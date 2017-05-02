@@ -1,11 +1,11 @@
-import { BatchProcess, BatchProcessObserver, BatchProcessOptions } from "./BatchProcess"
+import { BatchProcess, BatchProcessObserver, BatchProcessOptions, verifyOpts } from "./BatchProcess"
 import { delay } from "./Delay"
 import { Task } from "./Task"
-import { ChildProcess, execFile } from "child_process"
-import * as debug from "debug"
+import { ChildProcess } from "child_process"
 import * as _p from "process"
+import { debuglog } from "util"
 
-const dbg = debug("batch-cluster")
+const dbg = debuglog("batch-cluster")
 
 /**
  * These are required parameters for a given BatchCluster.
@@ -41,13 +41,13 @@ export class BatchCluster {
   private readonly _pendingTasks: Task<any>[] = []
 
   constructor(opts: Partial<BatchClusterOptions> & BatchProcessOptions & ChildProcessFactory) {
-    this.opts = { ... new BatchClusterOptions(), ...opts }
+    this.opts = { ... new BatchClusterOptions(), ...opts, ...verifyOpts(opts) }
     if (this.opts.onIdleIntervalMillis > 0) {
       setInterval(() => this.onIdle(), this.opts.onIdleIntervalMillis).unref()
     }
     this.observer = {
-      onIdle: this.onIdle,
-      enqueueTask: this.enqueueTask
+      onIdle: this.onIdle.bind(this),
+      enqueueTask: this.enqueueTask.bind(this)
     }
     _p.on("beforeExit", () => this.end())
   }
@@ -73,12 +73,19 @@ export class BatchCluster {
     return task.promise
   }
 
+  /**
+   * Useful for integration tests, but most likely not generally interesting.
+   */
+  get pids(): number[] {
+    return this.procs().map(p => p.pid)
+  }
+
   private dequeueTask(): Task<any> | undefined {
     return this._pendingTasks.shift()
   }
 
   private procs(): BatchProcess[] {
-    for (let i = this._procs.length - 1; i--; i >= 0) {
+    for (let i = this._procs.length - 1; i >= 0; i--) {
       if (this._procs[i].ended) {
         this._procs.splice(i, 1)
       }
@@ -87,12 +94,15 @@ export class BatchCluster {
   }
 
   private onIdle(): void {
+    dbg("onIdle(): " + this._pendingTasks.length + " pending tasks")
+
     if (this._pendingTasks.length > 0) {
       const idleProc = this._procs.find(p => p.idle)
       if (idleProc) {
+        dbg("onIdle(): Giving a task to " + idleProc.pid)
         idleProc.execTask(this.dequeueTask()!)
       } else if (this.procs().length < this.opts.maxProcs) {
-        dbg(`Spawning a new ExifTool instance. ${this._pendingTasks.length} pending tasks, ${this._procs.length} procs.`)
+        dbg(`onIdle(): Spawning a new process. ${this._pendingTasks.length} pending tasks, ${this._procs.length} procs.`)
         this._procs.push(new BatchProcess(this.opts.processFactory(), this.opts, this.observer))
         // this new proc will send an onIdle() when it's ready.
       }

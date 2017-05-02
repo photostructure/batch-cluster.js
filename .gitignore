@@ -1,6 +1,8 @@
 .node_repl_history
 .npm
 *.log
+.idea
+.history
 dist
 node_modules
 npm-debug.log*

@@ -1,4 +1,4 @@
-import { delay } from "./BatchCluster"
+import { delay } from "./Delay"
 import { createInterface } from "readline"
 
 function stripPrefix(s: string, prefix: string): string {

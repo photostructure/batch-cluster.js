@@ -1,0 +1,10 @@
+language: node_js
+node_js:
+  - "4"
+  - "6"
+  - "7"
+os:
+  - linux
+  - osx
+osx_image: xcode8
+script: 'npm run test'

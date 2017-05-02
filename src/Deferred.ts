@@ -1,6 +1,6 @@
 import * as debug from "debug"
 
-const dbg = debug("batch-cluster:Deferred")
+const dbg = debug("batch-cluster")
 
 /**
  * @see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise

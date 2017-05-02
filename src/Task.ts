@@ -16,11 +16,7 @@ export class Task<T> {
    * @param {Parser<T>} parser is used to parse resulting data from the
    * underlying process to a typed object.
    */
-  constructor(
-    readonly command: string,
-    readonly parser: Parser<T>
-  ) {
-  }
+  constructor(readonly command: string, readonly parser: Parser<T>) { }
 
   /**
    * @return the resolution or rejection of this task.
@@ -31,6 +27,10 @@ export class Task<T> {
 
   get pending(): boolean {
     return this.d.pending
+  }
+
+  toString() {
+    return this.constructor.name + "(" + this.command + ")"
   }
 
   /**

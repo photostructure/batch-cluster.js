@@ -3,17 +3,20 @@
   "version": "0.0.1-pre",
   "description": "Manage a cluster of child processes",
   "main": "dist/BatchCluster.js",
-  "types": "./dist/BatchCluster.d.ts",
+  "types": "dist/BatchCluster.d.ts",
   "scripts": {
     "clean": "rimraf lib dist",
     "lint": "tslint --fix src/**/*.ts",
     "compile": "tsc",
     "pretest": "tsc",
-    "test": "mocha --timeout 10000 dist/**/*.spec.js",
+    "test": "mocha",
     "cleantest": "run-s clean lint test"
   },
   "author": "Matthew McEachen <matthew-batchcluster@mceachen.org>",
   "license": "MIT",
+  "engines": {
+    "node": ">= 4"
+  },
   "devDependencies": {
     "@types/chai": "^3.5.2",
     "@types/chai-as-promised": "0.0.30",
