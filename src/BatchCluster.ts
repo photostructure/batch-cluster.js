@@ -3,9 +3,6 @@ import { delay } from "./Delay"
 import { Task } from "./Task"
 import { ChildProcess } from "child_process"
 import * as _p from "process"
-import { debuglog } from "util"
-
-const dbg = debuglog("batch-cluster")
 
 /**
  * These are required parameters for a given BatchCluster.
@@ -94,15 +91,11 @@ export class BatchCluster {
   }
 
   private onIdle(): void {
-    dbg("onIdle(): " + this._pendingTasks.length + " pending tasks")
-
     if (this._pendingTasks.length > 0) {
       const idleProc = this._procs.find(p => p.idle)
       if (idleProc) {
-        dbg("onIdle(): Giving a task to " + idleProc.pid)
         idleProc.execTask(this.dequeueTask()!)
       } else if (this.procs().length < this.opts.maxProcs) {
-        dbg(`onIdle(): Spawning a new process. ${this._pendingTasks.length} pending tasks, ${this._procs.length} procs.`)
         this._procs.push(new BatchProcess(this.opts.processFactory(), this.opts, this.observer))
         // this new proc will send an onIdle() when it's ready.
       }

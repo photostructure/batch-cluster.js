@@ -1,7 +1,3 @@
-import * as debug from "debug"
-
-const dbg = debug("batch-cluster")
-
 /**
  * @see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise
  */
@@ -52,7 +48,6 @@ export class Deferred<T> {
 
   resolve(value?: T): boolean {
     if (!this.pending) {
-      dbg("Warning: resolve() called when " + State[this.state] + ". Ignoring.")
       return false
     } else {
       this.state = State.fulfilled
@@ -63,7 +58,6 @@ export class Deferred<T> {
 
   reject(reason?: any): boolean {
     if (!this.pending) {
-      dbg("Warning: reject() called when " + State[this.state] + ". Ignoring.")
       return false
     } else {
       this.state = State.rejected
