@@ -1,6 +1,6 @@
 # batch-cluster
 
-Support external batch-mode tools within Node.JS.
+**Support external batch-mode tools within Node.js**
 
 [![npm version](https://badge.fury.io/js/batch-cluster.svg)](https://badge.fury.io/js/batch-cluster)
 [![Build status](https://travis-ci.org/mceachen/batch-cluster.js.svg?branch=master)](https://travis-ci.org/mceachen/batch-cluster.js)
