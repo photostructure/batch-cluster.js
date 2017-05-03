@@ -5,9 +5,10 @@
   "main": "dist/BatchCluster.js",
   "types": "dist/BatchCluster.d.ts",
   "scripts": {
-    "clean": "rimraf lib dist",
+    "clean": "rimraf dist",
     "lint": "tslint --fix src/**/*.ts",
     "compile": "tsc",
+    "tscw": "rimraf dist & tsc -w",
     "pretest": "tsc",
     "test": "mocha",
     "cleantest": "run-s clean lint test"
