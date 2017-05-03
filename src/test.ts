@@ -1,5 +1,6 @@
 import { delay } from "./Delay"
 import { createInterface } from "readline"
+import { stdout, env } from "process"
 
 function stripPrefix(s: string, prefix: string): string {
   return (s.startsWith(prefix)) ? s.slice(prefix.length) : s
@@ -9,25 +10,35 @@ const rl = createInterface({
   input: process.stdin
 })
 
+const newline = env.newline === "crlf" ? "\r\n" : env.newline === "cr" ? "\r" : "\n"
+
+function write(s: string): void {
+  stdout.write(s + newline)
+}
+// setInterval(() => write(""), 1000)
+
 rl.on("line", async (line: string) => {
   line = line.trim()
   if (line.startsWith("upcase ")) {
-    console.log(stripPrefix(line, "upcase ").trim().toUpperCase())
-    console.log("PASS")
+    write(stripPrefix(line, "upcase ").trim().toUpperCase())
+    write("PASS")
   } else if (line.startsWith("downcase ")) {
-    console.log(stripPrefix(line, "downcase ").trim().toLowerCase())
-    console.log("PASS")
+    write(stripPrefix(line, "downcase ").trim().toLowerCase())
+    write("PASS")
   } else if (line.startsWith("sleep ")) {
     const millis = parseInt(stripPrefix(line, "sleep").trim(), 10)
     await delay(millis)
-    console.log("PASS")
+    write("PASS")
   } else if (line === "version") {
-    console.log("v1.2.3")
-    console.log("PASS")
+    write("v1.2.3")
+    write("PASS")
   } else if (line.trim() === "exit") {
     process.exit(0)
+  } else if (line.startsWith("stderr")) {
+    console.error("Error: " + line)
+    write("PASS")
   } else {
     console.error("COMMAND MISSING for input", line)
-    console.log("FAIL")
+    write("FAIL")
   }
 })
