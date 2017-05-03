@@ -37,12 +37,10 @@ This package powers
 
 ### The `MAJOR` or `API` version is incremented for
 
-* 💔 Non-backward-compatible API changes
-* 🌲 New releases of ExifTool that have externally visible changes
+* 💔 Non-backwards-compatible API changes
 
 ### The `MINOR` or `UPDATE` version is incremented for
 
-* 🌱 New releases of ExifTool with no externally visible changes 
 * ✨ Backwards-compatible features
 
 ### The `PATCH` version is incremented for
