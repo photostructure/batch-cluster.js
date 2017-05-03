@@ -21,6 +21,31 @@ This package powers
 
 ## Changelog
 
+### v0.0.2
+
+* ✨ Added support and explicit tests for CR LF, CR, and LF encoded streams from
+  exec'ed processes
+* ✨ child processes are ended after `maxProcAgeMillis`, and restarted as needed
+* 🐞 `BatchCluster` now practices good listener hygene for `process.beforeExit`
+
 ### v0.0.1
 
-* ✨ Extracted implementation and tests from Exiftool Vendored
+* ✨ Extracted implementation and tests from
+  [exiftool-vendored](https://github.com/mceachen/exiftool-vendored.js)
+
+## Versioning
+
+### The `MAJOR` or `API` version is incremented for
+
+* 💔 Non-backward-compatible API changes
+* 🌲 New releases of ExifTool that have externally visible changes
+
+### The `MINOR` or `UPDATE` version is incremented for
+
+* 🌱 New releases of ExifTool with no externally visible changes 
+* ✨ Backwards-compatible features
+
+### The `PATCH` version is incremented for
+
+* 🐞 Backwards-compatible bug fixes
+* 📦 Minor packaging changes
