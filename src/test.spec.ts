@@ -3,8 +3,10 @@ import * as _cp from "child_process"
 import * as _p from "process"
 import { join } from "path"
 
-export function processFactory(): _cp.ChildProcess {
-  return _cp.spawn(_p.execPath, [join(__dirname, "test.js")])
+export function processFactory(env: any = {}): _cp.ChildProcess {
+  return _cp.spawn(_p.execPath, [join(__dirname, "test.js")], {
+    env
+  })
 }
 
 describe("test.js", () => {
