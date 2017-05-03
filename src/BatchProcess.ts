@@ -1,96 +1,25 @@
+import { BatchProcessOptions } from "./BatchCluster"
 import { Deferred } from "./Deferred"
 import { Task } from "./Task"
 import { ChildProcess } from "child_process"
-
-export interface BatchProcessOptions {
-
-  /**
-   * Low-overhead command to verify the child batch process has started
-   */
-  readonly versionCommand: string
-
-  /**
-   * Expected text to print if a command passes
-   */
-  readonly passString: string
-
-  /**
-   * Expected text to print if a command fails 
-   */
-  readonly failString: string
-
-  /**
-   * Command to end the child batch process
-   */
-  readonly exitCommand?: string
-
-  /**
-   * Spawning new commands must not take longer than this. Be pessimistic
-   * here--windows can regularly take several seconds to spin up a process,
-   * thanks to antivirus shenanigans.
-   */
-  readonly spawnTimeoutMillis: number
-
-  /**
-   * If commands take longer than this, presume the underlying process is dead
-   * and we should restart the task.
-   */
-  readonly taskTimeoutMillis: number
-
-  /**
-   * Must be >= 0. Processes will be recycled after processing `maxTasksPerProcess` tasks.
-   */
-  readonly maxTasksPerProcess: number
-
-  /**
-   * Must be >= 0. Tasks that result in errors will be retried at most
-   * `maxTaskRetries` times.
-   */
-  readonly taskRetries: number
-}
-
-// this is exported to allow BatchCluster to do this operation once, rather than
-// every time there is a new process spawned. It is not for public consumption.
-export function verifyOpts(opts: BatchProcessOptions): Partial<BatchProcessOptions> {
-  return {
-    versionCommand: ensureSuffix(opts.versionCommand, "\n"),
-    passString: ensureFix(opts.passString, "\n"),
-    failString: ensureFix(opts.failString, "\n"),
-    exitCommand: opts.exitCommand ? ensureSuffix(opts.exitCommand, "\n") : undefined
-  }
-}
-
-export interface BatchProcessObserver {
-  onIdle(batchProc: BatchProcess): void
-  enqueueTask(task: Task<any>): void
-}
-
-function ensureFix(s: string, fix: string): string {
-  return ensureSuffix(ensurePrefix(s, fix), fix)
-}
+import { debuglog, inspect } from "util"
 
 function ensureSuffix(s: string, suffix: string): string {
   return s.endsWith(suffix) ? s : s + suffix
 }
 
-function ensurePrefix(s: string, prefix: string): string {
-  return s.startsWith(prefix) ? s : prefix + s
+export interface BatchProcessObserver {
+  onIdle(): void
+  enqueueTask(task: Task<any>): void
 }
 
-function stripSuffix(s: string, suffix: string): string | undefined {
-  suffix = ensureSuffix(suffix, "\n")
-  if (s.endsWith(suffix)) {
-    return s.slice(0, -suffix.length)
-  } else {
-    s = s.trim()
-    if (s.endsWith(suffix)) {
-      return s.slice(0, -suffix.length)
-    }
-  }
-  return
+export interface InternalBatchProcessOptions extends BatchProcessOptions {
+  readonly passRE: RegExp
+  readonly failRE: RegExp
 }
 
 export class BatchProcess {
+  readonly start: number
   private _taskCount = -1 // don't count the warmup command
   private _ended: boolean = false
   private _closed = new Deferred<void>()
@@ -99,20 +28,23 @@ export class BatchProcess {
   private _currentTask: Task<any> | undefined
   private currentTaskTimeout: NodeJS.Timer | undefined
 
-  constructor(readonly proc: ChildProcess,
-    readonly opts: BatchProcessOptions,
-    readonly observer: BatchProcessObserver) {
-    this.proc.on("error", err => this.onError(err, true))
+  constructor(
+    readonly proc: ChildProcess,
+    readonly opts: InternalBatchProcessOptions,
+    readonly observer: BatchProcessObserver
+  ) {
+    this.start = Date.now()
+    this.proc.on("error", err => this.onError("proc", err, true))
 
-    this.proc.stdin.on("error", err => this.onError( err, true)) // probably ECONNRESET
+    this.proc.stdin.on("error", err => this.onError("stdin", err, true)) // probably ECONNRESET
 
-    this.proc.stderr.on("error", err => this.onError(err, false))
-    this.proc.stderr.on("data", err => this.onError(err, false))
+    this.proc.stderr.on("error", err => this.onError("stderr", err, false))
+    this.proc.stderr.on("data", err => this.onError("stderr.data", err.toString(), false))
 
-    this.proc.stdout.on("error", err => this.onError(err, true))
+    this.proc.stdout.on("error", err => this.onError("stdout.error", err, true))
     this.proc.stdout.on("data", d => this.onData(d))
-
     this.proc.on("close", () => {
+      this.log({ from: "close()" })
       this._ended = true
       this._closed.resolve()
     })
@@ -162,6 +94,7 @@ export class BatchProcess {
     if (timeout > 0) {
       this.currentTaskTimeout = setTimeout(() => this.onTimeout(task), timeout)
     }
+    this.log({ from: "execTask", timeout, task: cmd })
     this.proc.stdin.write(cmd)
     return true
   }
@@ -170,24 +103,32 @@ export class BatchProcess {
     return this.proc.kill(signal)
   }
 
-  end(exitCommand?: string): Promise<void> {
+  end(): Promise<void> {
     if (this._ended === false) {
       this._ended = true
       if (this.currentTaskTimeout != null) {
         clearTimeout(this.currentTaskTimeout)
       }
-      this.proc.stdin.end(exitCommand)
+      this.log({ from: "end()", exitCommand: this.opts.exitCommand })
+      const cmd = this.opts.exitCommand ? ensureSuffix(this.opts.exitCommand, "\n") : undefined
+      this.proc.stdin.end(cmd)
     }
     return this.closedPromise
   }
 
+  private log(obj: any): void {
+    debuglog("batch-cluster")(inspect({ time: new Date().toISOString(), pid: this.pid, ...obj }, { colors: true }))
+  }
+
   private onTimeout(task: Task<any>): void {
     if (task.pending) {
-      this.onError("timeout", true, task)
+      this.onError("timeout", new Error("timeout"), true, task)
     }
   }
 
-  private onError(error: any, retryTask: boolean = false, task?: Task<any>) {
+  private onError(source: string, error: any, retryTask: boolean = false, task?: Task<any>) {
+    this.log({ from: "onError(" + source + ")", error, retryTask, task: task ? task.command : "null" })
+
     // Recycle on errors, and clear task timeouts:
     this.end()
 
@@ -208,23 +149,23 @@ export class BatchProcess {
         task.onError(error)
       }
     }
-    this.observer.onIdle(this)
+    this.observer.onIdle()
   }
 
   private onData(data: string | Buffer) {
     this.buff = this.buff + data.toString()
-    const withoutPass = stripSuffix(this.buff, this.opts.passString)
-    if (withoutPass != null) {
-      return this.fulfillCurrentTask(withoutPass, t => t.onData.bind(t))
-    } else {
-      const withoutFail = stripSuffix(this.buff, this.opts.failString)
-      if (withoutFail != null) {
-        return this.fulfillCurrentTask(withoutFail, t => t.onError.bind(t))
-      }
+    this.log({ from: "BatchProcess.onData()", data: data.toString(), buff: this.buff, currentTask: this._currentTask && this._currentTask.command })
+    const pass = this.opts.passRE.exec(this.buff)
+    if (pass != null) {
+      return this.fulfillCurrentTask(pass[1], "onData")
+    }
+    const fail = this.opts.failRE.exec(this.buff)
+    if (fail != null) {
+      return this.fulfillCurrentTask(fail[1], "onError")
     }
   }
 
-  private fulfillCurrentTask(result: string, f: (task: Task<any>) => (result: string) => void): void {
+  private fulfillCurrentTask(result: string, methodName: "onData" | "onError"): void {
     this.buff = ""
     const task = this._currentTask
     this._currentTask = undefined
@@ -239,13 +180,19 @@ export class BatchProcess {
       }
       this.end()
     } else {
-      f(task)(result)
+      this.log({ from: "fulfillCurrentTask " + methodName, result, task: task.command })
+
+      if (methodName === "onData") {
+        task.onData(result)
+      } else {
+        task.onError(result)
+      }
+
       if (this.taskCount >= this.opts.maxTasksPerProcess) {
         this.end()
       } else {
-        this.observer.onIdle(this)
+        this.observer.onIdle()
       }
     }
   }
 }
-
