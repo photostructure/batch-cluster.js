@@ -5,7 +5,6 @@ import { Task } from "./Task"
 import { ChildProcess } from "child_process"
 import * as _p from "process"
 import { debuglog, inspect, InspectOptions } from "util"
-import * as _timers from "timers"
 
 /**
  * These are required parameters for a given BatchCluster.
@@ -192,8 +191,8 @@ export class BatchCluster {
   constructor(opts: Partial<BatchClusterOptions> & BatchProcessOptions & ChildProcessFactory) {
     this.opts = verifyOptions(opts)
     if (this.opts.onIdleIntervalMillis > 0) {
-      this.onIdleInterval = _timers.setInterval(() => this.onIdle(), this.opts.onIdleIntervalMillis)
-      this.onIdleInterval.unref()
+      this.onIdleInterval = setInterval(() => this.onIdle(), this.opts.onIdleIntervalMillis)
+      this.onIdleInterval.unref() // < don't prevent node from exiting
     }
     this.observer = {
       onIdle: this.onIdle.bind(this),
@@ -211,7 +210,7 @@ export class BatchCluster {
   end(): Promise<void> {
     if (!this._ended) {
       this._ended = true
-      _timers.clearInterval(this.onIdleInterval)
+      clearInterval(this.onIdleInterval)
       _p.removeListener("beforeExit", this.beforeExitListener)
       this.procs().forEach(p => p.end())
       const busyProcs = this._procs.filter(p => p.busy)
@@ -229,6 +228,7 @@ export class BatchCluster {
 
   enqueueTask<T>(task: Task<T>): Promise<T> {
     if (this._ended) {
+      task.onError("BatchCluster has ended")
       throw new Error("Cannot enqueue task " + task.command)
     }
     this._pendingTasks.push(task)
@@ -245,7 +245,7 @@ export class BatchCluster {
   }
 
   private get endPromise(): Promise<void> {
-    return Promise.all(this._procs.map(p => p.closedPromise)) as Promise<void>
+    return Promise.all(this.procs().map(p => p.closedPromise)) as Promise<void>
   }
 
   private retryTask(task: Task<any>, error: any) {
@@ -261,10 +261,10 @@ export class BatchCluster {
 
   private onStartError(error: any): void {
     this.startErrorRate.onEvent()
-    console.dir({ from: "onStartError()", error, startErrorRate: this.startErrorRate.eventsPerSecond })
+    this.log({ from: "onStartError()", error, startErrorRate: this.startErrorRate.eventsPerSecond })
     if (this.startErrorRate.eventsPerMinute > this.opts.maxReasonableProcessFailuresPerMinute) {
       this.end()
-      throw new Error(error)
+      throw new Error(error + "(start errors/min: " + this.startErrorRate.eventsPerMinute + ")")
     }
   }
 
@@ -280,7 +280,7 @@ export class BatchCluster {
         // This will only be in the case of an aggressive maxProcAgeMillis
         proc.end()
       }
-      if (proc.ended) {
+      if (proc.closed) {
         this._procs.splice(i, 1)
       }
     }
@@ -298,7 +298,8 @@ export class BatchCluster {
     this.log({ from: "onIdle()", pendingTasks: this._pendingTasks.length, idleProcs: this._procs.filter(p => p.idle).length })
 
     if (this._ended) {
-      console.error("ACK! onIdle() is still running!")
+      // TODO: the clearInterval is right after setting _ended, so why does it
+      // sometimes slip through?
       return
     }
 
