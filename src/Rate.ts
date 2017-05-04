@@ -9,6 +9,8 @@ export class Rate {
   /** total events */
   private _events = 0
 
+  constructor(readonly warmupMillis: number = 1000) {}
+
   onEvent() {
     this._events++
     const now = Date.now()
@@ -32,15 +34,29 @@ export class Rate {
     return this._events
   }
 
+  /**
+   * @return `(events / ageInMillis)`
+   */
   get eventsPerMillisecond(): number {
-    return this._eventsPerMillisecond
+    return this.squelched(this._events / this.durationMilliseconds)
+  }
+
+  /**
+   * @return an age-penalized rate
+   */
+  get weightedEventsPerMillisecond(): number {
+    return this.squelched(this._eventsPerMillisecond)
   }
 
   get eventsPerSecond(): number {
-    return this.eventsPerMillisecond * 1000
+    return this.squelched(this.eventsPerMillisecond * 1000)
   }
 
   get eventsPerMinute(): number {
-    return this.eventsPerSecond * 60
+    return this.squelched(this.eventsPerSecond * 60)
+  }
+
+  private squelched(value: number): number {
+    return (this.durationMilliseconds > this.warmupMillis) ? value : 0
   }
 }
