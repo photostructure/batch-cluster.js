@@ -30,6 +30,7 @@
     "np": "^2.13.3",
     "npm-run-all": "^4.0.2",
     "rimraf": "^2.6.1",
+    "seedrandom": "^2.4.3",
     "source-map-support": "^0.4.15",
     "tslint": "^4.5.1",
     "tslint-config-standard": "^4.0.0",

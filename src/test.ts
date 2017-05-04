@@ -16,13 +16,15 @@ function write(s: string): void {
   stdout.write(s + newline)
 }
 
-// const failrate = (env.failrate == null) ? 0 : parseFloat(env.failrate)
+const failrate = (env.failrate == null) ? 0 : parseFloat(env.failrate)
+const rng = env.rngseed ? require("seedrandom")(env.rngseed) : Math.random
 
 rl.on("line", async (line: string) => {
-  // if (Math.random() < failrate) {
-  //   console.error("EUNLUCKY")
-  //   return
-  // }
+  const r = rng()
+  if (r < failrate) {
+    console.error("EUNLUCKY: r: " + r.toFixed(3) + ", failrate: " + failrate.toFixed(3) + ", seed: " + env.rngseed)
+    return
+  }
   line = line.trim()
   if (line.startsWith("upcase ")) {
     write(stripPrefix(line, "upcase ").trim().toUpperCase())
