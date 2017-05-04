@@ -21,7 +21,7 @@ This package powers
 
 ## Changelog
 
-### v0.1.0
+### v1.0.0
 
 * ✨ Integration tests now throw deterministically random errors to simulate
   flaky child procs, and ensure retries and disaster recovery work as expected.
@@ -32,9 +32,6 @@ This package powers
 * ✨ Given the proliferation of construction options, those options are now
   sanity-checked at construction time, and an error will be raised whose message
   contains all incorrect option values.
-* 💔 `BatchCluster.enqueueTask` no longer supports unshifting new tasks, in the
-  interests of simplicity and that I'm tired of writing tests and it had no test
-  coverage.
 
 ### v0.0.2
 
