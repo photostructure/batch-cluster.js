@@ -1,0 +1,3 @@
+--check-leaks
+--timeout=20000
+dist/**/*.spec.js
