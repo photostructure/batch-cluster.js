@@ -1,6 +1,6 @@
 {
   "name": "batch-cluster",
-  "version": "0.0.2",
+  "version": "0.1.0-pre",
   "description": "Manage a cluster of child processes",
   "main": "dist/BatchCluster.js",
   "types": "dist/BatchCluster.d.ts",

@@ -64,10 +64,10 @@ describe("BatchCluster", function () {
 
               afterEach(() => bc.end())
 
-              it("runs > maxProcs tasks in parallel", async () => {
-                const iterations = maxProcs
+              it("runs maxProcs tasks in parallel", async () => {
+                const iterations = maxProcs + 2
                 expect(await Promise.all(runTasks(bc, iterations))).to.eql(expectedResults(iterations))
-                expect(bc.pids.length).to.eql(maxProcs)
+                expect(bc.pids.length).to.be.within(1, maxProcs)
               })
 
               it("calling .end() when new no-ops", async () => {
@@ -93,7 +93,7 @@ describe("BatchCluster", function () {
               it("restarts a given batch process if an error is raised", async () => {
                 expect(await bc.enqueueTask(new Task("downcase Hello", parser))).to.eql("hello")
                 const pids = bc.pids
-                expect(pids.length).to.gte(1) // we may have spun up another proc due to UNLUCKY
+                expect(bc.pids.length).to.be.within(1, maxProcs) // we may have spun up another proc due to UNLUCKY
                 const task = new Task("invalid", parser)
                 await expect(bc.enqueueTask(task)).to.eventually.be.rejectedWith(/invalid|UNLUCKY/)
                 await delay(onIdleIntervalMillis * 2) // wait for pids to not include closed procs
@@ -138,12 +138,10 @@ describe("BatchCluster", function () {
     })
     it("culls old child procs", async () => {
       expect(await Promise.all(runTasks(bc, 2 * maxProcs))).to.eql(expectedResults(2 * maxProcs))
-      const pids = bc.pids
-      expect(pids.length).to.be.gte(1)
-      expect(pids.length).to.be.lte(maxProcs)
+      expect(bc.pids.length).to.be.within(1, maxProcs)
       await delay(maxProcAgeMillis)
       // Calling .pids calls .procs(), which culls old procs
-      expect(bc.pids).to.not.be.undefined
+      expect(bc.pids.length).to.be.within(1, maxProcs)
       // Wait for the procs to shut down:
       await delay(500)
       expect(bc.pids).to.be.empty
