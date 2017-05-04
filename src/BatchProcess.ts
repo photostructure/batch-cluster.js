@@ -46,17 +46,20 @@ export class BatchProcess {
 
     this.proc.stdout.on("data", d => this.onData(d))
 
+    const startupTask = new Task(opts.versionCommand, ea => ea)
+
     this.proc.on("close", () => {
       this.log({ from: "close()" })
-      if (this._currentTask) {
-        this.observer.retryTask(this._currentTask, "proc closed on " + this._currentTask.command)
+      const task = this._currentTask
+      if (task != null && task !== startupTask) {
+        this.observer.retryTask(task, "proc closed on " + task.command)
       }
       this.clearCurrentTask()
       this._ended = true
       this._closed.resolve()
     })
     this.proc.unref() // < don't let node count the child processes as a reason to stay alive
-    this.execTask(new Task(opts.versionCommand, ea => ea))
+    this.execTask(startupTask)
   }
 
   get idle(): boolean {
@@ -67,8 +70,16 @@ export class BatchProcess {
     return !this._ended && (this._currentTask != null)
   }
 
+  get starting(): boolean {
+    return !this.busy && this._taskCount === 0
+  }
+
   get ended(): boolean {
     return this._ended
+  }
+
+  get closed(): boolean {
+    return !this._closed.pending
   }
 
   get pid(): number {
@@ -87,14 +98,19 @@ export class BatchProcess {
     return this._currentTask
   }
 
+  get currentTaskCommand(): string | undefined {
+    return (this._currentTask == null) ? undefined : this._currentTask.command
+  }
+
   execTask(task: Task<any>): boolean {
     if (this.ended || this.currentTask != null) {
+      this.log({ from: "execTask", error: "This proc is not idle, and cannot exec task", ended: this.ended, currentTask: this.currentTaskCommand })
       return false
     }
     this._taskCount++
     this._currentTask = task
     const cmd = ensureSuffix(task.command, "\n")
-    const timeout = (this._taskCount === 0) ? this.opts.spawnTimeoutMillis : this.opts.taskTimeoutMillis
+    const timeout = this.starting ? this.opts.spawnTimeoutMillis : this.opts.taskTimeoutMillis
     if (timeout > 0) {
       this.currentTaskTimeout = setTimeout(() => this.onTimeout(task), timeout)
     }
@@ -134,9 +150,7 @@ export class BatchProcess {
     if (task == null) {
       task = this._currentTask
     }
-    const o = { from: "onError(" + source + ")", error, retryTask, task: task ? task.command : "null"  }
-    console.dir(o)
-    // this.log(o)
+    this.log({ from: "onError(" + source + ")", error, retryTask, task: task ? task.command : "null" })
 
     const errorMsg = source + ": " + (error.stack || error)
 
@@ -181,8 +195,8 @@ export class BatchProcess {
     this.clearCurrentTask()
 
     if (task == null) {
-      if (result.length > 0) {
-        console.error("batch-process INTERNAL ERROR: stdin got data, with no current task")
+      if (result.length > 0 && !this._ended) {
+        console.error("batch-process INTERNAL ERROR: no current task in fulfillCurrentTask(" + methodName + ") result: " + result)
       }
       this.end()
     } else {
