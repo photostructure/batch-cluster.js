@@ -42,16 +42,14 @@ export class BatchProcess {
     this.proc.stdin.on("error", err => this.onError("stdin", err, true))
     this.proc.stdout.on("error", err => this.onError("stdout.error", err, true))
     this.proc.stderr.on("error", err => this.onError("stderr", err, true))
-
-    // If stderr is written to, the task is probably to blame. Don't retry:
-    this.proc.stderr.on("data", err => this.onError("stderr.data", err.toString(), false))
+    this.proc.stderr.on("data", err => this.onError("stderr.data", err.toString(), true))
 
     this.proc.stdout.on("data", d => this.onData(d))
 
     this.proc.on("close", () => {
       this.log({ from: "close()" })
       if (this._currentTask) {
-        this.observer.retryTask(this._currentTask, "proc closed")
+        this.observer.retryTask(this._currentTask, "proc closed on " + this._currentTask.command)
       }
       this.clearCurrentTask()
       this._ended = true
@@ -128,32 +126,31 @@ export class BatchProcess {
 
   private onTimeout(task: Task<any>): void {
     if (task.pending) {
-      this.onError("timeout", new Error("timeout"), false, task)
+      this.onError("timeout", new Error("timeout"), true, task)
     }
   }
 
   private onError(source: string, error: any, retryTask: boolean = false, task?: Task<any>) {
-    this.log({ from: "onError(" + source + ")", error, retryTask, task: task ? task.command : "null" })
+    if (task == null) {
+      task = this._currentTask
+    }
+    const o = { from: "onError(" + source + ")", error, retryTask, task: task ? task.command : "null"  }
+    console.dir(o)
+    // this.log(o)
 
     const errorMsg = source + ": " + (error.stack || error)
 
-    if (this._currentTask && this._taskCount === 0) {
+    // clear the task before ending so the onClose doesn't retry the task:
+    this.clearCurrentTask()
+    this.end()
+
+    if (this._taskCount === 0) {
       this.observer.onStartError(errorMsg)
-    } else {
-      if (task == null) {
-        task = this._currentTask
-      }
-
-      // clear the task before ending so the onClose doesn't retry the task:
-      this.clearCurrentTask()
-      this.end()
-
-      if (task != null && retryTask) {
-        this.observer.retryTask(task, errorMsg)
-      }
-
-      this.observer.onIdle()
+    } else if (task != null && retryTask) {
+      this.observer.retryTask(task, errorMsg)
     }
+
+    this.observer.onIdle()
   }
 
   private onData(data: string | Buffer) {

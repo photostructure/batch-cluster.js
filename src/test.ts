@@ -16,13 +16,13 @@ function write(s: string): void {
   stdout.write(s + newline)
 }
 
-const failrate = (env.failrate == null) ? 0 : parseFloat(env.failrate)
+// const failrate = (env.failrate == null) ? 0 : parseFloat(env.failrate)
 
 rl.on("line", async (line: string) => {
-  if (Math.random() < failrate) {
-    console.error("ECONNRESET")
-    return
-  }
+  // if (Math.random() < failrate) {
+  //   console.error("EUNLUCKY")
+  //   return
+  // }
   line = line.trim()
   if (line.startsWith("upcase ")) {
     write(stripPrefix(line, "upcase ").trim().toUpperCase())

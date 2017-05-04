@@ -8,7 +8,7 @@ export interface Parser<T> {
 }
 
 export class Task<T> {
-  retriesRemaining: number | undefined
+  retries = 0
   private readonly d = new Deferred<T>()
   /**
    * @param {string} command is the value written to stdin to perform the given

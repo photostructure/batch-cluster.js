@@ -29,6 +29,9 @@ This package powers
   rate, `BatchCluster` will shut down and raise exceptions to subsequent
   `enqueueTask` callers, rather than try forever to spin up processes that are
   most likely misconfigured.
+* ✨ Given the proliferation of construction options, those options are now
+  sanity-checked at construction time, and an error will be raised whose message
+  contains all incorrect option values.  
 
 ### v0.0.2
 

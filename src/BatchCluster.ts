@@ -31,17 +31,19 @@ export interface BatchProcessOptions {
   readonly versionCommand: string
 
   /**
-   * Expected text to print if a command passes.
+   * Expected text to print if a command passes. Cannot be blank.
    */
   readonly pass: string
 
   /**
-   * Expected text to print if a command fails.
+   * Expected text to print if a command fails. Cannot be blank.
    */
   readonly fail: string
 
   /**
-   * Command to end the child batch process
+   * Command to end the child batch process. If not provided, stdin will be
+   * closed to signal to the child process that it may terminate, and if it does
+   * not shut down within `endGracefulWaitTimeMillis`, it will be SIGHUP'ed.
    */
   readonly exitCommand?: string
 
@@ -49,23 +51,28 @@ export interface BatchProcessOptions {
    * Spawning new commands must not take longer than this. Be pessimistic
    * here--windows can regularly take several seconds to spin up a process,
    * thanks to antivirus shenanigans.
+   *
+   * This can't be set to a value less than 100ms.
    */
   readonly spawnTimeoutMillis: number
 
   /**
    * If commands take longer than this, presume the underlying process is dead
    * and we should restart the task.
+   *
+   * This can't be set to a value less than 10ms, and really should be set to
+   * something like several seconds.
    */
   readonly taskTimeoutMillis: number
 
   /**
-   * Must be >= 0. Processes will be recycled after processing `maxTasksPerProcess` tasks.
+   * Must be >= 0. Processes will be recycled after processing
+   * `maxTasksPerProcess` tasks. Depending on the commands and platform, batch
+   * mode commands shouldn't exhibit unduly memory leaks for at least tens if
+   * not thousands of tasks. Setting this to a low number (like less than 10)
+   * will impact performance markedly.
    */
   readonly maxTasksPerProcess: number
-}
-
-function toRe(s: string): RegExp {
-  return new RegExp("^([\\s\\S]*?)[\\n\\r]+" + s + "[\\n\\r]*$")
 }
 
 /**
@@ -73,23 +80,35 @@ function toRe(s: string): RegExp {
  * for a given BatchCluster.
  */
 export class BatchClusterOptions {
+  /**
+   * No more than `maxProcs` child processes will be run at a given time
+   * to serve pending tasks.
+   */
   readonly maxProcs: number = 1
 
   /**
    * Child processes will be recycled when they reach this age.
+   *
+   * If this value is set to 0, child processes will not "age out".
+   *
+   * This value should not be less than `spawnTimeoutMillis` or
+   * `taskTimeoutMillis`.
    */
   readonly maxProcAgeMillis: number = 5 * 60 * 1000 // 5 minutes
-  /**
 
+  /**
    * This is the minimum interval between calls to `this.onIdle`, which runs
    * pending tasks and shuts down old child processes.
    */
-  readonly onIdleIntervalMillis: number = 2000
+  readonly onIdleIntervalMillis: number = 1000
 
   /**
    * When `this.end()` is called, or Node broadcasts the `beforeExit` event,
    * this is the milliseconds spent waiting for currently running tasks to
    * finish before sending kill signals to child processes.
+   *
+   * Setting this value to 0 will not wait for processes to shut down before
+   * sending them a kill signal.
    */
   readonly endGracefulWaitTimeMillis: number = 500
 
@@ -110,8 +129,58 @@ export class BatchClusterOptions {
   readonly maxReasonableProcessFailuresPerMinute: number = 10
 }
 
+function verifyOptions(
+  opts: Partial<BatchClusterOptions> & BatchProcessOptions & ChildProcessFactory
+): AllOpts {
+  const toRe = (s: string) =>
+    new RegExp("^([\\s\\S]*?)[\\n\\r]+" + s + "[\\n\\r]*$")
+
+  const result = {
+    ... new BatchClusterOptions(),
+    ...opts,
+    passRE: toRe(opts.pass),
+    failRE: toRe(opts.fail)
+  }
+
+  const errors: string[] = []
+  const notBlank = (fieldName: keyof AllOpts) => {
+    const v = result[fieldName] as string
+    if (v.trim().length === 0) {
+      errors.push(fieldName + " must not be blank")
+    }
+  }
+  const gte = (fieldName: keyof AllOpts, value: number) => {
+    const v = result[fieldName] as number
+    if (v < value) {
+      errors.push(fieldName + " must be greater than or equal to " + value)
+    }
+  }
+  notBlank("versionCommand")
+  notBlank("pass")
+  notBlank("fail")
+
+  gte("spawnTimeoutMillis", 100)
+  gte("taskTimeoutMillis", 10)
+  gte("maxTasksPerProcess", 1)
+
+  gte("maxProcs", 1)
+  gte("maxProcAgeMillis", 0)
+  gte("onIdleIntervalMillis", 0)
+  gte("endGracefulWaitTimeMillis", 0)
+  gte("taskRetries", 0)
+  gte("maxReasonableProcessFailuresPerMinute", 0)
+
+  if (errors.length > 0) {
+    throw new Error("BatchCluster was given invalid options: " + errors.join(", "))
+  }
+
+  return result
+}
+
+type AllOpts = BatchClusterOptions & InternalBatchProcessOptions & ChildProcessFactory
+
 export class BatchCluster {
-  private readonly opts: BatchClusterOptions & InternalBatchProcessOptions & ChildProcessFactory
+  private readonly opts: AllOpts
   private readonly observer: BatchProcessObserver
   private readonly _procs: BatchProcess[] = []
   private readonly _pendingTasks: Task<any>[] = []
@@ -121,7 +190,7 @@ export class BatchCluster {
   private _ended = false
 
   constructor(opts: Partial<BatchClusterOptions> & BatchProcessOptions & ChildProcessFactory) {
-    this.opts = { ... new BatchClusterOptions(), ...opts, passRE: toRe(opts.pass), failRE: toRe(opts.fail) }
+    this.opts = verifyOptions(opts)
     if (this.opts.onIdleIntervalMillis > 0) {
       this.onIdleInterval = _timers.setInterval(() => this.onIdle(), this.opts.onIdleIntervalMillis)
       this.onIdleInterval.unref()
@@ -138,19 +207,24 @@ export class BatchCluster {
     return this._ended
   }
 
+  // not async so it doesn't relinquish control flow
   end(): Promise<void> {
-    this._ended = true
-    _timers.clearInterval(this.onIdleInterval)
-    _p.removeListener("beforeExit", this.beforeExitListener)
-    this._procs.forEach(p => p.end())
-    const busyProcs = this._procs.filter(p => p.busy)
-    this.log({ from: "end()", busyProcs: busyProcs.map(p => p.pid) })
-    return Promise.race([
-      delay(this.opts.endGracefulWaitTimeMillis),
-      Promise.all(busyProcs.map(p => p.closedPromise))
-    ]).then(() => {
-      this._procs.forEach(p => p.kill())
-    })
+    if (!this._ended) {
+      this._ended = true
+      _timers.clearInterval(this.onIdleInterval)
+      _p.removeListener("beforeExit", this.beforeExitListener)
+      this.procs().forEach(p => p.end())
+      const busyProcs = this._procs.filter(p => p.busy)
+      this.log({ from: "end()", busyProcs: busyProcs.map(p => p.pid) })
+      return Promise.race([
+        delay(this.opts.endGracefulWaitTimeMillis),
+        Promise.all(busyProcs.map(p => p.closedPromise))
+      ]).then(() => {
+        this._procs.forEach(p => p.kill())
+      }).then(() => this.endPromise)
+    } else {
+      return this.endPromise
+    }
   }
 
   enqueueTask<T>(task: Task<T>): Promise<T> {
@@ -163,19 +237,21 @@ export class BatchCluster {
   }
 
   /**
-   * Useful for integration tests, but most likely not generally interesting.
+   * @return the current, non-ended child process PIDs. Useful for integration
+   * tests, but most likely not generally interesting.
    */
   get pids(): number[] {
     return this.procs().map(p => p.pid)
   }
 
+  private get endPromise(): Promise<void> {
+    return Promise.all(this._procs.map(p => p.closedPromise)) as Promise<void>
+  }
+
   private retryTask(task: Task<any>, error: any) {
     if (task) {
-      if (task.retriesRemaining == null) {
-        task.retriesRemaining = this.opts.taskRetries
-      }
-      if (task.retriesRemaining > 0) {
-        task.retriesRemaining--
+      if (task.retries < this.opts.taskRetries) {
+        task.retries++
         this.enqueueTask(task)
       } else {
         task.onError(error)
@@ -185,10 +261,9 @@ export class BatchCluster {
 
   private onStartError(error: any): void {
     this.startErrorRate.onEvent()
-    this.log({ from: "onStartError()", error, startErrorRate: this.startErrorRate.eventsPerSecond })
+    console.dir({ from: "onStartError()", error, startErrorRate: this.startErrorRate.eventsPerSecond })
     if (this.startErrorRate.eventsPerMinute > this.opts.maxReasonableProcessFailuresPerMinute) {
       this.end()
-      this._ended = true
       throw new Error(error)
     }
   }
@@ -202,6 +277,7 @@ export class BatchCluster {
     for (let i = this._procs.length - 1; i >= 0; i--) {
       const proc = this._procs[i]
       if (proc.start < minStart) {
+        // This will only be in the case of an aggressive maxProcAgeMillis
         proc.end()
       }
       if (proc.ended) {
