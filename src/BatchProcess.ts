@@ -148,7 +148,7 @@ export class BatchProcess {
       this.clearCurrentTask()
       this.end()
 
-      if (task && retryTask) {
+      if (task != null && retryTask) {
         this.observer.retryTask(task, errorMsg)
       }
 

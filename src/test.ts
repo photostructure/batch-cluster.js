@@ -17,15 +17,11 @@ function write(s: string): void {
 }
 
 const failrate = (env.failrate == null) ? 0 : parseFloat(env.failrate)
-let lines = 0
-let fails = 0
 
 rl.on("line", async (line: string) => {
-  lines++
-  if (lines > 2 && (fails / lines) < failrate) {
-    fails++
-    // console.error("ECONNRESET")
-    // return
+  if (Math.random() < failrate) {
+    console.error("ECONNRESET")
+    return
   }
   line = line.trim()
   if (line.startsWith("upcase ")) {

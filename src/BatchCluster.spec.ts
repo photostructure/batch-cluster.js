@@ -38,7 +38,7 @@ describe("BatchCluster", function () {
             describe("maxProcs:" + maxProcs, () => {
               let bc: BatchCluster
               beforeEach(() => {
-                const failrate = taskRetries === 0 ? 0 : 1 / (maxTasksPerProcess - 1)
+                const failrate = taskRetries === 0 ? 0 : .3
                 bc = new BatchCluster({
                   processFactory: () => processFactory({ newline, failrate }),
                   taskRetries,
