@@ -26,6 +26,9 @@ describe("BatchCluster", function () {
     return times(iterations, i => "ABC " + i)
   }
 
+  let callcount = 0
+  const onIdleIntervalMillis = 100;
+
   ["cr", "crlf", "lf"].forEach(newline => {
     describe("newline:" + newline, () => {
       [0, 5].forEach(taskRetries => {
@@ -35,9 +38,16 @@ describe("BatchCluster", function () {
             describe("maxProcs:" + maxProcs, () => {
               let bc: BatchCluster
               beforeEach(() => {
-                const failrate = taskRetries === 0 ? "0" : "0.05"
+                // failrate needs to be high enough to trigger but low enough to
+                // allow retries to succeed.
+
+                // Seeding the RNG deterministically gives us repeatable test
+                // successes.
+                const failrate = taskRetries === 0 ? "0" : "0.1"
                 bc = new BatchCluster({
-                  processFactory: () => processFactory({ newline, failrate }),
+                  // seed needs to change for each process, or we'll always be
+                  // lucky or unlucky
+                  processFactory: () => processFactory({ newline, failrate, rngseed: "SEED" + (callcount++) }),
                   taskRetries,
                   maxProcs,
                   maxTasksPerProcess,
@@ -46,7 +56,9 @@ describe("BatchCluster", function () {
                   fail: "FAIL",
                   exitCommand: "exit",
                   spawnTimeoutMillis: 5000,
-                  taskTimeoutMillis: 200
+                  taskTimeoutMillis: 200,
+                  onIdleIntervalMillis,
+                  maxReasonableProcessFailuresPerMinute: 200 // this is so high because failrate is so high
                 })
               })
 
@@ -81,22 +93,23 @@ describe("BatchCluster", function () {
               it("restarts a given batch process if an error is raised", async () => {
                 expect(await bc.enqueueTask(new Task("downcase Hello", parser))).to.eql("hello")
                 const pids = bc.pids
-                expect(pids.length).to.eql(1)
+                expect(pids.length).to.gte(1) // we may have spun up another proc due to UNLUCKY
                 const task = new Task("invalid", parser)
-                await expect(bc.enqueueTask(task)).to.eventually.be.rejectedWith(/invalid/)
-                expect(bc.pids).to.not.include.members(pids)
+                await expect(bc.enqueueTask(task)).to.eventually.be.rejectedWith(/invalid|UNLUCKY/)
+                await delay(onIdleIntervalMillis * 2) // wait for pids to not include closed procs
+                expect(bc.pids).to.not.eql(pids) // at least one pid should be shut down now
                 expect(task.retries).to.eql(taskRetries)
               })
 
               it("times out slow requests", async () => {
                 const task = new Task("sleep " + (bc["opts"].taskTimeoutMillis + 20), parser)
-                await expect(bc.enqueueTask(task)).to.eventually.be.rejectedWith(/timeout/)
+                await expect(bc.enqueueTask(task)).to.eventually.be.rejectedWith(/timeout|UNLUCKY/)
                 expect(task.retries).to.eql(taskRetries)
               })
 
               it("rejects a command that emits to stderr", async () => {
                 const task = new Task("stderr omg this should fail", parser)
-                await expect(bc.enqueueTask(task)).to.eventually.be.rejectedWith(/omg this should fail/)
+                await expect(bc.enqueueTask(task)).to.eventually.be.rejectedWith(/omg this should fail|UNLUCKY/)
                 expect(task.retries).to.eql(taskRetries)
               })
             })
@@ -120,17 +133,20 @@ describe("BatchCluster", function () {
       fail: "FAIL",
       exitCommand: "exit",
       spawnTimeoutMillis: 5000,
-      taskTimeoutMillis: 200
+      taskTimeoutMillis: 200,
+      onIdleIntervalMillis
     })
     it("culls old child procs", async () => {
       expect(await Promise.all(runTasks(bc, 2 * maxProcs))).to.eql(expectedResults(2 * maxProcs))
       const pids = bc.pids
-      console.dir({ pids })
       expect(pids.length).to.be.gte(1)
       expect(pids.length).to.be.lte(maxProcs)
-      await delay(maxProcAgeMillis + 50)
+      await delay(maxProcAgeMillis)
+      // Calling .pids calls .procs(), which culls old procs
+      expect(bc.pids).to.not.be.undefined
+      // Wait for the procs to shut down:
+      await delay(500)
       expect(bc.pids).to.be.empty
-      return
     })
   })
 
