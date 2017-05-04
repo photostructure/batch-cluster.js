@@ -1,9 +1,11 @@
+import { Rate } from "./Rate"
 import { BatchProcess, BatchProcessObserver, InternalBatchProcessOptions } from "./BatchProcess"
 import { delay } from "./Delay"
 import { Task } from "./Task"
 import { ChildProcess } from "child_process"
 import * as _p from "process"
-import { debuglog, inspect } from "util"
+import { debuglog, inspect, InspectOptions } from "util"
+import * as _timers from "timers"
 
 /**
  * These are required parameters for a given BatchCluster.
@@ -60,12 +62,6 @@ export interface BatchProcessOptions {
    * Must be >= 0. Processes will be recycled after processing `maxTasksPerProcess` tasks.
    */
   readonly maxTasksPerProcess: number
-
-  /**
-   * Must be >= 0. Tasks that result in errors will be retried at most
-   * `maxTaskRetries` times.
-   */
-  readonly taskRetries: number
 }
 
 function toRe(s: string): RegExp {
@@ -78,9 +74,40 @@ function toRe(s: string): RegExp {
  */
 export class BatchClusterOptions {
   readonly maxProcs: number = 1
+
+  /**
+   * Child processes will be recycled when they reach this age.
+   */
   readonly maxProcAgeMillis: number = 5 * 60 * 1000 // 5 minutes
+  /**
+
+   * This is the minimum interval between calls to `this.onIdle`, which runs
+   * pending tasks and shuts down old child processes.
+   */
   readonly onIdleIntervalMillis: number = 2000
+
+  /**
+   * When `this.end()` is called, or Node broadcasts the `beforeExit` event,
+   * this is the milliseconds spent waiting for currently running tasks to
+   * finish before sending kill signals to child processes.
+   */
   readonly endGracefulWaitTimeMillis: number = 500
+
+  /**
+   * Must be >= 0. Tasks that result in errors will be retried at most
+   * `taskRetries` times.
+   */
+  readonly taskRetries: number = 0
+
+  /**
+   * If the initial `versionCommand` fails for new spawned processes more than
+   * this rate, end this BatchCluster and throw an error, because something is
+   * terribly wrong.
+   *
+   * If this backstop didn't exist, new (failing) child processes would be
+   * created indefinitely.
+   */
+  readonly maxReasonableProcessFailuresPerMinute: number = 10
 }
 
 export class BatchCluster {
@@ -88,38 +115,49 @@ export class BatchCluster {
   private readonly observer: BatchProcessObserver
   private readonly _procs: BatchProcess[] = []
   private readonly _pendingTasks: Task<any>[] = []
+  private readonly onIdleInterval: NodeJS.Timer
   private readonly beforeExitListener = this.end.bind(this)
+  private readonly startErrorRate = new Rate()
+  private _ended = false
 
   constructor(opts: Partial<BatchClusterOptions> & BatchProcessOptions & ChildProcessFactory) {
     this.opts = { ... new BatchClusterOptions(), ...opts, passRE: toRe(opts.pass), failRE: toRe(opts.fail) }
     if (this.opts.onIdleIntervalMillis > 0) {
-      setInterval(() => this.onIdle(), this.opts.onIdleIntervalMillis).unref()
+      this.onIdleInterval = _timers.setInterval(() => this.onIdle(), this.opts.onIdleIntervalMillis)
+      this.onIdleInterval.unref()
     }
     this.observer = {
       onIdle: this.onIdle.bind(this),
-      enqueueTask: this.enqueueTask.bind(this)
+      onStartError: this.onStartError.bind(this),
+      retryTask: this.retryTask.bind(this)
     }
     _p.on("beforeExit", this.beforeExitListener)
   }
 
-  async end(): Promise<void> {
+  get ended(): boolean {
+    return this._ended
+  }
+
+  end(): Promise<void> {
+    this._ended = true
+    _timers.clearInterval(this.onIdleInterval)
     _p.removeListener("beforeExit", this.beforeExitListener)
     this._procs.forEach(p => p.end())
     const busyProcs = this._procs.filter(p => p.busy)
-    if (busyProcs.length > 0) {
-      await Promise.race([
-        delay(this.opts.endGracefulWaitTimeMillis),
-        Promise.all(busyProcs.map(p => p.closedPromise))
-      ])
-    } else {
-      // We don't need to wait for the procs to close gracefully if all the procs are idle
-    }
-    this._procs.forEach(p => p.kill())
-    return
+    this.log({ from: "end()", busyProcs: busyProcs.map(p => p.pid) })
+    return Promise.race([
+      delay(this.opts.endGracefulWaitTimeMillis),
+      Promise.all(busyProcs.map(p => p.closedPromise))
+    ]).then(() => {
+      this._procs.forEach(p => p.kill())
+    })
   }
 
-  enqueueTask<T>(task: Task<T>, append: boolean = true): Promise<T> {
-    append ? this._pendingTasks.push(task) : this._pendingTasks.unshift(task)
+  enqueueTask<T>(task: Task<T>): Promise<T> {
+    if (this._ended) {
+      throw new Error("Cannot enqueue task " + task.command)
+    }
+    this._pendingTasks.push(task)
     this.onIdle()
     return task.promise
   }
@@ -129,6 +167,30 @@ export class BatchCluster {
    */
   get pids(): number[] {
     return this.procs().map(p => p.pid)
+  }
+
+  private retryTask(task: Task<any>, error: any) {
+    if (task) {
+      if (task.retriesRemaining == null) {
+        task.retriesRemaining = this.opts.taskRetries
+      }
+      if (task.retriesRemaining > 0) {
+        task.retriesRemaining--
+        this.enqueueTask(task)
+      } else {
+        task.onError(error)
+      }
+    }
+  }
+
+  private onStartError(error: any): void {
+    this.startErrorRate.onEvent()
+    this.log({ from: "onStartError()", error, startErrorRate: this.startErrorRate.eventsPerSecond })
+    if (this.startErrorRate.eventsPerMinute > this.opts.maxReasonableProcessFailuresPerMinute) {
+      this.end()
+      this._ended = true
+      throw new Error(error)
+    }
   }
 
   private dequeueTask(): Task<any> | undefined {
@@ -150,11 +212,19 @@ export class BatchCluster {
   }
 
   private log(obj: any): void {
-    debuglog("batch-cluster")(inspect({ time: new Date().toISOString(), ...obj }, { colors: true }))
+    debuglog("batch-cluster")(inspect(
+      { time: new Date().toISOString(), ...obj, from: "BatchCluster." + obj.from },
+      { colors: true, breakLength: 80 } as InspectOptions
+    ))
   }
 
   private onIdle(): void {
     this.log({ from: "onIdle()", pendingTasks: this._pendingTasks.length, idleProcs: this._procs.filter(p => p.idle).length })
+
+    if (this._ended) {
+      console.error("ACK! onIdle() is still running!")
+      return
+    }
 
     if (this._pendingTasks.length > 0) {
       const idleProc = this.procs().find(p => p.idle)

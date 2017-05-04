@@ -15,9 +15,18 @@ const newline = env.newline === "crlf" ? "\r\n" : env.newline === "cr" ? "\r" : 
 function write(s: string): void {
   stdout.write(s + newline)
 }
-// setInterval(() => write(""), 1000)
+
+const failrate = (env.failrate == null) ? 0 : parseFloat(env.failrate)
+let lines = 0
+let fails = 0
 
 rl.on("line", async (line: string) => {
+  lines++
+  if (lines > 2 && (fails / lines) < failrate) {
+    fails++
+    // console.error("ECONNRESET")
+    // return
+  }
   line = line.trim()
   if (line.startsWith("upcase ")) {
     write(stripPrefix(line, "upcase ").trim().toUpperCase())

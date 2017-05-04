@@ -21,10 +21,19 @@ This package powers
 
 ## Changelog
 
+### v0.0.3
+
+* ✨ Integration test script now throws random errors to simulate a flaky child
+  proc, and ensure retries work as expected.
+* ✨ If the `processFactory` or `versionCommand` fails more often than a given
+  rate, `BatchCluster` will shut down and raise exceptions to subsequent
+  `enqueueTask` callers, rather than try forever to spin up processes that are
+  most likely misconfigured.
+
 ### v0.0.2
 
 * ✨ Added support and explicit tests for CR LF, CR, and LF encoded streams from
-  exec'ed processes
+  exec'ed processes (ugh ExifTool)
 * ✨ child processes are ended after `maxProcAgeMillis`, and restarted as needed
 * 🐞 `BatchCluster` now practices good listener hygene for `process.beforeExit`
 

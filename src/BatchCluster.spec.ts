@@ -18,7 +18,10 @@ describe("BatchCluster", function () {
 
   function runTasks(bc: BatchCluster, iterations: number): Promise<string>[] {
     return times(iterations, i =>
-      bc.enqueueTask(new Task("upcase abc " + i, parser))
+      bc.enqueueTask(new Task("upcase abc " + i, parser)).then(ea => {
+        console.log("Got task result: " + ea)
+        return ea
+      })
     )
   }
 
@@ -26,17 +29,18 @@ describe("BatchCluster", function () {
     return times(iterations, i => "ABC " + i)
   }
 
-  ["cr", "crlf", "lf"].forEach(newline => {
+  [/*"cr", "crlf", */"lf"].forEach(newline => {
     describe("newline:" + newline, () => {
-      [0, 1].forEach(taskRetries => {
+      [/*0, */1].forEach(taskRetries => {
         describe("taskRetries:" + taskRetries, () => {
-          [1, 2].forEach(maxProcs => {
-            const maxTasksPerProcess = 3
+          [/*1,*/ 2].forEach(maxProcs => {
+            const maxTasksPerProcess = 5
             describe("maxProcs:" + maxProcs, () => {
               let bc: BatchCluster
               beforeEach(() => {
+                const failrate = taskRetries === 0 ? 0 : 1 / (maxTasksPerProcess - 1)
                 bc = new BatchCluster({
-                  processFactory: () => processFactory({ newline }),
+                  processFactory: () => processFactory({ newline, failrate }),
                   taskRetries,
                   maxProcs,
                   maxTasksPerProcess,
@@ -45,7 +49,8 @@ describe("BatchCluster", function () {
                   fail: "FAIL",
                   exitCommand: "exit",
                   spawnTimeoutMillis: 5000,
-                  taskTimeoutMillis: 200
+                  taskTimeoutMillis: 200,
+                  onIdleIntervalMillis: 0
                 })
               })
 
@@ -54,7 +59,7 @@ describe("BatchCluster", function () {
               it("runs > maxProcs tasks in parallel", async () => {
                 const iterations = maxProcs
                 expect(await Promise.all(runTasks(bc, iterations))).to.eql(expectedResults(iterations))
-                expect(bc["procs"]().length).to.eql(maxProcs)
+                expect(bc.pids.length).to.eql(maxProcs)
               })
 
               it("calling .end() when new no-ops", async () => {
@@ -62,11 +67,13 @@ describe("BatchCluster", function () {
                 expect(bc.pids.length).to.eql(0)
               })
 
-              it("calling .end() after running shuts down child procs", async () => {
+              it.only("calling .end() after running shuts down child procs", async () => {
                 // This just warms up bc to make child procs:
                 const iterations = maxProcs
                 expect(await Promise.all(runTasks(bc, iterations))).to.eql(expectedResults(iterations))
+                console.log("!!!!! ok, ending !!!!!")
                 await bc.end()
+                console.log("!!!!! done waiting !!!!!")
                 expect(bc.pids.length).to.eql(0)
               })
 
@@ -123,6 +130,7 @@ describe("BatchCluster", function () {
       expect(pids.length).to.eql(maxProcs)
       await delay(maxProcAgeMillis)
       expect(bc.pids).to.be.empty
+      return
     })
   })
 })

@@ -2,7 +2,7 @@ import { BatchProcessOptions } from "./BatchCluster"
 import { Deferred } from "./Deferred"
 import { Task } from "./Task"
 import { ChildProcess } from "child_process"
-import { debuglog, inspect } from "util"
+import { debuglog, inspect, InspectOptions } from "util"
 
 function ensureSuffix(s: string, suffix: string): string {
   return s.endsWith(suffix) ? s : s + suffix
@@ -10,7 +10,8 @@ function ensureSuffix(s: string, suffix: string): string {
 
 export interface BatchProcessObserver {
   onIdle(): void
-  enqueueTask(task: Task<any>): void
+  onStartError(error: any): void
+  retryTask(task: Task<any>, error: any): void
 }
 
 export interface InternalBatchProcessOptions extends BatchProcessOptions {
@@ -34,17 +35,25 @@ export class BatchProcess {
     readonly observer: BatchProcessObserver
   ) {
     this.start = Date.now()
+    // forking issue, not the task's fault:
     this.proc.on("error", err => this.onError("proc", err, true))
 
-    this.proc.stdin.on("error", err => this.onError("stdin", err, true)) // probably ECONNRESET
+    // pipe plumbing issues (like ECONNRESET) are not the task's fault, so retry:
+    this.proc.stdin.on("error", err => this.onError("stdin", err, true))
+    this.proc.stdout.on("error", err => this.onError("stdout.error", err, true))
+    this.proc.stderr.on("error", err => this.onError("stderr", err, true))
 
-    this.proc.stderr.on("error", err => this.onError("stderr", err, false))
+    // If stderr is written to, the task is probably to blame. Don't retry:
     this.proc.stderr.on("data", err => this.onError("stderr.data", err.toString(), false))
 
-    this.proc.stdout.on("error", err => this.onError("stdout.error", err, true))
     this.proc.stdout.on("data", d => this.onData(d))
+
     this.proc.on("close", () => {
       this.log({ from: "close()" })
+      if (this._currentTask) {
+        this.observer.retryTask(this._currentTask, "proc closed")
+      }
+      this.clearCurrentTask()
       this._ended = true
       this._closed.resolve()
     })
@@ -81,9 +90,6 @@ export class BatchProcess {
   }
 
   execTask(task: Task<any>): boolean {
-    if (task.retriesRemaining == null) {
-      task.retriesRemaining = this.opts.taskRetries
-    }
     if (this.ended || this.currentTask != null) {
       return false
     }
@@ -106,9 +112,6 @@ export class BatchProcess {
   end(): Promise<void> {
     if (this._ended === false) {
       this._ended = true
-      if (this.currentTaskTimeout != null) {
-        clearTimeout(this.currentTaskTimeout)
-      }
       this.log({ from: "end()", exitCommand: this.opts.exitCommand })
       const cmd = this.opts.exitCommand ? ensureSuffix(this.opts.exitCommand, "\n") : undefined
       this.proc.stdin.end(cmd)
@@ -117,44 +120,45 @@ export class BatchProcess {
   }
 
   private log(obj: any): void {
-    debuglog("batch-cluster")(inspect({ time: new Date().toISOString(), pid: this.pid, ...obj }, { colors: true }))
+    debuglog("batch-cluster:process")(inspect(
+      { time: new Date().toISOString(), pid: this.pid, ...obj, from: "BatchProcess." + obj.from },
+      { colors: true, breakLength: 80 } as InspectOptions
+    ))
   }
 
   private onTimeout(task: Task<any>): void {
     if (task.pending) {
-      this.onError("timeout", new Error("timeout"), true, task)
+      this.onError("timeout", new Error("timeout"), false, task)
     }
   }
 
   private onError(source: string, error: any, retryTask: boolean = false, task?: Task<any>) {
     this.log({ from: "onError(" + source + ")", error, retryTask, task: task ? task.command : "null" })
 
-    // Recycle on errors, and clear task timeouts:
-    this.end()
+    const errorMsg = source + ": " + (error.stack || error)
 
-    error = error.toString()
-    if (task == null) {
-      task = this._currentTask
-    }
-    this._currentTask = undefined
+    if (this._currentTask && this._taskCount === 0) {
+      this.observer.onStartError(errorMsg)
+    } else {
+      if (task == null) {
+        task = this._currentTask
+      }
 
-    if (task) {
-      if (task.retriesRemaining == null) {
-        task.retriesRemaining = this.opts.taskRetries
+      // clear the task before ending so the onClose doesn't retry the task:
+      this.clearCurrentTask()
+      this.end()
+
+      if (task && retryTask) {
+        this.observer.retryTask(task, errorMsg)
       }
-      if (task.retriesRemaining > 0 && retryTask) {
-        task.retriesRemaining--
-        this.observer.enqueueTask(task)
-      } else {
-        task.onError(error)
-      }
+
+      this.observer.onIdle()
     }
-    this.observer.onIdle()
   }
 
   private onData(data: string | Buffer) {
     this.buff = this.buff + data.toString()
-    this.log({ from: "BatchProcess.onData()", data: data.toString(), buff: this.buff, currentTask: this._currentTask && this._currentTask.command })
+    this.log({ from: "onData()", data: data.toString(), buff: this.buff, currentTask: this._currentTask && this._currentTask.command })
     const pass = this.opts.passRE.exec(this.buff)
     if (pass != null) {
       return this.fulfillCurrentTask(pass[1], "onData")
@@ -165,14 +169,19 @@ export class BatchProcess {
     }
   }
 
-  private fulfillCurrentTask(result: string, methodName: "onData" | "onError"): void {
-    this.buff = ""
-    const task = this._currentTask
-    this._currentTask = undefined
+  private clearCurrentTask() {
     if (this.currentTaskTimeout != null) {
       clearTimeout(this.currentTaskTimeout)
       this.currentTaskTimeout = undefined
     }
+    this._currentTask = undefined
+  }
+
+  private fulfillCurrentTask(result: string, methodName: "onData" | "onError"): void {
+    this.buff = ""
+    const task = this._currentTask
+
+    this.clearCurrentTask()
 
     if (task == null) {
       if (result.length > 0) {
