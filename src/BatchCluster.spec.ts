@@ -110,7 +110,7 @@ describe("BatchCluster", function () {
     })
   })
 
-  describe.only("maxProcAgeMillis", () => {
+  describe("maxProcAgeMillis", () => {
     const maxProcs = 4
     const maxProcAgeMillis = 500
     const bc = new BatchCluster({
