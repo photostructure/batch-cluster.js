@@ -184,7 +184,6 @@ export class BatchCluster {
   private readonly _procs: BatchProcess[] = []
   private readonly _pendingTasks: Task<any>[] = []
   private readonly onIdleInterval: NodeJS.Timer
-  private readonly beforeExitListener = this.end.bind(this)
   private readonly startErrorRate = new Rate()
   private _ended = false
 
@@ -200,6 +199,7 @@ export class BatchCluster {
       retryTask: this.retryTask.bind(this)
     }
     _p.on("beforeExit", this.beforeExitListener)
+    _p.on("exit", this.exitListener)
   }
 
   get ended(): boolean {
@@ -207,23 +207,26 @@ export class BatchCluster {
   }
 
   // not async so it doesn't relinquish control flow
-  end(): Promise<void> {
+  end(gracefully: boolean = true): Promise<void> {
     if (!this._ended) {
       this._ended = true
       clearInterval(this.onIdleInterval)
       _p.removeListener("beforeExit", this.beforeExitListener)
+      _p.removeListener("exit", this.exitListener)
       this.procs().forEach(p => p.end())
       const busyProcs = this._procs.filter(p => p.busy)
       this.log({ from: "end()", busyProcs: busyProcs.map(p => p.pid) })
-      return Promise.race([
-        delay(this.opts.endGracefulWaitTimeMillis),
-        Promise.all(busyProcs.map(p => p.closedPromise))
-      ]).then(() => {
-        this._procs.forEach(p => p.kill())
-      }).then(() => this.endPromise)
-    } else {
-      return this.endPromise
+      const kill = () => this._procs.forEach(p => p.kill())
+      if (gracefully) {
+        return Promise.race([
+          delay(this.opts.endGracefulWaitTimeMillis),
+          Promise.all(busyProcs.map(p => p.closedPromise))
+        ]).then(kill).then(() => this.endPromise)
+      } else {
+        kill()
+      }
     }
+    return this.endPromise
   }
 
   enqueueTask<T>(task: Task<T>): Promise<T> {
@@ -243,6 +246,9 @@ export class BatchCluster {
   get pids(): number[] {
     return this.procs().map(p => p.pid)
   }
+
+  private readonly beforeExitListener = () => this.end(true)
+  private readonly exitListener = () => this.end(false)
 
   private get endPromise(): Promise<void> {
     return Promise.all(this.procs().map(p => p.closedPromise)) as Promise<void>
@@ -264,7 +270,7 @@ export class BatchCluster {
     this.log({ from: "onStartError()", error, startErrorRate: this.startErrorRate.eventsPerSecond })
     if (this.startErrorRate.eventsPerMinute > this.opts.maxReasonableProcessFailuresPerMinute) {
       this.end()
-      throw new Error(error + "(start errors/min: " + this.startErrorRate.eventsPerMinute + ")")
+      throw new Error(error + "(start errors/min: " + this.startErrorRate.eventsPerMinute.toFixed(2) + ")")
     }
   }
 
@@ -295,7 +301,7 @@ export class BatchCluster {
   }
 
   private onIdle(): void {
-    this.log({ from: "onIdle()", pendingTasks: this._pendingTasks.length, idleProcs: this._procs.filter(p => p.idle).length })
+    this.log({ from: "onIdle()", pendingTasks: this._pendingTasks.length, pids: this.pids, idlePids: this._procs.filter(p => p.idle).map(p => p.pid) })
 
     if (this._ended) {
       // TODO: the clearInterval is right after setting _ended, so why does it

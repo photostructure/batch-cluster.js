@@ -1,61 +1,41 @@
-import { delay } from "./BatchCluster"
-import { expect } from "./spec"
 import { Rate } from "./Rate"
+import { expect, times } from "./spec"
+
+const tk = require("timekeeper")
 
 describe("Rate", () => {
-  it("is born with a rate of 0", () => {
-    const r = new Rate()
-    expect(r.eventsPerMillisecond).to.eql(0)
-    expect(r.eventsPerSecond).to.eql(0)
-    expect(r.eventsPerMinute).to.eql(0)
-  })
 
-  it("has a rate of 0 after only 1 event", () => {
-    const r = new Rate()
-    r.onEvent()
-    expect(r.eventsPerMillisecond).to.eql(0)
-    expect(r.eventsPerSecond).to.eql(0)
-    expect(r.eventsPerMinute).to.eql(0)
-  })
+  after(() => tk.reset())
 
-  const warmupMillis = 10
-
-  function assertRate(r: Rate) {
-    const expectedRate = r.events / r.durationMilliseconds
-    const expectedSlop = .5
-    // const actualDelta = Math.abs(r.eventsPerMillisecond - expectedRate)
-    // const actualSlop = actualDelta / expectedRate
-    const maxDelta = expectedRate * expectedSlop
-    // console.dir({ actualRate: r.eventsPerMillisecond, expectedRate, actualDelta, actualSlop, maxDelta })
-    if (r.durationMilliseconds > warmupMillis) {
-      expect(r.eventsPerMillisecond).to.be.closeTo(expectedRate, maxDelta)
-    } else {
-      expect(r.eventsPerMillisecond).to.eql(0)
-    }
-    expect(r.eventsPerSecond).to.eql(r.eventsPerMillisecond * 1000)
-    expect(r.eventsPerMinute).to.eql(r.eventsPerMillisecond * 1000 * 60)
+  function expectRate(r: Rate, epm: number = 0) {
+    expect(r.eventsPerMillisecond).to.be.closeTo(epm, epm / 1000)
+    expect(r.eventsPerSecond).to.be.closeTo(epm * 1000, epm)
+    expect(r.eventsPerMinute).to.be.closeTo(epm * 60 * 1000, epm * 60)
   }
 
-  [1e3, 1e4, 1e5, 1e6].forEach(iterations => {
-    it("measures " + iterations + " with no delay", () => {
-      const r = new Rate(warmupMillis)
-      for (let i = 0; i < iterations; i++) {
-        r.onEvent()
-      }
-      expect(r.events).to.eql(iterations)
-      assertRate(r)
-    })
+  it("is born with a rate of 0", () => {
+    const r = new Rate()
+    expectRate(r, 0)
+  })
+
+  it("calculates average rate before warmup", () => {
+    const now = Date.now()
+    tk.freeze(now)
+    const r = new Rate(100)
+    r.onEvent()
+    expectRate(r, 0)
+    tk.freeze(now + r.warmupMillis - 1)
+    expectRate(r, 0)
   });
 
-  [1, 10, 50].forEach(delayMs => {
-    it("measures rate with " + delayMs + "ms delay between events", async () => {
-      const duration = 250
-      const r = new Rate(warmupMillis)
-      while (r.durationMilliseconds < duration) {
-        r.onEvent()
-        await delay(delayMs)
-      }
-      assertRate(r)
+  [1, 10, 100, 1000].forEach(events => {
+    it("calculates average rate for " + events + " events after warmup", () => {
+      const now = Date.now()
+      tk.freeze(now)
+      const r = new Rate(100)
+      times(events, () => r.onEvent())
+      tk.freeze(now + r.warmupMillis)
+      expectRate(r, events / r.warmupMillis)
     })
   })
 })

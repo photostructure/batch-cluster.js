@@ -21,6 +21,17 @@ This package powers
 
 ## Changelog
 
+### v1.1.0
+
+* ✨ `BatchCluster` now has a force-shutdown `exit` handler to accompany the
+  graceful-shutdown `beforeExit` handler. For reference, from the [Node
+  docs](https://nodejs.org/api/process.html#process_event_beforeexit):
+  
+> The 'beforeExit' event is not emitted for conditions causing explicit
+  termination, such as calling process.exit() or uncaught exceptions.
+
+* ✨ Remove `Rate`'s time decay in the interests of simplicity
+
 ### v1.0.0
 
 * ✨ Integration tests now throw deterministically random errors to simulate

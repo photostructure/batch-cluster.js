@@ -141,7 +141,7 @@ export class BatchProcess {
   }
 
   private onTimeout(task: Task<any>): void {
-    if (task.pending) {
+    if (task === this._currentTask && task.pending) {
       this.onError("timeout", new Error("timeout"), true, task)
     }
   }
