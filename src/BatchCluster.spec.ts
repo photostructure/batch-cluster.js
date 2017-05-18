@@ -49,7 +49,8 @@ describe("BatchCluster", function () {
                   spawnTimeoutMillis: 5000,
                   taskTimeoutMillis: 500,
                   onIdleIntervalMillis,
-                  maxReasonableProcessFailuresPerMinute: 200 // this is so high because failrate is so high
+                  maxReasonableProcessFailuresPerMinute: 200, // this is so high because failrate is so high
+                  endGracefulWaitTimeMillis: 500
                 })
               })
 
@@ -125,7 +126,8 @@ describe("BatchCluster", function () {
       exitCommand: "exit",
       spawnTimeoutMillis: 5000,
       taskTimeoutMillis: 200,
-      onIdleIntervalMillis
+      onIdleIntervalMillis,
+      endGracefulWaitTimeMillis: 1000
     })
     it("culls old child procs", async () => {
       expect(await Promise.all(runTasks(bc, 2 * maxProcs))).to.eql(expectedResults(2 * maxProcs))

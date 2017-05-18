@@ -21,6 +21,11 @@ This package powers
 
 ## Changelog
 
+### v1.2.0
+
+* ✨ Moved child process management from `BatchCluster` to `BatchProcess`, and
+  added a configurable cleanup signal to ensure child processes shut down.
+
 ### v1.1.0
 
 * ✨ `BatchCluster` now has a force-shutdown `exit` handler to accompany the

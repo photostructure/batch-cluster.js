@@ -1,6 +1,5 @@
-import { Rate } from "./Rate"
 import { BatchProcess, BatchProcessObserver, InternalBatchProcessOptions } from "./BatchProcess"
-import { delay } from "./Delay"
+import { Rate } from "./Rate"
 import { Task } from "./Task"
 import { ChildProcess } from "child_process"
 import * as _p from "process"
@@ -69,9 +68,26 @@ export interface BatchProcessOptions {
    * `maxTasksPerProcess` tasks. Depending on the commands and platform, batch
    * mode commands shouldn't exhibit unduly memory leaks for at least tens if
    * not thousands of tasks. Setting this to a low number (like less than 10)
-   * will impact performance markedly.
+   * will impact performance markedly. Setting this to a very high number (>
+   * 1000) may result in a memory leak.
    */
   readonly maxTasksPerProcess: number
+
+  /**
+   * When `this.end()` is called, or Node broadcasts the `beforeExit` event,
+   * this is the milliseconds spent waiting for currently running tasks to
+   * finish before sending kill signals to child processes.
+   *
+   * Not setting this value means child processes will immediately receive a
+   * kill signal to shut down. Any pending requests may be interrupted.
+   */
+  readonly endGracefulWaitTimeMillis?: number
+
+  /**
+   * Signal sent to child processes if they don't shut down gracefully after
+   * given the `exitCommand` and waiting for `endGracefulWaitTimeMillis`.
+   */
+  readonly shutdownSignal?: string
 }
 
 /**
@@ -100,16 +116,6 @@ export class BatchClusterOptions {
    * pending tasks and shuts down old child processes.
    */
   readonly onIdleIntervalMillis: number = 1000
-
-  /**
-   * When `this.end()` is called, or Node broadcasts the `beforeExit` event,
-   * this is the milliseconds spent waiting for currently running tasks to
-   * finish before sending kill signals to child processes.
-   *
-   * Setting this value to 0 will not wait for processes to shut down before
-   * sending them a kill signal.
-   */
-  readonly endGracefulWaitTimeMillis: number = 500
 
   /**
    * Must be >= 0. Tasks that result in errors will be retried at most
@@ -213,18 +219,7 @@ export class BatchCluster {
       clearInterval(this.onIdleInterval)
       _p.removeListener("beforeExit", this.beforeExitListener)
       _p.removeListener("exit", this.exitListener)
-      this.procs().forEach(p => p.end())
-      const busyProcs = this._procs.filter(p => p.busy)
-      this.log({ from: "end()", busyProcs: busyProcs.map(p => p.pid) })
-      const kill = () => this._procs.forEach(p => p.kill())
-      if (gracefully) {
-        return Promise.race([
-          delay(this.opts.endGracefulWaitTimeMillis),
-          Promise.all(busyProcs.map(p => p.closedPromise))
-        ]).then(kill).then(() => this.endPromise)
-      } else {
-        kill()
-      }
+      this.procs().forEach(p => p.end(gracefully))
     }
     return this.endPromise
   }

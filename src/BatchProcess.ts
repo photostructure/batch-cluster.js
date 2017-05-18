@@ -1,5 +1,6 @@
 import { BatchProcessOptions } from "./BatchCluster"
 import { Deferred } from "./Deferred"
+import { delay } from "./Delay"
 import { Task } from "./Task"
 import { ChildProcess } from "child_process"
 import { debuglog, inspect, InspectOptions } from "util"
@@ -119,16 +120,22 @@ export class BatchProcess {
     return true
   }
 
-  kill(signal?: string) {
-    return this.proc.kill(signal)
-  }
-
-  end(): Promise<void> {
+  async end(gracefully: boolean = true): Promise<void> {
     if (this._ended === false) {
       this._ended = true
       this.log({ from: "end()", exitCommand: this.opts.exitCommand })
       const cmd = this.opts.exitCommand ? ensureSuffix(this.opts.exitCommand, "\n") : undefined
       this.proc.stdin.end(cmd)
+      if (gracefully) {
+        const closed = [this.closedPromise]
+        if (this.opts.endGracefulWaitTimeMillis != null) {
+          closed.push(delay(this.opts.endGracefulWaitTimeMillis))
+        }
+        await Promise.race(closed)
+      }
+      if (!this.closed) {
+        this.proc.kill(this.opts.shutdownSignal)
+      }
     }
     return this.closedPromise
   }
