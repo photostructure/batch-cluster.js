@@ -18,8 +18,9 @@ function write(s: string): void {
 
 const failrate = (env.failrate == null) ? 0 : parseFloat(env.failrate)
 const rng = env.rngseed ? require("seedrandom")(env.rngseed) : Math.random
+let last = Promise.resolve()
 
-rl.on("line", async (line: string) => {
+async function onLine(line: string): Promise<void> {
   const r = rng()
   if (r < failrate) {
     console.error("EUNLUCKY: r: " + r.toFixed(3) + ", failrate: " + failrate.toFixed(3) + ", seed: " + env.rngseed)
@@ -48,4 +49,11 @@ rl.on("line", async (line: string) => {
     console.error("COMMAND MISSING for input", line)
     write("FAIL")
   }
-})
+  return
+}
+
+function onLineSerial(line: string): void {
+  last = last.then(() => onLine(line))
+}
+
+rl.on("line", onLineSerial)
