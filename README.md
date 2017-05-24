@@ -23,8 +23,9 @@ This package powers
 
 ### v1.2.0
 
-* ✨ Moved child process management from `BatchCluster` to `BatchProcess`, and
-  added a configurable cleanup signal to ensure child processes shut down.
+* ✨ Added a configurable cleanup signal to ensure child processes shut down on `.end()`
+* 📦 Moved child process management from `BatchCluster` to `BatchProcess`
+* ✨ More test coverage around batch process reuse and proper shutdown 
 
 ### v1.1.0
 
