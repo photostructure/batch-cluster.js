@@ -4,6 +4,19 @@ import { expect, parser, times } from "./spec"
 import { Task } from "./Task"
 import { processFactory, runningSpawnedPids, spawnedPids } from "./test.spec"
 
+const opts = {
+  versionCommand: "version",
+  pass: "PASS",
+  fail: "FAIL",
+  exitCommand: "exit",
+  spawnTimeoutMillis: 5000,
+  taskTimeoutMillis: 500,
+  onIdleIntervalMillis: 100,
+  maxTasksPerProcess: 5,
+  maxProcAgeMillis: 500,
+  maxReasonableProcessFailuresPerMinute: 200, // this is so high because failrate is so high
+  endGracefulWaitTimeMillis: 500
+}
 
 describe("BatchCluster", function () {
 
@@ -17,15 +30,13 @@ describe("BatchCluster", function () {
     return times(iterations, i => "ABC " + i)
   }
 
-  let callcount = 0
-  const onIdleIntervalMillis = 100;
+  let callcount = 0;
 
   ["cr", "crlf", "lf"].forEach(newline => {
     describe("newline:" + newline, () => {
       [0, 5].forEach(taskRetries => {
         describe("taskRetries:" + taskRetries, () => {
           [1, 2].forEach(maxProcs => {
-            const maxTasksPerProcess = 5
             describe("maxProcs:" + maxProcs, () => {
               let bc: BatchCluster
               beforeEach(() => {
@@ -36,26 +47,19 @@ describe("BatchCluster", function () {
                 // successes.
                 const failrate = taskRetries === 0 ? "0" : "0.1"
                 bc = new BatchCluster({
+                  ...opts,
                   // seed needs to change for each process, or we'll always be
                   // lucky or unlucky
                   processFactory: () => processFactory({ newline, failrate, rngseed: "SEED" + (callcount++) }),
                   taskRetries,
-                  maxProcs,
-                  maxTasksPerProcess,
-                  versionCommand: "version",
-                  pass: "PASS",
-                  fail: "FAIL",
-                  exitCommand: "exit",
-                  spawnTimeoutMillis: 5000,
-                  taskTimeoutMillis: 500,
-                  onIdleIntervalMillis,
-                  maxReasonableProcessFailuresPerMinute: 200, // this is so high because failrate is so high
-                  endGracefulWaitTimeMillis: 500
+                  maxProcs
                 })
                 spawnedPids().length = 0
               })
 
-              afterEach(() => bc.end())
+              afterEach(() => {
+                bc.end()
+              })
 
               it("calling .end() when new no-ops", async () => {
                 await bc.end()
@@ -73,12 +77,12 @@ describe("BatchCluster", function () {
                 return
               })
 
-              it("runs a given batch process at most " + maxTasksPerProcess + " before recycling", async () => {
+              it("runs a given batch process at most " + opts.maxTasksPerProcess + " before recycling", async () => {
                 await Promise.all(runTasks(bc, maxProcs))
                 const pids = bc.pids
-                expect(await Promise.all(runTasks(bc, maxTasksPerProcess * maxProcs))).to.eql(expectedResults(maxTasksPerProcess * maxProcs))
+                expect(await Promise.all(runTasks(bc, opts.maxTasksPerProcess * maxProcs))).to.eql(expectedResults(opts.maxTasksPerProcess * maxProcs))
                 expect(bc.pids).to.not.include.members(pids)
-                expect(bc.meanTasksPerProc).to.be.within(2, maxTasksPerProcess)
+                expect(bc.meanTasksPerProc).to.be.within(2, opts.maxTasksPerProcess)
                 expect(runningSpawnedPids().length).to.lte(maxProcs)
                 return
               })
@@ -89,14 +93,14 @@ describe("BatchCluster", function () {
                 expect(bc.pids.length).to.be.within(1, maxProcs) // we may have spun up another proc due to UNLUCKY
                 const task = new Task("invalid", parser)
                 await expect(bc.enqueueTask(task)).to.eventually.be.rejectedWith(/invalid|UNLUCKY/)
-                await delay(onIdleIntervalMillis * 2) // wait for pids to not include closed procs
+                await delay(opts.onIdleIntervalMillis * 2) // wait for pids to not include closed procs
                 expect(bc.pids).to.not.eql(pids) // at least one pid should be shut down now
                 expect(task.retries).to.eql(taskRetries)
                 return
               })
 
               it("times out slow requests", async () => {
-                const task = new Task("sleep " + (bc["opts"].taskTimeoutMillis + 20), parser)
+                const task = new Task("sleep " + (opts.taskTimeoutMillis + 20), parser)
                 await expect(bc.enqueueTask(task)).to.eventually.be.rejectedWith(/timeout|UNLUCKY/)
                 expect(task.retries).to.eql(taskRetries)
                 return
@@ -117,26 +121,18 @@ describe("BatchCluster", function () {
 
   describe("maxProcAgeMillis", () => {
     const maxProcs = 4
-    const maxProcAgeMillis = 500
     const bc = new BatchCluster({
+      ...opts,
       processFactory,
       taskRetries: 0,
       maxProcs,
-      maxTasksPerProcess: 100,
-      maxProcAgeMillis,
-      versionCommand: "version",
-      pass: "PASS",
-      fail: "FAIL",
-      exitCommand: "exit",
-      spawnTimeoutMillis: 5000,
-      taskTimeoutMillis: 200,
-      onIdleIntervalMillis,
-      endGracefulWaitTimeMillis: 1000
+      maxTasksPerProcess: 100
     })
+
     it("culls old child procs", async () => {
       expect(await Promise.all(runTasks(bc, 2 * maxProcs))).to.eql(expectedResults(2 * maxProcs))
       expect(bc.pids.length).to.be.within(1, maxProcs)
-      await delay(maxProcAgeMillis)
+      await delay(opts.maxProcAgeMillis)
       // Calling .pids calls .procs(), which culls old procs
       expect(bc.pids.length).to.be.within(0, maxProcs)
       // Wait for the procs to shut down:

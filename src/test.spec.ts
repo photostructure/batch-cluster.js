@@ -14,9 +14,7 @@ export function runningSpawnedPids(): number[] {
 }
 
 export function processFactory(env: any = {}): _cp.ChildProcess {
-  const proc = _cp.spawn(_p.execPath, [join(__dirname, "test.js")], {
-    env
-  })
+  const proc = _cp.spawn(_p.execPath, [join(__dirname, "test.js")], { env })
   procs.push(proc)
   return proc
 }
