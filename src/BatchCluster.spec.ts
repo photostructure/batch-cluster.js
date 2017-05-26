@@ -2,7 +2,7 @@ import { BatchCluster } from "./BatchCluster"
 import { delay } from "./Delay"
 import { expect, parser, times } from "./spec"
 import { Task } from "./Task"
-import { processFactory } from "./test.spec"
+import { processFactory, runningSpawnedPids, spawnedPids } from "./test.spec"
 
 
 describe("BatchCluster", function () {
@@ -52,19 +52,15 @@ describe("BatchCluster", function () {
                   maxReasonableProcessFailuresPerMinute: 200, // this is so high because failrate is so high
                   endGracefulWaitTimeMillis: 500
                 })
+                spawnedPids().length = 0
               })
 
               afterEach(() => bc.end())
 
-              it("runs maxProcs tasks in parallel", async () => {
-                const iterations = maxProcs + 2
-                expect(await Promise.all(runTasks(bc, iterations))).to.eql(expectedResults(iterations))
-                expect(bc.pids.length).to.be.within(1, maxProcs)
-              })
-
               it("calling .end() when new no-ops", async () => {
                 await bc.end()
                 expect(bc.pids.length).to.eql(0)
+                return
               })
 
               it("calling .end() after running shuts down child procs", async () => {
@@ -73,6 +69,8 @@ describe("BatchCluster", function () {
                 expect(await Promise.all(runTasks(bc, iterations))).to.eql(expectedResults(iterations))
                 await bc.end()
                 expect(bc.pids.length).to.eql(0)
+                expect(runningSpawnedPids()).to.eql([])
+                return
               })
 
               it("runs a given batch process at most " + maxTasksPerProcess + " before recycling", async () => {
@@ -80,6 +78,9 @@ describe("BatchCluster", function () {
                 const pids = bc.pids
                 expect(await Promise.all(runTasks(bc, maxTasksPerProcess * maxProcs))).to.eql(expectedResults(maxTasksPerProcess * maxProcs))
                 expect(bc.pids).to.not.include.members(pids)
+                expect(bc.meanTasksPerProc).to.be.within(2, maxTasksPerProcess)
+                expect(runningSpawnedPids().length).to.lte(maxProcs)
+                return
               })
 
               it("restarts a given batch process if an error is raised", async () => {
@@ -91,18 +92,21 @@ describe("BatchCluster", function () {
                 await delay(onIdleIntervalMillis * 2) // wait for pids to not include closed procs
                 expect(bc.pids).to.not.eql(pids) // at least one pid should be shut down now
                 expect(task.retries).to.eql(taskRetries)
+                return
               })
 
               it("times out slow requests", async () => {
                 const task = new Task("sleep " + (bc["opts"].taskTimeoutMillis + 20), parser)
                 await expect(bc.enqueueTask(task)).to.eventually.be.rejectedWith(/timeout|UNLUCKY/)
                 expect(task.retries).to.eql(taskRetries)
+                return
               })
 
               it("rejects a command that emits to stderr", async () => {
                 const task = new Task("stderr omg this should fail", parser)
                 await expect(bc.enqueueTask(task)).to.eventually.be.rejectedWith(/omg this should fail|UNLUCKY/)
                 expect(task.retries).to.eql(taskRetries)
+                return
               })
             })
           })
@@ -140,6 +144,7 @@ describe("BatchCluster", function () {
         await delay(500)
       }
       expect(bc.pids).to.be.empty
+      return
     })
   })
 
