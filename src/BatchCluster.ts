@@ -260,8 +260,13 @@ export class BatchCluster {
     return this.procs().map(p => p.pid)
   }
 
+  /**
+   * @returns {number} the mean number of tasks completed by child processes
+   */
   get meanTasksPerProc(): number {
+    // _tasksPerProc holds the mean of all completed procs
     const m = this._tasksPerProc.clone()
+    // add the currently running proc taskCounts, too:
     this._procs.forEach(proc => m.push(proc.taskCount))
     return m.mean
   }

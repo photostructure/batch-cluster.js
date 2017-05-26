@@ -5,7 +5,7 @@ import { stdout, env } from "process"
 
 /**
  * This is a script written to behave similarly to ExifTool or GraphicsMagick's
- * batch-command modes, used for integration tests.
+ * batch-command modes. It is used for integration tests.
  */
 
 function stripPrefix(s: string, prefix: string): string {
@@ -58,8 +58,4 @@ async function onLine(line: string): Promise<void> {
   return
 }
 
-function onLineSerial(line: string): void {
-  last = last.then(() => onLine(line))
-}
-
-rl.on("line", onLineSerial)
+rl.on("line", line => last = last.then(() => onLine(line)))

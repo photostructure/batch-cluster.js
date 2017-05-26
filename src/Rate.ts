@@ -24,15 +24,12 @@ export class Rate {
     let mean: number | undefined = undefined
     const now = Date.now()
     const key = this.asKey(now - this.windows * this.windowMillis)
-    // const v = []
-      // the most recent slice represents less than windowMillis, so ignore:
+      // ignore the most recent window, which represents less than windowMillis
     for (let window = 0; window < this.windows; window++) {
       const events = this.e.get(key + window) || 0
       const epms = events / this.windowMillis
-      // v.push(events + "/" + this.windowMillis)
       mean = (mean == null) ? epms : (mean + epms) / 2
     }
-    // console.log(v)
     return mean || 0
   }
 

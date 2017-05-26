@@ -20,6 +20,9 @@ export interface InternalBatchProcessOptions extends BatchProcessOptions {
   readonly failRE: RegExp
 }
 
+/**
+ * BatchProcess manages the care and feeding of a single child process.
+ */
 export class BatchProcess {
   readonly start: number
   private _taskCount = -1 // don't count the warmup command
@@ -28,7 +31,9 @@ export class BatchProcess {
    * process table.
    */
   private _ended: boolean = false
-  // Support for non-polling notification of process shutdown:
+  /**
+   * Supports non-polling notification of process shutdown
+   */
   private _exited = new Deferred<void>()
 
   private buff = ""
@@ -36,8 +41,7 @@ export class BatchProcess {
   private currentTaskTimeout: NodeJS.Timer | undefined
   private readonly startupTask: Task<any>
 
-  constructor(
-    readonly proc: ChildProcess,
+  constructor(readonly proc: ChildProcess,
     readonly opts: InternalBatchProcessOptions,
     readonly observer: BatchProcessObserver
   ) {
@@ -49,16 +53,19 @@ export class BatchProcess {
     this.proc.stdin.on("error", err => this.onError("stdin", err, true))
     this.proc.stdout.on("error", err => this.onError("stdout.error", err, true))
     this.proc.stderr.on("error", err => this.onError("stderr", err, true))
-    this.proc.stderr.on("data", err => this.onError("stderr.data", err.toString(), true))
+
+    // If stderr was written to, blame the task. Don't retry.
+    this.proc.stderr.on("data", err => this.onError("stderr.data", err.toString(), false))
 
     this.proc.stdout.on("data", d => this.onData(d))
 
     this.startupTask = new Task(opts.versionCommand, ea => ea)
 
-    // This signal is not reliably broadcast on child shutdown, so
-    // we rely on the BatchCluster to  regularly call `.exited()` for us.
+    // This signal is not reliably broadcast by node on child shutdown, so we
+    // rely on the BatchCluster to regularly call `.exited()` for us.
     this.proc.on("exit", () => this.onExit())
-    this.proc.unref() // < don't let node count the child processes as a reason to stay alive
+    // don't let node count the child processes as a reason to stay alive
+    this.proc.unref()
     this.execTask(this.startupTask)
   }
 
@@ -75,7 +82,8 @@ export class BatchProcess {
   }
 
   /**
-   * True if the child process has exited or `this.end()` has been requested.
+   * @return {boolean} true if `this.end()` has been requested or the child
+   * process has exited.
    */
   get ended(): boolean {
     return this._ended || this.exited
@@ -118,7 +126,12 @@ export class BatchProcess {
 
   execTask(task: Task<any>): boolean {
     if (this.ended || this.currentTask != null) {
-      this.log({ from: "execTask", error: "This proc is not idle, and cannot exec task", ended: this.ended, currentTask: this.currentTaskCommand })
+      this.log({
+        from: "execTask",
+        error: "This proc is not idle, and cannot exec task",
+        ended: this.ended,
+        currentTask: this.currentTaskCommand
+      })
       return false
     }
     this._taskCount++
@@ -155,9 +168,8 @@ export class BatchProcess {
 
   private log(obj: any): void {
     debuglog("batch-cluster:process")(inspect(
-      { time: new Date().toISOString(), pid: this.pid, ...obj, from: "BatchProcess." + obj.from },
-      { colors: true, breakLength: 80 } as InspectOptions
-    ))
+      { time: new Date().toISOString(), pid: this.pid, ...obj, from: "BatchProcess." + obj.from }, 
+      { colors: true, breakLength: 80 } as InspectOptions))
   }
 
   private onTimeout(task: Task<any>): void {
@@ -200,7 +212,12 @@ export class BatchProcess {
 
   private onData(data: string | Buffer) {
     this.buff = this.buff + data.toString()
-    this.log({ from: "onData()", data: data.toString(), buff: this.buff, currentTask: this._currentTask && this._currentTask.command })
+    this.log({
+      from: "onData()",
+      data: data.toString(),
+      buff: this.buff,
+      currentTask: this._currentTask && this._currentTask.command
+    })
     const pass = this.opts.passRE.exec(this.buff)
     if (pass != null) {
       return this.fulfillCurrentTask(pass[1], "onData")
