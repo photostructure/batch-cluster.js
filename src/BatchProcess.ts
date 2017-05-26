@@ -23,6 +23,10 @@ export interface InternalBatchProcessOptions extends BatchProcessOptions {
 export class BatchProcess {
   readonly start: number
   private _taskCount = -1 // don't count the warmup command
+  /**
+   * true if `this.end()` has been called, or this process is no longer in the
+   * process table.
+   */
   private _ended: boolean = false
   // Support for non-polling notification of process shutdown:
   private _exited = new Deferred<void>()
@@ -59,11 +63,11 @@ export class BatchProcess {
   }
 
   get idle(): boolean {
-    return !this._ended && (this._currentTask == null)
+    return !this.ended && (this._currentTask == null)
   }
 
   get busy(): boolean {
-    return !this._ended && (this._currentTask != null)
+    return !this.ended && (this._currentTask != null)
   }
 
   get starting(): boolean {
@@ -74,7 +78,7 @@ export class BatchProcess {
    * True if the child process has exited or `this.end()` has been requested.
    */
   get ended(): boolean {
-    return this._ended
+    return this._ended || this.exited
   }
 
   /**
