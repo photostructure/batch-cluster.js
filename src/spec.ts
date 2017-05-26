@@ -1,6 +1,7 @@
 const _chai = require("chai")
 _chai.use(require("chai-string"))
 _chai.use(require("chai-as-promised"))
+_chai.use(require("chai-withintoleranceof"))
 
 export { expect } from "chai"
 
