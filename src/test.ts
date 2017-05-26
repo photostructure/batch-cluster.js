@@ -1,6 +1,12 @@
+#!/usr/bin/env node
 import { delay } from "./Delay"
 import { createInterface } from "readline"
 import { stdout, env } from "process"
+
+/**
+ * This is a script written to behave similarly to ExifTool or GraphicsMagick's
+ * batch-command modes, used for integration tests.
+ */
 
 function stripPrefix(s: string, prefix: string): string {
   return (s.startsWith(prefix)) ? s.slice(prefix.length) : s
