@@ -184,7 +184,25 @@ function verifyOptions(
 
 type AllOpts = BatchClusterOptions & InternalBatchProcessOptions & ChildProcessFactory
 
+class Mean {
+  constructor(private n: number = 0, private sum: number = 0) { }
+
+  push(x: number) {
+    this.n++
+    this.sum += x
+  }
+
+  get mean(): number {
+    return this.sum / this.n
+  }
+
+  clone(): Mean {
+    return new Mean(this.n, this.sum)
+  }
+}
+
 export class BatchCluster {
+  private readonly _tasksPerProc: Mean = new Mean()
   private readonly opts: AllOpts
   private readonly observer: BatchProcessObserver
   private readonly _procs: BatchProcess[] = []
@@ -242,11 +260,17 @@ export class BatchCluster {
     return this.procs().map(p => p.pid)
   }
 
+  get meanTasksPerProc(): number {
+    const m = this._tasksPerProc.clone()
+    this._procs.forEach(proc => m.push(proc.taskCount))
+    return m.mean
+  }
+
   private readonly beforeExitListener = () => this.end(true)
   private readonly exitListener = () => this.end(false)
 
   private get endPromise(): Promise<void> {
-    return Promise.all(this.procs().map(p => p.closedPromise)) as Promise<void>
+    return Promise.all(this.procs().map(p => p.exitedPromise)) as Promise<void>
   }
 
   private retryTask(task: Task<any>, error: any) {
@@ -275,13 +299,16 @@ export class BatchCluster {
 
   private procs(): BatchProcess[] {
     const minStart = Date.now() - this.opts.maxProcAgeMillis
+    // Iterate the array backwards, as we'll be removing _procs as we go:
     for (let i = this._procs.length - 1; i >= 0; i--) {
       const proc = this._procs[i]
       if (proc.start < minStart) {
         // This will only be in the case of an aggressive maxProcAgeMillis
         proc.end()
       }
-      if (proc.closed) {
+      // Remove exited processes from _procs:
+      if (proc.exited) {
+        this._tasksPerProc.push(proc.taskCount)
         this._procs.splice(i, 1)
       }
     }

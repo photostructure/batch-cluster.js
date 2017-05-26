@@ -24,11 +24,13 @@ export class BatchProcess {
   readonly start: number
   private _taskCount = -1 // don't count the warmup command
   private _ended: boolean = false
-  private _closed = new Deferred<void>()
+  // Support for non-polling notification of process shutdown:
+  private _exited = new Deferred<void>()
 
   private buff = ""
   private _currentTask: Task<any> | undefined
   private currentTaskTimeout: NodeJS.Timer | undefined
+  private readonly startupTask: Task<any>
 
   constructor(
     readonly proc: ChildProcess,
@@ -47,20 +49,13 @@ export class BatchProcess {
 
     this.proc.stdout.on("data", d => this.onData(d))
 
-    const startupTask = new Task(opts.versionCommand, ea => ea)
+    this.startupTask = new Task(opts.versionCommand, ea => ea)
 
-    this.proc.on("close", () => {
-      this.log({ from: "close()" })
-      const task = this._currentTask
-      if (task != null && task !== startupTask) {
-        this.observer.retryTask(task, "proc closed on " + task.command)
-      }
-      this.clearCurrentTask()
-      this._ended = true
-      this._closed.resolve()
-    })
+    // This signal is not reliably broadcast on child shutdown, so
+    // we rely on the BatchCluster to  regularly call `.exited()` for us.
+    this.proc.on("exit", () => this.onExit())
     this.proc.unref() // < don't let node count the child processes as a reason to stay alive
-    this.execTask(startupTask)
+    this.execTask(this.startupTask)
   }
 
   get idle(): boolean {
@@ -75,12 +70,26 @@ export class BatchProcess {
     return !this.busy && this._taskCount === 0
   }
 
+  /**
+   * True if the child process has exited or `this.end()` has been requested.
+   */
   get ended(): boolean {
     return this._ended
   }
 
-  get closed(): boolean {
-    return !this._closed.pending
+  /**
+   * true only if the child process has exited
+   */
+  get exited(): boolean {
+    if (this._exited.pending) {
+      // node bindings for kill are wrong, it takes a number. The "as any as
+      // string" works around the bug:
+      if (!this.proc.kill(0 as any as string)) {
+        // kill(0) returns true iff the process is running.
+        this.onExit()
+      }
+    }
+    return !this._exited.pending
   }
 
   get pid(): number {
@@ -91,8 +100,8 @@ export class BatchProcess {
     return this._taskCount
   }
 
-  get closedPromise(): Promise<void> {
-    return this._closed.promise
+  get exitedPromise(): Promise<void> {
+    return this._exited.promise
   }
 
   get currentTask(): Task<any> | undefined {
@@ -127,17 +136,17 @@ export class BatchProcess {
       const cmd = this.opts.exitCommand ? ensureSuffix(this.opts.exitCommand, "\n") : undefined
       this.proc.stdin.end(cmd)
       if (gracefully) {
-        const closed = [this.closedPromise]
+        const closed = [this.exitedPromise]
         if (this.opts.endGracefulWaitTimeMillis != null) {
           closed.push(delay(this.opts.endGracefulWaitTimeMillis))
         }
         await Promise.race(closed)
       }
-      if (!this.closed) {
+      if (!this.exited) {
         this.proc.kill(this.opts.shutdownSignal)
       }
     }
-    return this.closedPromise
+    return this.exitedPromise
   }
 
   private log(obj: any): void {
@@ -172,6 +181,17 @@ export class BatchProcess {
     }
 
     this.observer.onIdle()
+  }
+
+  private onExit() {
+    this.log({ from: "exit()" })
+    const task = this._currentTask
+    if (task != null && task !== this.startupTask) {
+      this.observer.retryTask(task, "proc closed on " + task.command)
+    }
+    this.clearCurrentTask()
+    this._ended = true
+    this._exited.resolve()
   }
 
   private onData(data: string | Buffer) {
