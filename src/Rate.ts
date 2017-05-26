@@ -1,37 +1,59 @@
 export class Rate {
-  private readonly _start = Date.now()
-  private _events = 0
+  private _events: number = 0
+  private start = Date.now()
+  private e = new Map<number, number>()
 
-  constructor(readonly warmupMillis: number = 1000) {}
+  constructor(readonly windowMillis: number = 250, readonly windows: number = 5) { }
 
   onEvent() {
     this._events++
-  }
-
-  get durationMilliseconds(): number {
-    return Date.now() - this._start
+    const t = this.asKey(Date.now())
+    this.e.set(t, (this.e.get(t) || 0) + 1)
+    this.vacuum()
   }
 
   get events(): number {
     return this._events
   }
 
-  /**
-   * @return `(events / ageInMillis)`
-   */
+  get period(): number {
+    return Date.now() - this.start
+  }
+
   get eventsPerMillisecond(): number {
-    return this.squelched(this._events / this.durationMilliseconds)
+    let mean: number | undefined = undefined
+    const now = Date.now()
+    const key = this.asKey(now - this.windows * this.windowMillis)
+    // const v = []
+      // the most recent slice represents less than windowMillis, so ignore:
+    for (let window = 0; window < this.windows; window++) {
+      const events = this.e.get(key + window) || 0
+      const epms = events / this.windowMillis
+      // v.push(events + "/" + this.windowMillis)
+      mean = (mean == null) ? epms : (mean + epms) / 2
+    }
+    // console.log(v)
+    return mean || 0
   }
 
   get eventsPerSecond(): number {
-    return this.squelched(this.eventsPerMillisecond * 1000)
+    return this.eventsPerMillisecond * 1000
   }
 
   get eventsPerMinute(): number {
-    return this.squelched(this.eventsPerSecond * 60)
+    return this.eventsPerSecond * 60
   }
 
-  private squelched(value: number): number {
-    return (this.durationMilliseconds >= this.warmupMillis) ? value : 0
+  private asKey(time: number): number {
+    return Math.floor(time / this.windowMillis)
+  }
+
+  private vacuum() {
+    const least = this.asKey(Date.now() - (this.windowMillis * this.windows))
+    this.e.forEach((_, k) => {
+      if (k < least) {
+        this.e.delete(k)
+      }
+    })
   }
 }
