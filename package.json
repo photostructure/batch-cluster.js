@@ -9,7 +9,7 @@
     "lint": "tslint --fix src/**/*.ts",
     "compile": "tsc",
     "tscw": "rimraf dist & tsc -w",
-    "pretest": "rimraf dist & tsc",
+    "pretest": "run-s clean compile",
     "test": "mocha --opts .mocha.opts"
   },
   "author": "Matthew McEachen <matthew-batchcluster@mceachen.org>",
