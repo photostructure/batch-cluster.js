@@ -16,7 +16,7 @@ const rl = createInterface({
   input: process.stdin
 })
 
-const newline = env.newline === "crlf" ? "\r\n" : env.newline === "cr" ? "\r" : "\n"
+const newline = env.newline === "crlf" ? "\r\n" : "\n"
 
 function write(s: string): void {
   stdout.write(s + newline)
@@ -25,6 +25,7 @@ function write(s: string): void {
 const failrate = (env.failrate == null) ? 0 : parseFloat(env.failrate)
 const rng = env.rngseed ? require("seedrandom")(env.rngseed) : Math.random
 let last = Promise.resolve()
+let flakeCount = 0
 
 async function onLine(line: string): Promise<void> {
   const r = rng()
@@ -33,7 +34,17 @@ async function onLine(line: string): Promise<void> {
     return
   }
   line = line.trim()
-  if (line.startsWith("upcase ")) {
+  if (line.startsWith("flaky ")) {
+    const count = parseInt(stripPrefix(line, "flaky "), 10)
+    flakeCount++
+    write("flaky response " + flakeCount + " of " + count)
+    if (flakeCount >= count) {
+      flakeCount = 0
+      write("PASS")
+    } else {
+      write("FAIL")
+    }
+  } else if (line.startsWith("upcase ")) {
     write(stripPrefix(line, "upcase ").trim().toUpperCase())
     write("PASS")
   } else if (line.startsWith("downcase ")) {
@@ -42,6 +53,7 @@ async function onLine(line: string): Promise<void> {
   } else if (line.startsWith("sleep ")) {
     const millis = parseInt(stripPrefix(line, "sleep").trim(), 10)
     await delay(millis)
+    write("slept " + millis)
     write("PASS")
   } else if (line === "version") {
     write("v1.2.3")
