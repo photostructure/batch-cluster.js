@@ -198,7 +198,7 @@ export class BatchProcess {
     }
   }
 
-  private onError(source: string, error: any, retryTask: boolean = true, task?: Task<any>, end: boolean = true) {
+  private onError(source: string, error: any, retryTask: boolean = true, task?: Task<any>) {
     if (task == null) {
       task = this._currentTask
     }
@@ -208,9 +208,7 @@ export class BatchProcess {
 
     // clear the task before ending so the onClose from end() doesn't retry the task:
     this.clearCurrentTask()
-    if (end) {
-      this.end()
-    }
+    this.end()
 
     if (this._taskCount === 0) {
       this.observer.onStartError(errorMsg)
@@ -251,7 +249,7 @@ export class BatchProcess {
       const fail = this.opts.failRE.exec(this.buff)
       if (fail != null) {
         const err = fail[1].trim() || new Error("command error")
-        this.onError("onData", err, true, this._currentTask, false)
+        this.onError("onData", err, true, this._currentTask)
       }
     }
   }
