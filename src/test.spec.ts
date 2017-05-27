@@ -26,7 +26,7 @@ describe("test.js", () => {
 
   beforeEach(() => {
     output = ""
-    child = processFactory()
+    child = processFactory({ rngseed: "hello" })
     child.on("error", (err: any) => { throw err })
     child.stdout.on("data", (buff: any) => {
       output += buff.toString()
@@ -55,7 +55,15 @@ describe("test.js", () => {
   })
 
   it("flakes out the first N responses", (done) => {
-    assertStdout("flaky response 1 of 3\nFAIL\nflaky response 2 of 3\nFAIL\nflaky response 3 of 3\nPASS", done)
-    child.stdin.end("flaky 3\nflaky 3\nflaky 3\nexit\n")
+    // These random numbers are consistent because we have a consistent rngseed:
+    assertStdout([
+      "flaky response (r: 0.55, flakeRate: 0.50)",
+      "PASS",
+      "flaky response (r: 0.44, flakeRate: 0.00)",
+      "PASS",
+      "flaky response (r: 0.55, flakeRate: 1.00)",
+      "FAIL"
+    ].join("\n"), done)
+    child.stdin.end("flaky .5\nflaky 0\nflaky 1\nexit\n")
   })
 })

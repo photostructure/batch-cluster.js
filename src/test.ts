@@ -25,24 +25,21 @@ function write(s: string): void {
 const failrate = (env.failrate == null) ? 0 : parseFloat(env.failrate)
 const rng = env.rngseed ? require("seedrandom")(env.rngseed) : Math.random
 let last = Promise.resolve()
-let flakeCount = 0
 
 async function onLine(line: string): Promise<void> {
   const r = rng()
   if (r < failrate) {
-    console.error("EUNLUCKY: r: " + r.toFixed(3) + ", failrate: " + failrate.toFixed(3) + ", seed: " + env.rngseed)
+    console.error("EUNLUCKY: r: " + r.toFixed(2) + ", failrate: " + failrate.toFixed(2) + ", seed: " + env.rngseed)
     return
   }
   line = line.trim()
   if (line.startsWith("flaky ")) {
-    const count = parseInt(stripPrefix(line, "flaky "), 10)
-    flakeCount++
-    write("flaky response " + flakeCount + " of " + count)
-    if (flakeCount >= count) {
-      flakeCount = 0
-      write("PASS")
-    } else {
+    const flakeRate = parseFloat(stripPrefix(line, "flaky "))
+    write("flaky response (r: " + r.toFixed(2) + ", flakeRate: " + flakeRate.toFixed(2) + ")")
+    if (r < flakeRate) {
       write("FAIL")
+    } else {
+      write("PASS")
     }
   } else if (line.startsWith("upcase ")) {
     write(stripPrefix(line, "upcase ").trim().toUpperCase())

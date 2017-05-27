@@ -106,7 +106,8 @@ describe("BatchCluster", function () {
 
       if (opts.taskRetries > 0) {
         it("retries a flaky task", async () => {
-          const task = new Task("flaky 3", parser)
+          callcount = 2 // for a consistent rngseed
+          const task = new Task("flaky .5", parser)
           expect(await bc.enqueueTask(task)).to.startWith("flaky response")
           expect(task.retries).to.be.within(2, opts.taskRetries)
           return
