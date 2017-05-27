@@ -21,7 +21,7 @@ export { Deferred } from "./Deferred"
 export { Task, Parser } from "./Task"
 export { delay } from "./Delay"
 
-export interface BatchProcessOptions {
+export class BatchProcessOptions {
 
   /**
    * Low-overhead command to verify the child batch process has started
@@ -44,50 +44,6 @@ export interface BatchProcessOptions {
    * not shut down within `endGracefulWaitTimeMillis`, it will be SIGHUP'ed.
    */
   readonly exitCommand?: string
-
-  /**
-   * Spawning new commands must not take longer than this. Be pessimistic
-   * here--windows can regularly take several seconds to spin up a process,
-   * thanks to antivirus shenanigans.
-   *
-   * This can't be set to a value less than 100ms.
-   */
-  readonly spawnTimeoutMillis: number
-
-  /**
-   * If commands take longer than this, presume the underlying process is dead
-   * and we should restart the task.
-   *
-   * This can't be set to a value less than 10ms, and really should be set to
-   * something like several seconds.
-   */
-  readonly taskTimeoutMillis: number
-
-  /**
-   * Must be >= 0. Processes will be recycled after processing
-   * `maxTasksPerProcess` tasks. Depending on the commands and platform, batch
-   * mode commands shouldn't exhibit unduly memory leaks for at least tens if
-   * not thousands of tasks. Setting this to a low number (like less than 10)
-   * will impact performance markedly. Setting this to a very high number (>
-   * 1000) may result in a memory leak.
-   */
-  readonly maxTasksPerProcess: number
-
-  /**
-   * When `this.end()` is called, or Node broadcasts the `beforeExit` event,
-   * this is the milliseconds spent waiting for currently running tasks to
-   * finish before sending kill signals to child processes.
-   *
-   * Not setting this value means child processes will immediately receive a
-   * kill signal to shut down. Any pending requests may be interrupted.
-   */
-  readonly endGracefulWaitTimeMillis?: number
-
-  /**
-   * Signal sent to child processes if they don't shut down gracefully after
-   * given the `exitCommand` and waiting for `endGracefulWaitTimeMillis`.
-   */
-  readonly shutdownSignal?: string
 }
 
 /**
@@ -98,6 +54,8 @@ export class BatchClusterOptions {
   /**
    * No more than `maxProcs` child processes will be run at a given time
    * to serve pending tasks.
+   *
+   * Defaults to 1.
    */
   readonly maxProcs: number = 1
 
@@ -106,20 +64,26 @@ export class BatchClusterOptions {
    *
    * If this value is set to 0, child processes will not "age out".
    *
-   * This value should not be less than `spawnTimeoutMillis` or
+   * This value must not be less than `spawnTimeoutMillis` or
    * `taskTimeoutMillis`.
+   *
+   * Defaults to 5 minutes.
    */
-  readonly maxProcAgeMillis: number = 5 * 60 * 1000 // 5 minutes
+  readonly maxProcAgeMillis: number = 5 * 60 * 1000
 
   /**
    * This is the minimum interval between calls to `this.onIdle`, which runs
    * pending tasks and shuts down old child processes.
+   *
+   * Must be >= 100ms. Defaults to 1 second.
    */
   readonly onIdleIntervalMillis: number = 1000
 
   /**
    * Must be >= 0. Tasks that result in errors will be retried at most
    * `taskRetries` times.
+   *
+   * Must be >= 0. Defaults to 0.
    */
   readonly taskRetries: number = 0
 
@@ -130,31 +94,96 @@ export class BatchClusterOptions {
    *
    * If this backstop didn't exist, new (failing) child processes would be
    * created indefinitely.
+   *
+   * Must be >= 0. Defaults to 10.
    */
   readonly maxReasonableProcessFailuresPerMinute: number = 10
+
+  /**
+   * Spawning new child processes and servicing a "version" task must not take
+   * longer than `spawnTimeoutMillis` before the process is considered failed,
+   * and need to be restarted. Be pessimistic here--windows can regularly take
+   * several seconds to spin up a process, thanks to antivirus shenanigans.
+   *
+   * Must be >= 100ms. Defaults to 15 seconds.
+   */
+  readonly spawnTimeoutMillis: number = 15000
+
+  /**
+   * If commands take longer than this, presume the underlying process is dead
+   * and we should fail or retry the task.
+   *
+   * This should be set to something on the order of seconds.
+   *
+   * Must be >= 10ms. Defaults to 10 seconds.
+   */
+  readonly taskTimeoutMillis: number = 10000
+
+  /**
+   * When tasks don't complete in `taskTimeoutMillis`, should they be retried (a
+   * maximum of `taskRetries`)? If taskRetries is set to 0, this value is
+   * meaningless.
+   *
+   * Defaults to false.
+   */
+  readonly retryTasksAfterTimeout: boolean = false
+
+  /**
+   * Processes will be recycled after processing `maxTasksPerProcess` tasks.
+   * Depending on the commands and platform, batch mode commands shouldn't
+   * exhibit unduly memory leaks for at least tens if not hundreds of tasks.
+   * Setting this to a low number (like less than 10) will impact performance
+   * markedly, due to OS process start/stop maintenance. Setting this to a very
+   * high number (> 1000) may result in more memory being consumed than
+   * necessary.
+   *
+   * Must be >= 0. Defaults to 500
+   */
+  readonly maxTasksPerProcess: number = 500
+
+  /**
+   * When `this.end()` is called, or Node broadcasts the `beforeExit` event,
+   * this is the milliseconds spent waiting for currently running tasks to
+   * finish before sending kill signals to child processes.
+   *
+   * Setting this value to 0 means child processes will immediately receive a
+   * kill signal to shut down. Any pending requests may be interrupted. Must be
+   * >= 0. Defaults to 500ms.
+   */
+  readonly endGracefulWaitTimeMillis: number = 500
+
+  /**
+   * Signal sent to child processes if they don't shut down gracefully after
+   * given the `exitCommand` and waiting for `endGracefulWaitTimeMillis`.
+   *
+   * Must be a valid signal name. Defaults to `SIGTERM`.
+   */
+  readonly shutdownSignal: string = "SIGTERM"
 }
 
 function verifyOptions(
   opts: Partial<BatchClusterOptions> & BatchProcessOptions & ChildProcessFactory
 ): AllOpts {
-  const toRe = (s: string) =>
-    new RegExp("^([\\s\\S]*?)[\\n\\r]+" + s + "[\\n\\r]*$")
+
+  function toRe(s: string) {
+    return new RegExp("^([\\s\\S]*?)[\\n\\r]+" + s + "[\\n\\r]*$")
+  }
 
   const result = {
-    ... new BatchClusterOptions(),
+    ...new BatchClusterOptions(),
     ...opts,
     passRE: toRe(opts.pass),
     failRE: toRe(opts.fail)
   }
 
   const errors: string[] = []
-  const notBlank = (fieldName: keyof AllOpts) => {
+  function notBlank(fieldName: keyof AllOpts) {
     const v = result[fieldName] as string
     if (v.trim().length === 0) {
       errors.push(fieldName + " must not be blank")
     }
   }
-  const gte = (fieldName: keyof AllOpts, value: number) => {
+  function gte(fieldName: keyof AllOpts, value: number) {
     const v = result[fieldName] as number
     if (v < value) {
       errors.push(fieldName + " must be greater than or equal to " + value)
@@ -169,8 +198,8 @@ function verifyOptions(
   gte("maxTasksPerProcess", 1)
 
   gte("maxProcs", 1)
-  gte("maxProcAgeMillis", 0)
-  gte("onIdleIntervalMillis", 0)
+  gte("maxProcAgeMillis", Math.max(result.spawnTimeoutMillis, result.taskTimeoutMillis))
+  gte("onIdleIntervalMillis", 100)
   gte("endGracefulWaitTimeMillis", 0)
   gte("taskRetries", 0)
   gte("maxReasonableProcessFailuresPerMinute", 0)
@@ -317,7 +346,7 @@ export class BatchCluster {
         this._procs.splice(i, 1)
       }
     }
-    return this._procs
+    return this._procs.sort((a, b) => a.idleMs - b.idleMs)
   }
 
   private log(obj: any): void {
@@ -341,7 +370,7 @@ export class BatchCluster {
       if (idleProc) {
         const task = this.dequeueTask()
         if (task && !idleProc.execTask(task)) {
-          // re-enqueue, task wasn't exec'ed.
+          // re-enqueue, child process refused execution
           this.enqueueTask(task)
         }
       } else if (this.procs().length < this.opts.maxProcs) {

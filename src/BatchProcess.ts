@@ -1,13 +1,10 @@
-import { BatchProcessOptions } from "./BatchCluster"
+import { BatchClusterOptions, BatchProcessOptions } from "./BatchCluster"
 import { Deferred } from "./Deferred"
 import { delay } from "./Delay"
 import { Task } from "./Task"
+import { kill } from "process"
 import { ChildProcess } from "child_process"
 import { debuglog, inspect, InspectOptions } from "util"
-
-function ensureSuffix(s: string, suffix: string): string {
-  return s.endsWith(suffix) ? s : s + suffix
-}
 
 export interface BatchProcessObserver {
   onIdle(): void
@@ -15,7 +12,7 @@ export interface BatchProcessObserver {
   retryTask(task: Task<any>, error: any): void
 }
 
-export interface InternalBatchProcessOptions extends BatchProcessOptions {
+export interface InternalBatchProcessOptions extends BatchProcessOptions, BatchClusterOptions {
   readonly passRE: RegExp
   readonly failRE: RegExp
 }
@@ -24,7 +21,8 @@ export interface InternalBatchProcessOptions extends BatchProcessOptions {
  * BatchProcess manages the care and feeding of a single child process.
  */
 export class BatchProcess {
-  readonly start: number
+  readonly start = Date.now()
+  private lastTaskFinish = Date.now()
   private _taskCount = -1 // don't count the warmup command
   /**
    * true if `this.end()` has been called, or this process is no longer in the
@@ -35,8 +33,13 @@ export class BatchProcess {
    * Supports non-polling notification of process shutdown
    */
   private _exited = new Deferred<void>()
-
+  /**
+   * Data from stdout, to be given to _currentTask
+   */
   private buff = ""
+  /**
+   * Should be undefined if this instance is not currently processing a task.
+   */
   private _currentTask: Task<any> | undefined
   private currentTaskTimeout: NodeJS.Timer | undefined
   private readonly startupTask: Task<any>
@@ -45,63 +48,28 @@ export class BatchProcess {
     readonly opts: InternalBatchProcessOptions,
     readonly observer: BatchProcessObserver
   ) {
-    this.start = Date.now()
-    // forking issue, not the task's fault:
-    this.proc.on("error", err => this.onError("proc", err, true))
+    // don't let node count the child processes as a reason to stay alive
+    this.proc.unref()
 
-    // pipe plumbing issues (like ECONNRESET) are not the task's fault, so retry:
-    this.proc.stdin.on("error", err => this.onError("stdin", err, true))
-    this.proc.stdout.on("error", err => this.onError("stdout.error", err, true))
-    this.proc.stderr.on("error", err => this.onError("stderr", err, true))
+    // This signal is not reliably broadcast by node on child shutdown, so we
+    // rely on the BatchCluster to regularly call `.exited()` for us.
+    this.proc.on("exit", () => this.onExit())
 
-    // If stderr was written to, blame the task. Don't retry.
-    this.proc.stderr.on("data", err => this.onError("stderr.data", err.toString(), false))
+    // forking or plumbing issues are not the task's fault, so retry:
+    this.proc.on("error", err => this.onError("proc", err))
+    this.proc.stdin.on("error", err => this.onError("stdin", err))
+    this.proc.stdout.on("error", err => this.onError("stdout.error", err))
+    this.proc.stderr.on("error", err => this.onError("stderr", err))
+    this.proc.stderr.on("data", err => this.onError("stderr.data", err.toString()))
 
     this.proc.stdout.on("data", d => this.onData(d))
 
     this.startupTask = new Task(opts.versionCommand, ea => ea)
 
-    // This signal is not reliably broadcast by node on child shutdown, so we
-    // rely on the BatchCluster to regularly call `.exited()` for us.
-    this.proc.on("exit", () => this.onExit())
-    // don't let node count the child processes as a reason to stay alive
-    this.proc.unref()
+    // Prevent unhandled rejection showing on console:
+    this.startupTask.promise.catch(err => this.log({ where: "startupTask", err }))
+
     this.execTask(this.startupTask)
-  }
-
-  get idle(): boolean {
-    return !this.ended && (this._currentTask == null)
-  }
-
-  get busy(): boolean {
-    return !this.ended && (this._currentTask != null)
-  }
-
-  get starting(): boolean {
-    return !this.busy && this._taskCount === 0
-  }
-
-  /**
-   * @return {boolean} true if `this.end()` has been requested or the child
-   * process has exited.
-   */
-  get ended(): boolean {
-    return this._ended || this.exited
-  }
-
-  /**
-   * true only if the child process has exited
-   */
-  get exited(): boolean {
-    if (this._exited.pending) {
-      // node bindings for kill are wrong, it takes a number. The "as any as
-      // string" works around the bug:
-      if (!this.proc.kill(0 as any as string)) {
-        // kill(0) returns true iff the process is running.
-        this.onExit()
-      }
-    }
-    return !this._exited.pending
   }
 
   get pid(): number {
@@ -124,10 +92,58 @@ export class BatchProcess {
     return (this._currentTask == null) ? undefined : this._currentTask.command
   }
 
+  get idle(): boolean {
+    return !this.ended && (this._currentTask == null)
+  }
+
+  get idleMs(): number {
+    return this.idle ? Date.now() - this.lastTaskFinish : 0
+  }
+
+  get busy(): boolean {
+    return !this.ended && (this._currentTask != null)
+  }
+
+  get starting(): boolean {
+    return !this.busy && this._taskCount === 0
+  }
+
+  /**
+   * @return true if the child process is in the process table
+   */
+  get alive(): boolean {
+    try {
+      let r: any = this.proc.kill(0 as any as string)
+      return (r == null) ? alive(this.pid) : !!r
+    } catch (err) {
+      return false
+    }
+  }
+
+  /**
+   * @return {boolean} true if `this.end()` has been requested or the child
+   * process has exited.
+   */
+  get ended(): boolean {
+    return this._ended || this.exited
+  }
+
+  /**
+   * true only if the child process has exited
+   */
+  get exited(): boolean {
+    if (this._exited.pending) {
+      if (!this.alive) {
+        this.onExit()
+      }
+    }
+    return !this._exited.pending
+  }
+
   execTask(task: Task<any>): boolean {
     if (this.ended || this.currentTask != null) {
       this.log({
-        from: "execTask",
+        from: "execTask()",
         error: "This proc is not idle, and cannot exec task",
         ended: this.ended,
         currentTask: this.currentTaskCommand
@@ -150,11 +166,15 @@ export class BatchProcess {
     if (this._ended === false) {
       this._ended = true
       this.log({ from: "end()", exitCommand: this.opts.exitCommand })
+      if (this._currentTask != null && this._currentTask !== this.startupTask) {
+        this.observer.retryTask(this._currentTask, "process end")
+      }
+      this.clearCurrentTask()
       const cmd = this.opts.exitCommand ? ensureSuffix(this.opts.exitCommand, "\n") : undefined
       this.proc.stdin.end(cmd)
       if (gracefully) {
         const closed = [this.exitedPromise]
-        if (this.opts.endGracefulWaitTimeMillis != null) {
+        if (this.opts.endGracefulWaitTimeMillis > 0) {
           closed.push(delay(this.opts.endGracefulWaitTimeMillis))
         }
         await Promise.race(closed)
@@ -168,35 +188,41 @@ export class BatchProcess {
 
   private log(obj: any): void {
     debuglog("batch-cluster:process")(inspect(
-      { time: new Date().toISOString(), pid: this.pid, ...obj, from: "BatchProcess." + obj.from }, 
+      { time: new Date().toISOString(), pid: this.pid, ...obj, from: "BatchProcess." + obj.from },
       { colors: true, breakLength: 80 } as InspectOptions))
   }
 
   private onTimeout(task: Task<any>): void {
     if (task === this._currentTask && task.pending) {
-      this.onError("timeout", new Error("timeout"), true, task)
+      this.onError("timeout", new Error("timeout"), this.opts.retryTasksAfterTimeout, task)
     }
   }
 
-  private onError(source: string, error: any, retryTask: boolean = false, task?: Task<any>) {
+  private onError(source: string, error: any, retryTask: boolean = true, task?: Task<any>, end: boolean = true) {
     if (task == null) {
       task = this._currentTask
     }
-    this.log({ from: "onError(" + source + ")", error, retryTask, task: task ? task.command : "null" })
+    this.log({ from: "onError()", source, error, retryTask, taskRetries: task ? task.retries : "null" })
 
     const errorMsg = source + ": " + (error.stack || error)
 
-    // clear the task before ending so the onClose doesn't retry the task:
+    // clear the task before ending so the onClose from end() doesn't retry the task:
     this.clearCurrentTask()
-    this.end()
+    if (end) {
+      this.end()
+    }
 
     if (this._taskCount === 0) {
       this.observer.onStartError(errorMsg)
-    } else if (task != null && retryTask) {
-      this.observer.retryTask(task, errorMsg)
     }
 
-    this.observer.onIdle()
+    if (task != null) {
+      if (retryTask && task !== this.startupTask) {
+        this.observer.retryTask(task, errorMsg)
+      } else {
+        task.onError(errorMsg)
+      }
+    }
   }
 
   private onExit() {
@@ -220,11 +246,13 @@ export class BatchProcess {
     })
     const pass = this.opts.passRE.exec(this.buff)
     if (pass != null) {
-      return this.fulfillCurrentTask(pass[1], "onData")
-    }
-    const fail = this.opts.failRE.exec(this.buff)
-    if (fail != null) {
-      return this.fulfillCurrentTask(fail[1], "onError")
+      this.resolveCurrentTask(pass[1].trim())
+    } else {
+      const fail = this.opts.failRE.exec(this.buff)
+      if (fail != null) {
+        const err = fail[1].trim() || new Error("command error")
+        this.onError("onData", err, true, this._currentTask, false)
+      }
     }
   }
 
@@ -233,34 +261,43 @@ export class BatchProcess {
       clearTimeout(this.currentTaskTimeout)
       this.currentTaskTimeout = undefined
     }
+    if (this._currentTask != null) {
+      this.lastTaskFinish = Date.now()
+    }
     this._currentTask = undefined
   }
 
-  private fulfillCurrentTask(result: string, methodName: "onData" | "onError"): void {
+  private resolveCurrentTask(result: string): void {
     this.buff = ""
     const task = this._currentTask
-
     this.clearCurrentTask()
-
     if (task == null) {
       if (result.length > 0 && !this._ended) {
-        console.error("batch-process INTERNAL ERROR: no current task in fulfillCurrentTask(" + methodName + ") result: " + result)
+        console.error("batch-process INTERNAL ERROR: no current task in resolveCurrentTask() result: " + result)
       }
       this.end()
     } else {
-      this.log({ from: "fulfillCurrentTask " + methodName, result, task: task.command })
-
-      if (methodName === "onData") {
-        task.onData(result)
-      } else {
-        task.onError(result)
-      }
-
+      this.log({ from: "resolveCurrentTask", result, task: task.command })
+      task.onData(result)
       if (this.taskCount >= this.opts.maxTasksPerProcess) {
         this.end()
       } else {
         this.observer.onIdle()
       }
     }
+  }
+}
+
+// private utility functions
+
+function ensureSuffix(s: string, suffix: string): string {
+  return s.endsWith(suffix) ? s : s + suffix
+}
+
+function alive(pid: number): boolean {
+  try {
+    return (!!kill(pid, 0)) // coerce to boolean (which node should return)
+  } catch (err) {
+    return false
   }
 }
