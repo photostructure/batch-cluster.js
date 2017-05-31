@@ -22,7 +22,6 @@ export interface InternalBatchProcessOptions extends BatchProcessOptions, BatchC
  */
 export class BatchProcess {
   readonly start = Date.now()
-  private lastTaskFinish = Date.now()
   private _taskCount = -1 // don't count the warmup command
   /**
    * true if `this.end()` has been called, or this process is no longer in the
@@ -40,7 +39,7 @@ export class BatchProcess {
   /**
    * Should be undefined if this instance is not currently processing a task.
    */
-  private _currentTask: Task<any> | undefined
+  private currentTask: Task<any> | undefined
   private currentTaskTimeout: NodeJS.Timer | undefined
   private readonly startupTask: Task<any>
 
@@ -84,24 +83,12 @@ export class BatchProcess {
     return this._exited.promise
   }
 
-  get currentTask(): Task<any> | undefined {
-    return this._currentTask
-  }
-
-  get currentTaskCommand(): string | undefined {
-    return (this._currentTask == null) ? undefined : this._currentTask.command
-  }
-
   get idle(): boolean {
-    return !this.ended && (this._currentTask == null)
-  }
-
-  get idleMs(): number {
-    return this.idle ? Date.now() - this.lastTaskFinish : 0
+    return !this.ended && (this.currentTask == null)
   }
 
   get busy(): boolean {
-    return !this.ended && (this._currentTask != null)
+    return !this.ended && (this.currentTask != null)
   }
 
   get starting(): boolean {
@@ -142,16 +129,16 @@ export class BatchProcess {
 
   execTask(task: Task<any>): boolean {
     if (this.ended || this.currentTask != null) {
-      this.log({
+      console.error("INTERNAL ERROR: BatchProcess.execTask() called when not idle", {
         from: "execTask()",
         error: "This proc is not idle, and cannot exec task",
         ended: this.ended,
-        currentTask: this.currentTaskCommand
+        currentTask: this.currentTask ? this.currentTask.command : "null"
       })
       return false
     }
     this._taskCount++
-    this._currentTask = task
+    this.currentTask = task
     const cmd = ensureSuffix(task.command, "\n")
     const timeout = this.starting ? this.opts.spawnTimeoutMillis : this.opts.taskTimeoutMillis
     if (timeout > 0) {
@@ -166,8 +153,8 @@ export class BatchProcess {
     if (this._ended === false) {
       this._ended = true
       this.log({ from: "end()", exitCommand: this.opts.exitCommand })
-      if (this._currentTask != null && this._currentTask !== this.startupTask) {
-        this.observer.retryTask(this._currentTask, "process end")
+      if (this.currentTask != null && this.currentTask !== this.startupTask) {
+        this.observer.retryTask(this.currentTask, "process end")
       }
       this.clearCurrentTask()
       const cmd = this.opts.exitCommand ? ensureSuffix(this.opts.exitCommand, "\n") : undefined
@@ -193,14 +180,14 @@ export class BatchProcess {
   }
 
   private onTimeout(task: Task<any>): void {
-    if (task === this._currentTask && task.pending) {
+    if (task === this.currentTask && task.pending) {
       this.onError("timeout", new Error("timeout"), this.opts.retryTasksAfterTimeout, task)
     }
   }
 
   private onError(source: string, error: any, retryTask: boolean = true, task?: Task<any>) {
     if (task == null) {
-      task = this._currentTask
+      task = this.currentTask
     }
     this.log({ from: "onError()", source, error, retryTask, taskRetries: task ? task.retries : "null" })
 
@@ -225,7 +212,7 @@ export class BatchProcess {
 
   private onExit() {
     this.log({ from: "exit()" })
-    const task = this._currentTask
+    const task = this.currentTask
     if (task != null && task !== this.startupTask) {
       this.observer.retryTask(task, "proc closed on " + task.command)
     }
@@ -240,7 +227,7 @@ export class BatchProcess {
       from: "onData()",
       data: data.toString(),
       buff: this.buff,
-      currentTask: this._currentTask && this._currentTask.command
+      currentTask: this.currentTask && this.currentTask.command
     })
     const pass = this.opts.passRE.exec(this.buff)
     if (pass != null) {
@@ -249,7 +236,7 @@ export class BatchProcess {
       const fail = this.opts.failRE.exec(this.buff)
       if (fail != null) {
         const err = fail[1].trim() || new Error("command error")
-        this.onError("onData", err, true, this._currentTask)
+        this.onError("onData", err, true, this.currentTask)
       }
     }
   }
@@ -259,15 +246,12 @@ export class BatchProcess {
       clearTimeout(this.currentTaskTimeout)
       this.currentTaskTimeout = undefined
     }
-    if (this._currentTask != null) {
-      this.lastTaskFinish = Date.now()
-    }
-    this._currentTask = undefined
+    this.currentTask = undefined
   }
 
   private resolveCurrentTask(result: string): void {
     this.buff = ""
-    const task = this._currentTask
+    const task = this.currentTask
     this.clearCurrentTask()
     if (task == null) {
       if (result.length > 0 && !this._ended) {
