@@ -332,21 +332,23 @@ export class BatchCluster {
   }
 
   private procs(): BatchProcess[] {
-    const minStart = Date.now() - this.opts.maxProcAgeMillis
-    // Iterate the array backwards, as we'll be removing _procs as we go:
-    for (let i = this._procs.length - 1; i >= 0; i--) {
-      const proc = this._procs[i]
-      if (proc.start < minStart) {
-        // This will only be in the case of an aggressive maxProcAgeMillis
-        proc.end()
-      }
-      // Remove exited processes from _procs:
-      if (proc.exited) {
-        this._tasksPerProc.push(proc.taskCount)
-        this._procs.splice(i, 1)
+    if (this._procs.length > 0) {
+      const minStart = Date.now() - this.opts.maxProcAgeMillis
+      // Iterate the array backwards, as we'll be removing _procs as we go:
+      for (let i = this._procs.length - 1; i >= 0; i--) {
+        const proc = this._procs[i]
+        if (proc.start < minStart) {
+          // This will only be in the case of an aggressive maxProcAgeMillis
+          proc.end()
+        }
+        // Remove exited processes from _procs:
+        if (proc.exited) {
+          this._tasksPerProc.push(proc.taskCount)
+          this._procs.splice(i, 1)
+        }
       }
     }
-    return this._procs.sort((a, b) => a.idleMs - b.idleMs)
+    return this._procs
   }
 
   private log(obj: any): void {
