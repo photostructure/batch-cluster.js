@@ -7,4 +7,5 @@ os:
   - linux
   - osx
 osx_image: xcode8
-script: 'npm run test'
+script: 'yarn test'
+cache: yarn
