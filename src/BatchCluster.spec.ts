@@ -1,4 +1,5 @@
 import { BatchCluster, BatchClusterOptions } from "./BatchCluster"
+import { BatchProcess } from "./BatchProcess"
 import { delay } from "./Delay"
 import { expect, parser, times } from "./spec"
 import { Task } from "./Task"
@@ -169,6 +170,34 @@ describe("BatchCluster", function () {
         await delay(500)
       }
       expect(bc.pids).to.be.empty
+      return
+    })
+  })
+
+  describe.only("BatchProcess", () => {
+    const bc = new BatchCluster({
+      ...defaultOpts,
+      taskTimeoutMillis: 500,
+      processFactory: () => processFactory({ failrate: "0" })
+    })
+
+    it("correctly reports that child procs are running", async () => {
+      const task = new Task("sleep 250", parser) // long enough to 
+      const result = bc.enqueueTask(task)
+      const procs = bc["_procs"] as BatchProcess[]
+      expect(task.pending).to.be.true
+      expect(procs.length).to.eql(1)
+      const proc = procs[0]!
+      expect(proc.alive).to.be.true
+      expect(proc.ended).to.be.false
+      expect(proc.exited).to.be.false
+      await result
+      const end = bc.end()
+      expect(proc.ended).to.be.true
+      await end
+      expect(proc.alive).to.be.false
+      expect(proc.ended).to.be.true
+      expect(proc.exited).to.be.true
       return
     })
   })

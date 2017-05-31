@@ -100,8 +100,9 @@ export class BatchProcess {
    */
   get alive(): boolean {
     try {
-      let r: any = this.proc.kill(0 as any as string)
-      return (r == null) ? alive(this.pid) : !!r
+      // child_process.kill(0) returns a boolean on windows and linux
+      const result = this.proc.kill(0 as any as string)
+      return (typeof result === "boolean") ? result : alive(this.pid)
     } catch (err) {
       return false
     }
@@ -278,7 +279,8 @@ function ensureSuffix(s: string, suffix: string): string {
 
 function alive(pid: number): boolean {
   try {
-    return (!!kill(pid, 0)) // coerce to boolean (which node should return)
+    const result = kill(pid, 0)
+    return (typeof result === "boolean") ? result : true
   } catch (err) {
     return false
   }
