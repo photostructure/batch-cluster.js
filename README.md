@@ -21,6 +21,14 @@ This package powers
 
 ## Changelog
 
+### v1.3.0
+
+* 📦 Added tests to verify that the `kill(0)` calls to verify the child
+  processes are still running work across different node version and OSes
+* 📦 Removed unused methods in `BatchProcess` (whose API should not be accessed
+  directly by consumers, so the major version remains at 1)
+* 📦 Switched to yarn and upgraded dependencies
+
 ### v1.2.0
 
 * ✨ Added a configurable cleanup signal to ensure child processes shut down on `.end()`

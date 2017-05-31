@@ -182,7 +182,7 @@ describe("BatchCluster", function () {
     })
 
     it("correctly reports that child procs are running", async () => {
-      const task = new Task("sleep 250", parser) // long enough to 
+      const task = new Task("sleep 250", parser) // long enough to
       const result = bc.enqueueTask(task)
       const procs = bc["_procs"] as BatchProcess[]
       expect(task.pending).to.be.true

@@ -5,6 +5,7 @@
   ],
   "rules": {
     "no-constant-condition": true,
+    "no-unused-expression": false, // < buggy
     "no-extra-semi": true,
     "no-unsafe-finally": true,
     "no-use-before-declare": true,
