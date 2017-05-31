@@ -21,7 +21,6 @@
     "@types/chai": "^3.5.2",
     "@types/chai-as-promised": "^0.0.30",
     "@types/chai-string": "^1.1.30",
-    "@types/chai-withintoleranceof": "./types/chai-withintoleranceof",
     "@types/mocha": "^2.2.41",
     "@types/node": "^7.0.22",
     "chai": "^3.5.0",
