@@ -110,7 +110,8 @@ export class BatchProcess {
 
   execTask(task: Task<any>): boolean {
     if (!this.idle) {
-      console.error("INTERNAL ERROR: BatchProcess.execTask() called when not idle", {
+      console.error("batch-process INTERNAL ERROR: BatchProcess.execTask() called when not idle", {
+        
         from: "execTask()",
         error: "This proc is not idle, and cannot exec task",
         ended: this.ended,
@@ -154,7 +155,7 @@ export class BatchProcess {
       await Promise.race(tasks)
     }
     if (this.running) { // this child proc didn't die gracefully. Send a kill signal.
-      console.log({ where: "end(" + gracefully + ")", pid: this.pid, msg: "killing" })
+      this.log({ where: "end(" + gracefully + ")", pid: this.pid, msg: "killing" })
       this.proc.kill(this.opts.shutdownSignal)
     }
     this.log({ where: "end(" + gracefully + ")", pid: this.pid, running: this.running })

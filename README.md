@@ -21,6 +21,10 @@ This package powers
 
 ## Changelog
 
+### v1.4.1
+
+* 📦 Replaced an errant `console.log` with a call to `log`.
+
 ### v1.4.0
 
 * 🐞 Discovered `maxProcs` wasn't always utilized by `onIdle`, which meant in
