@@ -1,3 +1,4 @@
+import { running } from "./BatchProcess"
 import { expect } from "./spec"
 import { spawn, ChildProcess } from "child_process"
 import * as _p from "process"
@@ -10,7 +11,7 @@ export function spawnedPids(): number[] {
 }
 
 export function runningSpawnedPids(): number[] {
-  return procs.filter(proc => proc.kill(0 as any as string)).map(proc => proc.pid)
+  return procs.filter(proc => running(proc.pid)).map(proc => proc.pid)
 }
 
 export function processFactory(env: any = {}): ChildProcess {

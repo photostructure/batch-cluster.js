@@ -2,8 +2,8 @@ import { BatchClusterOptions, BatchProcessOptions } from "./BatchCluster"
 import { Deferred } from "./Deferred"
 import { delay } from "./Delay"
 import { Task } from "./Task"
-import { kill } from "process"
 import { ChildProcess } from "child_process"
+import { kill } from "process"
 import { debuglog, inspect, InspectOptions } from "util"
 
 export interface BatchProcessObserver {
@@ -22,7 +22,7 @@ export interface InternalBatchProcessOptions extends BatchProcessOptions, BatchC
  */
 export class BatchProcess {
   readonly start = Date.now()
-  private _taskCount = -1 // don't count the warmup command
+  private _taskCount = -1 // don't count the startupTask
   /**
    * true if `this.end()` has been called, or this process is no longer in the
    * process table.
@@ -50,23 +50,25 @@ export class BatchProcess {
     // don't let node count the child processes as a reason to stay alive
     this.proc.unref()
 
-    // This signal is not reliably broadcast by node on child shutdown, so we
-    // rely on the BatchCluster to regularly call `.exited()` for us.
-    this.proc.on("exit", () => this.onExit())
-
     // forking or plumbing issues are not the task's fault, so retry:
     this.proc.on("error", err => this.onError("proc", err))
+    this.proc.on("close", () => this.onExit())
+    this.proc.on("exit", () => this.onExit())
+    this.proc.on("disconnect", () => this.onExit())
+
     this.proc.stdin.on("error", err => this.onError("stdin", err))
+
     this.proc.stdout.on("error", err => this.onError("stdout.error", err))
+    this.proc.stdout.on("data", d => this.onData(d))
+
     this.proc.stderr.on("error", err => this.onError("stderr", err))
     this.proc.stderr.on("data", err => this.onError("stderr.data", err.toString()))
-
-    this.proc.stdout.on("data", d => this.onData(d))
 
     this.startupTask = new Task(opts.versionCommand, ea => ea)
 
     // Prevent unhandled rejection showing on console:
-    this.startupTask.promise.catch(err => this.log({ where: "startupTask", err }))
+    // tslint:disable-next-line:no-empty
+    this.startupTask.promise.catch(() => {})
 
     this.execTask(this.startupTask)
   }
@@ -91,21 +93,11 @@ export class BatchProcess {
     return !this.ended && (this.currentTask != null)
   }
 
-  get starting(): boolean {
-    return !this.busy && this._taskCount === 0
-  }
-
   /**
    * @return true if the child process is in the process table
    */
-  get alive(): boolean {
-    try {
-      // child_process.kill(0) returns a boolean on windows and linux
-      const result = this.proc.kill(0 as any as string)
-      return (typeof result === "boolean") ? result : alive(this.pid)
-    } catch (err) {
-      return false
-    }
+  get running(): boolean {
+    return running(this.pid)
   }
 
   /**
@@ -113,23 +105,11 @@ export class BatchProcess {
    * process has exited.
    */
   get ended(): boolean {
-    return this._ended || this.exited
-  }
-
-  /**
-   * true only if the child process has exited
-   */
-  get exited(): boolean {
-    if (this._exited.pending) {
-      if (!this.alive) {
-        this.onExit()
-      }
-    }
-    return !this._exited.pending
+    return this._ended || !this.running
   }
 
   execTask(task: Task<any>): boolean {
-    if (this.ended || this.currentTask != null) {
+    if (!this.idle) {
       console.error("INTERNAL ERROR: BatchProcess.execTask() called when not idle", {
         from: "execTask()",
         error: "This proc is not idle, and cannot exec task",
@@ -141,7 +121,7 @@ export class BatchProcess {
     this._taskCount++
     this.currentTask = task
     const cmd = ensureSuffix(task.command, "\n")
-    const timeout = this.starting ? this.opts.spawnTimeoutMillis : this.opts.taskTimeoutMillis
+    const timeout = (task === this.startupTask) ? this.opts.spawnTimeoutMillis : this.opts.taskTimeoutMillis
     if (timeout > 0) {
       this.currentTaskTimeout = setTimeout(() => this.onTimeout(task), timeout)
     }
@@ -151,26 +131,33 @@ export class BatchProcess {
   }
 
   async end(gracefully: boolean = true): Promise<void> {
-    if (this._ended === false) {
+    this.log({ where: "end(" + gracefully + ")", pid: this.pid, _ended: this._ended })
+    const tasks = [this.exitedPromise]
+
+    if (!this._ended) {
       this._ended = true
-      this.log({ from: "end()", exitCommand: this.opts.exitCommand })
-      if (this.currentTask != null && this.currentTask !== this.startupTask) {
-        this.observer.retryTask(this.currentTask, "process end")
-      }
-      this.clearCurrentTask()
       const cmd = this.opts.exitCommand ? ensureSuffix(this.opts.exitCommand, "\n") : undefined
       this.proc.stdin.end(cmd)
       if (gracefully) {
-        const closed = [this.exitedPromise]
         if (this.opts.endGracefulWaitTimeMillis > 0) {
-          closed.push(delay(this.opts.endGracefulWaitTimeMillis))
+          tasks.push(delay(this.opts.endGracefulWaitTimeMillis))
         }
-        await Promise.race(closed)
-      }
-      if (!this.exited) {
-        this.proc.kill(this.opts.shutdownSignal)
       }
     }
+
+    if (this.currentTask != null && this.currentTask !== this.startupTask) {
+      this.observer.retryTask(this.currentTask, "process end")
+    }
+    this.clearCurrentTask()
+
+    if (this.running) {
+      await Promise.race(tasks)
+    }
+    if (this.running) { // this child proc didn't die gracefully. Send a kill signal.
+      console.log({ where: "end(" + gracefully + ")", pid: this.pid, msg: "killing" })
+      this.proc.kill(this.opts.shutdownSignal)
+    }
+    this.log({ where: "end(" + gracefully + ")", pid: this.pid, running: this.running })
     return this.exitedPromise
   }
 
@@ -186,19 +173,18 @@ export class BatchProcess {
     }
   }
 
-  private onError(source: string, error: any, retryTask: boolean = true, task?: Task<any>) {
+  private async onError(source: string, error: any, retryTask: boolean = true, task?: Task<any>) {
     if (task == null) {
       task = this.currentTask
     }
-    this.log({ from: "onError()", source, error, retryTask, taskRetries: task ? task.retries : "null" })
-
+    this.log({ from: "onError()", pid: this.pid, alive: this.running, ended: this._ended, source, error, retryTask, taskRetries: task ? task.retries : "null" })
     const errorMsg = source + ": " + (error.stack || error)
 
-    // clear the task before ending so the onClose from end() doesn't retry the task:
+    // clear the task before ending so the onExit from end() doesn't retry the task:
     this.clearCurrentTask()
-    this.end()
+    if (!this._ended) await this.end()
 
-    if (this._taskCount === 0) {
+    if (task === this.startupTask) {
       this.observer.onStartError(errorMsg)
     }
 
@@ -212,13 +198,23 @@ export class BatchProcess {
   }
 
   private onExit() {
-    this.log({ from: "exit()" })
+    if (this.running) {
+      throw new Error("onExit() called on a running process")
+    }
+    this._ended = true
     const task = this.currentTask
     if (task != null && task !== this.startupTask) {
-      this.observer.retryTask(task, "proc closed on " + task.command)
+      this.log({
+        where: "onExit()",
+        pid: this.pid,
+        _ended: this._ended,
+        alive: this.running,
+        exited: this._exited.fulfilled,
+        buffLen: this.buff.length
+      })
+      this.observer.retryTask(task, "child proc closed")
     }
     this.clearCurrentTask()
-    this._ended = true
     this._exited.resolve()
   }
 
@@ -233,6 +229,7 @@ export class BatchProcess {
     const pass = this.opts.passRE.exec(this.buff)
     if (pass != null) {
       this.resolveCurrentTask(pass[1].trim())
+      this.observer.onIdle()
     } else {
       const fail = this.opts.failRE.exec(this.buff)
       if (fail != null) {
@@ -262,11 +259,7 @@ export class BatchProcess {
     } else {
       this.log({ from: "resolveCurrentTask", result, task: task.command })
       task.onData(result)
-      if (this.taskCount >= this.opts.maxTasksPerProcess) {
-        this.end()
-      } else {
-        this.observer.onIdle()
-      }
+      this.observer.onIdle()
     }
   }
 }
@@ -277,7 +270,7 @@ function ensureSuffix(s: string, suffix: string): string {
   return s.endsWith(suffix) ? s : s + suffix
 }
 
-function alive(pid: number): boolean {
+export function running(pid: number): boolean {
   try {
     const result = kill(pid, 0)
     return (typeof result === "boolean") ? result : true

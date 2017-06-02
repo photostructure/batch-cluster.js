@@ -16,11 +16,6 @@ describe("Rate", () => {
   after(() => tk.reset())
 
   function expectRate(r: Rate, epm: number, tol: number = .25) {
-    // console.dir({ events: r.events, expectedPerMin: (60 * 1000 * r.events / r.period).toFixed(), actualPerMin: r.eventsPerMinute.toFixed(1) })
-
-    // const expectedPerMin = (epm * 60 * 1000)
-    // const actualTolMinPct = 100 * (r.eventsPerMinute - expectedPerMin) / expectedPerMin
-    // console.log("Actual tolerance: " + actualTolMinPct.toFixed(1) + "%")
     expect(r.eventsPerMillisecond).to.be.withinToleranceOf(epm, tol)
     expect(r.eventsPerSecond).to.be.withinToleranceOf(epm * 1000, tol)
     expect(r.eventsPerMinute).to.be.withinToleranceOf(epm * 60 * 1000, tol)

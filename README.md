@@ -21,6 +21,12 @@ This package powers
 
 ## Changelog
 
+### v1.4.0
+
+* 🐞 Discovered `maxProcs` wasn't always utilized by `onIdle`, which meant in
+  certain circumstances, only 1 child process would be servicing pending
+  requests. Added breaking tests and fixed impl.
+
 ### v1.3.0
 
 * 📦 Added tests to verify that the `kill(0)` calls to verify the child

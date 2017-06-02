@@ -75,7 +75,7 @@ export class BatchClusterOptions {
    * This is the minimum interval between calls to `this.onIdle`, which runs
    * pending tasks and shuts down old child processes.
    *
-   * Must be >= 100ms. Defaults to 1 second.
+   * Must be > 0. Defaults to 1 second.
    */
   readonly onIdleIntervalMillis: number = 1000
 
@@ -199,7 +199,7 @@ function verifyOptions(
 
   gte("maxProcs", 1)
   gte("maxProcAgeMillis", Math.max(result.spawnTimeoutMillis, result.taskTimeoutMillis))
-  gte("onIdleIntervalMillis", 100)
+  gte("onIdleIntervalMillis", 0)
   gte("endGracefulWaitTimeMillis", 0)
   gte("taskRetries", 0)
   gte("maxReasonableProcessFailuresPerMinute", 0)
@@ -238,6 +238,7 @@ export class BatchCluster {
   private readonly _pendingTasks: Task<any>[] = []
   private readonly onIdleInterval: NodeJS.Timer
   private readonly startErrorRate = new Rate()
+  private _spawnedProcs = 0
   private _ended = false
 
   constructor(opts: Partial<BatchClusterOptions> & BatchProcessOptions & ChildProcessFactory) {
@@ -266,7 +267,7 @@ export class BatchCluster {
       clearInterval(this.onIdleInterval)
       _p.removeListener("beforeExit", this.beforeExitListener)
       _p.removeListener("exit", this.exitListener)
-      this.procs().forEach(p => p.end(gracefully))
+      this._procs.forEach(p => p.end(gracefully))
     }
     return this.endPromise
   }
@@ -290,28 +291,40 @@ export class BatchCluster {
   }
 
   /**
+   * @return the number of pending tasks
+   */
+  get pendingTasks(): number {
+    return this._pendingTasks.length
+  }
+
+  /**
    * @returns {number} the mean number of tasks completed by child processes
    */
   get meanTasksPerProc(): number {
-    // _tasksPerProc holds the mean of all completed procs
-    const m = this._tasksPerProc.clone()
-    // add the currently running proc taskCounts, too:
-    this._procs.forEach(proc => m.push(proc.taskCount))
-    return m.mean
+    return this._tasksPerProc.mean
+  }
+
+  get spawnedProcs(): number {
+    return this._spawnedProcs
+  }
+
+  get pendingMaintenance(): Promise<void> {
+    return Promise.all(this._procs.filter(p => p.ended).map(p => p.end())) as Promise<void>
   }
 
   private readonly beforeExitListener = () => this.end(true)
   private readonly exitListener = () => this.end(false)
 
   private get endPromise(): Promise<void> {
-    return Promise.all(this.procs().map(p => p.exitedPromise)) as Promise<void>
+    return Promise.all(this._procs.map(p => p.exitedPromise)) as Promise<void>
   }
 
   private retryTask(task: Task<any>, error: any) {
     if (task) {
       if (task.retries < this.opts.taskRetries) {
         task.retries++
-        this.enqueueTask(task)
+        // fix for rapid-retry failure from mktags:
+        setTimeout(() => this.enqueueTask(task), 20)
       } else {
         task.onError(error)
       }
@@ -327,24 +340,22 @@ export class BatchCluster {
     }
   }
 
-  private dequeueTask(): Task<any> | undefined {
-    return this._pendingTasks.shift()
-  }
-
   private procs(): BatchProcess[] {
     if (this._procs.length > 0) {
       const minStart = Date.now() - this.opts.maxProcAgeMillis
       // Iterate the array backwards, as we'll be removing _procs as we go:
       for (let i = this._procs.length - 1; i >= 0; i--) {
         const proc = this._procs[i]
-        if (proc.start < minStart) {
-          // This will only be in the case of an aggressive maxProcAgeMillis
+        // Don't end procs that are currently servicing requests:
+        if (proc.idle && (proc.start < minStart || proc.taskCount >= this.opts.maxTasksPerProcess)) {
           proc.end()
         }
-        // Remove exited processes from _procs:
-        if (proc.exited) {
+        // Only remove exited processes from _procs:
+        if (!proc.running) {
+          proc.end() // make sure any pending task is re-enqueued
           this._tasksPerProc.push(proc.taskCount)
           this._procs.splice(i, 1)
+          this.log(proc.pid + " has ended")
         }
       }
     }
@@ -359,26 +370,29 @@ export class BatchCluster {
   }
 
   private onIdle(): void {
-    this.log({ from: "onIdle()", pendingTasks: this._pendingTasks.length, pids: this.pids, idlePids: this._procs.filter(p => p.idle).map(p => p.pid) })
-
     if (this._ended) {
-      // TODO: the clearInterval is right after setting _ended, so why does it
-      // sometimes slip through?
       return
     }
 
+    // calling this.procs is expensive
+    const procs = this.procs()
+
     if (this._pendingTasks.length > 0) {
-      const idleProc = this.procs().find(p => p.idle)
+      const idleProc = procs.find(proc => proc.idle)
       if (idleProc) {
-        const task = this.dequeueTask()
+        const task = this._pendingTasks.shift()
         if (task && !idleProc.execTask(task)) {
-          // re-enqueue, child process refused execution
+          // internal error, re-enqueue, child process refused execution
           this.enqueueTask(task)
         }
-      } else if (this.procs().length < this.opts.maxProcs) {
-        this._procs.push(new BatchProcess(this.opts.processFactory(), this.opts, this.observer))
-        // this new proc will send an onIdle() when it's ready.
       }
+    }
+    if (this._pendingTasks.length > 0 && procs.length < this.opts.maxProcs) {
+      const bp = new BatchProcess(this.opts.processFactory(), this.opts, this.observer)
+      this._procs.push(bp)
+      this.log({ where: "onIdle", msg: bp.pid + " has started" })
+      this._spawnedProcs++
+      // onIdle() will be called by the new proc when its startup task completes.
     }
   }
 }
