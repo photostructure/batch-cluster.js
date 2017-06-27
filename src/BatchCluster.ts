@@ -252,8 +252,8 @@ export class BatchCluster {
       onStartError: this.onStartError.bind(this),
       retryTask: this.retryTask.bind(this)
     }
-    _p.on("beforeExit", this.beforeExitListener)
-    _p.on("exit", this.exitListener)
+    _p.once("beforeExit", this.beforeExitListener)
+    _p.once("exit", this.exitListener)
   }
 
   get ended(): boolean {
@@ -309,14 +309,14 @@ export class BatchCluster {
   }
 
   get pendingMaintenance(): Promise<void> {
-    return Promise.all(this._procs.filter(p => p.ended).map(p => p.end())) as Promise<void>
+    return Promise.all(this._procs.filter(p => p.ended).map(p => p.end())).then(() => undefined)
   }
 
   private readonly beforeExitListener = () => this.end(true)
   private readonly exitListener = () => this.end(false)
 
   private get endPromise(): Promise<void> {
-    return Promise.all(this._procs.map(p => p.exitedPromise)) as Promise<void>
+    return Promise.all(this._procs.map(p => p.exitedPromise)).then(() => undefined)
   }
 
   private retryTask(task: Task<any>, error: any) {

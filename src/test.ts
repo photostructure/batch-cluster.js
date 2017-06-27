@@ -22,7 +22,7 @@ function write(s: string): void {
   stdout.write(s + newline)
 }
 
-const failrate = (env.failrate == null) ? 0 : parseFloat(env.failrate)
+const failrate = (env.failrate == null) ? 0 : parseFloat(env.failrate!)
 const rng = env.rngseed ? require("seedrandom")(env.rngseed) : Math.random
 let last = Promise.resolve()
 

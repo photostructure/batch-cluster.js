@@ -25,7 +25,7 @@ interface WithinTolerance {
 
 declare namespace Chai {
   interface Assertion {
-    withinToleranceOf: WithinTolerance;
-    withinTolOf: WithinTolerance;
+    withinToleranceOf: WithinTolerance
+    withinTolOf: WithinTolerance
   }
 }
