@@ -78,7 +78,7 @@ describe("BatchCluster", function () {
         const iterations = maxProcs
         expect(await Promise.all(runTasks(bc, iterations))).to.eql(expectedResults(iterations))
         await bc.end()
-        expect(bc.spawnedProcs).to.be.within(maxProcs, maxProcs + 3) // because EUNLUCKY
+        expect(bc.spawnedProcs).to.be.within(maxProcs, maxProcs + 4) // because EUNLUCKY
         expect(bc.pids.length).to.eql(0)
         expect(runningSpawnedPids()).to.eql([])
         return
@@ -90,7 +90,7 @@ describe("BatchCluster", function () {
         const tasks = await Promise.all(runTasks(bc, opts.maxTasksPerProcess * maxProcs))
         expect(tasks).to.eql(expectedResults(opts.maxTasksPerProcess * maxProcs))
         expect(bc.pids).to.not.include.members(pids)
-        const upperBoundSpawnedProcs = maxProcs * ((taskRetries === 0) ? 2 : 4) // because fail rate
+        const upperBoundSpawnedProcs = maxProcs * ((taskRetries === 0) ? 2 : 6) // because fail rate
         expect(bc.spawnedProcs).to.be.within(maxProcs, upperBoundSpawnedProcs)
         const lowerBoundMeanTasksPerProc = opts.maxTasksPerProcess * ((taskRetries === 0) ? .9 : .25) // because fail rate
         expect(bc.meanTasksPerProc).to.be.within(lowerBoundMeanTasksPerProc, opts.maxTasksPerProcess)
@@ -104,7 +104,7 @@ describe("BatchCluster", function () {
         expect(await bc.enqueueTask(new Task("downcase Hello", parser))).to.eql("hello")
         const pidsBefore = bc.pids
         const spawnedProcsBefore = bc.spawnedProcs
-        expect(bc.pids.length).to.be.within(1, 2) // we may have spun up another proc due to EUNLUCKY
+        expect(bc.pids.length).to.be.within(1, 3) // we may have spun up another proc due to EUNLUCKY
         const task = new Task("invalid", parser)
         await expect(bc.enqueueTask(task)).to.eventually.be.rejectedWith(/invalid|EUNLUCKY/)
         const newSpawnedProcs = bc.spawnedProcs - spawnedProcsBefore
