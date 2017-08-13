@@ -4,7 +4,7 @@ import { delay } from "./Delay"
 import { Task } from "./Task"
 import { ChildProcess } from "child_process"
 import { kill } from "process"
-import { debuglog, inspect, InspectOptions } from "util"
+import { debuglog, inspect } from "util"
 
 export interface BatchProcessObserver {
   onIdle(): void
@@ -43,7 +43,8 @@ export class BatchProcess {
   private currentTaskTimeout: NodeJS.Timer | undefined
   private readonly startupTask: Task<any>
 
-  constructor(readonly proc: ChildProcess,
+  constructor(
+    readonly proc: ChildProcess,
     readonly opts: InternalBatchProcessOptions,
     readonly observer: BatchProcessObserver
   ) {
@@ -51,20 +52,20 @@ export class BatchProcess {
     this.proc.unref()
 
     // forking or plumbing issues are not the task's fault, so retry:
-    this.proc.on("error", err => this.onError("proc", err))
+    this.proc.on("error", (err) => this.onError("proc", err))
     this.proc.on("close", () => this.onExit())
     this.proc.on("exit", () => this.onExit())
     this.proc.on("disconnect", () => this.onExit())
 
-    this.proc.stdin.on("error", err => this.onError("stdin", err))
+    this.proc.stdin.on("error", (err) => this.onError("stdin", err))
 
-    this.proc.stdout.on("error", err => this.onError("stdout.error", err))
-    this.proc.stdout.on("data", d => this.onData(d))
+    this.proc.stdout.on("error", (err) => this.onError("stdout.error", err))
+    this.proc.stdout.on("data", (d) => this.onData(d))
 
-    this.proc.stderr.on("error", err => this.onError("stderr", err))
-    this.proc.stderr.on("data", err => this.onError("stderr.data", err.toString()))
+    this.proc.stderr.on("error", (err) => this.onError("stderr", err))
+    this.proc.stderr.on("data", (err) => this.onError("stderr.data", err.toString()))
 
-    this.startupTask = new Task(opts.versionCommand, ea => ea)
+    this.startupTask = new Task(opts.versionCommand, (ea) => ea)
 
     // Prevent unhandled rejection showing on console:
     // tslint:disable-next-line:no-empty
@@ -86,11 +87,11 @@ export class BatchProcess {
   }
 
   get idle(): boolean {
-    return !this.ended && (this.currentTask == null)
+    return !this.ended && this.currentTask == null
   }
 
   get busy(): boolean {
-    return !this.ended && (this.currentTask != null)
+    return !this.ended && this.currentTask != null
   }
 
   /**
@@ -111,7 +112,6 @@ export class BatchProcess {
   execTask(task: Task<any>): boolean {
     if (!this.idle) {
       console.error("batch-process INTERNAL ERROR: BatchProcess.execTask() called when not idle", {
-        
         from: "execTask()",
         error: "This proc is not idle, and cannot exec task",
         ended: this.ended,
@@ -122,7 +122,8 @@ export class BatchProcess {
     this._taskCount++
     this.currentTask = task
     const cmd = ensureSuffix(task.command, "\n")
-    const timeout = (task === this.startupTask) ? this.opts.spawnTimeoutMillis : this.opts.taskTimeoutMillis
+    const timeout =
+      task === this.startupTask ? this.opts.spawnTimeoutMillis : this.opts.taskTimeoutMillis
     if (timeout > 0) {
       this.currentTaskTimeout = setTimeout(() => this.onTimeout(task), timeout)
     }
@@ -154,7 +155,8 @@ export class BatchProcess {
     if (this.running) {
       await Promise.race(tasks)
     }
-    if (this.running) { // this child proc didn't die gracefully. Send a kill signal.
+    if (this.running) {
+      // this child proc didn't die gracefully. Send a kill signal.
       this.log({ where: "end(" + gracefully + ")", pid: this.pid, msg: "killing" })
       this.proc.kill(this.opts.shutdownSignal)
     }
@@ -163,9 +165,12 @@ export class BatchProcess {
   }
 
   private log(obj: any): void {
-    debuglog("batch-cluster:process")(inspect(
-      { time: new Date().toISOString(), pid: this.pid, ...obj, from: "BatchProcess." + obj.from },
-      { colors: true, breakLength: 80 } as InspectOptions))
+    debuglog("batch-cluster:process")(
+      inspect(
+        { time: new Date().toISOString(), pid: this.pid, ...obj, from: "BatchProcess." + obj.from },
+        { colors: true, breakLength: 80 }
+      )
+    )
   }
 
   private onTimeout(task: Task<any>): void {
@@ -178,7 +183,16 @@ export class BatchProcess {
     if (task == null) {
       task = this.currentTask
     }
-    this.log({ from: "onError()", pid: this.pid, alive: this.running, ended: this._ended, source, error, retryTask, taskRetries: task ? task.retries : "null" })
+    this.log({
+      from: "onError()",
+      pid: this.pid,
+      alive: this.running,
+      ended: this._ended,
+      source,
+      error,
+      retryTask,
+      taskRetries: task ? task.retries : "null"
+    })
     const errorMsg = source + ": " + (error.stack || error)
 
     // clear the task before ending so the onExit from end() doesn't retry the task:
@@ -254,7 +268,9 @@ export class BatchProcess {
     this.clearCurrentTask()
     if (task == null) {
       if (result.length > 0 && !this._ended) {
-        console.error("batch-process INTERNAL ERROR: no current task in resolveCurrentTask() result: " + result)
+        console.error(
+          "batch-process INTERNAL ERROR: no current task in resolveCurrentTask() result: " + result
+        )
       }
       this.end()
     } else {
@@ -274,7 +290,7 @@ function ensureSuffix(s: string, suffix: string): string {
 export function running(pid: number): boolean {
   try {
     const result = kill(pid, 0)
-    return (typeof result === "boolean") ? result : true
+    return typeof result === "boolean" ? result : true
   } catch (err) {
     return false
   }

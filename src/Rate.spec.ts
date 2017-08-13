@@ -4,7 +4,6 @@ import { expect, times } from "./spec"
 const tk = require("timekeeper")
 
 describe("Rate", () => {
-
   const now = Date.now()
   let r: Rate
 
@@ -15,10 +14,10 @@ describe("Rate", () => {
 
   after(() => tk.reset())
 
-  function expectRate(r: Rate, epm: number, tol: number = .25) {
-    expect(r.eventsPerMillisecond).to.be.withinToleranceOf(epm, tol)
-    expect(r.eventsPerSecond).to.be.withinToleranceOf(epm * 1000, tol)
-    expect(r.eventsPerMinute).to.be.withinToleranceOf(epm * 60 * 1000, tol)
+  function expectRate(rate: Rate, epm: number, tol: number = 0.25) {
+    expect(rate.eventsPerMillisecond).to.be.withinToleranceOf(epm, tol)
+    expect(rate.eventsPerSecond).to.be.withinToleranceOf(epm * 1000, tol)
+    expect(rate.eventsPerMinute).to.be.withinToleranceOf(epm * 60 * 1000, tol)
   }
 
   it("is born with a rate of 0", () => {
@@ -34,7 +33,7 @@ describe("Rate", () => {
     r.onEvent()
     expectRate(r, 0)
     tk.freeze(now + r.windowMillis)
-    expectRate(r, .5 / r.windowMillis) // .5, not 1, because it will be averaged with 0s
+    expectRate(r, 0.5 / r.windowMillis) // .5, not 1, because it will be averaged with 0s
     tk.freeze(now + 1.25 * r.windowMillis * r.windows)
     expectRate(r, 0)
   })
@@ -44,16 +43,16 @@ describe("Rate", () => {
     r.onEvent()
     tk.freeze(now + r.windowMillis)
     expectRate(r, 1 / r.windowMillis) // 1, not 2, because it will be averaged with 0s
-  });
+  })
 
-  [10, 100, 1000].forEach(events => {
+  ;[10, 100, 1000].forEach((events) => {
     it("calculates average rate for " + events + " events", () => {
       const period = r.windowMillis * r.windows
       times(events, (i) => {
         tk.freeze(now + period * i / events)
         r.onEvent()
       })
-      expectRate(r, events / period, .1)
+      expectRate(r, events / period, 0.1)
     })
   })
 })

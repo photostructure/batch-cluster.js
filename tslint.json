@@ -1,22 +1,22 @@
 {
-  "extends": "tslint-config-standard",
-  "rulesDirectory": [
-    "node_modules/tslint-eslint-rules/dist/rules"
-  ],
+  "extends": ["tslint:latest", "tslint-config-standard"],
   "rules": {
-    "no-constant-condition": true,
-    "no-unused-expression": false, // < buggy
-    "no-extra-semi": true,
-    "no-unsafe-finally": true,
-    "no-use-before-declare": true,
-    "valid-typeof": true,
-    "quotemark": [
-      true,
-      "double"
-    ],
-    "space-before-function-paren": [
-      false,
-      "always"
-    ]
+    "align": [false],
+    "await-promise": [false],
+    "interface-name": [false],
+    "max-classes-per-file": [false],
+    "no-console": [false],
+    "no-floating-promises": [false],
+    "no-namespace": [false],
+    "no-string-literal": false,
+    "no-unused-expression": false,
+    "no-unused-variable": false,
+    "no-var-requires": false,
+    "object-literal-sort-keys": false,
+    "ordered-imports": [false],
+    "quotemark": [true, "double"],
+    "space-before-function-paren": [false, "always"],
+    "strict-type-predicates": false,
+    "valid-typeof": true
   }
 }

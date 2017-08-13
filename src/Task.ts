@@ -1,11 +1,6 @@
 import { Deferred } from "./Deferred"
 
-export interface Parser<T> {
-  /**
-   * @throw "Error" on invalid input
-   */
-  (data: string): T
-}
+export type Parser<T> = (data: string) => T
 
 export class Task<T> {
   retries = 0

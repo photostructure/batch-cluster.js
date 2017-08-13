@@ -1,17 +1,17 @@
 import { running } from "./BatchProcess"
 import { expect } from "./spec"
-import { spawn, ChildProcess } from "child_process"
-import * as _p from "process"
+import { ChildProcess, spawn } from "child_process"
 import { join } from "path"
+import * as _p from "process"
 
 export const procs: ChildProcess[] = []
 
 export function spawnedPids(): number[] {
-  return procs.map(proc => proc.pid)
+  return procs.map((proc) => proc.pid)
 }
 
 export function runningSpawnedPids(): number[] {
-  return procs.filter(proc => running(proc.pid)).map(proc => proc.pid)
+  return procs.filter((proc) => running(proc.pid)).map((proc) => proc.pid)
 }
 
 export function processFactory(env: any = {}): ChildProcess {
@@ -21,20 +21,21 @@ export function processFactory(env: any = {}): ChildProcess {
 }
 
 describe("test.js", () => {
-
   let child: ChildProcess
   let output: string
 
   beforeEach(() => {
     output = ""
     child = processFactory({ rngseed: "hello" })
-    child.on("error", (err: any) => { throw err })
+    child.on("error", (err: any) => {
+      throw err
+    })
     child.stdout.on("data", (buff: any) => {
       output += buff.toString()
     })
   })
 
-  function assertStdout(expectedOutput: string, done: Function) {
+  function assertStdout(expectedOutput: string, done: () => void) {
     child.stdout.on("end", () => {
       expect(output.trim()).to.eql(expectedOutput)
       done()
@@ -57,14 +58,17 @@ describe("test.js", () => {
 
   it("flakes out the first N responses", (done) => {
     // These random numbers are consistent because we have a consistent rngseed:
-    assertStdout([
-      "flaky response (r: 0.55, flakeRate: 0.50)",
-      "PASS",
-      "flaky response (r: 0.44, flakeRate: 0.00)",
-      "PASS",
-      "flaky response (r: 0.55, flakeRate: 1.00)",
-      "FAIL"
-    ].join("\n"), done)
+    assertStdout(
+      [
+        "flaky response (r: 0.55, flakeRate: 0.50)",
+        "PASS",
+        "flaky response (r: 0.44, flakeRate: 0.00)",
+        "PASS",
+        "flaky response (r: 0.55, flakeRate: 1.00)",
+        "FAIL"
+      ].join("\n"),
+      done
+    )
     child.stdin.end("flaky .5\nflaky 0\nflaky 1\nexit\n")
   })
 })

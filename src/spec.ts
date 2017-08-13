@@ -19,9 +19,11 @@ export function times<T>(n: number, f: ((idx: number) => T)): T[] {
 
 // because @types/chai-withintoleranceof isn't a thing (yet)
 
-interface WithinTolerance {
-  (expected: number, tol: number | number[], message?: string): Chai.Assertion
-}
+type WithinTolerance = (
+  expected: number,
+  tol: number | number[],
+  message?: string
+) => Chai.Assertion
 
 declare namespace Chai {
   interface Assertion {

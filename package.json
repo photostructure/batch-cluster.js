@@ -6,7 +6,7 @@
   "types": "dist/BatchCluster.d.ts",
   "scripts": {
     "clean": "rimraf dist",
-    "lint": "tslint --fix src/**/*.ts",
+    "lint": "tslint --type-check --project . -t verbose --fix src/**/*.ts",
     "compile": "tsc",
     "tscw": "rimraf dist & tsc -w",
     "pretest": "run-s clean compile",
@@ -35,7 +35,6 @@
     "timekeeper": "^1.0.0",
     "tslint": "^5.6.0",
     "tslint-config-standard": "^6.0.1",
-    "tslint-eslint-rules": "^4.1.1",
     "typescript": "^2.4.2"
   }
 }

@@ -67,4 +67,4 @@ async function onLine(line: string): Promise<void> {
   return
 }
 
-rl.on("line", line => last = last.then(() => onLine(line)))
+rl.on("line", (line) => last = last.then(() => onLine(line)))

@@ -3,7 +3,7 @@ import { Rate } from "./Rate"
 import { Task } from "./Task"
 import { ChildProcess } from "child_process"
 import * as _p from "process"
-import { debuglog, inspect, InspectOptions } from "util"
+import { debuglog, inspect } from "util"
 
 /**
  * These are required parameters for a given BatchCluster.
@@ -235,7 +235,7 @@ export class BatchCluster {
   private readonly opts: AllOpts
   private readonly observer: BatchProcessObserver
   private readonly _procs: BatchProcess[] = []
-  private readonly _pendingTasks: Task<any>[] = []
+  private readonly _pendingTasks: Array<Task<any>> = []
   private readonly onIdleInterval: NodeJS.Timer
   private readonly startErrorRate = new Rate()
   private _spawnedProcs = 0
@@ -267,7 +267,7 @@ export class BatchCluster {
       clearInterval(this.onIdleInterval)
       _p.removeListener("beforeExit", this.beforeExitListener)
       _p.removeListener("exit", this.exitListener)
-      this._procs.forEach(p => p.end(gracefully))
+      this._procs.forEach((p) => p.end(gracefully))
     }
     return this.endPromise
   }
@@ -287,7 +287,7 @@ export class BatchCluster {
    * tests, but most likely not generally interesting.
    */
   get pids(): number[] {
-    return this.procs().map(p => p.pid)
+    return this.procs().map((p) => p.pid)
   }
 
   /**
@@ -309,14 +309,14 @@ export class BatchCluster {
   }
 
   get pendingMaintenance(): Promise<void> {
-    return Promise.all(this._procs.filter(p => p.ended).map(p => p.end())).then(() => undefined)
+    return Promise.all(this._procs.filter((p) => p.ended).map((p) => p.end())).then(() => undefined)
   }
 
   private readonly beforeExitListener = () => this.end(true)
   private readonly exitListener = () => this.end(false)
 
   private get endPromise(): Promise<void> {
-    return Promise.all(this._procs.map(p => p.exitedPromise)).then(() => undefined)
+    return Promise.all(this._procs.map((p) => p.exitedPromise)).then(() => undefined)
   }
 
   private retryTask(task: Task<any>, error: any) {
@@ -365,7 +365,7 @@ export class BatchCluster {
   private log(obj: any): void {
     debuglog("batch-cluster")(inspect(
       { time: new Date().toISOString(), ...obj, from: "BatchCluster." + obj.from },
-      { colors: true, breakLength: 80 } as InspectOptions
+      { colors: true, breakLength: 80 }
     ))
   }
 
@@ -378,7 +378,7 @@ export class BatchCluster {
     const procs = this.procs()
 
     if (this._pendingTasks.length > 0) {
-      const idleProc = procs.find(proc => proc.idle)
+      const idleProc = procs.find((proc) => proc.idle)
       if (idleProc) {
         const task = this._pendingTasks.shift()
         if (task && !idleProc.execTask(task)) {

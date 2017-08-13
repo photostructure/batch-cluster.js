@@ -4,7 +4,7 @@ import { delay } from "./Delay"
 import { expect, parser, times } from "./spec"
 import { Task } from "./Task"
 import { processFactory, runningSpawnedPids, procs } from "./test.spec"
-import { inspect, InspectOptions } from "util"
+import { inspect } from "util"
 
 const defaultOpts = Object.freeze({
   ...new BatchClusterOptions(),
@@ -19,135 +19,153 @@ const defaultOpts = Object.freeze({
   maxReasonableProcessFailuresPerMinute: 1000 // this is so high because failrate is so high
 })
 
-describe("BatchCluster", function () {
-
-  function runTasks(bc: BatchCluster, iterations: number): Promise<string>[] {
-    return times(iterations, i =>
-      bc.enqueueTask(new Task("upcase abc " + i, parser))
-    )
+describe("BatchCluster", () => {
+  function runTasks(bc: BatchCluster, iterations: number): Array<Promise<string>> {
+    return times(iterations, (i) => bc.enqueueTask(new Task("upcase abc " + i, parser)))
   }
 
   function expectedResults(iterations: number): string[] {
-    return times(iterations, i => "ABC " + i)
+    return times(iterations, (i) => "ABC " + i)
   }
 
   // used to seed the failure RNG, to make tests deterministic:
   let callcount = 0
 
-  function specsWithOptions(newline: string, taskRetries: number, maxProcs: number, retryTasksAfterTimeout: boolean) {
-    describe(inspect({ newline, taskRetries, maxProcs, retryTasksAfterTimeout }, { colors: true, breakLength: 100 } as InspectOptions), () => {
-      let bc: BatchCluster
-      const opts = {
-        ...defaultOpts,
-        taskRetries,
-        maxProcs,
-        retryTasksAfterTimeout
-      }
+  function specsWithOptions(
+    newline: string,
+    taskRetries: number,
+    maxProcs: number,
+    retryTasksAfterTimeout: boolean
+  ) {
+    describe(
+      inspect(
+        { newline, taskRetries, maxProcs, retryTasksAfterTimeout },
+        { colors: true, breakLength: 100 }
+      ),
+      () => {
+        let bc: BatchCluster
+        const opts = {
+          ...defaultOpts,
+          taskRetries,
+          maxProcs,
+          retryTasksAfterTimeout
+        }
 
-      // failrate needs to be high enough to trigger but low enough to allow
-      // retries to succeed.
+        // failrate needs to be high enough to trigger but low enough to allow
+        // retries to succeed.
 
-      let failrate: string
+        let failrate: string
 
-      beforeEach(() => {
-        // Seeding the RNG deterministically gives us repeatable test successes.
-        failrate = taskRetries === 0 ? "0" : "0.1"
+        beforeEach(() => {
+          // Seeding the RNG deterministically gives us repeatable test successes.
+          failrate = taskRetries === 0 ? "0" : "0.1"
 
-        bc = new BatchCluster({
-          ...opts,
-          // seed needs to change for each process, or we'll always be
-          // lucky or unlucky
-          processFactory: () => processFactory({ newline, failrate, rngseed: "SEED" + (callcount++) })
+          bc = new BatchCluster({
+            ...opts,
+            // seed needs to change for each process, or we'll always be
+            // lucky or unlucky
+            processFactory: () =>
+              processFactory({ newline, failrate, rngseed: "SEED" + callcount++ })
+          })
+          procs.length = 0
         })
-        procs.length = 0
-      })
 
-      afterEach(() => {
-        bc.end(false)
-      })
+        afterEach(() => {
+          bc.end(false)
+        })
 
-      it("calling .end() when new no-ops", async () => {
-        await bc.end()
-        expect(bc.pids.length).to.eql(0)
-        expect(bc.spawnedProcs).to.eql(0)
-        return
-      })
+        it("calling .end() when new no-ops", async () => {
+          await bc.end()
+          expect(bc.pids.length).to.eql(0)
+          expect(bc.spawnedProcs).to.eql(0)
+          return
+        })
 
-      it("calling .end() after running shuts down child procs", async () => {
-        // This just warms up bc to make child procs:
-        const iterations = maxProcs
-        expect(await Promise.all(runTasks(bc, iterations))).to.eql(expectedResults(iterations))
-        await bc.end()
-        expect(bc.spawnedProcs).to.be.within(maxProcs, maxProcs + 4) // because EUNLUCKY
-        expect(bc.pids.length).to.eql(0)
-        expect(runningSpawnedPids()).to.eql([])
-        return
-      })
+        it("calling .end() after running shuts down child procs", async () => {
+          // This just warms up bc to make child procs:
+          const iterations = maxProcs
+          expect(await Promise.all(runTasks(bc, iterations))).to.eql(expectedResults(iterations))
+          await bc.end()
+          expect(bc.spawnedProcs).to.be.within(maxProcs, maxProcs + 4) // because EUNLUCKY
+          expect(bc.pids.length).to.eql(0)
+          expect(runningSpawnedPids()).to.eql([])
+          return
+        })
 
-      it("runs a given batch process roughly " + opts.maxTasksPerProcess + " before recycling", async () => {
-        await Promise.all(runTasks(bc, maxProcs))
-        const pids = bc.pids
-        const tasks = await Promise.all(runTasks(bc, opts.maxTasksPerProcess * maxProcs))
-        expect(tasks).to.eql(expectedResults(opts.maxTasksPerProcess * maxProcs))
-        expect(bc.pids).to.not.include.members(pids)
-        const upperBoundSpawnedProcs = maxProcs * ((taskRetries === 0) ? 2 : 6) // because fail rate
-        expect(bc.spawnedProcs).to.be.within(maxProcs, upperBoundSpawnedProcs)
-        const lowerBoundMeanTasksPerProc = opts.maxTasksPerProcess * ((taskRetries === 0) ? .9 : .25) // because fail rate
-        expect(bc.meanTasksPerProc).to.be.within(lowerBoundMeanTasksPerProc, opts.maxTasksPerProcess)
-        await bc.pendingMaintenance
-        expect(runningSpawnedPids().length).to.lte(maxProcs)
-        return
-      })
+        it(
+          "runs a given batch process roughly " + opts.maxTasksPerProcess + " before recycling",
+          async () => {
+            await Promise.all(runTasks(bc, maxProcs))
+            const pids = bc.pids
+            const tasks = await Promise.all(runTasks(bc, opts.maxTasksPerProcess * maxProcs))
+            expect(tasks).to.eql(expectedResults(opts.maxTasksPerProcess * maxProcs))
+            expect(bc.pids).to.not.include.members(pids)
+            const upperBoundSpawnedProcs = maxProcs * (taskRetries === 0 ? 2 : 6) // because fail rate
+            expect(bc.spawnedProcs).to.be.within(maxProcs, upperBoundSpawnedProcs)
+            const lowerBoundMeanTasksPerProc =
+              opts.maxTasksPerProcess * (taskRetries === 0 ? 0.9 : 0.25) // because fail rate
+            expect(bc.meanTasksPerProc).to.be.within(
+              lowerBoundMeanTasksPerProc,
+              opts.maxTasksPerProcess
+            )
+            await bc.pendingMaintenance
+            expect(runningSpawnedPids().length).to.lte(maxProcs)
+            return
+          }
+        )
 
-      it("recycles procs if the command is invalid", async () => {
-        // we need to run one task to "prime the pid pump"
-        expect(await bc.enqueueTask(new Task("downcase Hello", parser))).to.eql("hello")
-        const pidsBefore = bc.pids
-        const spawnedProcsBefore = bc.spawnedProcs
-        expect(bc.pids.length).to.be.within(1, 3) // we may have spun up another proc due to EUNLUCKY
-        const task = new Task("invalid", parser)
-        await expect(bc.enqueueTask(task)).to.eventually.be.rejectedWith(/invalid|EUNLUCKY/)
-        const newSpawnedProcs = bc.spawnedProcs - spawnedProcsBefore
-        expect(newSpawnedProcs).to.be.within(opts.taskRetries, opts.taskRetries + 3) // because EUNLUCKY
-        expect(bc.pids).to.not.eql(pidsBefore) // at least one pid should be shut down now
-        expect(task.retries).to.eql(opts.taskRetries)
-        return
-      })
+        it("recycles procs if the command is invalid", async () => {
+          // we need to run one task to "prime the pid pump"
+          expect(await bc.enqueueTask(new Task("downcase Hello", parser))).to.eql("hello")
+          const pidsBefore = bc.pids
+          const spawnedProcsBefore = bc.spawnedProcs
+          expect(bc.pids.length).to.be.within(1, 3) // we may have spun up another proc due to EUNLUCKY
+          const task = new Task("invalid", parser)
+          await expect(bc.enqueueTask(task)).to.eventually.be.rejectedWith(/invalid|EUNLUCKY/)
+          const newSpawnedProcs = bc.spawnedProcs - spawnedProcsBefore
+          expect(newSpawnedProcs).to.be.within(opts.taskRetries, opts.taskRetries + 3) // because EUNLUCKY
+          expect(bc.pids).to.not.eql(pidsBefore) // at least one pid should be shut down now
+          expect(task.retries).to.eql(opts.taskRetries)
+          return
+        })
 
-      if (opts.taskRetries > 0) {
-        it("retries a flaky task", async () => {
-          callcount = 2 // for a consistent rngseed
-          const task = new Task("flaky .5", parser)
-          expect(await bc.enqueueTask(task)).to.startWith("flaky response")
-          expect(task.retries).to.be.within(2, opts.taskRetries)
+        if (opts.taskRetries > 0) {
+          it("retries a flaky task", async () => {
+            callcount = 2 // for a consistent rngseed
+            const task = new Task("flaky .5", parser)
+            expect(await bc.enqueueTask(task)).to.startWith("flaky response")
+            expect(task.retries).to.be.within(2, opts.taskRetries)
+            return
+          })
+        }
+
+        it("times out slow requests", async () => {
+          const task = new Task("sleep " + (opts.taskTimeoutMillis + 20), parser)
+          await expect(bc.enqueueTask(task)).to.eventually.be.rejectedWith(/timeout|EUNLUCKY/)
+          if (retryTasksAfterTimeout) {
+            expect(task.retries).to.eql(taskRetries)
+          } else {
+            expect(task.retries).to.be.within(0, 1) // because UNLUCKY
+          }
+          return
+        })
+
+        it("rejects a command that emits to stderr", async () => {
+          const task = new Task("stderr omg this should fail", parser)
+          await expect(bc.enqueueTask(task)).to.eventually.be.rejectedWith(
+            /omg this should fail|UNLUCKY/
+          )
+          expect(task.retries).to.eql(taskRetries)
           return
         })
       }
-
-      it("times out slow requests", async () => {
-        const task = new Task("sleep " + (opts.taskTimeoutMillis + 20), parser)
-        await expect(bc.enqueueTask(task)).to.eventually.be.rejectedWith(/timeout|EUNLUCKY/)
-        if (retryTasksAfterTimeout) {
-          expect(task.retries).to.eql(taskRetries)
-        } else {
-          expect(task.retries).to.be.within(0, 1) // because UNLUCKY
-        }
-        return
-      })
-
-      it("rejects a command that emits to stderr", async () => {
-        const task = new Task("stderr omg this should fail", parser)
-        await expect(bc.enqueueTask(task)).to.eventually.be.rejectedWith(/omg this should fail|UNLUCKY/)
-        expect(task.retries).to.eql(taskRetries)
-        return
-      })
-    })
+    )
   }
 
-  ["lf", "crlf"].forEach(newline => {
-    [5, 0].forEach(taskRetries => {
-      [4, 1].forEach(maxProcs => {
-        [true, false].forEach(retryTasksAfterTimeout => {
+  ["lf", "crlf"].forEach((newline) => {
+    [5, 0].forEach((taskRetries) => {
+      [4, 1].forEach((maxProcs) => {
+        [true, false].forEach((retryTasksAfterTimeout) => {
           specsWithOptions(newline, taskRetries, maxProcs, retryTasksAfterTimeout)
         })
       })
@@ -169,7 +187,9 @@ describe("BatchCluster", function () {
     })
 
     it("culls old child procs", async () => {
-      expect(await Promise.all(runTasks(bc, 2 * opts.maxProcs))).to.eql(expectedResults(2 * opts.maxProcs))
+      expect(await Promise.all(runTasks(bc, 2 * opts.maxProcs))).to.eql(
+        expectedResults(2 * opts.maxProcs)
+      )
       expect(bc.pids.length).to.be.within(1, opts.maxProcs)
       await delay(opts.maxProcAgeMillis)
       // Calling .pids calls .procs(), which culls old procs
@@ -193,10 +213,10 @@ describe("BatchCluster", function () {
     it("correctly reports that child procs are running", async () => {
       const task = new Task("sleep 250", parser) // long enough to
       const result = bc.enqueueTask(task)
-      const procs = bc["_procs"] as BatchProcess[]
+      const processes = bc["_procs"] as BatchProcess[]
       expect(task.pending).to.be.true
-      expect(procs.length).to.eql(1)
-      const proc = procs[0]!
+      expect(processes.length).to.eql(1)
+      const proc = processes[0]!
       expect(proc.running).to.be.true
       expect(proc.ended).to.be.false
       await result
@@ -210,7 +230,6 @@ describe("BatchCluster", function () {
   })
 
   describe("opts parsing", () => {
-
     function errToArr(err: any) {
       return err.toString().split(/[:,]/).map((ea: string) => ea.trim())
     }

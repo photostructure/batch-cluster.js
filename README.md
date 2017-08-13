@@ -21,6 +21,11 @@ This package powers
 
 ## Changelog
 
+### v1.4.2
+
+* 📦 Ran code through `prettier` and delinted
+* 📦 Massaged test assertions to pass through slower CI systems
+
 ### v1.4.1
 
 * 📦 Replaced an errant `console.log` with a call to `log`.

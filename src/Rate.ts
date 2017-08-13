@@ -21,7 +21,7 @@ export class Rate {
   }
 
   get eventsPerMillisecond(): number {
-    let mean: number | undefined = undefined
+    let mean: number | undefined
     const now = Date.now()
     const key = this.asKey(now - this.windows * this.windowMillis)
       // ignore the most recent window, which represents less than windowMillis
