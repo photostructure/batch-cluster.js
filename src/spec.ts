@@ -2,12 +2,15 @@ const _chai = require("chai")
 _chai.use(require("chai-string"))
 _chai.use(require("chai-as-promised"))
 _chai.use(require("chai-withintoleranceof"))
+import { platform } from "os"
 
 export { expect } from "chai"
 
 require("source-map-support").install()
 
 export const parser = (ea: string) => ea.trim()
+
+export const isWin = platform().startsWith("win")
 
 process.on("unhandledRejection", (reason: any) => {
   console.error("unhandledRejection:", reason.stack || reason)
