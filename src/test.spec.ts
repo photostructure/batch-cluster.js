@@ -7,11 +7,11 @@ import * as _p from "process"
 export const procs: ChildProcess[] = []
 
 export function spawnedPids(): number[] {
-  return procs.map((proc) => proc.pid)
+  return procs.map(proc => proc.pid)
 }
 
 export function runningSpawnedPids(): number[] {
-  return procs.filter((proc) => running(proc.pid)).map((proc) => proc.pid)
+  return procs.filter(proc => running(proc.pid)).map(proc => proc.pid)
 }
 
 export function processFactory(env: any = {}): ChildProcess {
@@ -36,18 +36,26 @@ describe("test.js", () => {
   })
 
   function assertStdout(expectedOutput: string, done: () => void) {
+    expect(running(child.pid)).to.be.true
     child.stdout.on("end", () => {
       expect(output.trim()).to.eql(expectedOutput)
+      expect(running(child.pid)).to.be.false
       done()
     })
   }
 
-  it("results in expected output", (done) => {
+  it("results in expected output", done => {
     assertStdout("HELLO\nPASS\nworld\nPASS\nFAIL\nv1.2.3\nPASS", done)
-    child.stdin.end("upcase Hello\ndowncase World\ninvalid input\nversion\nexit\n")
+    child.stdin.end(
+      "upcase Hello\ndowncase World\ninvalid input\nversion\nexit\n"
+    )
   })
 
-  it("sleeps serially", (done) => {
+  it("returns a valid pid", () => {
+    expect(running(child.pid)).to.be.true
+  })
+
+  it("sleeps serially", done => {
     const start = Date.now()
     assertStdout("slept 200\nPASS\nslept 201\nPASS\nslept 202\nPASS", () => {
       expect(Date.now() - start).to.be.gte(603)
@@ -56,7 +64,7 @@ describe("test.js", () => {
     child.stdin.end("sleep 200\nsleep 201\nsleep 202\nexit\n")
   })
 
-  it("flakes out the first N responses", (done) => {
+  it("flakes out the first N responses", done => {
     // These random numbers are consistent because we have a consistent rngseed:
     assertStdout(
       [

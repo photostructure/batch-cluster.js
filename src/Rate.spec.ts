@@ -44,11 +44,10 @@ describe("Rate", () => {
     tk.freeze(now + r.windowMillis)
     expectRate(r, 1 / r.windowMillis) // 1, not 2, because it will be averaged with 0s
   })
-
-  ;[10, 100, 1000].forEach((events) => {
+  ;[10, 100, 1000].forEach(events => {
     it("calculates average rate for " + events + " events", () => {
       const period = r.windowMillis * r.windows
-      times(events, (i) => {
+      times(events, i => {
         tk.freeze(now + period * i / events)
         r.onEvent()
       })

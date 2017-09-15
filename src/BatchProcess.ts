@@ -12,7 +12,9 @@ export interface BatchProcessObserver {
   retryTask(task: Task<any>, error: any): void
 }
 
-export interface InternalBatchProcessOptions extends BatchProcessOptions, BatchClusterOptions {
+export interface InternalBatchProcessOptions
+  extends BatchProcessOptions,
+    BatchClusterOptions {
   readonly passRE: RegExp
   readonly failRE: RegExp
 }
@@ -52,20 +54,22 @@ export class BatchProcess {
     this.proc.unref()
 
     // forking or plumbing issues are not the task's fault, so retry:
-    this.proc.on("error", (err) => this.onError("proc", err))
+    this.proc.on("error", err => this.onError("proc", err))
     this.proc.on("close", () => this.onExit())
     this.proc.on("exit", () => this.onExit())
     this.proc.on("disconnect", () => this.onExit())
 
-    this.proc.stdin.on("error", (err) => this.onError("stdin", err))
+    this.proc.stdin.on("error", err => this.onError("stdin", err))
 
-    this.proc.stdout.on("error", (err) => this.onError("stdout.error", err))
-    this.proc.stdout.on("data", (d) => this.onData(d))
+    this.proc.stdout.on("error", err => this.onError("stdout.error", err))
+    this.proc.stdout.on("data", d => this.onData(d))
 
-    this.proc.stderr.on("error", (err) => this.onError("stderr", err))
-    this.proc.stderr.on("data", (err) => this.onError("stderr.data", err.toString()))
+    this.proc.stderr.on("error", err => this.onError("stderr", err))
+    this.proc.stderr.on("data", err =>
+      this.onError("stderr.data", err.toString())
+    )
 
-    this.startupTask = new Task(opts.versionCommand, (ea) => ea)
+    this.startupTask = new Task(opts.versionCommand, ea => ea)
 
     // Prevent unhandled rejection showing on console:
     // tslint:disable-next-line:no-empty
@@ -111,19 +115,24 @@ export class BatchProcess {
 
   execTask(task: Task<any>): boolean {
     if (!this.idle) {
-      console.error("batch-process INTERNAL ERROR: BatchProcess.execTask() called when not idle", {
-        from: "execTask()",
-        error: "This proc is not idle, and cannot exec task",
-        ended: this.ended,
-        currentTask: this.currentTask ? this.currentTask.command : "null"
-      })
+      console.error(
+        "batch-process INTERNAL ERROR: BatchProcess.execTask() called when not idle",
+        {
+          from: "execTask()",
+          error: "This proc is not idle, and cannot exec task",
+          ended: this.ended,
+          currentTask: this.currentTask ? this.currentTask.command : "null"
+        }
+      )
       return false
     }
     this._taskCount++
     this.currentTask = task
     const cmd = ensureSuffix(task.command, "\n")
     const timeout =
-      task === this.startupTask ? this.opts.spawnTimeoutMillis : this.opts.taskTimeoutMillis
+      task === this.startupTask
+        ? this.opts.spawnTimeoutMillis
+        : this.opts.taskTimeoutMillis
     if (timeout > 0) {
       this.currentTaskTimeout = setTimeout(() => this.onTimeout(task), timeout)
     }
@@ -133,12 +142,18 @@ export class BatchProcess {
   }
 
   async end(gracefully: boolean = true): Promise<void> {
-    this.log({ where: "end(" + gracefully + ")", pid: this.pid, _ended: this._ended })
+    this.log({
+      where: "end(" + gracefully + ")",
+      pid: this.pid,
+      _ended: this._ended
+    })
     const tasks = [this.exitedPromise]
 
     if (!this._ended) {
       this._ended = true
-      const cmd = this.opts.exitCommand ? ensureSuffix(this.opts.exitCommand, "\n") : undefined
+      const cmd = this.opts.exitCommand
+        ? ensureSuffix(this.opts.exitCommand, "\n")
+        : undefined
       this.proc.stdin.end(cmd)
       if (gracefully) {
         if (this.opts.endGracefulWaitTimeMillis > 0) {
@@ -157,17 +172,30 @@ export class BatchProcess {
     }
     if (this.running) {
       // this child proc didn't die gracefully. Send a kill signal.
-      this.log({ where: "end(" + gracefully + ")", pid: this.pid, msg: "killing" })
+      this.log({
+        where: "end(" + gracefully + ")",
+        pid: this.pid,
+        msg: "killing"
+      })
       this.proc.kill(this.opts.shutdownSignal)
     }
-    this.log({ where: "end(" + gracefully + ")", pid: this.pid, running: this.running })
+    this.log({
+      where: "end(" + gracefully + ")",
+      pid: this.pid,
+      running: this.running
+    })
     return this.exitedPromise
   }
 
   private log(obj: any): void {
     debuglog("batch-cluster:process")(
       inspect(
-        { time: new Date().toISOString(), pid: this.pid, ...obj, from: "BatchProcess." + obj.from },
+        {
+          time: new Date().toISOString(),
+          pid: this.pid,
+          ...obj,
+          from: "BatchProcess." + obj.from
+        },
         { colors: true, breakLength: 80 }
       )
     )
@@ -175,11 +203,21 @@ export class BatchProcess {
 
   private onTimeout(task: Task<any>): void {
     if (task === this.currentTask && task.pending) {
-      this.onError("timeout", new Error("timeout"), this.opts.retryTasksAfterTimeout, task)
+      this.onError(
+        "timeout",
+        new Error("timeout"),
+        this.opts.retryTasksAfterTimeout,
+        task
+      )
     }
   }
 
-  private async onError(source: string, error: any, retryTask: boolean = true, task?: Task<any>) {
+  private async onError(
+    source: string,
+    error: any,
+    retryTask: boolean = true,
+    task?: Task<any>
+  ) {
     if (task == null) {
       task = this.currentTask
     }
@@ -269,7 +307,8 @@ export class BatchProcess {
     if (task == null) {
       if (result.length > 0 && !this._ended) {
         console.error(
-          "batch-process INTERNAL ERROR: no current task in resolveCurrentTask() result: " + result
+          "batch-process INTERNAL ERROR: no current task in resolveCurrentTask() result: " +
+            result
         )
       }
       this.end()
@@ -289,9 +328,9 @@ function ensureSuffix(s: string, suffix: string): string {
 
 export function running(pid: number): boolean {
   try {
-    const result = kill(pid, 0)
+    const result = kill(pid, 0) as any // node 7 and 8 return a boolean, but types are borked
     return typeof result === "boolean" ? result : true
-  } catch (err) {
-    return false
+  } catch (e) {
+    return e.code === "EPERM" || e.errno === "EPERM"
   }
 }

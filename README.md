@@ -21,6 +21,11 @@ This package powers
 
 ## Changelog
 
+### v1.5.0
+
+* ✨ `.running()` works correctly for PIDs with different owners now.
+* 📦 `yarn upgrade --latest`
+
 ### v1.4.2
 
 * 📦 Ran code through `prettier` and delinted

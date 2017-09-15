@@ -71,7 +71,7 @@ describe("BatchCluster", () => {
         })
 
         afterEach(() => {
-          bc.end(false)
+          return bc.end(false)
         })
 
         it("calling .end() when new no-ops", async () => {
