@@ -36,7 +36,6 @@ describe("test.js", () => {
   })
 
   function assertStdout(expectedOutput: string, done: () => void) {
-    expect(running(child.pid)).to.be.true
     child.stdout.on("end", () => {
       expect(output.trim()).to.eql(expectedOutput)
       expect(running(child.pid)).to.be.false
