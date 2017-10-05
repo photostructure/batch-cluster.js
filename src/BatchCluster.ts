@@ -230,6 +230,16 @@ class Mean {
   }
 }
 
+/**
+ * BatchCluster instances manage 0 or more homogenious child processes, and
+ * provide the main interface for enqueing `Task`s via `enqueueTask`.
+ *
+ * Given the large number of configuration options, the constructor
+ * receives a single options hash. The most important of these are the
+ * `ChildProcessFactory`, which specifies the factory that creates
+ * ChildProcess instances, and `BatchProcessOptions`, which specifies how
+ * child tasks can be verified and shut down.
+ */
 export class BatchCluster {
   private readonly _tasksPerProc: Mean = new Mean()
   private readonly opts: AllOpts
