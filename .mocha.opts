@@ -1,4 +1,5 @@
 --check-leaks
 --slow=7000
 --timeout=20000
+--exit
 dist/**/*.spec.js
