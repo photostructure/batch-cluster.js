@@ -41,14 +41,14 @@ BatchCluster will ensure a given process is only given one task at a time.
 process.
 
 2. Create a singleton instance of `BatchCluster`. Note the [constructor
-   options](blob/master/src/BatchCluster.ts#L271) takes a union type of [ChildProcessFactory](blob/master/src/BatchCluster.ts#L15) and [BatchProcessOptions](blob/master/src/BatchCluster.ts#L34), both of which have no defaults, and [BatchClusterOptions](blob/master/src/BatchCluster.ts#L64), which has defaults that may or may not be relevant to your application.
+   options](src/BatchCluster.ts#L271) takes a union type of [ChildProcessFactory](src/BatchCluster.ts#L15) and [BatchProcessOptions](src/BatchCluster.ts#L34), both of which have no defaults, and [BatchClusterOptions](src/BatchCluster.ts#L64), which has defaults that may or may not be relevant to your application.
 
-3. Give instances of your `Task` to [enqueueTask](blob/master/src/BatchCluster.ts#L309).
+3. Give instances of your `Task` to [enqueueTask](src/BatchCluster.ts#L309).
 
-See [src/test.ts](blob/master/src/test.ts) for an example child process.
+See [src/test.ts](src/test.ts) for an example child process.
 Note that the script is more than minimal, due to it being designed to be
 flaky to test BatchCluster sufficiently.
 
 ## Changelog
 
-See [CHANGELOG.md](../blob/master/CHANGELOG.md).
+See [CHANGELOG.md](CHANGELOG.md).
