@@ -37,7 +37,7 @@ $ yarn add batch-cluster
 The child process must use `stdin` and `stdout` for control/response.
 BatchCluster will ensure a given process is only given one task at a time.
 
-1. Extend the [Task](blob/master/src/Task.ts#L5) class to parse results from your child
+1. Extend the [Task](src/Task.ts#L5) class to parse results from your child
 process.
 
 2. Create a singleton instance of `BatchCluster`. Note the [constructor
