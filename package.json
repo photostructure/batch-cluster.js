@@ -8,8 +8,6 @@
     "clean": "rimraf dist",
     "lint": "tslint --type-check --project . -t verbose --fix src/**/*.ts",
     "compile": "tsc",
-    "predoc": "typedoc -v || echo \"typedoc doesn't work as a devDependency due to a bug with @types/highlight, so `yarn global add typedoc` first.\"",
-    "doc": "rimraf docs & typedoc --theme minimal --out docs src/BatchCluster.ts",
     "tscw": "rimraf dist & tsc -w",
     "pretest": "run-s clean compile",
     "test": "mocha --opts .mocha.opts"

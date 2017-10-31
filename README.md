@@ -37,15 +37,15 @@ $ yarn add batch-cluster
 The child process must use `stdin` and `stdout` for control/response.
 BatchCluster will ensure a given process is only given one task at a time.
 
-1. Extend the [Task](classes/_task_.task.html#constructor) class to parse results from your child
+1. Extend the [Task](blob/master/src/Task.ts#L5) class to parse results from your child
 process.
 
 2. Create a singleton instance of `BatchCluster`. Note the [constructor
-   options](classes/_batchcluster_.batchcluster.html#constructor) takes a union type of [ChildProcessFactory](interfaces/_batchcluster_.childprocessfactory.html) and [BatchProcessOptions](classes/_batchcluster_.batchprocessoptions.html), both of which have no defaults, and [InternalBatchProcessOptions](interfaces/_batchprocess_.internalbatchprocessoptions.html), which has defaults that may or may not be relevant to your application.
+   options](blob/master/src/BatchCluster.ts#L271) takes a union type of [ChildProcessFactory](blob/master/src/BatchCluster.ts#L15) and [BatchProcessOptions](blob/master/src/BatchCluster.ts#L34), both of which have no defaults, and [BatchClusterOptions](blob/master/src/BatchCluster.ts#L64), which has defaults that may or may not be relevant to your application.
 
-3. Give instances of your `Task` to [enqueueTask](classes/_batchcluster_.batchcluster.html#enqueuetask).
+3. Give instances of your `Task` to [enqueueTask](blob/master/src/BatchCluster.ts#L309).
 
-See [src/test.ts](../blob/master/src/test.ts) for an example child process.
+See [src/test.ts](blob/master/src/test.ts) for an example child process.
 Note that the script is more than minimal, due to it being designed to be
 flaky to test BatchCluster sufficiently.
 
