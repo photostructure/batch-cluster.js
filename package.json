@@ -8,6 +8,8 @@
     "clean": "rimraf dist",
     "lint": "tslint --type-check --project . -t verbose --fix src/**/*.ts",
     "compile": "tsc",
+    "predoc": "typedoc -v || echo \"typedoc doesn't work as a devDependency due to a bug with @types/highlight, so `yarn global add typedoc` first.\"",
+    "doc": "rimraf docs & typedoc --theme minimal --out docs src/BatchCluster.ts",
     "tscw": "rimraf dist & tsc -w",
     "pretest": "run-s clean compile",
     "test": "mocha --opts .mocha.opts"
@@ -18,23 +20,22 @@
     "node": ">= 4"
   },
   "devDependencies": {
-    "@types/chai": "^4.0.3",
+    "@types/chai": "^4.0.4",
     "@types/chai-as-promised": "^7.1.0",
-    "@types/chai-string": "^1.1.30",
-    "@types/mocha": "^2.2.41",
-    "@types/node": "^8.0.32",
-    "chai": "^4.1.1",
+    "@types/chai-string": "^1.1.31",
+    "@types/mocha": "^2.2.44",
+    "@types/node": "^8.0.47",
+    "chai": "^4.1.2",
     "chai-as-promised": "^7.1.1",
     "chai-string": "^1.4.0",
     "chai-withintoleranceof": "^1.0.1",
-    "mocha": "^4.0.0",
-    "npm-run-all": "^4.0.2",
+    "mocha": "^4.0.1",
+    "npm-run-all": "^4.1.1",
     "rimraf": "^2.6.2",
     "seedrandom": "^2.4.3",
     "source-map-support": "^0.5.0",
     "timekeeper": "^2.0.0",
-    "tslint": "^5.6.0",
-    "tslint-config-standard": "^6.0.1",
+    "tslint": "^5.8.0",
     "typescript": "^2.5.3"
   }
 }
