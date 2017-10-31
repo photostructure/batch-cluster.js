@@ -41,7 +41,11 @@ BatchCluster will ensure a given process is only given one task at a time.
 process.
 
 2. Create a singleton instance of `BatchCluster`. Note the [constructor
-   options](src/BatchCluster.ts#L271) takes a union type of [ChildProcessFactory](src/BatchCluster.ts#L15) and [BatchProcessOptions](src/BatchCluster.ts#L34), both of which have no defaults, and [BatchClusterOptions](src/BatchCluster.ts#L64), which has defaults that may or may not be relevant to your application.
+   options](src/BatchCluster.ts#L271) takes a union type of
+   [ChildProcessFactory](src/BatchCluster.ts#L15) and
+   [BatchProcessOptions](src/BatchCluster.ts#L34), both of which have no
+   defaults, and [BatchClusterOptions](src/BatchCluster.ts#L64), which has
+   defaults that may or may not be relevant to your application.
 
 3. Give instances of your `Task` to [enqueueTask](src/BatchCluster.ts#L309).
 
