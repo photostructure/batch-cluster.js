@@ -3,7 +3,7 @@ import { BatchProcess } from "./BatchProcess"
 import { delay } from "./Delay"
 import { expect, parser, times } from "./spec"
 import { Task } from "./Task"
-import { processFactory, runningSpawnedPids, procs } from "./test.spec"
+import { processFactory, procs, runningSpawnedPids } from "./test.spec"
 import { inspect } from "util"
 
 const defaultOpts = Object.freeze({
@@ -20,12 +20,17 @@ const defaultOpts = Object.freeze({
 })
 
 describe("BatchCluster", () => {
-  function runTasks(bc: BatchCluster, iterations: number): Array<Promise<string>> {
-    return times(iterations, (i) => bc.enqueueTask(new Task("upcase abc " + i, parser)))
+  function runTasks(
+    bc: BatchCluster,
+    iterations: number
+  ): Array<Promise<string>> {
+    return times(iterations, i =>
+      bc.enqueueTask(new Task("upcase abc " + i, parser))
+    )
   }
 
   function expectedResults(iterations: number): string[] {
-    return times(iterations, (i) => "ABC " + i)
+    return times(iterations, i => "ABC " + i)
   }
 
   // used to seed the failure RNG, to make tests deterministic:
@@ -35,11 +40,12 @@ describe("BatchCluster", () => {
     newline: string,
     taskRetries: number,
     maxProcs: number,
-    retryTasksAfterTimeout: boolean
+    retryTasksAfterTimeout: boolean,
+    ignoreExit: boolean
   ) {
     describe(
       inspect(
-        { newline, taskRetries, maxProcs, retryTasksAfterTimeout },
+        { newline, taskRetries, maxProcs, retryTasksAfterTimeout, ignoreExit },
         { colors: true, breakLength: 100 }
       ),
       () => {
@@ -65,7 +71,12 @@ describe("BatchCluster", () => {
             // seed needs to change for each process, or we'll always be
             // lucky or unlucky
             processFactory: () =>
-              processFactory({ newline, failrate, rngseed: "SEED" + callcount++ })
+              processFactory({
+                newline,
+                failrate,
+                rngseed: "SEED" + callcount++,
+                ignoreExit: ignoreExit ? "1" : "0"
+              })
           })
           procs.length = 0
         })
@@ -84,7 +95,9 @@ describe("BatchCluster", () => {
         it("calling .end() after running shuts down child procs", async () => {
           // This just warms up bc to make child procs:
           const iterations = maxProcs
-          expect(await Promise.all(runTasks(bc, iterations))).to.eql(expectedResults(iterations))
+          expect(await Promise.all(runTasks(bc, iterations))).to.eql(
+            expectedResults(iterations)
+          )
           await bc.end()
           expect(bc.spawnedProcs).to.be.within(maxProcs, maxProcs + 4) // because EUNLUCKY
           expect(bc.pids.length).to.eql(0)
@@ -93,15 +106,25 @@ describe("BatchCluster", () => {
         })
 
         it(
-          "runs a given batch process roughly " + opts.maxTasksPerProcess + " before recycling",
+          "runs a given batch process roughly " +
+            opts.maxTasksPerProcess +
+            " before recycling",
           async () => {
             await Promise.all(runTasks(bc, maxProcs))
             const pids = bc.pids
-            const tasks = await Promise.all(runTasks(bc, opts.maxTasksPerProcess * maxProcs))
-            expect(tasks).to.eql(expectedResults(opts.maxTasksPerProcess * maxProcs))
+            const tasks = await Promise.all(
+              runTasks(bc, opts.maxTasksPerProcess * maxProcs)
+            )
+            expect(tasks).to.eql(
+              expectedResults(opts.maxTasksPerProcess * maxProcs)
+            )
             expect(bc.pids).to.not.include.members(pids)
-            const upperBoundSpawnedProcs = maxProcs * (taskRetries === 0 ? 2 : 6) // because fail rate
-            expect(bc.spawnedProcs).to.be.within(maxProcs, upperBoundSpawnedProcs)
+            const upperBoundSpawnedProcs =
+              maxProcs * (taskRetries === 0 ? 2 : 6) // because fail rate
+            expect(bc.spawnedProcs).to.be.within(
+              maxProcs,
+              upperBoundSpawnedProcs
+            )
             const lowerBoundMeanTasksPerProc =
               opts.maxTasksPerProcess * (taskRetries === 0 ? 0.9 : 0.25) // because fail rate
             expect(bc.meanTasksPerProc).to.be.within(
@@ -116,14 +139,21 @@ describe("BatchCluster", () => {
 
         it("recycles procs if the command is invalid", async () => {
           // we need to run one task to "prime the pid pump"
-          expect(await bc.enqueueTask(new Task("downcase Hello", parser))).to.eql("hello")
+          expect(
+            await bc.enqueueTask(new Task("downcase Hello", parser))
+          ).to.eql("hello")
           const pidsBefore = bc.pids
           const spawnedProcsBefore = bc.spawnedProcs
           expect(bc.pids.length).to.be.within(1, 3) // we may have spun up another proc due to EUNLUCKY
           const task = new Task("invalid", parser)
-          await expect(bc.enqueueTask(task)).to.eventually.be.rejectedWith(/invalid|EUNLUCKY/)
+          await expect(bc.enqueueTask(task)).to.eventually.be.rejectedWith(
+            /invalid|EUNLUCKY/
+          )
           const newSpawnedProcs = bc.spawnedProcs - spawnedProcsBefore
-          expect(newSpawnedProcs).to.be.within(opts.taskRetries, opts.taskRetries + 3) // because EUNLUCKY
+          expect(newSpawnedProcs).to.be.within(
+            opts.taskRetries,
+            opts.taskRetries + 3
+          ) // because EUNLUCKY
           expect(bc.pids).to.not.eql(pidsBefore) // at least one pid should be shut down now
           expect(task.retries).to.eql(opts.taskRetries)
           return
@@ -140,8 +170,13 @@ describe("BatchCluster", () => {
         }
 
         it("times out slow requests", async () => {
-          const task = new Task("sleep " + (opts.taskTimeoutMillis + 20), parser)
-          await expect(bc.enqueueTask(task)).to.eventually.be.rejectedWith(/timeout|EUNLUCKY/)
+          const task = new Task(
+            "sleep " + (opts.taskTimeoutMillis + 20),
+            parser
+          )
+          await expect(bc.enqueueTask(task)).to.eventually.be.rejectedWith(
+            /timeout|EUNLUCKY/
+          )
           if (retryTasksAfterTimeout) {
             expect(task.retries).to.eql(taskRetries)
           } else {
@@ -162,11 +197,19 @@ describe("BatchCluster", () => {
     )
   }
 
-  ["lf", "crlf"].forEach((newline) => {
-    [5, 0].forEach((taskRetries) => {
-      [4, 1].forEach((maxProcs) => {
-        [true, false].forEach((retryTasksAfterTimeout) => {
-          specsWithOptions(newline, taskRetries, maxProcs, retryTasksAfterTimeout)
+  ;["lf", "crlf"].forEach(newline => {
+    ;[5, 0].forEach(taskRetries => {
+      ;[4, 1].forEach(maxProcs => {
+        ;[true, false].forEach(retryTasksAfterTimeout => {
+          ;[true, false].forEach(ignoreExit => {
+            specsWithOptions(
+              newline,
+              taskRetries,
+              maxProcs,
+              retryTasksAfterTimeout,
+              ignoreExit
+            )
+          })
         })
       })
     })
@@ -231,7 +274,10 @@ describe("BatchCluster", () => {
 
   describe("opts parsing", () => {
     function errToArr(err: any) {
-      return err.toString().split(/[:,]/).map((ea: string) => ea.trim())
+      return err
+        .toString()
+        .split(/[:,]/)
+        .map((ea: string) => ea.trim())
     }
 
     it("requires maxProcAgeMillis to be > spawnTimeoutMillis", () => {
@@ -248,7 +294,8 @@ describe("BatchCluster", () => {
         expect(errToArr(err)).to.eql([
           "Error",
           "BatchCluster was given invalid options",
-          "maxProcAgeMillis must be greater than or equal to " + spawnTimeoutMillis
+          "maxProcAgeMillis must be greater than or equal to " +
+            spawnTimeoutMillis
         ])
       }
     })
@@ -267,7 +314,8 @@ describe("BatchCluster", () => {
         expect(errToArr(err)).to.eql([
           "Error",
           "BatchCluster was given invalid options",
-          "maxProcAgeMillis must be greater than or equal to " + taskTimeoutMillis
+          "maxProcAgeMillis must be greater than or equal to " +
+            taskTimeoutMillis
         ])
       }
     })

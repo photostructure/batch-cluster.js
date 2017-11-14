@@ -6,20 +6,81 @@
 [![Build status](https://travis-ci.org/mceachen/batch-cluster.js.svg?branch=master)](https://travis-ci.org/mceachen/batch-cluster.js)
 [![Build status](https://ci.appveyor.com/api/projects/status/4564x6lvc8s6a55l/branch/master?svg=true)](https://ci.appveyor.com/project/mceachen/batch-cluster-js/branch/master)
 
-Many command line tools, like ExifTool and GraphicsMagick, support running
-arbitrary commands via a "batch mode," which amortizes process spin-up
-costs over several, serial request/response pairs, sent via stdin/stdout.
+Many command line tools, like
+[ExifTool](https://sno.phy.queensu.ca/~phil/exiftool/) and
+[GraphicsMagick](http://www.graphicsmagick.org/), support running in a
+"batch mode" that accept commands provided through stdin and results
+through stdout. As these tools can be fairly large, spinning them up can be
+expensive. 
 
-Spinning up N of these child processes on multiprocessor machines gives you
-parallelism.
-
-Distributing requests to these processes, monitoring and restarting processes as
-needed, and shutting them down appropriately, is what this module gives you.
+This module expedites these commands, or "Tasks," by managing a cluster of
+these "batch" processes, feeding tasks to idle processes, retrying tasks
+when the tool crashes, and preventing memory leaks by restarting tasks
+after performing a given number of tasks or after a given set of time has
+elapsed.
 
 This package powers
-[exiftool-vendored](https://github.com/mceachen/exiftool-vendored.js).
+[exiftool-vendored](https://github.com/mceachen/exiftool-vendored.js)
+(whose source you can examine as an example consumer).
+
+## Installation
+
+Depending on your yarn/npm preference:
+
+```bash
+$ npm install --save batch-cluster
+# or
+$ yarn add batch-cluster
+```
+
+## Usage 
+
+The child process must use `stdin` and `stdout` for control/response.
+BatchCluster will ensure a given process is only given one task at a time.
+
+1. Extend the [Task](src/Task.ts#L5) class to parse results from your child
+process.
+
+2. Create a singleton instance of `BatchCluster`. Note the [constructor
+   options](src/BatchCluster.ts#L271) takes a union type of
+   * [ChildProcessFactory](src/BatchCluster.ts#L15) and
+   * [BatchProcessOptions](src/BatchCluster.ts#L34), both of which have no
+   defaults, and 
+   * [BatchClusterOptions](src/BatchCluster.ts#L64), which has
+   defaults that may or may not be relevant to your application.
+
+3. Give instances of your `Task` to [enqueueTask](src/BatchCluster.ts#L309).
+
+See [src/test.ts](src/test.ts) for an example child process.
+Note that the script is more than minimal, due to it being designed to be
+flaky to test BatchCluster sufficiently.
+
+## Versioning
+
+### The `MAJOR` or `API` version is incremented for
+
+* 💔 Non-backwards-compatible API changes
+
+### The `MINOR` or `UPDATE` version is incremented for
+
+* ✨ Backwards-compatible features
+
+### The `PATCH` version is incremented for
+
+* 🐞 Backwards-compatible bug fixes
+* 📦 Minor packaging changes
 
 ## Changelog
+
+
+### v1.6.0
+
+* ✨ Processes are forcefully shut down with `taskkill` on windows and `kill
+  -9` on other unix-like platforms if they don't terminate after sending
+  the `exitCommand`, closing `stdin`, and sending the proc a `SIGTERM`.
+  Added a test harness to exercise.
+* 📦 Upgrade to TypeScript 2.6.1
+* 🐞 `mocha` tests don't require the `--exit` hack anymore 🎉
 
 ### v1.5.0
 
@@ -92,17 +153,3 @@ This package powers
 * ✨ Extracted implementation and tests from
   [exiftool-vendored](https://github.com/mceachen/exiftool-vendored.js)
 
-## Versioning
-
-### The `MAJOR` or `API` version is incremented for
-
-* 💔 Non-backwards-compatible API changes
-
-### The `MINOR` or `UPDATE` version is incremented for
-
-* ✨ Backwards-compatible features
-
-### The `PATCH` version is incremented for
-
-* 🐞 Backwards-compatible bug fixes
-* 📦 Minor packaging changes

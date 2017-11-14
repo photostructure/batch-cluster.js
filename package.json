@@ -4,6 +4,10 @@
   "description": "Manage a cluster of child processes",
   "main": "dist/BatchCluster.js",
   "types": "dist/BatchCluster.d.ts",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mceachen/batch-cluster.js.git"
+  },
   "scripts": {
     "clean": "rimraf dist",
     "lint": "tslint --type-check --project . -t verbose --fix src/**/*.ts",
@@ -18,23 +22,23 @@
     "node": ">= 4"
   },
   "devDependencies": {
-    "@types/chai": "^4.0.3",
+    "@types/chai": "^4.0.4",
     "@types/chai-as-promised": "^7.1.0",
-    "@types/chai-string": "^1.1.30",
-    "@types/mocha": "^2.2.41",
-    "@types/node": "^8.0.20",
-    "chai": "^4.1.1",
+    "@types/chai-string": "^1.1.31",
+    "@types/mocha": "^2.2.44",
+    "@types/node": "^8.0.47",
+    "chai": "^4.1.2",
     "chai-as-promised": "^7.1.1",
     "chai-string": "^1.4.0",
     "chai-withintoleranceof": "^1.0.1",
-    "mocha": "^3.5.3",
-    "npm-run-all": "^4.0.2",
+    "mocha": "^4.0.1",
+    "npm-run-all": "^4.1.1",
     "rimraf": "^2.6.2",
     "seedrandom": "^2.4.3",
-    "source-map-support": "^0.4.15",
+    "source-map-support": "^0.5.0",
     "timekeeper": "^2.0.0",
-    "tslint": "^5.6.0",
-    "tslint-config-standard": "^6.0.1",
-    "typescript": "^2.5.2"
+    "tslint": "^5.8.0",
+    "typescript": "^2.6.1",
+    "wtfnode": "^0.5.5"
   }
 }
