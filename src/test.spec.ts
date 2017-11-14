@@ -34,8 +34,8 @@ describe("test.js", () => {
         this.output += buff.toString()
       })
     }
-    async untilOutput(): Promise<void> {
-      await until(() => this.output.length > 0, 1000)
+    async untilOutput(minLength: number = 0): Promise<void> {
+      await until(() => this.output.length > minLength, 1000)
       return
     }
     async end(): Promise<void> {
@@ -109,7 +109,7 @@ describe("test.js", () => {
   it("doesn't exit if ignoreExit is set", async () => {
     const h = new Harness({ ignoreExit: "1" })
     h.child.stdin.write("upcase Boink\nexit\n")
-    await h.untilOutput()
+    await h.untilOutput("BOINK\nPASS\nignore".length)
     expect(h.output).to.eql("BOINK\nPASS\nignoreExit is set\n")
     expect(h.running).to.be.true
     await h.end()
