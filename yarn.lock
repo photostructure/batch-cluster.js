@@ -659,9 +659,9 @@ type-detect@^4.0.0:
   version "4.0.3"
   resolved "https://registry.yarnpkg.com/type-detect/-/type-detect-4.0.3.tgz#0e3f2670b44099b0b46c284d136a7ef49c74c2ea"
 
-typescript@^2.5.3:
-  version "2.5.3"
-  resolved "https://registry.yarnpkg.com/typescript/-/typescript-2.5.3.tgz#df3dcdc38f3beb800d4bc322646b04a3f6ca7f0d"
+typescript@^2.6.1:
+  version "2.6.1"
+  resolved "https://registry.yarnpkg.com/typescript/-/typescript-2.6.1.tgz#ef39cdea27abac0b500242d6726ab90e0c846631"
 
 validate-npm-package-license@^3.0.1:
   version "3.0.1"
@@ -679,6 +679,10 @@ which@^1.2.9:
 wrappy@1:
   version "1.0.2"
   resolved "https://registry.yarnpkg.com/wrappy/-/wrappy-1.0.2.tgz#b5243d8f3ec1aa35f1364605bc0d1036e30ab69f"
+
+wtfnode@^0.5.5:
+  version "0.5.5"
+  resolved "https://registry.yarnpkg.com/wtfnode/-/wtfnode-0.5.5.tgz#d4698bad4f13d78b1c443371a8f966d234a7b887"
 
 yallist@^2.1.2:
   version "2.1.2"

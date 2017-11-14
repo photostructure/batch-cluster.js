@@ -4,6 +4,10 @@
   "description": "Manage a cluster of child processes",
   "main": "dist/BatchCluster.js",
   "types": "dist/BatchCluster.d.ts",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mceachen/batch-cluster.js.git"
+  },
   "scripts": {
     "clean": "rimraf dist",
     "lint": "tslint --type-check --project . -t verbose --fix src/**/*.ts",
@@ -34,6 +38,7 @@
     "source-map-support": "^0.5.0",
     "timekeeper": "^2.0.0",
     "tslint": "^5.8.0",
-    "typescript": "^2.5.3"
+    "typescript": "^2.6.1",
+    "wtfnode": "^0.5.5"
   }
 }

@@ -7,7 +7,6 @@ import { Rate } from "./Rate"
 import { Task } from "./Task"
 import { ChildProcess } from "child_process"
 import * as _p from "process"
-import { debuglog, inspect } from "util"
 
 /**
  * These are required parameters for a given BatchCluster.
@@ -51,15 +50,16 @@ export class BatchProcessOptions {
 
   /**
    * Command to end the child batch process. If not provided, stdin will be
-   * closed to signal to the child process that it may terminate, and if it does
-   * not shut down within `endGracefulWaitTimeMillis`, it will be SIGHUP'ed.
+   * closed to signal to the child process that it may terminate, and if it
+   * does not shut down within `endGracefulWaitTimeMillis`, it will be
+   * SIGHUP'ed.
    */
   readonly exitCommand?: string
 }
 
 /**
- * These parameter values have somewhat sensible defaults, but can be overridden
- * for a given BatchCluster.
+ * These parameter values have somewhat sensible defaults, but can be
+ * overridden for a given BatchCluster.
  */
 export class BatchClusterOptions {
   /**
@@ -83,8 +83,8 @@ export class BatchClusterOptions {
   readonly maxProcAgeMillis: number = 5 * 60 * 1000
 
   /**
-   * This is the minimum interval between calls to `this.onIdle`, which runs
-   * pending tasks and shuts down old child processes.
+   * This is the minimum interval between calls to `this.onIdle`, which
+   * runs pending tasks and shuts down old child processes.
    *
    * Must be &gt; 0. Defaults to 1 second.
    */
@@ -99,9 +99,9 @@ export class BatchClusterOptions {
   readonly taskRetries: number = 0
 
   /**
-   * If the initial `versionCommand` fails for new spawned processes more than
-   * this rate, end this BatchCluster and throw an error, because something is
-   * terribly wrong.
+   * If the initial `versionCommand` fails for new spawned processes more
+   * than this rate, end this BatchCluster and throw an error, because
+   * something is terribly wrong.
    *
    * If this backstop didn't exist, new (failing) child processes would be
    * created indefinitely.
@@ -111,18 +111,19 @@ export class BatchClusterOptions {
   readonly maxReasonableProcessFailuresPerMinute: number = 10
 
   /**
-   * Spawning new child processes and servicing a "version" task must not take
-   * longer than `spawnTimeoutMillis` before the process is considered failed,
-   * and need to be restarted. Be pessimistic here--windows can regularly take
-   * several seconds to spin up a process, thanks to antivirus shenanigans.
+   * Spawning new child processes and servicing a "version" task must not
+   * take longer than `spawnTimeoutMillis` before the process is considered
+   * failed, and need to be restarted. Be pessimistic here--windows can
+   * regularly take several seconds to spin up a process, thanks to
+   * antivirus shenanigans.
    *
    * Must be &gt;= 100ms. Defaults to 15 seconds.
    */
   readonly spawnTimeoutMillis: number = 15000
 
   /**
-   * If commands take longer than this, presume the underlying process is dead
-   * and we should fail or retry the task.
+   * If commands take longer than this, presume the underlying process is
+   * dead and we should fail or retry the task.
    *
    * This should be set to something on the order of seconds.
    *
@@ -131,45 +132,37 @@ export class BatchClusterOptions {
   readonly taskTimeoutMillis: number = 10000
 
   /**
-   * When tasks don't complete in `taskTimeoutMillis`, should they be retried (a
-   * maximum of `taskRetries`)? If taskRetries is set to 0, this value is
-   * meaningless.
+   * When tasks don't complete in `taskTimeoutMillis`, should they be
+   * retried (a maximum of `taskRetries`)? If taskRetries is set to 0, this
+   * value is meaningless.
    *
    * Defaults to false.
    */
   readonly retryTasksAfterTimeout: boolean = false
 
   /**
-   * Processes will be recycled after processing `maxTasksPerProcess` tasks.
-   * Depending on the commands and platform, batch mode commands shouldn't
-   * exhibit unduly memory leaks for at least tens if not hundreds of tasks.
-   * Setting this to a low number (like less than 10) will impact performance
-   * markedly, due to OS process start/stop maintenance. Setting this to a very
-   * high number (> 1000) may result in more memory being consumed than
-   * necessary.
+   * Processes will be recycled after processing `maxTasksPerProcess`
+   * tasks. Depending on the commands and platform, batch mode commands
+   * shouldn't exhibit unduly memory leaks for at least tens if not
+   * hundreds of tasks. Setting this to a low number (like less than 10)
+   * will impact performance markedly, due to OS process start/stop
+   * maintenance. Setting this to a very high number (> 1000) may result in
+   * more memory being consumed than necessary.
    *
    * Must be &gt;= 0. Defaults to 500
    */
   readonly maxTasksPerProcess: number = 500
 
   /**
-   * When `this.end()` is called, or Node broadcasts the `beforeExit` event,
-   * this is the milliseconds spent waiting for currently running tasks to
-   * finish before sending kill signals to child processes.
+   * When `this.end()` is called, or Node broadcasts the `beforeExit`
+   * event, this is the milliseconds spent waiting for currently running
+   * tasks to finish before sending kill signals to child processes.
    *
-   * Setting this value to 0 means child processes will immediately receive a
-   * kill signal to shut down. Any pending requests may be interrupted. Must be
-   * &gt;= 0. Defaults to 500ms.
+   * Setting this value to 0 means child processes will immediately receive
+   * a kill signal to shut down. Any pending requests may be interrupted.
+   * Must be &gt;= 0. Defaults to 500ms.
    */
   readonly endGracefulWaitTimeMillis: number = 500
-
-  /**
-   * Signal sent to child processes if they don't shut down gracefully after
-   * given the `exitCommand` and waiting for `endGracefulWaitTimeMillis`.
-   *
-   * Must be a valid signal name. Defaults to `SIGTERM`.
-   */
-  readonly shutdownSignal: string = "SIGTERM"
 }
 
 function verifyOptions(
@@ -371,11 +364,6 @@ export class BatchCluster {
 
   private onStartError(error: any): void {
     this.startErrorRate.onEvent()
-    this.log({
-      from: "onStartError()",
-      error,
-      startErrorRate: this.startErrorRate.eventsPerSecond
-    })
     if (
       this.startErrorRate.eventsPerMinute >
       this.opts.maxReasonableProcessFailuresPerMinute
@@ -402,31 +390,19 @@ export class BatchCluster {
           (proc.start < minStart ||
             proc.taskCount >= this.opts.maxTasksPerProcess)
         ) {
-          proc.end()
+          // No need to be graceful, just shut down.
+          const gracefully = false
+          proc.end(gracefully)
         }
         // Only remove exited processes from _procs:
         if (!proc.running) {
           proc.end() // make sure any pending task is re-enqueued
           this._tasksPerProc.push(proc.taskCount)
           this._procs.splice(i, 1)
-          this.log(proc.pid + " has ended")
         }
       }
     }
     return this._procs
-  }
-
-  private log(obj: any): void {
-    debuglog("batch-cluster")(
-      inspect(
-        {
-          time: new Date().toISOString(),
-          ...obj,
-          from: "BatchCluster." + obj.from
-        },
-        { colors: true, breakLength: 80 }
-      )
-    )
   }
 
   private onIdle(): void {
@@ -454,7 +430,6 @@ export class BatchCluster {
         this.observer
       )
       this._procs.push(bp)
-      this.log({ where: "onIdle", msg: bp.pid + " has started" })
       this._spawnedProcs++
       // onIdle() will be called by the new proc when its startup task completes.
     }
