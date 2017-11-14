@@ -70,7 +70,7 @@ describe("test.js", () => {
   it("exits properly if ignoreExit is not set", async () => {
     const h = new Harness()
     h.child.stdin.write("upcase fuzzy\nexit\n")
-    await h.untilOutput()
+    await h.untilOutput(9)
     expect(h.output).to.eql("FUZZY\nPASS\n")
     await until(() => !h.running, 500)
     expect(h.running).to.be.false
