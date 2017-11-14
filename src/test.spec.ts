@@ -72,6 +72,7 @@ describe("test.js", () => {
     h.child.stdin.write("upcase fuzzy\nexit\n")
     await h.untilOutput()
     expect(h.output).to.eql("FUZZY\nPASS\n")
+    await until(() => !h.running, 500)
     expect(h.running).to.be.false
     return
   })
