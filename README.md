@@ -72,6 +72,9 @@ flaky to test BatchCluster sufficiently.
 
 ## Changelog
 
+### v1.6.1
+
+* 📦 De-flaked some tests on mac, and added Node 8 to the build matrix. 
 
 ### v1.6.0
 
