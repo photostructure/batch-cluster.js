@@ -278,6 +278,12 @@ function ensureSuffix(s: string, suffix: string): string {
   return s.endsWith(suffix) ? s : s + suffix
 }
 
+/**
+ * @export
+ * @param {number} pid process id. Required.
+ * @returns {boolean} true if the given process id is in the local process
+ * table.
+ */
 export function running(pid: number): boolean {
   const r = (() => {
     try {
@@ -292,6 +298,14 @@ export function running(pid: number): boolean {
 
 const isWin = _os.platform().startsWith("win")
 
+/**
+ * Send a signal to the given process id.
+ * 
+ * @export
+ * @param {number} pid the process id. Required.
+ * @param {boolean} [force=false] if true, and the current user has
+ * permissions to send the signal, the pid will be forced to shut down.
+ */
 export function kill(pid: number, force: boolean = false): void {
   if (isWin) {
     const args = ["/pid", pid.toString(), "/T"]

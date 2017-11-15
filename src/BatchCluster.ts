@@ -21,8 +21,9 @@ export interface ChildProcessFactory {
 }
 
 export { Deferred } from "./Deferred"
-export { Task, Parser } from "./Task"
 export { delay } from "./Delay"
+export { kill, running } from "./BatchProcess"
+export { Task, Parser } from "./Task"
 
 /**
  * `BatchProcessOptions` have no reasonable defaults, as they are specific

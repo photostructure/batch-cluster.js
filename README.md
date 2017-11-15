@@ -72,6 +72,10 @@ flaky to test BatchCluster sufficiently.
 
 ## Changelog
 
+### v1.7.0
+
+* 📦 Exported `kill()` and `running()` from `BatchProcess`
+
 ### v1.6.1
 
 * 📦 De-flaked some tests on mac, and added Node 8 to the build matrix. 
