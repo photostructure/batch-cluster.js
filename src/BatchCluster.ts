@@ -39,12 +39,14 @@ export class BatchProcessOptions {
   readonly versionCommand: string
 
   /**
-   * Expected text to print if a command passes. Cannot be blank.
+   * Expected text to print if a command passes. Cannot be blank. Will be
+   * interpreted as a regular expression fragment. 
    */
   readonly pass: string
 
   /**
-   * Expected text to print if a command fails. Cannot be blank.
+   * Expected text to print if a command fails. Cannot be blank. Will be
+   * interpreted as a regular expression fragment.
    */
   readonly fail: string
 
