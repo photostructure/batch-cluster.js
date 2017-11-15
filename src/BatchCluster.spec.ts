@@ -171,7 +171,7 @@ describe("BatchCluster", () => {
 
         it("times out slow requests", async () => {
           const task = new Task(
-            "sleep " + (opts.taskTimeoutMillis + 20),
+            "sleep " + (opts.taskTimeoutMillis + 250), // < make sure it times out
             parser
           )
           await expect(bc.enqueueTask(task)).to.eventually.be.rejectedWith(
