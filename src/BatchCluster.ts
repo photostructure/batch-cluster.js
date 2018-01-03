@@ -3,6 +3,7 @@ import {
   BatchProcessObserver,
   InternalBatchProcessOptions
 } from "./BatchProcess"
+import { Mean } from "./Mean"
 import { Rate } from "./Rate"
 import { Task } from "./Task"
 import { ChildProcess } from "child_process"
@@ -41,7 +42,7 @@ export class BatchProcessOptions {
 
   /**
    * Expected text to print if a command passes. Cannot be blank. Will be
-   * interpreted as a regular expression fragment. 
+   * interpreted as a regular expression fragment.
    */
   readonly pass: string
 
@@ -226,21 +227,8 @@ type AllOpts = BatchClusterOptions &
   InternalBatchProcessOptions &
   ChildProcessFactory
 
-class Mean {
-  constructor(private n: number = 0, private sum: number = 0) {}
-
-  push(x: number) {
-    this.n++
-    this.sum += x
-  }
-
-  get mean(): number {
-    return this.sum / this.n
-  }
-
-  clone(): Mean {
-    return new Mean(this.n, this.sum)
-  }
+function map<T, R>(obj: T | undefined, f: (t: T) => R): R | undefined {
+  return obj != null ? f(obj) : undefined
 }
 
 /**
@@ -382,27 +370,25 @@ export class BatchCluster {
   }
 
   private procs(): BatchProcess[] {
-    if (this._procs.length > 0) {
-      const minStart = Date.now() - this.opts.maxProcAgeMillis
-      // Iterate the array backwards, as we'll be removing _procs as we go:
-      for (let i = this._procs.length - 1; i >= 0; i--) {
-        const proc = this._procs[i]
-        // Don't end procs that are currently servicing requests:
-        if (
-          proc.idle &&
-          (proc.start < minStart ||
-            proc.taskCount >= this.opts.maxTasksPerProcess)
-        ) {
-          // No need to be graceful, just shut down.
-          const gracefully = false
-          proc.end(gracefully)
-        }
-        // Only remove exited processes from _procs:
-        if (!proc.running) {
-          proc.end() // make sure any pending task is re-enqueued
-          this._tasksPerProc.push(proc.taskCount)
-          this._procs.splice(i, 1)
-        }
+    const minStart = Date.now() - this.opts.maxProcAgeMillis
+    // Iterate the array backwards, as we'll be removing _procs as we go:
+    for (let i = this._procs.length - 1; i >= 0; i--) {
+      const proc = this._procs[i]
+      // Don't end procs that are currently servicing requests:
+      if (
+        proc.idle &&
+        (proc.start < minStart ||
+          proc.taskCount >= this.opts.maxTasksPerProcess)
+      ) {
+        // No need to be graceful, just shut down.
+        const gracefully = false
+        proc.end(gracefully)
+      }
+      // Only remove exited processes from _procs:
+      if (!proc.running) {
+        proc.end() // make sure any pending task is re-enqueued
+        this._tasksPerProc.push(proc.taskCount)
+        this._procs.splice(i, 1)
       }
     }
     return this._procs
@@ -413,19 +399,21 @@ export class BatchCluster {
       return
     }
 
-    // calling this.procs is expensive
     const procs = this.procs()
+    const idleProcs = procs.filter(proc => proc.idle)
 
-    if (this._pendingTasks.length > 0) {
-      const idleProc = procs.find(proc => proc.idle)
-      if (idleProc) {
-        const task = this._pendingTasks.shift()
-        if (task && !idleProc.execTask(task)) {
-          // internal error, re-enqueue, child process refused execution
-          this.enqueueTask(task)
-        }
-      }
-    }
+    const execNextTask = () =>
+      map(idleProcs.shift(), idleProc =>
+        map(this._pendingTasks.shift(), task => {
+          if (!idleProc.execTask(task)) {
+            this.enqueueTask(task)
+          }
+          return true
+        })
+      )
+
+    while (!this._ended && execNextTask()) {}
+
     if (this._pendingTasks.length > 0 && procs.length < this.opts.maxProcs) {
       const bp = new BatchProcess(
         this.opts.processFactory(),

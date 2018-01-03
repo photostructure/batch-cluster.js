@@ -116,15 +116,6 @@ export class BatchProcess {
 
   execTask(task: Task<any>): boolean {
     if (!this.idle) {
-      console.error(
-        "batch-process INTERNAL ERROR: BatchProcess.execTask() called when not idle",
-        {
-          from: "execTask()",
-          error: "This proc is not idle, and cannot exec task",
-          ended: this.ended,
-          currentTask: this.currentTask ? this.currentTask.command : "null"
-        }
-      )
       return false
     }
     this._taskCount++

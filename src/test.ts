@@ -1,4 +1,4 @@
-#!/usr/bin/_p.env.node
+#!/usr/bin/env node
 import { delay } from "./Delay"
 import { createInterface } from "readline"
 import * as _p from "process"
