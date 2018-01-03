@@ -151,9 +151,9 @@ describe("BatchCluster", () => {
           )
           const newSpawnedProcs = bc.spawnedProcs - spawnedProcsBefore
           expect(newSpawnedProcs).to.be.within(
-            opts.taskRetries,
-            opts.taskRetries + 5
-          ) // because EUNLUCKY
+            opts.taskRetries - 1,
+            opts.taskRetries + 5 // because EUNLUCKY
+          )
           expect(bc.pids).to.not.eql(pidsBefore) // at least one pid should be shut down now
           expect(task.retries).to.eql(opts.taskRetries)
           return
