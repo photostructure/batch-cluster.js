@@ -72,20 +72,27 @@ flaky to test BatchCluster sufficiently.
 
 ## Changelog
 
+### v1.8.0
+
+* ✨ onIdle now runs as many tasks as it can, rather than just one. This should
+  provide higher throughput.
+* 🐞 Removed stderr emit on race condition between onIdle and execTask. The
+  error condition was already handled appropriately--no need to console.error.
+
 ### v1.7.0
 
 * 📦 Exported `kill()` and `running()` from `BatchProcess`
 
 ### v1.6.1
 
-* 📦 De-flaked some tests on mac, and added Node 8 to the build matrix. 
+* 📦 De-flaked some tests on mac, and added Node 8 to the build matrix.
 
 ### v1.6.0
 
 * ✨ Processes are forcefully shut down with `taskkill` on windows and `kill
-  -9` on other unix-like platforms if they don't terminate after sending
-  the `exitCommand`, closing `stdin`, and sending the proc a `SIGTERM`.
-  Added a test harness to exercise.
+  -9` on other unix-like platforms if they don't terminate after sending the
+  `exitCommand`, closing `stdin`, and sending the proc a `SIGTERM`. Added a
+  test harness to exercise.
 * 📦 Upgrade to TypeScript 2.6.1
 * 🐞 `mocha` tests don't require the `--exit` hack anymore 🎉
 
