@@ -15,7 +15,7 @@ const defaultOpts = Object.freeze({
   onIdleIntervalMillis: 250, // frequently to speed up tests
   maxTasksPerProcess: 5,
   spawnTimeoutMillis: 1000,
-  taskTimeoutMillis: 250, // so the timeout test doesn't timeout. 250 on windows is too short.
+  taskTimeoutMillis: 500, // so the timeout test doesn't timeout
   maxReasonableProcessFailuresPerMinute: 1000 // this is so high because failrate is so high
 })
 
