@@ -28,9 +28,13 @@
   dependencies:
     "@types/node" "*"
 
-"@types/node@*", "@types/node@^8.5.2":
+"@types/node@*":
   version "8.5.2"
   resolved "https://registry.yarnpkg.com/@types/node/-/node-8.5.2.tgz#83b8103fa9a2c2e83d78f701a9aa7c9539739aa5"
+
+"@types/node@^8.5.3":
+  version "8.5.3"
+  resolved "https://registry.yarnpkg.com/@types/node/-/node-8.5.3.tgz#5cf2fa867d4b663d14a60eaa345f81678c21c41c"
 
 ansi-regex@^2.0.0:
   version "2.1.1"
@@ -130,7 +134,7 @@ chalk@^2.1.0:
     escape-string-regexp "^1.0.5"
     supports-color "^4.0.0"
 
-check-error@^1.0.1, check-error@^1.0.2:
+check-error@^1.0.1:
   version "1.0.2"
   resolved "https://registry.yarnpkg.com/check-error/-/check-error-1.0.2.tgz#574d312edd88bb5dd8912e9286dd6c0aed4aac82"
 
