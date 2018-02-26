@@ -8,6 +8,7 @@ import { Rate } from "./Rate"
 import { Task } from "./Task"
 import { ChildProcess } from "child_process"
 import * as _p from "process"
+import * as _timers from "timers"
 
 /**
  * These are required parameters for a given BatchCluster.
@@ -259,7 +260,7 @@ export class BatchCluster {
   ) {
     this.opts = verifyOptions(opts)
     if (this.opts.onIdleIntervalMillis > 0) {
-      this.onIdleInterval = setInterval(
+      this.onIdleInterval = _timers.setInterval(
         () => this.onIdle(),
         this.opts.onIdleIntervalMillis
       )
