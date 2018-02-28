@@ -14,7 +14,9 @@ process.on("unhandledRejection", (reason: any) => {
 })
 
 export function times<T>(n: number, f: ((idx: number) => T)): T[] {
-  return Array(n).fill(undefined).map((_, i) => f(i))
+  return Array(n)
+    .fill(undefined)
+    .map((_, i) => f(i))
 }
 
 // because @types/chai-withintoleranceof isn't a thing (yet)
