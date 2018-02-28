@@ -1,10 +1,11 @@
-import { BatchClusterOptions, BatchProcessOptions } from "./BatchCluster"
-import { Deferred } from "./Deferred"
-import { delay } from "./Delay"
-import { Task } from "./Task"
 import * as _cp from "child_process"
 import * as _os from "os"
 import * as _p from "process"
+
+import { BatchClusterOptions, BatchProcessOptions, logger } from "./BatchCluster"
+import { Deferred } from "./Deferred"
+import { delay } from "./Delay"
+import { Task } from "./Task"
 
 export interface BatchProcessObserver {
   onIdle(): void
@@ -252,7 +253,7 @@ export class BatchProcess {
     this.clearCurrentTask()
     if (task == null) {
       if (result.length > 0 && !this._ended) {
-        console.error(
+        logger().error(
           "batch-process INTERNAL ERROR: no current task in resolveCurrentTask() result: " +
             result
         )
@@ -291,7 +292,7 @@ const isWin = _os.platform().startsWith("win")
 
 /**
  * Send a signal to the given process id.
- * 
+ *
  * @export
  * @param {number} pid the process id. Required.
  * @param {boolean} [force=false] if true, and the current user has
