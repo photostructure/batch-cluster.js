@@ -14,8 +14,10 @@ enum State {
  */
 export class Deferred<T> {
   readonly promise: Promise<T>
-  private _resolve: (value?: T) => void
-  private _reject: (reason?: any) => void
+  // prettier-ignore
+  private _resolve!: (value?: T) => void
+  // prettier-ignore
+  private _reject!: (reason?: any) => void
   private state: State = State.pending
 
   constructor() {
