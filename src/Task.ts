@@ -1,4 +1,5 @@
 import { Deferred } from "./Deferred"
+import { logger } from "./Logger"
 
 export type Parser<T> = (data: string) => T
 
@@ -11,7 +12,7 @@ export class Task<T> {
    * @param {Parser<T>} parser is used to parse resulting data from the
    * underlying process to a typed object.
    */
-  constructor(readonly command: string, readonly parser: Parser<T>) { }
+  constructor(readonly command: string, readonly parser: Parser<T>) {}
 
   /**
    * @return the resolution or rejection of this task.
@@ -34,8 +35,11 @@ export class Task<T> {
    */
   onData(data: string): void {
     try {
-      this.d.resolve(this.parser(data))
+      const result = this.parser(data)
+      logger().debug("Task.onData(): resolved", { result, command: this.command, data })
+      this.d.resolve(result)
     } catch (error) {
+      logger().warn("Task.onData(): parser raised " + error, { command: this.command, data })
       this.d.reject(error)
     }
   }
@@ -45,6 +49,7 @@ export class Task<T> {
    * process has errored after N retries
    */
   onError(error: any): void {
+    logger().warn("Task.onError(): Failed to run " + this.command, error)
     this.d.reject(error)
   }
 }
