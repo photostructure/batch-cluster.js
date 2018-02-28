@@ -1,3 +1,5 @@
+import { NoLogger, setLogger } from "./Logger"
+
 const _chai = require("chai")
 _chai.use(require("chai-string"))
 _chai.use(require("chai-as-promised"))
@@ -6,6 +8,9 @@ _chai.use(require("chai-withintoleranceof"))
 export { expect } from "chai"
 
 require("source-map-support").install()
+
+// Tests should be quiet:
+setLogger(NoLogger)
 
 export const parser = (ea: string) => ea.trim()
 

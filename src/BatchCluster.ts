@@ -13,7 +13,7 @@ import { Task } from "./Task"
 export { kill, running } from "./BatchProcess"
 export { Deferred } from "./Deferred"
 export { delay } from "./Delay"
-export { Logger, setLogger, logger } from "./Logger"
+export * from "./Logger"
 export { Task, Parser } from "./Task"
 
 /**

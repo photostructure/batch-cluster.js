@@ -3,14 +3,7 @@ import { debuglog } from "util"
 export type Log = (message: string, ...optionalParams: any[]) => void
 
 /**
- * Simple interface for logging. 
- *
- * Note that the default implementation delegates `debug` and `info` to
- * `util.debuglog("batch-cluster")`:
- * <https://nodejs.org/api/util.html#util_util_debuglog_section>. 
- *
- * `warn` and `error` default to `console.warn` and `console.error`,
- * respectively.
+ * Simple interface for logging.
  */
 export interface Logger {
   debug: Log
@@ -21,11 +14,39 @@ export interface Logger {
 
 const _debuglog = debuglog("batch-cluster")
 
-namespace ConsoleLogger {
+/**
+ * Default `Logger` implementation.
+ */
+export namespace ConsoleLogger {
+  /**
+   * Delegates to `util.debuglog("batch-cluster")`:
+   * <https://nodejs.org/api/util.html#util_util_debuglog_section>
+   */
   export const debug = _debuglog
+   /**
+   * Delegates to `util.debuglog("batch-cluster")`:
+   * <https://nodejs.org/api/util.html#util_util_debuglog_section>
+   */
   export const info = _debuglog
+  /**
+   * Delegates to `console.warn`
+   */
   export const warn = console.warn
+  /**
+   * Delegates to `console.error`
+   */
   export const error = console.error
+}
+
+/**
+ * `Logger` that disables all logging. 
+ */
+export namespace NoLogger {
+  const noop = () => {}
+  export const debug = noop
+  export const info = noop
+  export const warn = noop
+  export const error = noop
 }
 
 let _logger: Logger = ConsoleLogger
