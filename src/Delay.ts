@@ -1,5 +1,7 @@
 export function delay(millis: number): Promise<void> {
-  return new Promise<void>(resolve => setTimeout(() => resolve(), millis))
+  return new Promise<void>(resolve =>
+    global.setTimeout(() => resolve(), millis).unref()
+  )
 }
 
 /**
