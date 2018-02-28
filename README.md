@@ -1,6 +1,6 @@
 # batch-cluster
 
-**Support external batch-mode tools within Node.js**
+** Support external batch-mode tools within Node.js. **
 
 [![npm version](https://badge.fury.io/js/batch-cluster.svg)](https://badge.fury.io/js/batch-cluster)
 [![Build status](https://travis-ci.org/mceachen/batch-cluster.js.svg?branch=master)](https://travis-ci.org/mceachen/batch-cluster.js)
@@ -8,52 +8,54 @@
 
 Many command line tools, like
 [ExifTool](https://sno.phy.queensu.ca/~phil/exiftool/) and
-[GraphicsMagick](http://www.graphicsmagick.org/), support running in a
-"batch mode" that accept commands provided through stdin and results
-through stdout. As these tools can be fairly large, spinning them up can be
-expensive. 
+[GraphicsMagick](http://www.graphicsmagick.org/), support running in a "batch
+mode" that accept commands provided through stdin and results through stdout.
+As these tools can be fairly large, spinning them up can be expensive
+(especially on Windows).
 
 This module expedites these commands, or "Tasks," by managing a cluster of
-these "batch" processes, feeding tasks to idle processes, retrying tasks
-when the tool crashes, and preventing memory leaks by restarting tasks
-after performing a given number of tasks or after a given set of time has
-elapsed.
+these "batch" processes, feeding tasks to idle processes, retrying tasks when
+the tool crashes, and preventing memory leaks by restarting tasks after
+performing a given number of tasks or after a given set of time has elapsed.
 
 This package powers
-[exiftool-vendored](https://github.com/mceachen/exiftool-vendored.js)
-(whose source you can examine as an example consumer).
+[exiftool-vendored](https://github.com/mceachen/exiftool-vendored.js), whose
+source you can examine as an example consumer.
 
 ## Installation
 
 Depending on your yarn/npm preference:
 
 ```bash
-$ npm install --save batch-cluster
-# or
 $ yarn add batch-cluster
+# or
+$ npm install --save batch-cluster
 ```
 
-## Usage 
+## Usage
 
 The child process must use `stdin` and `stdout` for control/response.
 BatchCluster will ensure a given process is only given one task at a time.
 
-1. Extend the [Task](src/Task.ts#L5) class to parse results from your child
-process.
+1.  Extend the [Task](src/Task.ts#L5) class to parse results from your child
+    process.
 
-2. Create a singleton instance of `BatchCluster`. Note the [constructor
-   options](src/BatchCluster.ts#L271) takes a union type of
-   * [ChildProcessFactory](src/BatchCluster.ts#L15) and
-   * [BatchProcessOptions](src/BatchCluster.ts#L34), both of which have no
-   defaults, and 
-   * [BatchClusterOptions](src/BatchCluster.ts#L64), which has
-   defaults that may or may not be relevant to your application.
+2.  Create a singleton instance of `BatchCluster`. Note the
+    [constructor options](src/BatchCluster.ts#L271) takes a union type of
 
-3. Give instances of your `Task` to [enqueueTask](src/BatchCluster.ts#L309).
+    * [ChildProcessFactory](src/BatchCluster.ts#L15) and
+    * [BatchProcessOptions](src/BatchCluster.ts#L34), both of which have no
+      defaults, and
+    * [BatchClusterOptions](src/BatchCluster.ts#L64), which has defaults that may
+      or may not be relevant to your application.
 
-See [src/test.ts](src/test.ts) for an example child process.
-Note that the script is more than minimal, due to it being designed to be
-flaky to test BatchCluster sufficiently.
+3.  Set up logging appropriately with `setLogger`
+
+4.  Give instances of your `Task` to [enqueueTask](src/BatchCluster.ts#L309).
+
+See [src/test.ts](https://github.com/mceachen/batch-cluster.js/blob/master/src/test.ts) for an example child process. Note that the
+script is more than minimal, due to it being designed to be flaky to test
+BatchCluster sufficiently.
 
 ## Versioning
 
@@ -72,6 +74,22 @@ flaky to test BatchCluster sufficiently.
 
 ## Changelog
 
+### v1.9.0
+
+* ✨ New `Logger.setLogger()` for debug, info, warning, and errors. `debug` and
+  `info` defaults to Node's
+  [debuglog](https://nodejs.org/api/util.html#util_util_debuglog_section),
+  `warn` and `error` default to `console.warn` and `console.error`,
+  respectively.
+* 📦 Upgraded dependencies (including TypeScript 2.7, which has more strict
+  verifications)
+* 📦 Removed tslint, as `tsc` provides good lint coverage now
+* 📦 The code is now [prettier](https://github.com/prettier/prettier)
+* 🐞 `delay` now
+  [unref](https://nodejs.org/api/timers.html#timers_timeout_unref)'s the
+  timer, which, in certain circumstances, could prevent node processes from
+  exiting gracefully until their timeouts expired
+
 ### v1.8.0
 
 * ✨ onIdle now runs as many tasks as it can, rather than just one. This should
@@ -89,10 +107,10 @@ flaky to test BatchCluster sufficiently.
 
 ### v1.6.0
 
-* ✨ Processes are forcefully shut down with `taskkill` on windows and `kill
-  -9` on other unix-like platforms if they don't terminate after sending the
-  `exitCommand`, closing `stdin`, and sending the proc a `SIGTERM`. Added a
-  test harness to exercise.
+* ✨ Processes are forcefully shut down with `taskkill` on windows and `kill -9`
+  on other unix-like platforms if they don't terminate after sending the
+  `exitCommand`, closing `stdin`, and sending the proc a `SIGTERM`. Added a test
+  harness to exercise.
 * 📦 Upgrade to TypeScript 2.6.1
 * 🐞 `mocha` tests don't require the `--exit` hack anymore 🎉
 
@@ -126,7 +144,8 @@ flaky to test BatchCluster sufficiently.
 
 ### v1.2.0
 
-* ✨ Added a configurable cleanup signal to ensure child processes shut down on `.end()`
+* ✨ Added a configurable cleanup signal to ensure child processes shut down on
+  `.end()`
 * 📦 Moved child process management from `BatchCluster` to `BatchProcess`
 * ✨ More test coverage around batch process concurrency, reuse, flaky task
   retries, and proper process shutdown
@@ -134,11 +153,11 @@ flaky to test BatchCluster sufficiently.
 ### v1.1.0
 
 * ✨ `BatchCluster` now has a force-shutdown `exit` handler to accompany the
-  graceful-shutdown `beforeExit` handler. For reference, from the [Node
-  docs](https://nodejs.org/api/process.html#process_event_beforeexit):
-  
+  graceful-shutdown `beforeExit` handler. For reference, from the
+  [Node docs](https://nodejs.org/api/process.html#process_event_beforeexit):
+
 > The 'beforeExit' event is not emitted for conditions causing explicit
-  termination, such as calling process.exit() or uncaught exceptions.
+> termination, such as calling process.exit() or uncaught exceptions.
 
 * ✨ Remove `Rate`'s time decay in the interests of simplicity
 
@@ -156,9 +175,9 @@ flaky to test BatchCluster sufficiently.
 
 ### v0.0.2
 
-* ✨ Added support and explicit tests for [CR LF, CR, and
-  LF](https://en.wikipedia.org/wiki/Newline) encoded streams from exec'ed
-  processes
+* ✨ Added support and explicit tests for
+  [CR LF, CR, and LF](https://en.wikipedia.org/wiki/Newline) encoded streams
+  from exec'ed processes
 * ✨ child processes are ended after `maxProcAgeMillis`, and restarted as needed
 * 🐞 `BatchCluster` now practices good listener hygene for `process.beforeExit`
 
@@ -166,4 +185,3 @@ flaky to test BatchCluster sufficiently.
 
 * ✨ Extracted implementation and tests from
   [exiftool-vendored](https://github.com/mceachen/exiftool-vendored.js)
-
