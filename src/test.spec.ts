@@ -1,9 +1,11 @@
-import { until } from "./Delay"
-import { kill, running } from "./BatchProcess"
-import { expect } from "./spec"
 import { ChildProcess, spawn } from "child_process"
 import { join } from "path"
 import * as _p from "process"
+
+import { kill, running } from "./BatchProcess"
+import { Deferred } from "./Deferred"
+import { until } from "./Delay"
+import { expect } from "./spec"
 
 export const procs: ChildProcess[] = []
 
@@ -50,21 +52,27 @@ describe("test.js", () => {
     get running(): boolean {
       return running(this.child.pid)
     }
-    assertStdout(expectedOutput: string, done: () => void) {
+    assertStdout(expectedOutput: string) {
       expect(running(this.child.pid)).to.be.true
+      const d = new Deferred()
       this.child.on("exit", async () => {
-        expect(this.output.trim()).to.eql(expectedOutput)
-        expect(this.running).to.be.false
-        done()
+        try {
+          expect(this.output.trim()).to.eql(expectedOutput)
+          expect(this.running).to.be.false
+          d.resolve()
+        } catch (err) {
+          d.reject(err)
+        }
       })
+      return d.promise
     }
   }
 
-  it("results in expected output", done => {
+  it("results in expected output", async () => {
     const h = new Harness()
-    h.assertStdout("HELLO\nPASS\nworld\nPASS\nFAIL\nv1.2.3\nPASS", done)
+    const a = h.assertStdout("HELLO\nPASS\nworld\nPASS\nFAIL\nv1.2.3\nPASS")
     h.child.stdin.end("upcase Hello\ndowncase World\ninvalid input\nversion\n")
-    return
+    return a
   })
 
   it("exits properly if ignoreExit is not set", async () => {
@@ -125,20 +133,20 @@ describe("test.js", () => {
     return
   })
 
-  it("sleeps serially", done => {
+  it("sleeps serially", () => {
     const h = new Harness()
     const start = Date.now()
-    h.assertStdout("slept 200\nPASS\nslept 201\nPASS\nslept 202\nPASS", () => {
-      expect(Date.now() - start).to.be.gte(603)
-      done()
-    })
+    const a = h
+      .assertStdout("slept 200\nPASS\nslept 201\nPASS\nslept 202\nPASS")
+      .then(() => expect(Date.now() - start).to.be.gte(603))
     h.child.stdin.end("sleep 200\nsleep 201\nsleep 202\nexit\n")
+    return a
   })
 
-  it("flakes out the first N responses", done => {
+  it("flakes out the first N responses", () => {
     const h = new Harness()
     // These random numbers are consistent because we have a consistent rngseed:
-    h.assertStdout(
+    const a = h.assertStdout(
       [
         "flaky response (r: 0.55, flakeRate: 0.50)",
         "PASS",
@@ -146,9 +154,9 @@ describe("test.js", () => {
         "PASS",
         "flaky response (r: 0.55, flakeRate: 1.00)",
         "FAIL"
-      ].join("\n"),
-      done
+      ].join("\n")
     )
     h.child.stdin.end("flaky .5\nflaky 0\nflaky 1\nexit\n")
+    return a
   })
 })

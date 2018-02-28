@@ -197,6 +197,8 @@ describe("BatchCluster", () => {
     )
   }
 
+  // specsWithOptions( "lf", 5, 4, true, false )
+
   ;["lf", "crlf"].forEach(newline => {
     ;[5, 0].forEach(taskRetries => {
       ;[4, 1].forEach(maxProcs => {

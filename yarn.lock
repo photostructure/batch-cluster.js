@@ -1245,6 +1245,10 @@ write-file-atomic@^2.0.0:
     imurmurhash "^0.1.4"
     signal-exit "^3.0.2"
 
+wtfnode@^0.6.0:
+  version "0.6.0"
+  resolved "https://registry.yarnpkg.com/wtfnode/-/wtfnode-0.6.0.tgz#5b4cadefc33bafcea0b38ba9b53ab7100b8a6c25"
+
 xdg-basedir@^3.0.0:
   version "3.0.0"
   resolved "https://registry.yarnpkg.com/xdg-basedir/-/xdg-basedir-3.0.0.tgz#496b2cc109eca8dbacfe2dc72b603c17c5870ad4"

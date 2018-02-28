@@ -40,6 +40,7 @@
     "source-map-support": "^0.5.3",
     "timekeeper": "^2.0.0",
     "typedoc": "^0.10.0",
-    "typescript": "^2.7.2"
+    "typescript": "^2.7.2",
+    "wtfnode": "^0.6.0"
   }
 }

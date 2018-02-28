@@ -2,7 +2,11 @@ import * as _cp from "child_process"
 import * as _os from "os"
 import * as _p from "process"
 
-import { BatchClusterOptions, BatchProcessOptions, logger } from "./BatchCluster"
+import {
+  BatchClusterOptions,
+  BatchProcessOptions,
+  logger
+} from "./BatchCluster"
 import { Deferred } from "./Deferred"
 import { delay } from "./Delay"
 import { Task } from "./Task"
@@ -164,9 +168,15 @@ export class BatchProcess {
     }
 
     if (this.running) {
+      logger().debug(
+        `end(${gracefully}): PID ${
+          this.pid
+        } still running. Waiting for PID to end.`
+      )
       await Promise.race(tasks)
     }
     if (this.running) {
+      logger().info("end(" + gracefully + "): killing PID " + this.pid)
       kill(this.proc.pid, !gracefully)
     }
     return this.exitedPromise
