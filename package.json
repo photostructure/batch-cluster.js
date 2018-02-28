@@ -9,13 +9,13 @@
     "url": "https://github.com/mceachen/batch-cluster.js.git"
   },
   "scripts": {
-    "clean": "rimraf dist docs",
+    "clean": "rimraf dist",
     "prettier": "prettier --write src/*.ts",
     "compile": "tsc",
     "tscw": "rimraf dist & tsc -w",
     "pretest": "yarn clean && yarn compile",
     "test": "mocha --opts .mocha.opts",
-    "docs": "yarn clean && typedoc --name batch-cluster --out ./docs --readme ./README.md --exclude \"**/*+(test|spec).ts\" --excludePrivate --excludeProtected . && serve docs"
+    "docs": "rimraf docs && typedoc --name batch-cluster --out ./docs --readme ./README.md --exclude \"**/*+(test|spec).ts\" --excludePrivate --excludeProtected . && serve docs"
   },
   "author": "Matthew McEachen <matthew-batchcluster@mceachen.org>",
   "license": "MIT",
