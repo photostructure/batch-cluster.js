@@ -3,7 +3,10 @@ export class Rate {
   private start = Date.now()
   private e = new Map<number, number>()
 
-  constructor(readonly windowMillis: number = 250, readonly windows: number = 5) { }
+  constructor(
+    readonly windowMillis: number = 250,
+    readonly windows: number = 5
+  ) {}
 
   onEvent() {
     this._events++
@@ -24,11 +27,11 @@ export class Rate {
     let mean: number | undefined
     const now = Date.now()
     const key = this.asKey(now - this.windows * this.windowMillis)
-      // ignore the most recent window, which represents less than windowMillis
+    // ignore the most recent window, which represents less than windowMillis
     for (let window = 0; window < this.windows; window++) {
       const events = this.e.get(key + window) || 0
       const epms = events / this.windowMillis
-      mean = (mean == null) ? epms : (mean + epms) / 2
+      mean = mean == null ? epms : (mean + epms) / 2
     }
     return mean || 0
   }
@@ -46,7 +49,7 @@ export class Rate {
   }
 
   private vacuum() {
-    const least = this.asKey(Date.now() - (this.windowMillis * this.windows))
+    const least = this.asKey(Date.now() - this.windowMillis * this.windows)
     this.e.forEach((_, k) => {
       if (k < least) {
         this.e.delete(k)
