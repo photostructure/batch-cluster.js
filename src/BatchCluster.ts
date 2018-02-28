@@ -1,3 +1,6 @@
+import { ChildProcess } from "child_process"
+import * as _p from "process"
+
 import {
   BatchProcess,
   BatchProcessObserver,
@@ -6,8 +9,12 @@ import {
 import { Mean } from "./Mean"
 import { Rate } from "./Rate"
 import { Task } from "./Task"
-import { ChildProcess } from "child_process"
-import * as _p from "process"
+
+export { kill, running } from "./BatchProcess"
+export { Deferred } from "./Deferred"
+export { delay } from "./Delay"
+export { Logger, setLogger, logger } from "./Logger"
+export { Task, Parser } from "./Task"
 
 /**
  * These are required parameters for a given BatchCluster.
@@ -21,18 +28,13 @@ export interface ChildProcessFactory {
   readonly processFactory: () => ChildProcess
 }
 
-export { Deferred } from "./Deferred"
-export { delay } from "./Delay"
-export { kill, running } from "./BatchProcess"
-export { Task, Parser } from "./Task"
-
 /**
  * `BatchProcessOptions` have no reasonable defaults, as they are specific
  * to the API of the command that BatchCluster is spawning.
  *
  * All fields must be set.
  */
-export class BatchProcessOptions {
+export interface BatchProcessOptions {
   /**
    * Low-overhead command to verify the child batch process has started.
    * Will be invoked immediately after spawn. This command must return
@@ -247,7 +249,7 @@ export class BatchCluster {
   private readonly observer: BatchProcessObserver
   private readonly _procs: BatchProcess[] = []
   private readonly _pendingTasks: Array<Task<any>> = []
-  private readonly onIdleInterval: NodeJS.Timer
+  private readonly onIdleInterval?: NodeJS.Timer
   private readonly startErrorRate = new Rate()
   private _spawnedProcs = 0
   private _ended = false
@@ -259,7 +261,7 @@ export class BatchCluster {
   ) {
     this.opts = verifyOptions(opts)
     if (this.opts.onIdleIntervalMillis > 0) {
-      this.onIdleInterval = setInterval(
+      this.onIdleInterval = global.setInterval(
         () => this.onIdle(),
         this.opts.onIdleIntervalMillis
       )
@@ -282,7 +284,7 @@ export class BatchCluster {
   end(gracefully: boolean = true): Promise<void> {
     if (!this._ended) {
       this._ended = true
-      clearInterval(this.onIdleInterval)
+      if (this.onIdleInterval) clearInterval(this.onIdleInterval)
       _p.removeListener("beforeExit", this.beforeExitListener)
       _p.removeListener("exit", this.exitListener)
       this._procs.forEach(p => p.end(gracefully))
