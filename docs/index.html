@@ -1,0 +1,352 @@
+<!doctype html>
+<html class="default no-js">
+<head>
+	<meta charset="utf-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<title>batch-cluster</title>
+	<meta name="description" content="">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<link rel="stylesheet" href="assets/css/main.css">
+</head>
+<body>
+<header>
+	<div class="tsd-page-toolbar">
+		<div class="container">
+			<div class="table-wrap">
+				<div class="table-cell" id="tsd-search" data-index="assets/js/search.js" data-base=".">
+					<div class="field">
+						<label for="tsd-search-field" class="tsd-widget search no-caption">Search</label>
+						<input id="tsd-search-field" type="text" />
+					</div>
+					<ul class="results">
+						<li class="state loading">Preparing search index...</li>
+						<li class="state failure">The search index is not available</li>
+					</ul>
+					<a href="index.html" class="title">batch-cluster</a>
+				</div>
+				<div class="table-cell" id="tsd-widgets">
+					<div id="tsd-filter">
+						<a href="#" class="tsd-widget options no-caption" data-toggle="options">Options</a>
+						<div class="tsd-filter-group">
+							<div class="tsd-select" id="tsd-filter-visibility">
+								<span class="tsd-select-label">All</span>
+								<ul class="tsd-select-list">
+									<li data-value="public">Public</li>
+									<li data-value="protected">Public/Protected</li>
+									<li data-value="private" class="selected">All</li>
+								</ul>
+							</div>
+							<input type="checkbox" id="tsd-filter-inherited" checked />
+							<label class="tsd-widget" for="tsd-filter-inherited">Inherited</label>
+							<input type="checkbox" id="tsd-filter-externals" checked />
+							<label class="tsd-widget" for="tsd-filter-externals">Externals</label>
+							<input type="checkbox" id="tsd-filter-only-exported" />
+							<label class="tsd-widget" for="tsd-filter-only-exported">Only exported</label>
+						</div>
+					</div>
+					<a href="#" class="tsd-widget menu no-caption" data-toggle="menu">Menu</a>
+				</div>
+			</div>
+		</div>
+	</div>
+	<div class="tsd-page-title">
+		<div class="container">
+			<ul class="tsd-breadcrumb">
+				<li>
+					<a href="globals.html">Globals</a>
+				</li>
+			</ul>
+			<h1> batch-cluster</h1>
+		</div>
+	</div>
+</header>
+<div class="container container-main">
+	<div class="row">
+		<div class="col-8 col-content">
+			<div class="tsd-panel tsd-typography">
+				<h1 id="batch-cluster">batch-cluster</h1>
+				<p><strong> Support external batch-mode tools within Node.js. </strong></p>
+				<p><a href="https://badge.fury.io/js/batch-cluster"><img src="https://badge.fury.io/js/batch-cluster.svg" alt="npm version"></a>
+					<a href="https://travis-ci.org/mceachen/batch-cluster.js"><img src="https://travis-ci.org/mceachen/batch-cluster.js.svg?branch=master" alt="Build status"></a>
+				<a href="https://ci.appveyor.com/project/mceachen/batch-cluster-js/branch/master"><img src="https://ci.appveyor.com/api/projects/status/4564x6lvc8s6a55l/branch/master?svg=true" alt="Build status"></a></p>
+				<p>Many command line tools, like
+					<a href="https://sno.phy.queensu.ca/~phil/exiftool/">ExifTool</a> and
+					<a href="http://www.graphicsmagick.org/">GraphicsMagick</a>, support running in a &quot;batch
+					mode&quot; that accept commands provided through stdin and results through stdout.
+					As these tools can be fairly large, spinning them up can be expensive
+				(especially on Windows).</p>
+				<p>This module expedites these commands, or &quot;Tasks,&quot; by managing a cluster of
+					these &quot;batch&quot; processes, feeding tasks to idle processes, retrying tasks when
+					the tool crashes, and preventing memory leaks by restarting tasks after
+				performing a given number of tasks or after a given set of time has elapsed.</p>
+				<p>This package powers
+					<a href="https://github.com/mceachen/exiftool-vendored.js">exiftool-vendored</a>, whose
+				source you can examine as an example consumer.</p>
+				<h2 id="installation">Installation</h2>
+				<p>Depending on your yarn/npm preference:</p>
+				<pre><code class="lang-bash">$ yarn add batch-cluster
+<span class="hljs-comment"># or</span>
+$ npm install --save batch-cluster
+</code></pre>
+				<h2 id="usage">Usage</h2>
+				<p>The child process must use <code>stdin</code> and <code>stdout</code> for control/response.
+				BatchCluster will ensure a given process is only given one task at a time.</p>
+				<ol>
+					<li><p>Extend the <a href="src/Task.ts#L5">Task</a> class to parse results from your child
+						process.</p>
+					</li>
+					<li><p>Create a singleton instance of <code>BatchCluster</code>. Note the
+						<a href="src/BatchCluster.ts#L271">constructor options</a> takes a union type of</p>
+						<ul>
+							<li><a href="src/BatchCluster.ts#L15">ChildProcessFactory</a> and</li>
+							<li><a href="src/BatchCluster.ts#L34">BatchProcessOptions</a>, both of which have no
+							defaults, and</li>
+							<li><a href="src/BatchCluster.ts#L64">BatchClusterOptions</a>, which has defaults that may
+							or may not be relevant to your application.</li>
+						</ul>
+					</li>
+					<li><p>Set up logging appropriately with <code>setLogger</code></p>
+					</li>
+					<li><p>Give instances of your <code>Task</code> to <a href="src/BatchCluster.ts#L309">enqueueTask</a>.</p>
+					</li>
+				</ol>
+				<p>See <a href="https://github.com/mceachen/batch-cluster.js/blob/master/src/test.ts">src/test.ts</a> for an example child process. Note that the
+					script is more than minimal, due to it being designed to be flaky to test
+				BatchCluster sufficiently.</p>
+				<h2 id="versioning">Versioning</h2>
+				<h3 id="the-major-or-api-version-is-incremented-for">The <code>MAJOR</code> or <code>API</code> version is incremented for</h3>
+				<ul>
+					<li>💔 Non-backwards-compatible API changes</li>
+				</ul>
+				<h3 id="the-minor-or-update-version-is-incremented-for">The <code>MINOR</code> or <code>UPDATE</code> version is incremented for</h3>
+				<ul>
+					<li>✨ Backwards-compatible features</li>
+				</ul>
+				<h3 id="the-patch-version-is-incremented-for">The <code>PATCH</code> version is incremented for</h3>
+				<ul>
+					<li>🐞 Backwards-compatible bug fixes</li>
+					<li>📦 Minor packaging changes</li>
+				</ul>
+				<h2 id="changelog">Changelog</h2>
+				<h3 id="v1-9-0">v1.9.0</h3>
+				<ul>
+					<li>✨ New <code>Logger.setLogger()</code> for debug, info, warning, and errors. <code>debug</code> and
+						<code>info</code> defaults to Node&#39;s
+						<a href="https://nodejs.org/api/util.html#util_util_debuglog_section">debuglog</a>,
+						<code>warn</code> and <code>error</code> default to <code>console.warn</code> and <code>console.error</code>,
+					respectively.</li>
+					<li>📦 Upgraded dependencies (including TypeScript 2.7, which has more strict
+					verifications)</li>
+					<li>📦 Removed tslint, as <code>tsc</code> provides good lint coverage now</li>
+					<li>📦 The code is now <a href="https://github.com/prettier/prettier">prettier</a></li>
+					<li>🐞 <code>delay</code> now
+						<a href="https://nodejs.org/api/timers.html#timers_timeout_unref">unref</a>&#39;s the
+						timer, which, in certain circumstances, could prevent node processes from
+					exiting gracefully until their timeouts expired</li>
+				</ul>
+				<h3 id="v1-8-0">v1.8.0</h3>
+				<ul>
+					<li>✨ onIdle now runs as many tasks as it can, rather than just one. This should
+					provide higher throughput.</li>
+					<li>🐞 Removed stderr emit on race condition between onIdle and execTask. The
+					error condition was already handled appropriately--no need to console.error.</li>
+				</ul>
+				<h3 id="v1-7-0">v1.7.0</h3>
+				<ul>
+					<li>📦 Exported <code>kill()</code> and <code>running()</code> from <code>BatchProcess</code></li>
+				</ul>
+				<h3 id="v1-6-1">v1.6.1</h3>
+				<ul>
+					<li>📦 De-flaked some tests on mac, and added Node 8 to the build matrix.</li>
+				</ul>
+				<h3 id="v1-6-0">v1.6.0</h3>
+				<ul>
+					<li>✨ Processes are forcefully shut down with <code>taskkill</code> on windows and <code>kill -9</code>
+						on other unix-like platforms if they don&#39;t terminate after sending the
+						<code>exitCommand</code>, closing <code>stdin</code>, and sending the proc a <code>SIGTERM</code>. Added a test
+					harness to exercise.</li>
+					<li>📦 Upgrade to TypeScript 2.6.1</li>
+					<li>🐞 <code>mocha</code> tests don&#39;t require the <code>--exit</code> hack anymore 🎉</li>
+				</ul>
+				<h3 id="v1-5-0">v1.5.0</h3>
+				<ul>
+					<li>✨ <code>.running()</code> works correctly for PIDs with different owners now.</li>
+					<li>📦 <code>yarn upgrade --latest</code></li>
+				</ul>
+				<h3 id="v1-4-2">v1.4.2</h3>
+				<ul>
+					<li>📦 Ran code through <code>prettier</code> and delinted</li>
+					<li>📦 Massaged test assertions to pass through slower CI systems</li>
+				</ul>
+				<h3 id="v1-4-1">v1.4.1</h3>
+				<ul>
+					<li>📦 Replaced an errant <code>console.log</code> with a call to <code>log</code>.</li>
+				</ul>
+				<h3 id="v1-4-0">v1.4.0</h3>
+				<ul>
+					<li>🐞 Discovered <code>maxProcs</code> wasn&#39;t always utilized by <code>onIdle</code>, which meant in
+						certain circumstances, only 1 child process would be servicing pending
+					requests. Added breaking tests and fixed impl.</li>
+				</ul>
+				<h3 id="v1-3-0">v1.3.0</h3>
+				<ul>
+					<li>📦 Added tests to verify that the <code>kill(0)</code> calls to verify the child
+					processes are still running work across different node version and OSes</li>
+					<li>📦 Removed unused methods in <code>BatchProcess</code> (whose API should not be accessed
+					directly by consumers, so the major version remains at 1)</li>
+					<li>📦 Switched to yarn and upgraded dependencies</li>
+				</ul>
+				<h3 id="v1-2-0">v1.2.0</h3>
+				<ul>
+					<li>✨ Added a configurable cleanup signal to ensure child processes shut down on
+					<code>.end()</code></li>
+					<li>📦 Moved child process management from <code>BatchCluster</code> to <code>BatchProcess</code></li>
+					<li>✨ More test coverage around batch process concurrency, reuse, flaky task
+					retries, and proper process shutdown</li>
+				</ul>
+				<h3 id="v1-1-0">v1.1.0</h3>
+				<ul>
+					<li>✨ <code>BatchCluster</code> now has a force-shutdown <code>exit</code> handler to accompany the
+						graceful-shutdown <code>beforeExit</code> handler. For reference, from the
+					<a href="https://nodejs.org/api/process.html#process_event_beforeexit">Node docs</a>:</li>
+				</ul>
+				<blockquote>
+					<p>The &#39;beforeExit&#39; event is not emitted for conditions causing explicit
+					termination, such as calling process.exit() or uncaught exceptions.</p>
+				</blockquote>
+				<ul>
+					<li>✨ Remove <code>Rate</code>&#39;s time decay in the interests of simplicity</li>
+				</ul>
+				<h3 id="v1-0-0">v1.0.0</h3>
+				<ul>
+					<li>✨ Integration tests now throw deterministically random errors to simulate
+					flaky child procs, and ensure retries and disaster recovery work as expected.</li>
+					<li>✨ If the <code>processFactory</code> or <code>versionCommand</code> fails more often than a given
+						rate, <code>BatchCluster</code> will shut down and raise exceptions to subsequent
+						<code>enqueueTask</code> callers, rather than try forever to spin up processes that are
+					most likely misconfigured.</li>
+					<li>✨ Given the proliferation of construction options, those options are now
+						sanity-checked at construction time, and an error will be raised whose message
+					contains all incorrect option values.</li>
+				</ul>
+				<h3 id="v0-0-2">v0.0.2</h3>
+				<ul>
+					<li>✨ Added support and explicit tests for
+						<a href="https://en.wikipedia.org/wiki/Newline">CR LF, CR, and LF</a> encoded streams
+					from exec&#39;ed processes</li>
+					<li>✨ child processes are ended after <code>maxProcAgeMillis</code>, and restarted as needed</li>
+					<li>🐞 <code>BatchCluster</code> now practices good listener hygene for <code>process.beforeExit</code></li>
+				</ul>
+				<h3 id="v0-0-1">v0.0.1</h3>
+				<ul>
+					<li>✨ Extracted implementation and tests from
+					<a href="https://github.com/mceachen/exiftool-vendored.js">exiftool-vendored</a></li>
+				</ul>
+			</div>
+		</div>
+		<div class="col-4 col-menu menu-sticky-wrap menu-highlight">
+			<nav class="tsd-navigation primary">
+				<ul>
+					<li class="globals  ">
+						<a href="globals.html"><em>Globals</em></a>
+					</li>
+					<li class=" tsd-kind-external-module">
+						<a href="modules/_batchcluster_.html">"<wbr>Batch<wbr>Cluster"</a>
+					</li>
+					<li class=" tsd-kind-external-module">
+						<a href="modules/_batchprocess_.html">"<wbr>Batch<wbr>Process"</a>
+					</li>
+					<li class=" tsd-kind-external-module">
+						<a href="modules/_deferred_.html">"<wbr>Deferred"</a>
+					</li>
+					<li class=" tsd-kind-external-module">
+						<a href="modules/_delay_.html">"<wbr>Delay"</a>
+					</li>
+					<li class=" tsd-kind-external-module">
+						<a href="modules/_logger_.html">"<wbr>Logger"</a>
+					</li>
+					<li class=" tsd-kind-external-module">
+						<a href="modules/_mean_.html">"<wbr>Mean"</a>
+					</li>
+					<li class=" tsd-kind-external-module">
+						<a href="modules/_rate_.html">"<wbr>Rate"</a>
+					</li>
+					<li class=" tsd-kind-external-module">
+						<a href="modules/_task_.html">"<wbr>Task"</a>
+					</li>
+				</ul>
+			</nav>
+			<nav class="tsd-navigation secondary menu-sticky">
+				<ul class="before-current">
+				</ul>
+			</nav>
+		</div>
+	</div>
+</div>
+<footer class="with-border-bottom">
+	<div class="container">
+		<h2>Legend</h2>
+		<div class="tsd-legend-group">
+			<ul class="tsd-legend">
+				<li class="tsd-kind-module"><span class="tsd-kind-icon">Module</span></li>
+				<li class="tsd-kind-object-literal"><span class="tsd-kind-icon">Object literal</span></li>
+				<li class="tsd-kind-variable"><span class="tsd-kind-icon">Variable</span></li>
+				<li class="tsd-kind-function"><span class="tsd-kind-icon">Function</span></li>
+				<li class="tsd-kind-function tsd-has-type-parameter"><span class="tsd-kind-icon">Function with type parameter</span></li>
+				<li class="tsd-kind-index-signature"><span class="tsd-kind-icon">Index signature</span></li>
+				<li class="tsd-kind-type-alias"><span class="tsd-kind-icon">Type alias</span></li>
+			</ul>
+			<ul class="tsd-legend">
+				<li class="tsd-kind-enum"><span class="tsd-kind-icon">Enumeration</span></li>
+				<li class="tsd-kind-enum-member"><span class="tsd-kind-icon">Enumeration member</span></li>
+				<li class="tsd-kind-property tsd-parent-kind-enum"><span class="tsd-kind-icon">Property</span></li>
+				<li class="tsd-kind-method tsd-parent-kind-enum"><span class="tsd-kind-icon">Method</span></li>
+			</ul>
+			<ul class="tsd-legend">
+				<li class="tsd-kind-interface"><span class="tsd-kind-icon">Interface</span></li>
+				<li class="tsd-kind-interface tsd-has-type-parameter"><span class="tsd-kind-icon">Interface with type parameter</span></li>
+				<li class="tsd-kind-constructor tsd-parent-kind-interface"><span class="tsd-kind-icon">Constructor</span></li>
+				<li class="tsd-kind-property tsd-parent-kind-interface"><span class="tsd-kind-icon">Property</span></li>
+				<li class="tsd-kind-method tsd-parent-kind-interface"><span class="tsd-kind-icon">Method</span></li>
+				<li class="tsd-kind-index-signature tsd-parent-kind-interface"><span class="tsd-kind-icon">Index signature</span></li>
+			</ul>
+			<ul class="tsd-legend">
+				<li class="tsd-kind-class"><span class="tsd-kind-icon">Class</span></li>
+				<li class="tsd-kind-class tsd-has-type-parameter"><span class="tsd-kind-icon">Class with type parameter</span></li>
+				<li class="tsd-kind-constructor tsd-parent-kind-class"><span class="tsd-kind-icon">Constructor</span></li>
+				<li class="tsd-kind-property tsd-parent-kind-class"><span class="tsd-kind-icon">Property</span></li>
+				<li class="tsd-kind-method tsd-parent-kind-class"><span class="tsd-kind-icon">Method</span></li>
+				<li class="tsd-kind-accessor tsd-parent-kind-class"><span class="tsd-kind-icon">Accessor</span></li>
+				<li class="tsd-kind-index-signature tsd-parent-kind-class"><span class="tsd-kind-icon">Index signature</span></li>
+			</ul>
+			<ul class="tsd-legend">
+				<li class="tsd-kind-constructor tsd-parent-kind-class tsd-is-inherited"><span class="tsd-kind-icon">Inherited constructor</span></li>
+				<li class="tsd-kind-property tsd-parent-kind-class tsd-is-inherited"><span class="tsd-kind-icon">Inherited property</span></li>
+				<li class="tsd-kind-method tsd-parent-kind-class tsd-is-inherited"><span class="tsd-kind-icon">Inherited method</span></li>
+				<li class="tsd-kind-accessor tsd-parent-kind-class tsd-is-inherited"><span class="tsd-kind-icon">Inherited accessor</span></li>
+			</ul>
+			<ul class="tsd-legend">
+				<li class="tsd-kind-property tsd-parent-kind-class tsd-is-protected"><span class="tsd-kind-icon">Protected property</span></li>
+				<li class="tsd-kind-method tsd-parent-kind-class tsd-is-protected"><span class="tsd-kind-icon">Protected method</span></li>
+				<li class="tsd-kind-accessor tsd-parent-kind-class tsd-is-protected"><span class="tsd-kind-icon">Protected accessor</span></li>
+			</ul>
+			<ul class="tsd-legend">
+				<li class="tsd-kind-property tsd-parent-kind-class tsd-is-private"><span class="tsd-kind-icon">Private property</span></li>
+				<li class="tsd-kind-method tsd-parent-kind-class tsd-is-private"><span class="tsd-kind-icon">Private method</span></li>
+				<li class="tsd-kind-accessor tsd-parent-kind-class tsd-is-private"><span class="tsd-kind-icon">Private accessor</span></li>
+			</ul>
+			<ul class="tsd-legend">
+				<li class="tsd-kind-property tsd-parent-kind-class tsd-is-static"><span class="tsd-kind-icon">Static property</span></li>
+				<li class="tsd-kind-call-signature tsd-parent-kind-class tsd-is-static"><span class="tsd-kind-icon">Static method</span></li>
+			</ul>
+		</div>
+	</div>
+</footer>
+<div class="container tsd-generator">
+	<p>Generated using <a href="http://typedoc.org/" target="_blank">TypeDoc</a></p>
+</div>
+<div class="overlay"></div>
+<script src="assets/js/main.js"></script>
+<script>if (location.protocol == 'file:') document.write('<script src="assets/js/search.js"><' + '/script>');</script>
+</body>
+</html>
