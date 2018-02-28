@@ -3,7 +3,7 @@
 <head>
 	<meta charset="utf-8">
 	<meta http-equiv="X-UA-Compatible" content="IE=edge">
-	<title>&quot;Task&quot; | batch-cluster</title>
+	<title>NoLogger | batch-cluster</title>
 	<meta name="description" content="">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<link rel="stylesheet" href="../assets/css/main.css">
@@ -56,67 +56,109 @@
 					<a href="../globals.html">Globals</a>
 				</li>
 				<li>
-					<a href="_task_.html">&quot;Task&quot;</a>
+					<a href="_logger_.html">&quot;Logger&quot;</a>
+				</li>
+				<li>
+					<a href="_logger_.nologger.html">NoLogger</a>
 				</li>
 			</ul>
-			<h1>External module &quot;Task&quot;</h1>
+			<h1>Module NoLogger</h1>
 		</div>
 	</div>
 </header>
 <div class="container container-main">
 	<div class="row">
 		<div class="col-8 col-content">
+			<section class="tsd-panel tsd-comment">
+				<div class="tsd-comment tsd-typography">
+					<div class="lead">
+						<p><code>Logger</code> that disables all logging.</p>
+					</div>
+				</div>
+			</section>
 			<section class="tsd-panel-group tsd-index-group">
 				<h2>Index</h2>
 				<section class="tsd-panel tsd-index-panel">
 					<div class="tsd-index-content">
 						<section class="tsd-index-section ">
-							<h3>Classes</h3>
+							<h3>Variables</h3>
 							<ul class="tsd-index-list">
-								<li class="tsd-kind-class tsd-parent-kind-external-module tsd-has-type-parameter"><a href="../classes/_task_.task.html" class="tsd-kind-icon">Task</a></li>
+								<li class="tsd-kind-variable tsd-parent-kind-module"><a href="_logger_.nologger.html#debug" class="tsd-kind-icon">debug</a></li>
+								<li class="tsd-kind-variable tsd-parent-kind-module"><a href="_logger_.nologger.html#error" class="tsd-kind-icon">error</a></li>
+								<li class="tsd-kind-variable tsd-parent-kind-module"><a href="_logger_.nologger.html#info" class="tsd-kind-icon">info</a></li>
+								<li class="tsd-kind-variable tsd-parent-kind-module"><a href="_logger_.nologger.html#warn" class="tsd-kind-icon">warn</a></li>
 							</ul>
 						</section>
-						<section class="tsd-index-section ">
-							<h3>Type aliases</h3>
+						<section class="tsd-index-section tsd-is-not-exported">
+							<h3>Functions</h3>
 							<ul class="tsd-index-list">
-								<li class="tsd-kind-type-alias tsd-parent-kind-external-module tsd-has-type-parameter"><a href="_task_.html#parser" class="tsd-kind-icon">Parser</a></li>
+								<li class="tsd-kind-function tsd-parent-kind-module tsd-is-not-exported"><a href="_logger_.nologger.html#noop" class="tsd-kind-icon">noop</a></li>
 							</ul>
 						</section>
 					</div>
 				</section>
 			</section>
 			<section class="tsd-panel-group tsd-member-group ">
-				<h2>Type aliases</h2>
-				<section class="tsd-panel tsd-member tsd-kind-type-alias tsd-parent-kind-external-module tsd-has-type-parameter">
-					<a name="parser" class="tsd-anchor"></a>
-					<h3>Parser</h3>
-					<div class="tsd-signature tsd-kind-icon">Parser<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">function</span></div>
+				<h2>Variables</h2>
+				<section class="tsd-panel tsd-member tsd-kind-variable tsd-parent-kind-module">
+					<a name="debug" class="tsd-anchor"></a>
+					<h3><span class="tsd-flag ts-flagConst">Const</span> debug</h3>
+					<div class="tsd-signature tsd-kind-icon">debug<span class="tsd-signature-symbol">:</span> <a href="" class="tsd-signature-type">noop</a><span class="tsd-signature-symbol"> =&nbsp;noop</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/mceachen/batch-cluster.js/blob/93f6977/src/Task.ts#L4">Task.ts:4</a></li>
+							<li>Defined in <a href="https://github.com/mceachen/batch-cluster.js/blob/93f6977/src/Logger.ts#L46">Logger.ts:46</a></li>
 						</ul>
 					</aside>
-					<div class="tsd-type-declaration">
-						<h4>Type declaration</h4>
-						<ul class="tsd-parameters">
-							<li class="tsd-parameter-siganture">
-								<ul class="tsd-signatures tsd-kind-type-literal tsd-parent-kind-type-alias tsd-is-not-exported">
-									<li class="tsd-signature tsd-kind-icon"><span class="tsd-signature-symbol">(</span>data<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">T</span></li>
-								</ul>
-								<ul class="tsd-descriptions">
-									<li class="tsd-description">
-										<h4 class="tsd-parameters-title">Parameters</h4>
-										<ul class="tsd-parameters">
-											<li>
-												<h5>data: <span class="tsd-signature-type">string</span></h5>
-											</li>
-										</ul>
-										<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">T</span></h4>
-									</li>
-								</ul>
-							</li>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-variable tsd-parent-kind-module">
+					<a name="error" class="tsd-anchor"></a>
+					<h3><span class="tsd-flag ts-flagConst">Const</span> error</h3>
+					<div class="tsd-signature tsd-kind-icon">error<span class="tsd-signature-symbol">:</span> <a href="" class="tsd-signature-type">noop</a><span class="tsd-signature-symbol"> =&nbsp;noop</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li>Defined in <a href="https://github.com/mceachen/batch-cluster.js/blob/93f6977/src/Logger.ts#L49">Logger.ts:49</a></li>
 						</ul>
-					</div>
+					</aside>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-variable tsd-parent-kind-module">
+					<a name="info" class="tsd-anchor"></a>
+					<h3><span class="tsd-flag ts-flagConst">Const</span> info</h3>
+					<div class="tsd-signature tsd-kind-icon">info<span class="tsd-signature-symbol">:</span> <a href="" class="tsd-signature-type">noop</a><span class="tsd-signature-symbol"> =&nbsp;noop</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li>Defined in <a href="https://github.com/mceachen/batch-cluster.js/blob/93f6977/src/Logger.ts#L47">Logger.ts:47</a></li>
+						</ul>
+					</aside>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-variable tsd-parent-kind-module">
+					<a name="warn" class="tsd-anchor"></a>
+					<h3><span class="tsd-flag ts-flagConst">Const</span> warn</h3>
+					<div class="tsd-signature tsd-kind-icon">warn<span class="tsd-signature-symbol">:</span> <a href="" class="tsd-signature-type">noop</a><span class="tsd-signature-symbol"> =&nbsp;noop</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li>Defined in <a href="https://github.com/mceachen/batch-cluster.js/blob/93f6977/src/Logger.ts#L48">Logger.ts:48</a></li>
+						</ul>
+					</aside>
+				</section>
+			</section>
+			<section class="tsd-panel-group tsd-member-group tsd-is-not-exported">
+				<h2>Functions</h2>
+				<section class="tsd-panel tsd-member tsd-kind-function tsd-parent-kind-module tsd-is-not-exported">
+					<a name="noop" class="tsd-anchor"></a>
+					<h3><span class="tsd-flag ts-flagConst">Const</span> noop</h3>
+					<ul class="tsd-signatures tsd-kind-function tsd-parent-kind-module tsd-is-not-exported">
+						<li class="tsd-signature tsd-kind-icon">noop<span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/mceachen/batch-cluster.js/blob/93f6977/src/Logger.ts#L45">Logger.ts:45</a></li>
+								</ul>
+							</aside>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
+						</li>
+					</ul>
 				</section>
 			</section>
 		</div>
@@ -126,39 +168,24 @@
 					<li class="globals  ">
 						<a href="../globals.html"><em>Globals</em></a>
 					</li>
-					<li class=" tsd-kind-external-module">
-						<a href="_batchcluster_.html">"<wbr>Batch<wbr>Cluster"</a>
-					</li>
-					<li class=" tsd-kind-external-module">
-						<a href="_batchprocess_.html">"<wbr>Batch<wbr>Process"</a>
-					</li>
-					<li class=" tsd-kind-external-module">
-						<a href="_deferred_.html">"<wbr>Deferred"</a>
-					</li>
-					<li class=" tsd-kind-external-module">
-						<a href="_delay_.html">"<wbr>Delay"</a>
-					</li>
-					<li class=" tsd-kind-external-module">
-						<a href="_logger_.html">"<wbr>Logger"</a>
-					</li>
-					<li class=" tsd-kind-external-module">
-						<a href="_mean_.html">"<wbr>Mean"</a>
-					</li>
-					<li class=" tsd-kind-external-module">
-						<a href="_rate_.html">"<wbr>Rate"</a>
-					</li>
-					<li class="current tsd-kind-external-module">
-						<a href="_task_.html">"<wbr>Task"</a>
-					</li>
 				</ul>
 			</nav>
 			<nav class="tsd-navigation secondary menu-sticky">
 				<ul class="before-current">
-					<li class=" tsd-kind-class tsd-parent-kind-external-module tsd-has-type-parameter">
-						<a href="../classes/_task_.task.html" class="tsd-kind-icon">Task</a>
+					<li class=" tsd-kind-variable tsd-parent-kind-module">
+						<a href="_logger_.nologger.html#debug" class="tsd-kind-icon">debug</a>
 					</li>
-					<li class=" tsd-kind-type-alias tsd-parent-kind-external-module tsd-has-type-parameter">
-						<a href="_task_.html#parser" class="tsd-kind-icon">Parser</a>
+					<li class=" tsd-kind-variable tsd-parent-kind-module">
+						<a href="_logger_.nologger.html#error" class="tsd-kind-icon">error</a>
+					</li>
+					<li class=" tsd-kind-variable tsd-parent-kind-module">
+						<a href="_logger_.nologger.html#info" class="tsd-kind-icon">info</a>
+					</li>
+					<li class=" tsd-kind-variable tsd-parent-kind-module">
+						<a href="_logger_.nologger.html#warn" class="tsd-kind-icon">warn</a>
+					</li>
+					<li class=" tsd-kind-function tsd-parent-kind-module tsd-is-not-exported">
+						<a href="_logger_.nologger.html#noop" class="tsd-kind-icon">noop</a>
 					</li>
 				</ul>
 			</nav>

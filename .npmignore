@@ -12,5 +12,8 @@ appveyor.yml
 # no src
 src/
 
+# no docs
+docs/
+
 # no typescript configs
 ts*.json
