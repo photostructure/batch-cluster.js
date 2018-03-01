@@ -8,9 +8,9 @@ enum State {
 }
 
 /**
- * Enables a Promise to be resolved or rejected at a future time, outside of the
- * context of the Promise construction. Also exposes the current `fulfilled`
- * status.
+ * Enables a Promise to be resolved or rejected at a future time, outside of
+ * the context of the Promise construction. Also exposes the `pending`,
+ * `fulfilled`, or `rejected` state of the promise.
  */
 export class Deferred<T> {
   readonly promise: Promise<T>

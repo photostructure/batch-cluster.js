@@ -1,6 +1,11 @@
 import { Deferred } from "./Deferred"
 import { logger } from "./Logger"
 
+/**
+ * Parser implementations convert stdout from the underlying child process to
+ * a more useable format. This can be a no-op passthrough if no parsing is
+ * necessary. 
+ */
 export type Parser<T> = (data: string) => T
 
 /**
