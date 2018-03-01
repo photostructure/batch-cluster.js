@@ -3,6 +3,11 @@ import { logger } from "./Logger"
 
 export type Parser<T> = (data: string) => T
 
+/**
+ * Tasks embody individual jobs given to the underlying child processes. Each
+ * instance has a promise that will be resolved or rejected based on the
+ * result of the task.
+ */
 export class Task<T> {
   retries = 0
   private readonly d = new Deferred<T>()
