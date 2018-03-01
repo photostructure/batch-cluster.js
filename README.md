@@ -37,29 +37,37 @@ $ npm install --save batch-cluster
 The child process must use `stdin` and `stdout` for control/response.
 BatchCluster will ensure a given process is only given one task at a time.
 
-1.  Create a singleton instance of [BatchCluster](classes/_batchcluster_.batchcluster.html).
+_If these links are broken, use <https://batch-cluster.js.org/>_
+
+1.  Create a singleton instance of [BatchCluster](/classes/_batchcluster_.batchcluster.html).
 
     Note the
-    [constructor options](classes/_batchcluster_.batchcluster.html#constructor) takes a union type of
+    [constructor options](/classes/_batchcluster_.batchcluster.html#constructor) takes a union type of
 
-    * [ChildProcessFactory](interfaces/_batchcluster_.childprocessfactory.html) and
-    * [BatchProcessOptions](interfaces/_batchcluster_.batchprocessoptions.html), both of which have no
+    * [ChildProcessFactory](/interfaces/_batchcluster_.childprocessfactory.html) and
+    * [BatchProcessOptions](/interfaces/_batchcluster_.batchprocessoptions.html), both of which have no
       defaults, and
-    * [BatchClusterOptions](classes/_batchcluster_.batchclusteroptions.html), which has defaults that may
+    * [BatchClusterOptions](/classes/_batchcluster_.batchclusteroptions.html), which has defaults that may
       or may not be relevant to your application.
 
-1.  Set up logging appropriately with [setLogger](modules/_logger_.html#setlogger).
+1.  The [default](/modules/_logger_.consolelogger.html) logger writes warning
+    and error messages to `console.warn` and `console.error`. You can change
+    this to your logger by using
+    [setLogger](/modules/_logger_.html#setlogger).
 
 1.  Implement the [Parser](/modules/_task_.html#parser) class to parse results from your child
     process.
 
-1.  Construct a [Task](classes/_task_.task.html) with the desired command and
-    the parser you built in the previous step, and submit it to [enqueueTask](classes/_batchcluster_.batchcluster.html#enqueuetask).
+1.  Construct a [Task](/classes/_task_.task.html) with the desired command and
+    the parser you built in the previous step, and submit it to your
+    BatchCluster singleton's
+    [enqueueTask](/classes/_batchcluster_.batchcluster.html#enqueuetask)
+    method.
 
 See
 [src/test.ts](https://github.com/mceachen/batch-cluster.js/blob/master/src/test.ts)
-for an example child process. Note that the script is more than minimal, due
-to it being designed to be flaky to test BatchCluster sufficiently.
+for an example child process. Note that the script is *designed* to be flaky
+on order to test BatchCluster's retry and error handling code.
 
 ## Versioning
 
