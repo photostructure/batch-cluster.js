@@ -1,6 +1,6 @@
 # batch-cluster
 
-** Support external batch-mode tools within Node.js. **
+**Support external batch-mode tools within Node.js.**
 
 [![npm version](https://badge.fury.io/js/batch-cluster.svg)](https://badge.fury.io/js/batch-cluster)
 [![Build status](https://travis-ci.org/mceachen/batch-cluster.js.svg?branch=master)](https://travis-ci.org/mceachen/batch-cluster.js)
@@ -73,6 +73,12 @@ BatchCluster sufficiently.
 * 📦 Minor packaging changes
 
 ## Changelog
+
+### v1.9.1
+
+* 📦 Changed `BatchProcess.end()` to use `until()` rather than `Promise.race`,
+  and always use `kill(pid, forced)` after waiting the shutdown grace period
+  to prevent child process leaks.
 
 ### v1.9.0
 
