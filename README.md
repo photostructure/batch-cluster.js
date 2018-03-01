@@ -37,25 +37,26 @@ $ npm install --save batch-cluster
 The child process must use `stdin` and `stdout` for control/response.
 BatchCluster will ensure a given process is only given one task at a time.
 
-1.  Extend the [Task](src/Task.ts#L5) class to parse results from your child
+1.  Extend the [Task](classes/_task_.task.html) class to parse results from your child
     process.
 
 2.  Create a singleton instance of `BatchCluster`. Note the
-    [constructor options](src/BatchCluster.ts#L271) takes a union type of
+    [constructor options](classes/_batchcluster_.batchcluster.html#constructor) takes a union type of
 
-    * [ChildProcessFactory](src/BatchCluster.ts#L15) and
-    * [BatchProcessOptions](src/BatchCluster.ts#L34), both of which have no
+    * [ChildProcessFactory](interfaces/_batchcluster_.childprocessfactory.html) and
+    * [BatchProcessOptions](interfaces/_batchcluster_.batchprocessoptions.html), both of which have no
       defaults, and
-    * [BatchClusterOptions](src/BatchCluster.ts#L64), which has defaults that may
+    * [BatchClusterOptions](classes/_batchcluster_.batchclusteroptions.html), which has defaults that may
       or may not be relevant to your application.
 
-3.  Set up logging appropriately with `setLogger`
+3.  Set up logging appropriately with [setLogger](modules/_logger_.html#setlogger).
 
-4.  Give instances of your `Task` to [enqueueTask](src/BatchCluster.ts#L309).
+4.  Give instances of your `Task` to [enqueueTask](classes/_batchcluster_.batchcluster.html#enqueuetask).
 
-See [src/test.ts](https://github.com/mceachen/batch-cluster.js/blob/master/src/test.ts) for an example child process. Note that the
-script is more than minimal, due to it being designed to be flaky to test
-BatchCluster sufficiently.
+See
+[src/test.ts](https://github.com/mceachen/batch-cluster.js/blob/master/src/test.ts)
+for an example child process. Note that the script is more than minimal, due
+to it being designed to be flaky to test BatchCluster sufficiently.
 
 ## Versioning
 
