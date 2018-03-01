@@ -8,7 +8,7 @@ import {
   logger
 } from "./BatchCluster"
 import { Deferred } from "./Deferred"
-import { delay } from "./Delay"
+import { until } from "./Delay"
 import { Task } from "./Task"
 
 export interface BatchProcessObserver {
@@ -138,19 +138,12 @@ export class BatchProcess {
   }
 
   async end(gracefully: boolean = true): Promise<void> {
-    const tasks = [this.exitedPromise]
-
     if (!this._ended) {
       this._ended = true
       const cmd = this.opts.exitCommand
         ? ensureSuffix(this.opts.exitCommand, "\n")
         : undefined
       this.proc.stdin.end(cmd)
-      if (gracefully) {
-        if (this.opts.endGracefulWaitTimeMillis > 0) {
-          tasks.push(delay(this.opts.endGracefulWaitTimeMillis))
-        }
-      }
     }
 
     if (this.currentTask != null && this.currentTask !== this.startupTask) {
@@ -168,18 +161,25 @@ export class BatchProcess {
     }
 
     if (this.running) {
-      logger().debug(
-        `end(${gracefully}): PID ${
-          this.pid
-        } still running. Waiting for PID to end.`
-      )
-      await Promise.race(tasks)
+      if (gracefully && this.opts.endGracefulWaitTimeMillis > 0) {
+        await this.awaitNotRunning(this.opts.endGracefulWaitTimeMillis)
+      }
     }
     if (this.running) {
-      logger().info("end(" + gracefully + "): killing PID " + this.pid)
-      kill(this.proc.pid, !gracefully)
+      logger().info("end(): killing PID " + this.pid)
+      kill(this.proc.pid, true)
     }
+    // The OS is srsly f@rked if `kill` doesn't respond within a couple ms. 5s
+    // should be 100x longer than necessary.
+    if (!await this.awaitNotRunning(5000)) {
+      logger().error("end(): PID " + this.pid + " did not respond to kill.")
+    }
+
     return this.exitedPromise
+  }
+
+  private awaitNotRunning(timeout: number) {
+    return until(() => !this.running, timeout)
   }
 
   private onTimeout(task: Task<any>): void {
