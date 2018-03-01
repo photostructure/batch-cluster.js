@@ -86,6 +86,12 @@ on order to test BatchCluster's retry and error handling code.
 
 ## Changelog
 
+### v1.10.0
+
+* 🐞 Explicitly use `timers.setInterval`. May address [this
+  issue](https://stackoverflow.com/questions/48961238/electron-setinterval-implementation-difference-between-chrome-and-node).
+  Thanks for the PR, [Tim Fish](https://github.com/timfish)!
+
 ### v1.9.1
 
 * 📦 Changed `BatchProcess.end()` to use `until()` rather than `Promise.race`,
