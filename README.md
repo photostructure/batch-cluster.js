@@ -37,10 +37,9 @@ $ npm install --save batch-cluster
 The child process must use `stdin` and `stdout` for control/response.
 BatchCluster will ensure a given process is only given one task at a time.
 
-1.  Extend the [Task](classes/_task_.task.html) class to parse results from your child
-    process.
+1.  Create a singleton instance of [BatchCluster](classes/_batchcluster_.batchcluster.html).
 
-2.  Create a singleton instance of `BatchCluster`. Note the
+    Note the
     [constructor options](classes/_batchcluster_.batchcluster.html#constructor) takes a union type of
 
     * [ChildProcessFactory](interfaces/_batchcluster_.childprocessfactory.html) and
@@ -49,9 +48,13 @@ BatchCluster will ensure a given process is only given one task at a time.
     * [BatchClusterOptions](classes/_batchcluster_.batchclusteroptions.html), which has defaults that may
       or may not be relevant to your application.
 
-3.  Set up logging appropriately with [setLogger](modules/_logger_.html#setlogger).
+1.  Set up logging appropriately with [setLogger](modules/_logger_.html#setlogger).
 
-4.  Give instances of your `Task` to [enqueueTask](classes/_batchcluster_.batchcluster.html#enqueuetask).
+1.  Implement the [Parser](/modules/_task_.html#parser) class to parse results from your child
+    process.
+
+1.  Construct a [Task](classes/_task_.task.html) with the desired command and
+    the parser you built in the previous step, and submit it to [enqueueTask](classes/_batchcluster_.batchcluster.html#enqueuetask).
 
 See
 [src/test.ts](https://github.com/mceachen/batch-cluster.js/blob/master/src/test.ts)
