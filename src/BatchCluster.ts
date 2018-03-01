@@ -1,5 +1,6 @@
 import { ChildProcess } from "child_process"
 import * as _p from "process"
+import { clearInterval, setInterval } from "timers"
 
 import {
   BatchProcess,
@@ -261,7 +262,7 @@ export class BatchCluster {
   ) {
     this.opts = verifyOptions(opts)
     if (this.opts.onIdleIntervalMillis > 0) {
-      this.onIdleInterval = global.setInterval(
+      this.onIdleInterval = setInterval(
         () => this.onIdle(),
         this.opts.onIdleIntervalMillis
       )

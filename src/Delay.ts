@@ -1,6 +1,8 @@
+import { setTimeout } from "timers";
+
 export function delay(millis: number, unref = false): Promise<void> {
   return new Promise<void>(resolve => {
-    const t = global.setTimeout(() => resolve(), millis)
+    const t = setTimeout(() => resolve(), millis)
     if (unref) t.unref()
   })
 }
