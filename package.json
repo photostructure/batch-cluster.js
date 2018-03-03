@@ -3,6 +3,10 @@
   "version": "1.10.0",
   "description": "Manage a cluster of child processes",
   "main": "dist/BatchCluster.js",
+  "homepage": "https://batch-cluster.js.org/",
+  "bugs": {
+    "url": "https://github.com/mceachen/batch-cluster.js/issues"
+  },
   "types": "dist/BatchCluster.d.ts",
   "repository": {
     "type": "git",
