@@ -7,6 +7,7 @@ import {
   BatchProcessObserver,
   InternalBatchProcessOptions
 } from "./BatchProcess"
+import { logger } from "./Logger"
 import { Mean } from "./Mean"
 import { Rate } from "./Rate"
 import { Task } from "./Task"
@@ -63,6 +64,28 @@ export interface BatchProcessOptions {
    */
   readonly exitCommand?: string
 }
+
+/**
+ * BatchClusterObserver is notified as lifecycle events occur
+ */
+export interface BatchClusterObserver {
+  onStartError(err: any): void
+  onTaskError(task: Task<any>, err: any): void
+  onEndError(err: any): void
+  onBeforeEnd(): void
+  onEnd(): void
+}
+
+namespace NoOpObserver {
+  const noop = () => {}
+  export const onStartError = noop,
+    onTaskError = noop,
+    onEndError = noop,
+    onBeforeEnd = noop,
+    onEnd = noop
+}
+
+export const NoOpBatchClusterObserver: BatchClusterObserver = NoOpObserver
 
 /**
  * These parameter values have somewhat sensible defaults, but can be
@@ -161,6 +184,11 @@ export class BatchClusterOptions {
   readonly maxTasksPerProcess: number = 500
 
   /**
+   * How many task errors can a process generate before it is terminated? 
+   */
+  readonly maxTaskErrorsPerProcess: number = 5
+
+  /**
    * When `this.end()` is called, or Node broadcasts the `beforeExit`
    * event, this is the milliseconds spent waiting for currently running
    * tasks to finish before sending kill signals to child processes.
@@ -170,6 +198,11 @@ export class BatchClusterOptions {
    * Must be &gt;= 0. Defaults to 500ms.
    */
   readonly endGracefulWaitTimeMillis: number = 500
+
+  /**
+   * Provide an observer to be notified of lifecycle events.
+   */
+  readonly observer: BatchClusterObserver = NoOpBatchClusterObserver
 }
 
 function verifyOptions(
@@ -187,6 +220,11 @@ function verifyOptions(
   }
 
   const errors: string[] = []
+  function present(fieldName: keyof AllOpts) {
+    if (result[fieldName] == null) {
+      errors.push(fieldName + " must be defined")
+    }
+  }
   function notBlank(fieldName: keyof AllOpts) {
     const v = result[fieldName] as string
     if (v.trim().length === 0) {
@@ -216,6 +254,7 @@ function verifyOptions(
   gte("endGracefulWaitTimeMillis", 0)
   gte("taskRetries", 0)
   gte("maxReasonableProcessFailuresPerMinute", 0)
+  present("observer")
 
   if (errors.length > 0) {
     throw new Error(
@@ -281,16 +320,26 @@ export class BatchCluster {
     return this._ended
   }
 
-  // not async so it doesn't relinquish control flow
   end(gracefully: boolean = true): Promise<void> {
+    this.opts.observer.onBeforeEnd()
+    if (!gracefully || !this._ended) {
+      // We don't need to wait for these promises
+      this._procs.forEach(p =>
+        p.end(gracefully).catch(err => this.opts.observer.onEndError(err))
+      )
+    }
+
     if (!this._ended) {
       this._ended = true
       if (this.onIdleInterval) clearInterval(this.onIdleInterval)
       _p.removeListener("beforeExit", this.beforeExitListener)
       _p.removeListener("exit", this.exitListener)
-      this._procs.forEach(p => p.end(gracefully))
+      return this.endPromise().then(() => {
+        this.opts.observer.onEnd()
+      })
+    } else {
+      return this.endPromise()
     }
-    return this.endPromise
   }
 
   enqueueTask<T>(task: Task<T>): Promise<T> {
@@ -338,25 +387,36 @@ export class BatchCluster {
   private readonly beforeExitListener = () => this.end(true)
   private readonly exitListener = () => this.end(false)
 
-  private get endPromise(): Promise<void> {
-    return Promise.all(this._procs.map(p => p.exitedPromise)).then(
-      () => undefined
-    )
+  private endPromise(): Promise<void> {
+    return Promise.all(this._procs.map(p => p.exitedPromise))
+      .then(() => {})
+      .catch(err => this.opts.observer.onEndError(err))
   }
 
   private retryTask(task: Task<any>, error: any) {
-    if (task) {
-      if (task.retries < this.opts.taskRetries) {
+    if (task != null) {
+      logger().debug("BatchCluster.retryTask()", {
+        cmd: task.command,
+        error: error.stack || error,
+        retries: task.retries
+      })
+      if (task.retries < this.opts.taskRetries && !this.ended) {
         task.retries++
         // fix for rapid-retry failure from mktags:
         setTimeout(() => this.enqueueTask(task), 20)
       } else {
+        if (error != null) {
+          // Only notify the observer if the task can't be retried:
+          this.opts.observer.onTaskError(task, error)
+        }
         task.onError(error)
       }
     }
   }
 
   private onStartError(error: any): void {
+    logger().warn("BatchCluster.onStartError()", { error: error.stack || error })
+    this.opts.observer.onStartError(error)
     this.startErrorRate.onEvent()
     if (
       this.startErrorRate.eventsPerMinute >
@@ -410,6 +470,13 @@ export class BatchCluster {
         map(this._pendingTasks.shift(), task => {
           if (!idleProc.execTask(task)) {
             this.enqueueTask(task)
+          } else {
+            logger().debug(
+              "BatchCluster.execNextTask(): submitted " +
+                task.command +
+                " to child pid " +
+                idleProc.pid
+            )
           }
           return true
         })

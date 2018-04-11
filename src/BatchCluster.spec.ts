@@ -1,23 +1,15 @@
-import { BatchCluster, BatchClusterOptions } from "./BatchCluster"
+import { inspect } from "util"
+
+import {
+  BatchCluster,
+  BatchClusterObserver,
+  BatchClusterOptions
+} from "./BatchCluster"
 import { BatchProcess } from "./BatchProcess"
 import { delay } from "./Delay"
 import { expect, parser, times } from "./spec"
 import { Task } from "./Task"
 import { processFactory, procs, runningSpawnedPids } from "./test.spec"
-import { inspect } from "util"
-
-const defaultOpts = Object.freeze({
-  ...new BatchClusterOptions(),
-  versionCommand: "version",
-  pass: "PASS",
-  fail: "FAIL",
-  exitCommand: "exit",
-  onIdleIntervalMillis: 250, // frequently to speed up tests
-  maxTasksPerProcess: 5,
-  spawnTimeoutMillis: 1000,
-  taskTimeoutMillis: 500, // so the timeout test doesn't timeout
-  maxReasonableProcessFailuresPerMinute: 1000 // this is so high because failrate is so high
-})
 
 describe("BatchCluster", () => {
   function runTasks(
@@ -33,8 +25,49 @@ describe("BatchCluster", () => {
     return times(iterations, i => "ABC " + i)
   }
 
-  // used to seed the failure RNG, to make tests deterministic:
-  let callcount = 0
+  class ProxyHandler {
+    constructor(readonly events: Event[]) {}
+    get(_target: any, p: PropertyKey): any {
+      return (...args: any[]) => {
+        const ev: Event = { event: String(p) }
+        if (args.length > 0) {
+          ev.args = args
+        }
+        this.events.push(ev)
+      }
+    }
+  }
+
+  const events: Event[] = []
+  const expectedEndEvents = [{ event: "onBeforeEnd" }, { event: "onEnd" }]
+  const observer = new Proxy(
+    {},
+    new ProxyHandler(events)
+  ) as BatchClusterObserver
+
+  const defaultOpts = Object.freeze({
+    ...new BatchClusterOptions(),
+    versionCommand: "version",
+    pass: "PASS",
+    fail: "FAIL",
+    exitCommand: "exit",
+    onIdleIntervalMillis: 250, // frequently to speed up tests
+    maxTasksPerProcess: 5,
+    spawnTimeoutMillis: 1000,
+    taskTimeoutMillis: 500, // so the timeout test doesn't timeout
+    maxReasonableProcessFailuresPerMinute: 1000, // this is so high because failrate is so high
+    maxTaskErrorsPerProcess: 2,
+    observer
+  })
+
+  afterEach(() => {
+    events.length = 0
+  })
+
+  interface Event {
+    event: string
+    args?: any
+  }
 
   function specsWithOptions(
     newline: string,
@@ -62,6 +95,14 @@ describe("BatchCluster", () => {
 
         let failrate: string
 
+        let rngseed = [
+          newline.length,
+          taskRetries,
+          maxProcs,
+          retryTasksAfterTimeout ? 0 : 1,
+          ignoreExit ? 0 : 1
+        ].join("")
+
         beforeEach(() => {
           // Seeding the RNG deterministically gives us repeatable test successes.
           failrate = taskRetries === 0 ? "0" : "0.1"
@@ -74,7 +115,7 @@ describe("BatchCluster", () => {
               processFactory({
                 newline,
                 failrate,
-                rngseed: "SEED" + callcount++,
+                rngseed,
                 ignoreExit: ignoreExit ? "1" : "0"
               })
           })
@@ -89,6 +130,7 @@ describe("BatchCluster", () => {
           await bc.end()
           expect(bc.pids.length).to.eql(0)
           expect(bc.spawnedProcs).to.eql(0)
+          expect(events).to.eql(expectedEndEvents)
           return
         })
 
@@ -102,6 +144,18 @@ describe("BatchCluster", () => {
           expect(bc.spawnedProcs).to.be.within(maxProcs, maxProcs + 4) // because EUNLUCKY
           expect(bc.pids.length).to.eql(0)
           expect(runningSpawnedPids()).to.eql([])
+          const expectedEvents = []
+          if (rngseed == "25200") {
+            expectedEvents.push(
+              ...times(2, () => ({
+                args: [
+                  "stderr.data: EUNLUCKY: r: 0.04, failrate: 0.10, seed: 25200"
+                ],
+                event: "onStartError"
+              }))
+            )
+            expect(events).to.eql([...expectedEvents, ...expectedEndEvents])
+          }
           return
         })
 
@@ -133,45 +187,75 @@ describe("BatchCluster", () => {
             )
             await bc.pendingMaintenance
             expect(runningSpawnedPids().length).to.lte(maxProcs)
+            if (rngseed == "25200") {
+              expect(events[0]).to.eql(
+                {
+                  args: [
+                    "stderr.data: EUNLUCKY: r: 0.04, failrate: 0.10, seed: 25200"
+                  ],
+                  event: "onStartError"
+                },
+                JSON.stringify({ events })
+              )
+            }
             return
           }
         )
 
-        it("recycles procs if the command is invalid", async () => {
-          // we need to run one task to "prime the pid pump"
-          expect(
-            await bc.enqueueTask(new Task("downcase Hello", parser))
-          ).to.eql("hello")
-          const pidsBefore = bc.pids
-          const spawnedProcsBefore = bc.spawnedProcs
-          expect(bc.pids.length).to.be.within(1, 3) // we may have spun up another proc due to EUNLUCKY
-          const task = new Task("invalid", parser)
-          await expect(bc.enqueueTask(task)).to.eventually.be.rejectedWith(
-            /invalid|EUNLUCKY/
-          )
-          const newSpawnedProcs = bc.spawnedProcs - spawnedProcsBefore
-          expect(newSpawnedProcs).to.be.within(
-            opts.taskRetries - 1,
-            opts.taskRetries + 5 // because EUNLUCKY
-          )
-          expect(bc.pids).to.not.eql(pidsBefore) // at least one pid should be shut down now
-          expect(task.retries).to.eql(opts.taskRetries)
-          return
-        })
-
         if (opts.taskRetries > 0) {
+          it("recycles procs if the command is invalid", async () => {
+            // we need to run one task to "prime the pid pump"
+            expect(
+              await bc.enqueueTask(new Task("downcase Hello", parser))
+            ).to.eql("hello")
+            const pidsBefore = bc.pids
+            const spawnedProcsBefore = bc.spawnedProcs
+            expect(bc.pids.length).to.be.within(1, 3) // we may have spun up another proc due to EUNLUCKY
+            const task = new Task("invalid", parser)
+            await expect(bc.enqueueTask(task)).to.eventually.be.rejectedWith(
+              /invalid|EUNLUCKY/
+            )
+            const newSpawnedProcs = bc.spawnedProcs - spawnedProcsBefore
+            console.log({ rngseed })
+            expect(newSpawnedProcs).to.be.within(
+              1,
+              opts.taskRetries + 5 // because EUNLUCKY
+            )
+            expect(bc.pids).to.not.eql(pidsBefore) // at least one pid should be shut down now
+            expect(task.retries).to.eql(opts.taskRetries)
+            expect(events[events.length - 1].event).to.eql(
+              "onTaskError",
+              JSON.stringify(events)
+            )
+            const err = String(events[events.length - 1].args[1])
+            if (!err.startsWith("stderr.data: EUNLUCKY:")) {
+              expect(err).to.eql(
+                "stderr.data: COMMAND MISSING for input invalid",
+                JSON.stringify(events)
+              )
+            }
+            return
+          })
+
           it("retries a flaky task", async () => {
-            callcount = 2 // for a consistent rngseed
-            const task = new Task("flaky .5", parser)
-            expect(await bc.enqueueTask(task)).to.startWith("flaky response")
+            rngseed = "a" // consistent rngseed
+            const task = new Task("flaky .6", parser)
+            expect(await bc.enqueueTask(task).catch(err => err)).to.include(
+              "flaky response"
+            )
             expect(task.retries).to.be.within(2, opts.taskRetries)
+            expect(events[0].event).to.eql(
+              "onTaskError",
+              JSON.stringify(events)
+            )
+            expect(events[0].args[1]).to.include("flaky response")
             return
           })
         }
 
         it("times out slow requests", async () => {
           const task = new Task(
-            "sleep " + (opts.taskTimeoutMillis + 250), // < make sure it times out
+            "sleep " + (opts.taskTimeoutMillis + 500), // < make sure it times out
             parser
           )
           await expect(bc.enqueueTask(task)).to.eventually.be.rejectedWith(
@@ -182,6 +266,7 @@ describe("BatchCluster", () => {
           } else {
             expect(task.retries).to.be.within(0, 1) // because UNLUCKY
           }
+          console.dir(events)
           return
         })
 
@@ -191,17 +276,17 @@ describe("BatchCluster", () => {
             /omg this should fail|UNLUCKY/
           )
           expect(task.retries).to.eql(taskRetries)
+          // expect(events).to.eql({})
           return
         })
       }
     )
   }
 
-  // specsWithOptions( "lf", 5, 4, true, false )
-
+  // specsWithOptions("lf", 5, 2, true, true)
   ;["lf", "crlf"].forEach(newline => {
     ;[5, 0].forEach(taskRetries => {
-      ;[4, 1].forEach(maxProcs => {
+      ;[2, 1].forEach(maxProcs => {
         ;[true, false].forEach(retryTasksAfterTimeout => {
           ;[true, false].forEach(ignoreExit => {
             specsWithOptions(
@@ -244,6 +329,7 @@ describe("BatchCluster", () => {
         await delay(500)
       }
       expect(bc.pids).to.be.empty
+      // expect(events).to.eql({})
       return
     })
   })
@@ -270,6 +356,7 @@ describe("BatchCluster", () => {
       await end
       expect(proc.running).to.be.false
       expect(proc.ended).to.be.true
+      // expect(events).to.eql({})
       return
     })
   })

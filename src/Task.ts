@@ -4,7 +4,7 @@ import { logger } from "./Logger"
 /**
  * Parser implementations convert stdout from the underlying child process to
  * a more useable format. This can be a no-op passthrough if no parsing is
- * necessary. 
+ * necessary.
  */
 export type Parser<T> = (data: string) => T
 
@@ -46,10 +46,13 @@ export class Task<T> {
   onData(data: string): void {
     try {
       const result = this.parser(data)
-      logger().debug("Task.onData(): resolved", { result, command: this.command, data })
+      logger().debug("Task.onData(): resolved", {
+        command: this.command,
+        result
+      })
       this.d.resolve(result)
     } catch (error) {
-      logger().warn("Task.onData(): parser raised " + error, { command: this.command, data })
+      logger().warn("Task.onData(): rejected", { command: this.command, error })
       this.d.reject(error)
     }
   }
@@ -59,7 +62,7 @@ export class Task<T> {
    * process has errored after N retries
    */
   onError(error: any): void {
-    logger().warn("Task.onError(): Failed to run " + this.command, error)
+    logger().warn("Task.onError(): rejected", { command: this.command, error })
     this.d.reject(error)
   }
 }

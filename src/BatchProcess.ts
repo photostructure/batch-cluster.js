@@ -11,6 +11,9 @@ import { Deferred } from "./Deferred"
 import { until } from "./Delay"
 import { Task } from "./Task"
 
+/**
+ * This interface decouples BatchProcess from BatchCluster.
+ */
 export interface BatchProcessObserver {
   onIdle(): void
   onStartError(error: any): void
@@ -29,6 +32,7 @@ export interface InternalBatchProcessOptions
  */
 export class BatchProcess {
   readonly start = Date.now()
+  private errorCount = 0
   private _taskCount = -1 // don't count the startupTask
   /**
    * true if `this.end()` has been called, or this process is no longer in the
@@ -71,7 +75,7 @@ export class BatchProcess {
 
     this.proc.stderr.on("error", err => this.onError("stderr", err))
     this.proc.stderr.on("data", err =>
-      this.onError("stderr.data", err.toString())
+      this.onError("stderr.data", String(err).trim())
     )
 
     this.startupTask = new Task(opts.versionCommand, ea => ea)
@@ -126,12 +130,20 @@ export class BatchProcess {
     this._taskCount++
     this.currentTask = task
     const cmd = ensureSuffix(task.command, "\n")
-    const timeout =
+    const timeoutMs =
       task === this.startupTask
         ? this.opts.spawnTimeoutMillis
         : this.opts.taskTimeoutMillis
-    if (timeout > 0) {
-      this.currentTaskTimeout = setTimeout(() => this.onTimeout(task), timeout)
+    if (timeoutMs > 0) {
+      logger().debug("BatchProcess.execTask(): scheduling timeout", {
+        command: task.command,
+        timeoutMs,
+        pid: this.pid
+      })
+      this.currentTaskTimeout = setTimeout(
+        () => this.onTimeout(task, timeoutMs),
+        timeoutMs
+      )
     }
     this.proc.stdin.write(cmd)
     return true
@@ -166,13 +178,15 @@ export class BatchProcess {
       }
     }
     if (this.running) {
-      logger().info("end(): killing PID " + this.pid)
+      logger().info("BatchProcess.end(): killing PID " + this.pid)
       kill(this.proc.pid, true)
     }
     // The OS is srsly f@rked if `kill` doesn't respond within a couple ms. 5s
     // should be 100x longer than necessary.
     if (!await this.awaitNotRunning(5000)) {
-      logger().error("end(): PID " + this.pid + " did not respond to kill.")
+      logger().error(
+        "BatchProcess.end(): PID " + this.pid + " did not respond to kill."
+      )
     }
 
     return this.exitedPromise
@@ -182,14 +196,19 @@ export class BatchProcess {
     return until(() => !this.running, timeout)
   }
 
-  private onTimeout(task: Task<any>): void {
+  private onTimeout(task: Task<any>, timeoutMs: number): void {
     if (task === this.currentTask && task.pending) {
       this.onError(
         "timeout",
-        new Error("timeout"),
+        "waited " + timeoutMs + "ms",
         this.opts.retryTasksAfterTimeout,
         task
       )
+      logger().warn(
+        "BatchProcess.onTimeout(): ending to prevent result pollution with other tasks.",
+        { pid: this.pid, task: task.command }
+      )
+      this.end()
     }
   }
 
@@ -206,16 +225,34 @@ export class BatchProcess {
 
     // clear the task before ending so the onExit from end() doesn't retry the task:
     this.clearCurrentTask()
-    if (!this._ended) await this.end()
+    this.buff = ""
 
+    if (++this.errorCount > this.opts.maxTaskErrorsPerProcess && !this._ended) {
+      logger().error(
+        "BatchProcess.onError(): " + this.errorCount + " task errors, ending.",
+        { pid: this.pid, taskCount: this.taskCount }
+      )
+      await this.end()
+    }
     if (task === this.startupTask) {
+      logger().warn("BatchProcess.onError(): startup task failed: " + errorMsg)
       this.observer.onStartError(errorMsg)
     }
 
     if (task != null) {
       if (retryTask && task !== this.startupTask) {
+        logger().debug("BatchProcess.onError(): task error, retrying", {
+          pid: this.pid,
+          taskCount: this.taskCount,
+          errorCount: this.errorCount
+        })
         this.observer.retryTask(task, errorMsg)
       } else {
+        logger().debug("BatchProcess.onError(): task failed", {
+          pid: this.pid,
+          taskCount: this.taskCount,
+          errorCount: this.errorCount
+        })
         task.onError(errorMsg)
       }
     }
@@ -223,7 +260,7 @@ export class BatchProcess {
 
   private onExit() {
     if (this.running) {
-      throw new Error("onExit() called on a running process")
+      throw new Error("BatchProcess.onExit() called on a running process")
     }
     this._ended = true
     const task = this.currentTask
@@ -264,8 +301,8 @@ export class BatchProcess {
     if (task == null) {
       if (result.length > 0 && !this._ended) {
         logger().error(
-          "batch-process INTERNAL ERROR: no current task in resolveCurrentTask() result: " +
-            result
+          "BatchProcess.resolveCurrentTask(): INTERNAL ERROR: no current task in resolveCurrentTask()",
+          { result, pid: this.pid }
         )
       }
       this.end()
