@@ -15,7 +15,8 @@ export interface Logger {
 const _debuglog = debuglog("batch-cluster")
 
 /**
- * Default `Logger` implementation.
+ * Default `Logger` implementation.  `debug` and `info` go to
+ * util.debuglog("batch-cluster")`, and `warn` and `error` go to `console`.
  */
 export namespace ConsoleLogger {
   /**
@@ -23,7 +24,7 @@ export namespace ConsoleLogger {
    * <https://nodejs.org/api/util.html#util_util_debuglog_section>
    */
   export const debug = _debuglog
-   /**
+  /**
    * Delegates to `util.debuglog("batch-cluster")`:
    * <https://nodejs.org/api/util.html#util_util_debuglog_section>
    */
@@ -39,7 +40,7 @@ export namespace ConsoleLogger {
 }
 
 /**
- * `Logger` that disables all logging. 
+ * `Logger` that disables all logging.
  */
 export namespace NoLogger {
   const noop = () => {}
