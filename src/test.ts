@@ -6,6 +6,8 @@ import * as _p from "process"
 /**
  * This is a script written to behave similarly to ExifTool or
  * GraphicsMagick's batch-command modes. It is used for integration tests.
+ *
+ * The complexity comes from introducing predictable flakiness.
  */
 
 function stripPrefix(s: string, prefix: string): string {
@@ -36,7 +38,6 @@ if (ignoreExit) {
 
 const failrate = _p.env.failrate == null ? 0 : parseFloat(_p.env.failrate!)
 const rng = _p.env.rngseed ? require("seedrandom")(_p.env.rngseed) : Math.random
-let last = Promise.resolve()
 
 async function onLine(line: string): Promise<void> {
   const r = rng()
@@ -104,4 +105,6 @@ async function onLine(line: string): Promise<void> {
   return
 }
 
-rl.on("line", line => (last = last.then(() => onLine(line))))
+let prior = Promise.resolve()
+
+rl.on("line", line => (prior = prior.then(() => onLine(line))))
