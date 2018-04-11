@@ -86,6 +86,11 @@ on order to test BatchCluster's retry and error handling code.
 
 ## Changelog
 
+### v1.11.0
+
+* ✨ Added new `BatchClusterObserver` for error and lifecycle monitoring
+* 📦 Added a number of additional logging calls
+
 ### v1.10.0
 
 * 🐞 Explicitly use `timers.setInterval`. May address [this
