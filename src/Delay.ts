@@ -1,4 +1,4 @@
-import { setTimeout } from "timers";
+import { setTimeout } from "timers"
 
 export function delay(millis: number, unref = false): Promise<void> {
   return new Promise<void>(resolve => {
