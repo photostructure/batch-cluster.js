@@ -216,7 +216,7 @@ on order to test BatchCluster's retry and error handling code.
 
 * ✨ Added support and explicit tests for
   [CR LF, CR, and LF](https://en.wikipedia.org/wiki/Newline) encoded streams
-  from exec'ed processes
+  from spawned processes
 * ✨ child processes are ended after `maxProcAgeMillis`, and restarted as needed
 * 🐞 `BatchCluster` now practices good listener hygene for `process.beforeExit`
 
