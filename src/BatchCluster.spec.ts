@@ -157,7 +157,7 @@ describe("BatchCluster", function() {
             )
             expect(bc.pids).to.not.include.members(pids)
             const upperBoundSpawnedProcs =
-              maxProcs * (taskRetries === 0 ? 2 : 6) // because fail rate
+              maxProcs * (taskRetries === 0 ? 2 : 10) // because fail rate
             expect(bc.spawnedProcs).to.be.within(
               maxProcs,
               upperBoundSpawnedProcs
