@@ -32,7 +32,6 @@ export interface InternalBatchProcessOptions
  */
 export class BatchProcess {
   readonly start = Date.now()
-  private errorCount = 0
   private _taskCount = -1 // don't count the startupTask
   /**
    * true if `this.end()` has been called, or this process is no longer in the
@@ -145,6 +144,10 @@ export class BatchProcess {
         timeoutMs
       )
     }
+    logger().debug("BatchProcess.execTask(): starting", {
+      cmd,
+      retries: task.retries
+    })
     this.proc.stdin.write(cmd)
     return true
   }
@@ -225,15 +228,7 @@ export class BatchProcess {
 
     // clear the task before ending so the onExit from end() doesn't retry the task:
     this.clearCurrentTask()
-    this.buff = ""
-
-    if (++this.errorCount > this.opts.maxTaskErrorsPerProcess && !this._ended) {
-      logger().error(
-        "BatchProcess.onError(): " + this.errorCount + " task errors, ending.",
-        { pid: this.pid, taskCount: this.taskCount }
-      )
-      await this.end()
-    }
+    this.end(false) // no need for grace, just clean up.
     if (task === this.startupTask) {
       logger().warn("BatchProcess.onError(): startup task failed: " + errorMsg)
       this.observer.onStartError(errorMsg)
@@ -242,16 +237,16 @@ export class BatchProcess {
     if (task != null) {
       if (retryTask && task !== this.startupTask) {
         logger().debug("BatchProcess.onError(): task error, retrying", {
+          command: task.command,
           pid: this.pid,
-          taskCount: this.taskCount,
-          errorCount: this.errorCount
+          taskCount: this.taskCount
         })
         this.observer.retryTask(task, errorMsg)
       } else {
         logger().debug("BatchProcess.onError(): task failed", {
+          command: task.command,
           pid: this.pid,
-          taskCount: this.taskCount,
-          errorCount: this.errorCount
+          taskCount: this.taskCount
         })
         task.onError(errorMsg)
       }
