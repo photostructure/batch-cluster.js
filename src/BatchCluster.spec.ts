@@ -216,7 +216,7 @@ describe("BatchCluster", function() {
           if (retryTasksAfterTimeout) {
             expect(task.retries).to.eql(taskRetries)
           } else {
-            expect(task.retries).to.be.within(0, 1) // because UNLUCKY
+            expect(task.retries).to.be.within(0, 2) // because UNLUCKY
           }
           return
         })
