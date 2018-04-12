@@ -988,6 +988,25 @@ $ npm install --save batch-cluster
 				<li>📦 Minor packaging changes</li>
 			</ul>
 			<h2 id="changelog">Changelog</h2>
+			<h3 id="v2-0-0">v2.0.0</h3>
+			<ul>
+				<li>💔 Replaced <code>BatchClusterObserver</code> with a simple EventEmitter API on
+				<code>BatchCluster</code> to be more idiomatic with node&#39;s API</li>
+				<li>💔 v1.11.0 added &quot;process reuse&quot; after errors, but that turned out to be
+					problematic in recovery, so that change was reverted (and with it, the
+				<code>maxTaskErrorsPerProcess</code> parameter was removed)</li>
+			</ul>
+			<h3 id="v1-11-0">v1.11.0</h3>
+			<ul>
+				<li>✨ Added new <code>BatchClusterObserver</code> for error and lifecycle monitoring</li>
+				<li>📦 Added a number of additional logging calls</li>
+			</ul>
+			<h3 id="v1-10-0">v1.10.0</h3>
+			<ul>
+				<li>🐞 Explicitly use <code>timers.setInterval</code>. May address <a href="https://stackoverflow.com/questions/48961238/electron-setinterval-implementation-difference-between-chrome-and-node">this
+					issue</a>.
+				Thanks for the PR, <a href="https://github.com/timfish">Tim Fish</a>!</li>
+			</ul>
 			<h3 id="v1-9-1">v1.9.1</h3>
 			<ul>
 				<li>📦 Changed <code>BatchProcess.end()</code> to use <code>until()</code> rather than <code>Promise.race</code>,

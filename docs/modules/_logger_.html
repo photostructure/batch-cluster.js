@@ -915,6 +915,12 @@ img { max-width: 100%; }
 		<li class=" tsd-kind-type-alias tsd-parent-kind-external-module">
 			<a href="_logger_.html#log" class="tsd-kind-icon">Log</a>
 		</li>
+		<li class=" tsd-kind-variable tsd-parent-kind-external-module">
+			<a href="_logger_.html#consolelogger" class="tsd-kind-icon">Console<wbr>Logger</a>
+		</li>
+		<li class=" tsd-kind-variable tsd-parent-kind-external-module">
+			<a href="_logger_.html#nologger" class="tsd-kind-icon">No<wbr>Logger</a>
+		</li>
 		<li class=" tsd-kind-variable tsd-parent-kind-external-module tsd-is-not-exported">
 			<a href="_logger_.html#_debuglog" class="tsd-kind-icon">_debuglog</a>
 		</li>
@@ -923,6 +929,9 @@ img { max-width: 100%; }
 		</li>
 		<li class=" tsd-kind-function tsd-parent-kind-external-module">
 			<a href="_logger_.html#logger-1" class="tsd-kind-icon">logger</a>
+		</li>
+		<li class=" tsd-kind-function tsd-parent-kind-external-module tsd-is-not-exported">
+			<a href="_logger_.html#noop" class="tsd-kind-icon">noop</a>
 		</li>
 		<li class=" tsd-kind-function tsd-parent-kind-external-module">
 			<a href="_logger_.html#setlogger" class="tsd-kind-icon">set<wbr>Logger</a>
@@ -936,13 +945,6 @@ img { max-width: 100%; }
 			<section class="tsd-panel tsd-index-panel">
 				<div class="tsd-index-content">
 					<section class="tsd-index-section ">
-						<h3>Modules</h3>
-						<ul class="tsd-index-list">
-							<li class="tsd-kind-module tsd-parent-kind-external-module"><a href="_logger_.consolelogger.html" class="tsd-kind-icon">Console<wbr>Logger</a></li>
-							<li class="tsd-kind-module tsd-parent-kind-external-module"><a href="_logger_.nologger.html" class="tsd-kind-icon">No<wbr>Logger</a></li>
-						</ul>
-					</section>
-					<section class="tsd-index-section ">
 						<h3>Interfaces</h3>
 						<ul class="tsd-index-list">
 							<li class="tsd-kind-interface tsd-parent-kind-external-module"><a href="../interfaces/_logger_.logger.html" class="tsd-kind-icon">Logger</a></li>
@@ -954,9 +956,11 @@ img { max-width: 100%; }
 							<li class="tsd-kind-type-alias tsd-parent-kind-external-module"><a href="_logger_.html#log" class="tsd-kind-icon">Log</a></li>
 						</ul>
 					</section>
-					<section class="tsd-index-section tsd-is-not-exported">
+					<section class="tsd-index-section ">
 						<h3>Variables</h3>
 						<ul class="tsd-index-list">
+							<li class="tsd-kind-variable tsd-parent-kind-external-module"><a href="_logger_.html#consolelogger" class="tsd-kind-icon">Console<wbr>Logger</a></li>
+							<li class="tsd-kind-variable tsd-parent-kind-external-module"><a href="_logger_.html#nologger" class="tsd-kind-icon">No<wbr>Logger</a></li>
 							<li class="tsd-kind-variable tsd-parent-kind-external-module tsd-is-not-exported"><a href="_logger_.html#_debuglog" class="tsd-kind-icon">_debuglog</a></li>
 							<li class="tsd-kind-variable tsd-parent-kind-external-module tsd-is-not-exported"><a href="_logger_.html#_logger" class="tsd-kind-icon">_logger</a></li>
 						</ul>
@@ -965,6 +969,7 @@ img { max-width: 100%; }
 						<h3>Functions</h3>
 						<ul class="tsd-index-list">
 							<li class="tsd-kind-function tsd-parent-kind-external-module"><a href="_logger_.html#logger-1" class="tsd-kind-icon">logger</a></li>
+							<li class="tsd-kind-function tsd-parent-kind-external-module tsd-is-not-exported"><a href="_logger_.html#noop" class="tsd-kind-icon">noop</a></li>
 							<li class="tsd-kind-function tsd-parent-kind-external-module"><a href="_logger_.html#setlogger" class="tsd-kind-icon">set<wbr>Logger</a></li>
 						</ul>
 					</section>
@@ -979,7 +984,7 @@ img { max-width: 100%; }
 				<div class="tsd-signature tsd-kind-icon">Log<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">function</span></div>
 				<aside class="tsd-sources">
 					<ul>
-						<li>Defined in <a href="https://github.com/mceachen/batch-cluster.js/blob/8759bb7/src/Logger.ts#L3">Logger.ts:3</a></li>
+						<li>Defined in <a href="https://github.com/mceachen/batch-cluster.js/blob/1f8dd6f/src/Logger.ts#L3">Logger.ts:3</a></li>
 					</ul>
 				</aside>
 				<div class="tsd-type-declaration">
@@ -1008,15 +1013,46 @@ img { max-width: 100%; }
 				</div>
 			</section>
 		</section>
-		<section class="tsd-panel-group tsd-member-group tsd-is-not-exported">
+		<section class="tsd-panel-group tsd-member-group ">
 			<h2>Variables</h2>
+			<section class="tsd-panel tsd-member tsd-kind-variable tsd-parent-kind-external-module">
+				<a name="consolelogger" class="tsd-anchor"></a>
+				<h3><span class="tsd-flag ts-flagConst">Const</span> Console<wbr>Logger</h3>
+				<div class="tsd-signature tsd-kind-icon">Console<wbr>Logger<span class="tsd-signature-symbol">:</span> <a href="../interfaces/_logger_.logger.html" class="tsd-signature-type">Logger</a><span class="tsd-signature-symbol"> =&nbsp;Object.freeze({/*** Delegates to &#x60;util.debuglog(&quot;batch-cluster&quot;)&#x60;:* &lt;https://nodejs.org/api/util.html#util_util_debuglog_section&gt;*/debug: _debuglog,/*** Delegates to &#x60;util.debuglog(&quot;batch-cluster&quot;)&#x60;:* &lt;https://nodejs.org/api/util.html#util_util_debuglog_section&gt;*/info: _debuglog,/*** Delegates to &#x60;console.warn&#x60;*/warn: console.warn,/*** Delegates to &#x60;console.error&#x60;*/error: console.error})</span></div>
+				<aside class="tsd-sources">
+					<ul>
+						<li>Defined in <a href="https://github.com/mceachen/batch-cluster.js/blob/1f8dd6f/src/Logger.ts#L21">Logger.ts:21</a></li>
+					</ul>
+				</aside>
+				<div class="tsd-comment tsd-typography">
+					<div class="lead">
+						<p>Default <code>Logger</code> implementation.  <code>debug</code> and <code>info</code> go to
+						util.debuglog(&quot;batch-cluster&quot;)<code>.</code>warn<code>and</code>error<code>go to</code>console`.</p>
+					</div>
+				</div>
+			</section>
+			<section class="tsd-panel tsd-member tsd-kind-variable tsd-parent-kind-external-module">
+				<a name="nologger" class="tsd-anchor"></a>
+				<h3><span class="tsd-flag ts-flagConst">Const</span> No<wbr>Logger</h3>
+				<div class="tsd-signature tsd-kind-icon">No<wbr>Logger<span class="tsd-signature-symbol">:</span> <a href="../interfaces/_logger_.logger.html" class="tsd-signature-type">Logger</a><span class="tsd-signature-symbol"> =&nbsp;Object.freeze({debug: noop,info: noop,warn: noop,error: noop})</span></div>
+				<aside class="tsd-sources">
+					<ul>
+						<li>Defined in <a href="https://github.com/mceachen/batch-cluster.js/blob/1f8dd6f/src/Logger.ts#L46">Logger.ts:46</a></li>
+					</ul>
+				</aside>
+				<div class="tsd-comment tsd-typography">
+					<div class="lead">
+						<p><code>Logger</code> that disables all logging.</p>
+					</div>
+				</div>
+			</section>
 			<section class="tsd-panel tsd-member tsd-kind-variable tsd-parent-kind-external-module tsd-is-not-exported">
 				<a name="_debuglog" class="tsd-anchor"></a>
 				<h3><span class="tsd-flag ts-flagConst">Const</span> _debuglog</h3>
 				<div class="tsd-signature tsd-kind-icon">_debuglog<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">function</span><span class="tsd-signature-symbol"> =&nbsp;debuglog(&quot;batch-cluster&quot;)</span></div>
 				<aside class="tsd-sources">
 					<ul>
-						<li>Defined in <a href="https://github.com/mceachen/batch-cluster.js/blob/8759bb7/src/Logger.ts#L15">Logger.ts:15</a></li>
+						<li>Defined in <a href="https://github.com/mceachen/batch-cluster.js/blob/1f8dd6f/src/Logger.ts#L15">Logger.ts:15</a></li>
 					</ul>
 				</aside>
 				<div class="tsd-type-declaration">
@@ -1050,7 +1086,7 @@ img { max-width: 100%; }
 				<div class="tsd-signature tsd-kind-icon">_logger<span class="tsd-signature-symbol">:</span> <a href="../interfaces/_logger_.logger.html" class="tsd-signature-type">Logger</a><span class="tsd-signature-symbol"> =&nbsp;ConsoleLogger</span></div>
 				<aside class="tsd-sources">
 					<ul>
-						<li>Defined in <a href="https://github.com/mceachen/batch-cluster.js/blob/8759bb7/src/Logger.ts#L52">Logger.ts:52</a></li>
+						<li>Defined in <a href="https://github.com/mceachen/batch-cluster.js/blob/1f8dd6f/src/Logger.ts#L53">Logger.ts:53</a></li>
 					</ul>
 				</aside>
 			</section>
@@ -1067,10 +1103,27 @@ img { max-width: 100%; }
 					<li class="tsd-description">
 						<aside class="tsd-sources">
 							<ul>
-								<li>Defined in <a href="https://github.com/mceachen/batch-cluster.js/blob/8759bb7/src/Logger.ts#L61">Logger.ts:61</a></li>
+								<li>Defined in <a href="https://github.com/mceachen/batch-cluster.js/blob/1f8dd6f/src/Logger.ts#L62">Logger.ts:62</a></li>
 							</ul>
 						</aside>
 						<h4 class="tsd-returns-title">Returns <a href="../interfaces/_logger_.logger.html" class="tsd-signature-type">Logger</a></h4>
+					</li>
+				</ul>
+			</section>
+			<section class="tsd-panel tsd-member tsd-kind-function tsd-parent-kind-external-module tsd-is-not-exported">
+				<a name="noop" class="tsd-anchor"></a>
+				<h3><span class="tsd-flag ts-flagConst">Const</span> noop</h3>
+				<ul class="tsd-signatures tsd-kind-function tsd-parent-kind-external-module tsd-is-not-exported">
+					<li class="tsd-signature tsd-kind-icon">noop<span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
+				</ul>
+				<ul class="tsd-descriptions">
+					<li class="tsd-description">
+						<aside class="tsd-sources">
+							<ul>
+								<li>Defined in <a href="https://github.com/mceachen/batch-cluster.js/blob/1f8dd6f/src/Logger.ts#L41">Logger.ts:41</a></li>
+							</ul>
+						</aside>
+						<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
 					</li>
 				</ul>
 			</section>
@@ -1084,7 +1137,7 @@ img { max-width: 100%; }
 					<li class="tsd-description">
 						<aside class="tsd-sources">
 							<ul>
-								<li>Defined in <a href="https://github.com/mceachen/batch-cluster.js/blob/8759bb7/src/Logger.ts#L54">Logger.ts:54</a></li>
+								<li>Defined in <a href="https://github.com/mceachen/batch-cluster.js/blob/1f8dd6f/src/Logger.ts#L55">Logger.ts:55</a></li>
 							</ul>
 						</aside>
 						<h4 class="tsd-parameters-title">Parameters</h4>
