@@ -125,7 +125,7 @@ describe("BatchCluster", function() {
             expectedResults(iterations)
           )
           await bc.end()
-          expect(bc.spawnedProcs).to.be.within(maxProcs, maxProcs + 4) // because EUNLUCKY
+          expect(bc.spawnedProcs).to.be.within(maxProcs, maxProcs + 8) // because EUNLUCKY
           expect(bc.pids.length).to.eql(0)
           expect(runningSpawnedPids()).to.eql([])
           const startErrorEvent = events.find(ea => ea.event === "startError")
