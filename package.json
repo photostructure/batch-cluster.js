@@ -19,7 +19,7 @@
     "tscw": "rimraf dist & tsc -w",
     "pretest": "yarn clean && yarn compile",
     "test": "mocha --opts .mocha.opts",
-    "docs": "typedoc --name batch-cluster --out ./docs --readme ./README.md --exclude \"**/*+(test|spec).ts\" --excludePrivate --excludeProtected --theme minimal . && serve docs"
+    "docs": "typedoc --name batch-cluster --out ./docs --readme ./README.md --exclude \"**/*+(test|spec).ts\" --excludePrivate --excludeProtected --theme minimal src && serve docs"
   },
   "author": "Matthew McEachen <matthew-batchcluster@mceachen.org>",
   "license": "MIT",
@@ -40,7 +40,7 @@
     "prettier": "^1.11.1",
     "rimraf": "^2.6.2",
     "seedrandom": "^2.4.3",
-    "serve": "^6.5.4",
+    "serve": "^6.5.5",
     "source-map-support": "^0.5.4",
     "timekeeper": "^2.1.0",
     "typedoc": "^0.11.1",
