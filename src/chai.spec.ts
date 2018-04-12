@@ -1,6 +1,6 @@
 import { env } from "process"
 
-import { NoLogger, setLogger } from "./Logger"
+import { setLogger } from "./Logger"
 
 const _chai = require("chai")
 _chai.use(require("chai-string"))
@@ -11,17 +11,29 @@ export { expect } from "chai"
 
 require("source-map-support").install()
 
-// Tests should be quiet unles LOG is set
-if (!!env.LOG) {
-  setLogger(
-    new Proxy(console, {
-      get: (target: any, p: PropertyKey, _receiver: any): any => {
-        return (...args: any[]) => target[p](new Date().toISOString() + ": " + args[0], ...args.slice(1))
-      }
-    })
+const noop = () => undefined
+function log(level: string, ...args: any[]) {
+  console.log(
+    new Date().toISOString() + ": " + level + ": " + args[0],
+    ...args.slice(1)
   )
+}
+
+// Tests should be quiet unless LOG is set
+if (!!env.LOG) {
+  setLogger({
+    debug: (...args: any[]) => log("debug", ...args),
+    info: (...args: any[]) => log("info ", ...args),
+    warn: (...args: any[]) => log("warn ", ...args),
+    error: (...args: any[]) => log("error", ...args)
+  })
 } else {
-  setLogger(NoLogger)
+  setLogger({
+    debug: noop,
+    info: noop,
+    warn: noop,
+    error: (...args: any[]) => log("error", ...args)
+  })
 }
 
 export const parser = (ea: string) => ea.trim()
