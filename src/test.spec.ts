@@ -3,9 +3,9 @@ import { join } from "path"
 import * as _p from "process"
 
 import { kill, running } from "./BatchProcess"
+import { expect } from "./chai.spec"
 import { Deferred } from "./Deferred"
 import { until } from "./Delay"
-import { expect } from "./spec"
 
 export const procs: ChildProcess[] = []
 
