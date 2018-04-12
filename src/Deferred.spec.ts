@@ -1,5 +1,5 @@
+import { expect } from "./chai.spec"
 import { Deferred } from "./Deferred"
-import { expect } from "./spec"
 
 describe("Deferred", () => {
   it("is born pending", () => {
