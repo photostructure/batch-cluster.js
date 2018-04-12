@@ -16,39 +16,39 @@ const _debuglog = debuglog("batch-cluster")
 
 /**
  * Default `Logger` implementation.  `debug` and `info` go to
- * util.debuglog("batch-cluster")`, and `warn` and `error` go to `console`.
+ * util.debuglog("batch-cluster")`. `warn` and `error` go to `console`.
  */
-export namespace ConsoleLogger {
+export const ConsoleLogger: Logger = Object.freeze({
   /**
    * Delegates to `util.debuglog("batch-cluster")`:
    * <https://nodejs.org/api/util.html#util_util_debuglog_section>
    */
-  export const debug = _debuglog
+  debug: _debuglog,
   /**
    * Delegates to `util.debuglog("batch-cluster")`:
    * <https://nodejs.org/api/util.html#util_util_debuglog_section>
    */
-  export const info = _debuglog
+  info: _debuglog,
   /**
    * Delegates to `console.warn`
    */
-  export const warn = console.warn
+  warn: console.warn,
   /**
    * Delegates to `console.error`
    */
-  export const error = console.error
-}
+  error: console.error
+})
+const noop = () => {}
 
 /**
  * `Logger` that disables all logging.
  */
-export namespace NoLogger {
-  const noop = () => {}
-  export const debug = noop
-  export const info = noop
-  export const warn = noop
-  export const error = noop
-}
+export const NoLogger: Logger = Object.freeze({
+  debug: noop,
+  info: noop,
+  warn: noop,
+  error: noop
+})
 
 let _logger: Logger = ConsoleLogger
 
