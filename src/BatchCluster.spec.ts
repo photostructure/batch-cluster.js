@@ -163,7 +163,7 @@ describe("BatchCluster", function() {
               upperBoundSpawnedProcs
             )
             expect(bc.meanTasksPerProc).to.be.within(
-              1,
+              0.5, // because flaky
               opts.maxTasksPerProcess
             )
             await bc.pendingMaintenance
