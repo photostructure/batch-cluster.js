@@ -162,10 +162,8 @@ describe("BatchCluster", function() {
               maxProcs,
               upperBoundSpawnedProcs
             )
-            const lowerBoundMeanTasksPerProc =
-              opts.maxTasksPerProcess * (taskRetries === 0 ? 0.9 : 0.25) // because fail rate
             expect(bc.meanTasksPerProc).to.be.within(
-              lowerBoundMeanTasksPerProc,
+              1,
               opts.maxTasksPerProcess
             )
             await bc.pendingMaintenance
