@@ -1,4 +1,5 @@
 import { ChildProcess } from "child_process"
+import { EventEmitter } from "events"
 import * as _p from "process"
 import { clearInterval, setInterval } from "timers"
 
@@ -64,28 +65,6 @@ export interface BatchProcessOptions {
    */
   readonly exitCommand?: string
 }
-
-/**
- * BatchClusterObserver is notified as lifecycle events occur
- */
-export interface BatchClusterObserver {
-  onStartError(err: any): void
-  onTaskError(task: Task<any>, err: any): void
-  onEndError(err: any): void
-  onBeforeEnd(): void
-  onEnd(): void
-}
-
-namespace NoOpObserver {
-  const noop = () => {}
-  export const onStartError = noop,
-    onTaskError = noop,
-    onEndError = noop,
-    onBeforeEnd = noop,
-    onEnd = noop
-}
-
-export const NoOpBatchClusterObserver: BatchClusterObserver = NoOpObserver
 
 /**
  * These parameter values have somewhat sensible defaults, but can be
@@ -184,11 +163,6 @@ export class BatchClusterOptions {
   readonly maxTasksPerProcess: number = 500
 
   /**
-   * How many task errors can a process generate before it is terminated? 
-   */
-  readonly maxTaskErrorsPerProcess: number = 5
-
-  /**
    * When `this.end()` is called, or Node broadcasts the `beforeExit`
    * event, this is the milliseconds spent waiting for currently running
    * tasks to finish before sending kill signals to child processes.
@@ -198,11 +172,6 @@ export class BatchClusterOptions {
    * Must be &gt;= 0. Defaults to 500ms.
    */
   readonly endGracefulWaitTimeMillis: number = 500
-
-  /**
-   * Provide an observer to be notified of lifecycle events.
-   */
-  readonly observer: BatchClusterObserver = NoOpBatchClusterObserver
 }
 
 function verifyOptions(
@@ -220,11 +189,6 @@ function verifyOptions(
   }
 
   const errors: string[] = []
-  function present(fieldName: keyof AllOpts) {
-    if (result[fieldName] == null) {
-      errors.push(fieldName + " must be defined")
-    }
-  }
   function notBlank(fieldName: keyof AllOpts) {
     const v = result[fieldName] as string
     if (v.trim().length === 0) {
@@ -254,7 +218,6 @@ function verifyOptions(
   gte("endGracefulWaitTimeMillis", 0)
   gte("taskRetries", 0)
   gte("maxReasonableProcessFailuresPerMinute", 0)
-  present("observer")
 
   if (errors.length > 0) {
     throw new Error(
@@ -284,6 +247,7 @@ function map<T, R>(obj: T | undefined, f: (t: T) => R): R | undefined {
  * child tasks can be verified and shut down.
  */
 export class BatchCluster {
+  private readonly emitter = new EventEmitter()
   private readonly _tasksPerProc: Mean = new Mean()
   private readonly opts: AllOpts
   private readonly observer: BatchProcessObserver
@@ -316,30 +280,56 @@ export class BatchCluster {
     _p.once("exit", this.exitListener)
   }
 
+  /**
+   * Emitted when a child process has an error when spawning
+   */
+  on(event: "startError", listener: (err: any) => void): void
+  /**
+   * Emitted when a task has an error even after retries
+   */
+  on(event: "taskError", listener: (err: any, task: Task<any>) => void): void
+  /**
+   * Emitted when a child process has an error during shutdown
+   */
+  on(event: "endError", listener: (err: any) => void): void
+  /**
+   * Emitted when this instance is in the process of ending.
+   */
+  on(event: "beforeEnd", listener: () => void): void
+  /**
+   * Emitted when this instance has ended. No child processes should remain at
+   * this point.
+   */
+  on(event: "end", listener: () => void): void
+  on(event: string, listener: (...args: any[]) => void) {
+    this.emitter.on(event, listener)
+  }
+
   get ended(): boolean {
     return this._ended
   }
 
   end(gracefully: boolean = true): Promise<void> {
-    this.opts.observer.onBeforeEnd()
-    if (!gracefully || !this._ended) {
-      // We don't need to wait for these promises
-      this._procs.forEach(p =>
-        p.end(gracefully).catch(err => this.opts.observer.onEndError(err))
-      )
-    }
+    const alreadyEnded = this._ended
+    this._ended = true
 
-    if (!this._ended) {
-      this._ended = true
+    if (!alreadyEnded) {
+      this.emitter.emit("beforeEnd")
       if (this.onIdleInterval) clearInterval(this.onIdleInterval)
       _p.removeListener("beforeExit", this.beforeExitListener)
       _p.removeListener("exit", this.exitListener)
-      return this.endPromise().then(() => {
-        this.opts.observer.onEnd()
-      })
-    } else {
-      return this.endPromise()
     }
+
+    if (!gracefully || !alreadyEnded) {
+      // We don't need to wait for these promises:
+      this._procs.forEach(p =>
+        p.end(gracefully).catch(err => this.emitter.emit("endError", err))
+      )
+    }
+
+    return this.endPromise().then(() => {
+      if (!alreadyEnded) this.emitter.emit("end")
+    })
   }
 
   enqueueTask<T>(task: Task<T>): Promise<T> {
@@ -390,7 +380,9 @@ export class BatchCluster {
   private endPromise(): Promise<void> {
     return Promise.all(this._procs.map(p => p.exitedPromise))
       .then(() => {})
-      .catch(err => this.opts.observer.onEndError(err))
+      .catch(err => {
+        this.emitter.emit("endError", err)
+      })
   }
 
   private retryTask(task: Task<any>, error: any) {
@@ -407,7 +399,7 @@ export class BatchCluster {
       } else {
         if (error != null) {
           // Only notify the observer if the task can't be retried:
-          this.opts.observer.onTaskError(task, error)
+          this.emitter.emit("taskError", error, task)
         }
         task.onError(error)
       }
@@ -415,8 +407,10 @@ export class BatchCluster {
   }
 
   private onStartError(error: any): void {
-    logger().warn("BatchCluster.onStartError()", { error: error.stack || error })
-    this.opts.observer.onStartError(error)
+    logger().warn("BatchCluster.onStartError()", {
+      error: error.stack || error
+    })
+    this.emitter.emit("startError", error)
     this.startErrorRate.onEvent()
     if (
       this.startErrorRate.eventsPerMinute >

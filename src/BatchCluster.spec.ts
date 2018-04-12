@@ -1,17 +1,13 @@
 import { inspect } from "util"
 
-import {
-  BatchCluster,
-  BatchClusterObserver,
-  BatchClusterOptions
-} from "./BatchCluster"
+import { BatchCluster, BatchClusterOptions } from "./BatchCluster"
 import { BatchProcess } from "./BatchProcess"
+import { expect, parser, times } from "./chai.spec"
 import { delay } from "./Delay"
-import { expect, parser, times } from "./spec"
 import { Task } from "./Task"
 import { processFactory, procs, runningSpawnedPids } from "./test.spec"
 
-describe("BatchCluster", () => {
+describe("BatchCluster", function() {
   function runTasks(
     bc: BatchCluster,
     iterations: number
@@ -25,25 +21,23 @@ describe("BatchCluster", () => {
     return times(iterations, i => "ABC " + i)
   }
 
-  class ProxyHandler {
-    constructor(readonly events: Event[]) {}
-    get(_target: any, p: PropertyKey): any {
-      return (...args: any[]) => {
-        const ev: Event = { event: String(p) }
-        if (args.length > 0) {
-          ev.args = args
-        }
-        this.events.push(ev)
-      }
-    }
-  }
-
   const events: Event[] = []
-  const expectedEndEvents = [{ event: "onBeforeEnd" }, { event: "onEnd" }]
-  const observer = new Proxy(
-    {},
-    new ProxyHandler(events)
-  ) as BatchClusterObserver
+  const expectedEndEvents = [{ event: "beforeEnd" }, { event: "end" }]
+
+  function listen(bc: BatchCluster) {
+    ;["startError", "taskError", "endError", "beforeEnd", "end"].forEach(
+      event => {
+        bc.on(event as any, (...args: any[]) => {
+          const ev: Event = { event }
+          if (args.length > 0) {
+            ev.args = args
+          }
+          events.push(ev)
+        })
+      }
+    )
+    return bc
+  }
 
   const defaultOpts = Object.freeze({
     ...new BatchClusterOptions(),
@@ -55,9 +49,7 @@ describe("BatchCluster", () => {
     maxTasksPerProcess: 5,
     spawnTimeoutMillis: 1000,
     taskTimeoutMillis: 500, // so the timeout test doesn't timeout
-    maxReasonableProcessFailuresPerMinute: 1000, // this is so high because failrate is so high
-    maxTaskErrorsPerProcess: 2,
-    observer
+    maxReasonableProcessFailuresPerMinute: 2000 // this is so high because failrate is so high
   })
 
   afterEach(() => {
@@ -92,33 +84,25 @@ describe("BatchCluster", () => {
 
         // failrate needs to be high enough to trigger but low enough to allow
         // retries to succeed.
-
         let failrate: string
-
-        let rngseed = [
-          newline.length,
-          taskRetries,
-          maxProcs,
-          retryTasksAfterTimeout ? 0 : 1,
-          ignoreExit ? 0 : 1
-        ].join("")
 
         beforeEach(() => {
           // Seeding the RNG deterministically gives us repeatable test successes.
           failrate = taskRetries === 0 ? "0" : "0.1"
 
-          bc = new BatchCluster({
-            ...opts,
-            // seed needs to change for each process, or we'll always be
-            // lucky or unlucky
-            processFactory: () =>
-              processFactory({
-                newline,
-                failrate,
-                rngseed,
-                ignoreExit: ignoreExit ? "1" : "0"
-              })
-          })
+          bc = listen(
+            new BatchCluster({
+              ...opts,
+              // seed needs to change for each process, or we'll always be
+              // lucky or unlucky
+              processFactory: () =>
+                processFactory({
+                  newline,
+                  failrate,
+                  ignoreExit: ignoreExit ? "1" : "0"
+                })
+            })
+          )
           procs.length = 0
         })
 
@@ -144,18 +128,17 @@ describe("BatchCluster", () => {
           expect(bc.spawnedProcs).to.be.within(maxProcs, maxProcs + 4) // because EUNLUCKY
           expect(bc.pids.length).to.eql(0)
           expect(runningSpawnedPids()).to.eql([])
-          const expectedEvents = []
-          if (rngseed == "25200") {
-            expectedEvents.push(
-              ...times(2, () => ({
-                args: [
-                  "stderr.data: EUNLUCKY: r: 0.04, failrate: 0.10, seed: 25200"
-                ],
-                event: "onStartError"
-              }))
+          const startErrorEvent = events.find(ea => ea.event === "startError")
+          if (startErrorEvent != null) {
+            expect(startErrorEvent.args[0]).to.startWith(
+              "stderr.data: EUNLUCKY",
+              JSON.stringify(events)
             )
-            expect(events).to.eql([...expectedEvents, ...expectedEndEvents])
           }
+          expect(events.slice(-2)).to.eql(
+            expectedEndEvents,
+            JSON.stringify(events)
+          )
           return
         })
 
@@ -187,17 +170,6 @@ describe("BatchCluster", () => {
             )
             await bc.pendingMaintenance
             expect(runningSpawnedPids().length).to.lte(maxProcs)
-            if (rngseed == "25200") {
-              expect(events[0]).to.eql(
-                {
-                  args: [
-                    "stderr.data: EUNLUCKY: r: 0.04, failrate: 0.10, seed: 25200"
-                  ],
-                  event: "onStartError"
-                },
-                JSON.stringify({ events })
-              )
-            }
             return
           }
         )
@@ -216,18 +188,15 @@ describe("BatchCluster", () => {
               /invalid|EUNLUCKY/
             )
             const newSpawnedProcs = bc.spawnedProcs - spawnedProcsBefore
-            console.log({ rngseed })
             expect(newSpawnedProcs).to.be.within(
               1,
               opts.taskRetries + 5 // because EUNLUCKY
             )
             expect(bc.pids).to.not.eql(pidsBefore) // at least one pid should be shut down now
             expect(task.retries).to.eql(opts.taskRetries)
-            expect(events[events.length - 1].event).to.eql(
-              "onTaskError",
-              JSON.stringify(events)
-            )
-            const err = String(events[events.length - 1].args[1])
+            const lastEvent = events[events.length - 1]
+            expect(lastEvent.event).to.eql("taskError", JSON.stringify(events))
+            const err = String(lastEvent.args[0])
             if (!err.startsWith("stderr.data: EUNLUCKY:")) {
               expect(err).to.eql(
                 "stderr.data: COMMAND MISSING for input invalid",
@@ -236,26 +205,11 @@ describe("BatchCluster", () => {
             }
             return
           })
-
-          it("retries a flaky task", async () => {
-            rngseed = "a" // consistent rngseed
-            const task = new Task("flaky .6", parser)
-            expect(await bc.enqueueTask(task).catch(err => err)).to.include(
-              "flaky response"
-            )
-            expect(task.retries).to.be.within(2, opts.taskRetries)
-            expect(events[0].event).to.eql(
-              "onTaskError",
-              JSON.stringify(events)
-            )
-            expect(events[0].args[1]).to.include("flaky response")
-            return
-          })
         }
 
         it("times out slow requests", async () => {
           const task = new Task(
-            "sleep " + (opts.taskTimeoutMillis + 500), // < make sure it times out
+            "sleep " + (opts.taskTimeoutMillis + 250), // < make sure it times out
             parser
           )
           await expect(bc.enqueueTask(task)).to.eventually.be.rejectedWith(
@@ -266,7 +220,6 @@ describe("BatchCluster", () => {
           } else {
             expect(task.retries).to.be.within(0, 1) // because UNLUCKY
           }
-          console.dir(events)
           return
         })
 
@@ -286,7 +239,7 @@ describe("BatchCluster", () => {
   // specsWithOptions("lf", 5, 2, true, true)
   ;["lf", "crlf"].forEach(newline => {
     ;[5, 0].forEach(taskRetries => {
-      ;[2, 1].forEach(maxProcs => {
+      ;[3, 1].forEach(maxProcs => {
         ;[true, false].forEach(retryTasksAfterTimeout => {
           ;[true, false].forEach(ignoreExit => {
             specsWithOptions(
@@ -299,6 +252,27 @@ describe("BatchCluster", () => {
           })
         })
       })
+    })
+  })
+
+  describe("flaky results", () => {
+    const taskRetries = 16
+    const bc = new BatchCluster({
+      ...defaultOpts,
+      taskRetries,
+      processFactory
+    })
+
+    after(() => {
+      return bc.end(false)
+    })
+
+    it("retries a flaky task", async function() {
+      const task = new Task("flaky .7", parser)
+      expect(await bc.enqueueTask(task)).to.include("flaky response")
+      expect(task.retries).to.be.within(0, taskRetries)
+      console.log({ retries: task.retries })
+      return
     })
   })
 
