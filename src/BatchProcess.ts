@@ -134,7 +134,7 @@ export class BatchProcess {
         ? this.opts.spawnTimeoutMillis
         : this.opts.taskTimeoutMillis
     if (timeoutMs > 0) {
-      logger().debug("BatchProcess.execTask(): scheduling timeout", {
+      logger().trace("BatchProcess.execTask(): scheduling timeout", {
         command: task.command,
         timeoutMs,
         pid: this.pid
@@ -144,7 +144,7 @@ export class BatchProcess {
         timeoutMs
       )
     }
-    logger().debug("BatchProcess.execTask(): starting", {
+    logger().trace("BatchProcess.execTask(): starting", {
       cmd,
       retries: task.retries
     })

@@ -86,6 +86,14 @@ on order to test BatchCluster's retry and error handling code.
 
 ## Changelog
 
+### v2.1.0
+
+* 📦 Introduced `Logger.trace` and moved logging related to per-task items down
+  to `trace`, as heavy load and large request or response payloads could
+  overwhelm loggers. If you really want to see on-the-wire requests and results,
+  enable `trace` in your debugger implementation. By default, the
+  `ConsoleLogger` omits log messages with this level.
+
 ### v2.0.0
 
 * 💔 Replaced `BatchClusterObserver` with a simple EventEmitter API on

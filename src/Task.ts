@@ -46,7 +46,7 @@ export class Task<T> {
   onData(data: string): void {
     try {
       const result = this.parser(data)
-      logger().debug("Task.onData(): resolved", {
+      logger().trace("Task.onData(): resolved", {
         command: this.command,
         result
       })

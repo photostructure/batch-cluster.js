@@ -268,7 +268,6 @@ describe("BatchCluster", function() {
     it("retries a flaky task", async function() {
       const task = new Task("flaky .5", parser)
       expect(await bc.enqueueTask(task)).to.include("flaky response")
-      console.log({ retries: task.retries })
       expect(task.retries).to.be.within(0, taskRetries)
       return
     })

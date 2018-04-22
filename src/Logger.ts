@@ -6,6 +6,7 @@ export type Log = (message: string, ...optionalParams: any[]) => void
  * Simple interface for logging.
  */
 export interface Logger {
+  trace: Log
   debug: Log
   info: Log
   warn: Log
@@ -14,11 +15,18 @@ export interface Logger {
 
 const _debuglog = debuglog("batch-cluster")
 
+const noop = () => {}
+
 /**
  * Default `Logger` implementation.  `debug` and `info` go to
  * util.debuglog("batch-cluster")`. `warn` and `error` go to `console`.
  */
 export const ConsoleLogger: Logger = Object.freeze({
+  /**
+   * No-ops by default, as this is very low-level information.
+   */
+  trace: noop,
+
   /**
    * Delegates to `util.debuglog("batch-cluster")`:
    * <https://nodejs.org/api/util.html#util_util_debuglog_section>
@@ -38,12 +46,12 @@ export const ConsoleLogger: Logger = Object.freeze({
    */
   error: console.error
 })
-const noop = () => {}
 
 /**
  * `Logger` that disables all logging.
  */
 export const NoLogger: Logger = Object.freeze({
+  trace: noop,
   debug: noop,
   info: noop,
   warn: noop,
