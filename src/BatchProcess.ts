@@ -1,6 +1,7 @@
 import * as _cp from "child_process"
 import * as _os from "os"
 import * as _p from "process"
+import { Writable } from "stream"
 
 import {
   BatchClusterOptions,
@@ -158,7 +159,7 @@ export class BatchProcess {
       const cmd = this.opts.exitCommand
         ? ensureSuffix(this.opts.exitCommand, "\n")
         : undefined
-      this.proc.stdin.end(cmd)
+      await end(this.proc.stdin, cmd)
     }
 
     if (this.currentTask != null && this.currentTask !== this.startupTask) {
@@ -166,27 +167,27 @@ export class BatchProcess {
     }
     this.clearCurrentTask()
 
-    try {
-      this.proc.stdin.end()
-      this.proc.stdout.destroy()
-      this.proc.stderr.destroy()
-      this.proc.disconnect()
-    } catch (_) {
-      // don't care
+    tryEach([
+      () => this.proc.stdin.end(),
+      () => this.proc.stdout.destroy(),
+      () => this.proc.stderr.destroy(),
+      () => this.proc.disconnect()
+    ])
+
+    if (this.running && gracefully && this.opts.endGracefulWaitTimeMillis > 0) {
+      await this.awaitNotRunning(this.opts.endGracefulWaitTimeMillis / 2)
+      if (this.running) kill(this.proc.pid, false)
+      await this.awaitNotRunning(this.opts.endGracefulWaitTimeMillis / 2)
     }
 
-    if (this.running) {
-      if (gracefully && this.opts.endGracefulWaitTimeMillis > 0) {
-        await this.awaitNotRunning(this.opts.endGracefulWaitTimeMillis)
-      }
-    }
     if (this.running) {
       logger().info("BatchProcess.end(): killing PID " + this.pid)
       kill(this.proc.pid, true)
     }
+
     // The OS is srsly f@rked if `kill` doesn't respond within a couple ms. 5s
     // should be 100x longer than necessary.
-    if (!await this.awaitNotRunning(5000)) {
+    if (!(await this.awaitNotRunning(5000))) {
       logger().error(
         "BatchProcess.end(): PID " + this.pid + " did not respond to kill."
       )
@@ -349,5 +350,19 @@ export function kill(pid: number, force: boolean = false): void {
     _cp.execFile("taskkill", args)
   } else {
     _p.kill(pid, force ? "SIGKILL" : "SIGTERM")
+  }
+}
+
+function end(endable: Writable, contents?: string): Promise<void> {
+  return new Promise<void>(resolve => {
+    endable.end(contents, resolve)
+  })
+}
+
+function tryEach(arr: (() => void)[]) {
+  for (const f of arr) {
+    try {
+      f()
+    } catch (_) {}
   }
 }
