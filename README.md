@@ -86,6 +86,12 @@ on order to test BatchCluster's retry and error handling code.
 
 ## Changelog
 
+### v2.1.2
+
+* 🐞 Windows taskkill `/PID` option seemed to work downcased, but the docs say
+  to use uppercase, so I've updated it.
+* 📦 Upgrade all deps including TypeScript to 2.9
+
 ### v2.1.1
 
 * 📦 More robust `end` for `BatchProcess`, which may prevent very long-lived

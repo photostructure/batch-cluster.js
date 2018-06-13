@@ -343,7 +343,7 @@ const isWin = _os.platform().startsWith("win")
  */
 export function kill(pid: number, force: boolean = false): void {
   if (isWin) {
-    const args = ["/pid", pid.toString(), "/T"]
+    const args = ["/PID", pid.toString(), "/T"]
     if (force) {
       args.push("/F")
     }
