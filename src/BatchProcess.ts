@@ -17,8 +17,8 @@ import { Task } from "./Task"
  */
 export interface BatchProcessObserver {
   onIdle(): void
-  onStartError(error: any): void
-  retryTask(task: Task<any>, error: any): void
+  onStartError(error: Error): void
+  retryTask(task: Task<any>, error: Error): void
 }
 
 export interface InternalBatchProcessOptions
@@ -163,7 +163,7 @@ export class BatchProcess {
     }
 
     if (this.currentTask != null && this.currentTask !== this.startupTask) {
-      this.observer.retryTask(this.currentTask, "process end")
+      this.observer.retryTask(this.currentTask, new Error("process ended"))
     }
     this.clearCurrentTask()
 
@@ -218,21 +218,23 @@ export class BatchProcess {
 
   private async onError(
     source: string,
-    error: Error,
+    _error: Error,
     retryTask: boolean = true,
     task?: Task<any>
   ) {
     if (task == null) {
       task = this.currentTask
     }
-    const errorMsg = source + ": " + (error.stack || error)
+    // make a new Error rather than pollute the arg:
+    const error = new Error(source + ": " + _error.message)
+    error.stack = _error.stack
 
     // clear the task before ending so the onExit from end() doesn't retry the task:
     this.clearCurrentTask()
     this.end(false) // no need for grace, just clean up.
     if (task === this.startupTask) {
-      logger().warn("BatchProcess.onError(): startup task failed: " + errorMsg)
-      this.observer.onStartError(errorMsg)
+      logger().warn("BatchProcess.onError(): startup task failed: " + error)
+      this.observer.onStartError(error)
     }
 
     if (task != null) {
@@ -242,16 +244,14 @@ export class BatchProcess {
           pid: this.pid,
           taskCount: this.taskCount
         })
-        this.observer.retryTask(task, errorMsg)
+        this.observer.retryTask(task, error)
       } else {
         logger().debug("BatchProcess.onError(): task failed", {
           command: task.command,
           pid: this.pid,
           taskCount: this.taskCount
         })
-        const taskError = new Error(errorMsg)
-        taskError.stack = error.stack
-        task.onError(taskError)
+        task.onError(error)
       }
     }
   }
@@ -263,7 +263,7 @@ export class BatchProcess {
     this._ended = true
     const task = this.currentTask
     if (task != null && task !== this.startupTask) {
-      this.observer.retryTask(task, "child proc closed")
+      this.observer.retryTask(task, new Error("child process exited"))
     }
     this.clearCurrentTask()
     this._exited.resolve()

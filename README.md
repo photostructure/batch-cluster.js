@@ -86,11 +86,15 @@ order to test BatchCluster's retry and error handling code.
 
 ## Changelog
 
-### v2.3.0
+### v3.0.0
 
-* ✨ `Task` promises are only rejected with `Error` instances now. Resolves
-  [#3](https://github.com/mceachen/batch-cluster.js/issues/3). Thanks, [Nils
-  Knappmeier](https://github.com/nknapp)!
+* ✨/💔 **`Task` promises are only rejected with `Error` instances now.** Note
+  that also means that `BatchProcessObserver` types are more strict. It could be
+  argued that this isn't an API breaking change as it only makes rejection
+  values more strict, but people may need to change their error handling, so I'm
+  bumping the major version to highlight that. Resolves
+  [#3](https://github.com/mceachen/batch-cluster.js/issues/3). Thanks for the
+  issue, [Nils Knappmeier](https://github.com/nknapp)!
 
 ### v2.2.0
 
