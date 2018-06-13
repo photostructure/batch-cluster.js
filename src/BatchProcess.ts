@@ -75,7 +75,7 @@ export class BatchProcess {
 
     this.proc.stderr.on("error", err => this.onError("stderr", err))
     this.proc.stderr.on("data", err =>
-      this.onError("stderr.data", String(err).trim())
+      this.onError("stderr.data", new Error(String(err).trim()))
     )
 
     this.startupTask = new Task(opts.versionCommand, ea => ea)
@@ -204,7 +204,7 @@ export class BatchProcess {
     if (task === this.currentTask && task.pending) {
       this.onError(
         "timeout",
-        "waited " + timeoutMs + "ms",
+        new Error("waited " + timeoutMs + "ms"),
         this.opts.retryTasksAfterTimeout,
         task
       )
@@ -218,7 +218,7 @@ export class BatchProcess {
 
   private async onError(
     source: string,
-    error: any,
+    error: Error,
     retryTask: boolean = true,
     task?: Task<any>
   ) {
@@ -249,7 +249,9 @@ export class BatchProcess {
           pid: this.pid,
           taskCount: this.taskCount
         })
-        task.onError(errorMsg)
+        const taskError = new Error(errorMsg)
+        taskError.stack = error.stack
+        task.onError(taskError)
       }
     }
   }
@@ -276,7 +278,7 @@ export class BatchProcess {
     } else {
       const fail = this.opts.failRE.exec(this.buff)
       if (fail != null) {
-        const err = fail[1].trim() || new Error("command error")
+        const err = new Error(fail[1].trim() || "command error")
         this.onError("onData", err, true, this.currentTask)
       }
     }

@@ -194,10 +194,10 @@ describe("BatchCluster", function() {
             expect(task.retries).to.eql(opts.taskRetries)
             const lastEvent = events[events.length - 1]
             expect(lastEvent.event).to.eql("taskError", JSON.stringify(events))
-            const err = String(lastEvent.args[0])
-            if (!err.startsWith("stderr.data: EUNLUCKY:")) {
-              expect(err).to.eql(
-                "stderr.data: COMMAND MISSING for input invalid",
+            const err = lastEvent.args[0]
+            if (!err.startsWith("stderr.data: Error: EUNLUCKY:")) {
+              expect(err).to.startWith(
+                "stderr.data: Error: COMMAND MISSING for input invalid",
                 JSON.stringify(events)
               )
             }

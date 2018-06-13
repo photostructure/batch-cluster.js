@@ -334,7 +334,7 @@ export class BatchCluster {
 
   enqueueTask<T>(task: Task<T>): Promise<T> {
     if (this._ended) {
-      task.onError("BatchCluster has ended")
+      task.onError(new Error("BatchCluster has ended"))
       throw new Error("Cannot enqueue task " + task.command)
     }
     this._pendingTasks.push(task)

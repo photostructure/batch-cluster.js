@@ -86,6 +86,12 @@ order to test BatchCluster's retry and error handling code.
 
 ## Changelog
 
+### v2.3.0
+
+* ✨ `Task` promises are only rejected with `Error` instances now. Resolves
+  [#3](https://github.com/mceachen/batch-cluster.js/issues/3). Thanks, [Nils
+  Knappmeier](https://github.com/nknapp)!
+
 ### v2.2.0
 
 * 🐞 Windows taskkill `/PID` option seemed to work downcased, but the docs say
