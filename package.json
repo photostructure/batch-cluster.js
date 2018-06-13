@@ -22,7 +22,7 @@
     "predocs":
       "typedoc --name batch-cluster --out ./docs --readme ./README.md --exclude \"**/*+(test|spec).ts\" --excludePrivate --excludeProtected --theme minimal src",
     "docs":
-      "echo batch-cluster.js.org > docs/CNAME && touch docs/.nojekyll && serve docs"
+      "echo batch-cluster.js.org > docs/CNAME && touch docs/.nojekyll && yarn serve docs"
   },
   "author": "Matthew McEachen <matthew-batchcluster@mceachen.org>",
   "license": "MIT",
