@@ -9,14 +9,14 @@
 Many command line tools, like
 [ExifTool](https://sno.phy.queensu.ca/~phil/exiftool/) and
 [GraphicsMagick](http://www.graphicsmagick.org/), support running in a "batch
-mode" that accept commands provided through stdin and results through stdout.
-As these tools can be fairly large, spinning them up can be expensive
-(especially on Windows).
+mode" that accept commands provided through stdin and results through stdout. As
+these tools can be fairly large, spinning them up can be expensive (especially
+on Windows).
 
-This module expedites these commands, or "Tasks," by managing a cluster of
-these "batch" processes, feeding tasks to idle processes, retrying tasks when
-the tool crashes, and preventing memory leaks by restarting tasks after
-performing a given number of tasks or after a given set of time has elapsed.
+This module expedites these commands, or "Tasks," by managing a cluster of these
+"batch" processes, feeding tasks to idle processes, retrying tasks when the tool
+crashes, and preventing memory leaks by restarting tasks after performing a
+given number of tasks or after a given set of time has elapsed.
 
 This package powers
 [exiftool-vendored](https://github.com/mceachen/exiftool-vendored.js), whose
@@ -39,35 +39,35 @@ BatchCluster will ensure a given process is only given one task at a time.
 
 _If these links are broken, use <https://batch-cluster.js.org/>_
 
-1.  Create a singleton instance of [BatchCluster](/classes/_batchcluster_.batchcluster.html).
+1. Create a singleton instance of
+   [BatchCluster](/classes/_batchcluster_.batchcluster.html).
 
-    Note the
-    [constructor options](/classes/_batchcluster_.batchcluster.html#constructor) takes a union type of
+   Note the [constructor
+   options](/classes/_batchcluster_.batchcluster.html#constructor) takes a union
+   type of
 
-    * [ChildProcessFactory](/interfaces/_batchcluster_.childprocessfactory.html) and
-    * [BatchProcessOptions](/interfaces/_batchcluster_.batchprocessoptions.html), both of which have no
-      defaults, and
-    * [BatchClusterOptions](/classes/_batchcluster_.batchclusteroptions.html), which has defaults that may
-      or may not be relevant to your application.
+   * [ChildProcessFactory](/interfaces/_batchcluster_.childprocessfactory.html) and
+   * [BatchProcessOptions](/interfaces/_batchcluster_.batchprocessoptions.html),
+      both of which have no defaults, and
+   * [BatchClusterOptions](/classes/_batchcluster_.batchclusteroptions.html),
+      which has defaults that may or may not be relevant to your application.
 
-1.  The [default](/modules/_logger_.consolelogger.html) logger writes warning
-    and error messages to `console.warn` and `console.error`. You can change
-    this to your logger by using
-    [setLogger](/modules/_logger_.html#setlogger).
+1. The [default](/modules/_logger_.consolelogger.html) logger writes warning and
+   error messages to `console.warn` and `console.error`. You can change this to
+   your logger by using [setLogger](/modules/_logger_.html#setlogger).
 
-1.  Implement the [Parser](/modules/_task_.html#parser) class to parse results from your child
-    process.
+1. Implement the [Parser](/modules/_task_.html#parser) class to parse results from your child
+   process.
 
-1.  Construct a [Task](/classes/_task_.task.html) with the desired command and
-    the parser you built in the previous step, and submit it to your
-    BatchCluster singleton's
-    [enqueueTask](/classes/_batchcluster_.batchcluster.html#enqueuetask)
-    method.
+1. Construct a [Task](/classes/_task_.task.html) with the desired command and
+   the parser you built in the previous step, and submit it to your BatchCluster
+   singleton's
+   [enqueueTask](/classes/_batchcluster_.batchcluster.html#enqueuetask) method.
 
 See
 [src/test.ts](https://github.com/mceachen/batch-cluster.js/blob/master/src/test.ts)
-for an example child process. Note that the script is _designed_ to be flaky
-on order to test BatchCluster's retry and error handling code.
+for an example child process. Note that the script is _designed_ to be flaky on
+order to test BatchCluster's retry and error handling code.
 
 ## Versioning
 
@@ -86,11 +86,13 @@ on order to test BatchCluster's retry and error handling code.
 
 ## Changelog
 
-### v2.1.2
+### v2.2.0
 
 * 🐞 Windows taskkill `/PID` option seemed to work downcased, but the docs say
   to use uppercase, so I've updated it.
 * 📦 Upgrade all deps including TypeScript to 2.9
+
+(v2.1.2 is the same contents, but `np` had a crashbug during publish)
 
 ### v2.1.1
 
