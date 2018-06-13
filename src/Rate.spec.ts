@@ -53,7 +53,7 @@ describe("Rate", () => {
     it("calculates average rate for " + events + " events", () => {
       const period = r.ttlMs
       times(events, i => {
-        tk.freeze(now + (period * i) / events)
+        tk.freeze(now + period * i / events)
         r.onEvent()
       })
       expectRate(r, events / period, 0.25)
