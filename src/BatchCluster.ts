@@ -283,15 +283,15 @@ export class BatchCluster {
   /**
    * Emitted when a child process has an error when spawning
    */
-  on(event: "startError", listener: (err: any) => void): void
+  on(event: "startError", listener: (err: Error) => void): void
   /**
    * Emitted when a task has an error even after retries
    */
-  on(event: "taskError", listener: (err: any, task: Task<any>) => void): void
+  on(event: "taskError", listener: (err: Error, task: Task<any>) => void): void
   /**
    * Emitted when a child process has an error during shutdown
    */
-  on(event: "endError", listener: (err: any) => void): void
+  on(event: "endError", listener: (err: Error) => void): void
   /**
    * Emitted when this instance is in the process of ending.
    */
@@ -385,7 +385,7 @@ export class BatchCluster {
       })
   }
 
-  private retryTask(task: Task<any>, error: any) {
+  private retryTask(task: Task<any>, error: Error) {
     if (task != null) {
       logger().debug("BatchCluster.retryTask()", {
         cmd: task.command,
@@ -406,10 +406,8 @@ export class BatchCluster {
     }
   }
 
-  private onStartError(error: any): void {
-    logger().warn("BatchCluster.onStartError()", {
-      error: error.stack || error
-    })
+  private onStartError(error: Error): void {
+    logger().warn("BatchCluster.onStartError(): " + error)
     this.emitter.emit("startError", error)
     this.startErrorRate.onEvent()
     if (
