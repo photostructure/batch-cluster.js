@@ -922,6 +922,9 @@ img { max-width: 100%; }
 			<a href="_batchprocess_.html#iswin" class="tsd-kind-icon">is<wbr>Win</a>
 		</li>
 		<li class=" tsd-kind-function tsd-parent-kind-external-module tsd-is-not-exported">
+			<a href="_batchprocess_.html#end" class="tsd-kind-icon">end</a>
+		</li>
+		<li class=" tsd-kind-function tsd-parent-kind-external-module tsd-is-not-exported">
 			<a href="_batchprocess_.html#ensuresuffix" class="tsd-kind-icon">ensure<wbr>Suffix</a>
 		</li>
 		<li class=" tsd-kind-function tsd-parent-kind-external-module">
@@ -929,6 +932,9 @@ img { max-width: 100%; }
 		</li>
 		<li class=" tsd-kind-function tsd-parent-kind-external-module">
 			<a href="_batchprocess_.html#running" class="tsd-kind-icon">running</a>
+		</li>
+		<li class=" tsd-kind-function tsd-parent-kind-external-module tsd-is-not-exported">
+			<a href="_batchprocess_.html#tryeach" class="tsd-kind-icon">try<wbr>Each</a>
 		</li>
 	</ul>
 </nav>
@@ -960,9 +966,11 @@ img { max-width: 100%; }
 					<section class="tsd-index-section ">
 						<h3>Functions</h3>
 						<ul class="tsd-index-list">
+							<li class="tsd-kind-function tsd-parent-kind-external-module tsd-is-not-exported"><a href="_batchprocess_.html#end" class="tsd-kind-icon">end</a></li>
 							<li class="tsd-kind-function tsd-parent-kind-external-module tsd-is-not-exported"><a href="_batchprocess_.html#ensuresuffix" class="tsd-kind-icon">ensure<wbr>Suffix</a></li>
 							<li class="tsd-kind-function tsd-parent-kind-external-module"><a href="_batchprocess_.html#kill" class="tsd-kind-icon">kill</a></li>
 							<li class="tsd-kind-function tsd-parent-kind-external-module"><a href="_batchprocess_.html#running" class="tsd-kind-icon">running</a></li>
+							<li class="tsd-kind-function tsd-parent-kind-external-module tsd-is-not-exported"><a href="_batchprocess_.html#tryeach" class="tsd-kind-icon">try<wbr>Each</a></li>
 						</ul>
 					</section>
 				</div>
@@ -976,13 +984,39 @@ img { max-width: 100%; }
 				<div class="tsd-signature tsd-kind-icon">is<wbr>Win<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol"> =&nbsp;_os.platform().startsWith(&quot;win&quot;)</span></div>
 				<aside class="tsd-sources">
 					<ul>
-						<li>Defined in <a href="https://github.com/mceachen/batch-cluster.js/blob/709fdd6/src/BatchProcess.ts#L333">BatchProcess.ts:333</a></li>
+						<li>Defined in <a href="https://github.com/mceachen/batch-cluster.js/blob/c2aa74e/src/BatchProcess.ts#L336">BatchProcess.ts:336</a></li>
 					</ul>
 				</aside>
 			</section>
 		</section>
 		<section class="tsd-panel-group tsd-member-group ">
 			<h2>Functions</h2>
+			<section class="tsd-panel tsd-member tsd-kind-function tsd-parent-kind-external-module tsd-is-not-exported">
+				<a name="end" class="tsd-anchor"></a>
+				<h3>end</h3>
+				<ul class="tsd-signatures tsd-kind-function tsd-parent-kind-external-module tsd-is-not-exported">
+					<li class="tsd-signature tsd-kind-icon">end<span class="tsd-signature-symbol">(</span>endable<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Writable</span>, contents<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">undefined</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">void</span><span class="tsd-signature-symbol">&gt;</span></li>
+				</ul>
+				<ul class="tsd-descriptions">
+					<li class="tsd-description">
+						<aside class="tsd-sources">
+							<ul>
+								<li>Defined in <a href="https://github.com/mceachen/batch-cluster.js/blob/c2aa74e/src/BatchProcess.ts#L358">BatchProcess.ts:358</a></li>
+							</ul>
+						</aside>
+						<h4 class="tsd-parameters-title">Parameters</h4>
+						<ul class="tsd-parameters">
+							<li>
+								<h5>endable: <span class="tsd-signature-type">Writable</span></h5>
+							</li>
+							<li>
+								<h5><span class="tsd-flag ts-flagOptional">Optional</span> contents: <span class="tsd-signature-type">undefined</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">string</span></h5>
+							</li>
+						</ul>
+						<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">void</span><span class="tsd-signature-symbol">&gt;</span></h4>
+					</li>
+				</ul>
+			</section>
 			<section class="tsd-panel tsd-member tsd-kind-function tsd-parent-kind-external-module tsd-is-not-exported">
 				<a name="ensuresuffix" class="tsd-anchor"></a>
 				<h3>ensure<wbr>Suffix</h3>
@@ -993,7 +1027,7 @@ img { max-width: 100%; }
 					<li class="tsd-description">
 						<aside class="tsd-sources">
 							<ul>
-								<li>Defined in <a href="https://github.com/mceachen/batch-cluster.js/blob/709fdd6/src/BatchProcess.ts#L311">BatchProcess.ts:311</a></li>
+								<li>Defined in <a href="https://github.com/mceachen/batch-cluster.js/blob/c2aa74e/src/BatchProcess.ts#L314">BatchProcess.ts:314</a></li>
 							</ul>
 						</aside>
 						<h4 class="tsd-parameters-title">Parameters</h4>
@@ -1019,7 +1053,7 @@ img { max-width: 100%; }
 					<li class="tsd-description">
 						<aside class="tsd-sources">
 							<ul>
-								<li>Defined in <a href="https://github.com/mceachen/batch-cluster.js/blob/709fdd6/src/BatchProcess.ts#L343">BatchProcess.ts:343</a></li>
+								<li>Defined in <a href="https://github.com/mceachen/batch-cluster.js/blob/c2aa74e/src/BatchProcess.ts#L346">BatchProcess.ts:346</a></li>
 							</ul>
 						</aside>
 						<div class="tsd-comment tsd-typography">
@@ -1057,7 +1091,7 @@ img { max-width: 100%; }
 					<li class="tsd-description">
 						<aside class="tsd-sources">
 							<ul>
-								<li>Defined in <a href="https://github.com/mceachen/batch-cluster.js/blob/709fdd6/src/BatchProcess.ts#L321">BatchProcess.ts:321</a></li>
+								<li>Defined in <a href="https://github.com/mceachen/batch-cluster.js/blob/c2aa74e/src/BatchProcess.ts#L324">BatchProcess.ts:324</a></li>
 							</ul>
 						</aside>
 						<div class="tsd-comment tsd-typography">
@@ -1078,6 +1112,29 @@ img { max-width: 100%; }
 						<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">boolean</span></h4>
 						<p>true if the given process id is in the local process
 						table.</p>
+					</li>
+				</ul>
+			</section>
+			<section class="tsd-panel tsd-member tsd-kind-function tsd-parent-kind-external-module tsd-is-not-exported">
+				<a name="tryeach" class="tsd-anchor"></a>
+				<h3>try<wbr>Each</h3>
+				<ul class="tsd-signatures tsd-kind-function tsd-parent-kind-external-module tsd-is-not-exported">
+					<li class="tsd-signature tsd-kind-icon">try<wbr>Each<span class="tsd-signature-symbol">(</span>arr<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">function</span><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
+				</ul>
+				<ul class="tsd-descriptions">
+					<li class="tsd-description">
+						<aside class="tsd-sources">
+							<ul>
+								<li>Defined in <a href="https://github.com/mceachen/batch-cluster.js/blob/c2aa74e/src/BatchProcess.ts#L364">BatchProcess.ts:364</a></li>
+							</ul>
+						</aside>
+						<h4 class="tsd-parameters-title">Parameters</h4>
+						<ul class="tsd-parameters">
+							<li>
+								<h5>arr: <span class="tsd-signature-type">function</span><span class="tsd-signature-symbol">[]</span></h5>
+							</li>
+						</ul>
+						<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
 					</li>
 				</ul>
 			</section>
