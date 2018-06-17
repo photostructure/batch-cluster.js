@@ -327,7 +327,7 @@ function map<T, R>(obj: T | null | undefined, f: (t: T) => R): R | undefined {
 function cleanError(s: any): string {
   return String(s)
     .trim()
-    .replace(/^error:? ?/gi, "")
+    .replace(/^error: /gi, "")
 }
 
 function ensureSuffix(s: string, suffix: string): string {
