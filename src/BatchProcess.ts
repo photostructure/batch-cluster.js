@@ -63,26 +63,26 @@ export class BatchProcess {
     this.proc.unref()
 
     // forking or plumbing issues are not the task's fault, so retry:
-    this.proc.on("error", err => this.onError("proc", err))
+    this.proc.on("error", err => this.onError("proc.error", err))
     this.proc.on("close", () => this.onExit())
     this.proc.on("exit", () => this.onExit())
     this.proc.on("disconnect", () => this.onExit())
 
-    this.proc.stdin.on("error", err => this.onError("stdin", err))
+    this.proc.stdin.on("error", err => this.onError("stdin.error", err))
 
     this.proc.stdout.on("error", err => this.onError("stdout.error", err))
     this.proc.stdout.on("data", d => this.onData(d))
 
-    this.proc.stderr.on("error", err => this.onError("stderr", err))
-    this.proc.stderr.on("data", err =>
-      this.onError("stderr.data", new Error(String(err).trim()))
-    )
+    this.proc.stderr.on("error", err => this.onError("stderr.error", err))
+    this.proc.stderr.on("data", err => {
+      this.onError("stderr.data", new Error(cleanError(err)))
+    })
 
     this.startupTask = new Task(opts.versionCommand, ea => ea)
 
     // Prevent unhandled startup task rejections from killing node:
-    this.startupTask.promise.catch(() => {
-      //
+    this.startupTask.promise.catch(err => {
+      logger().warn("BatchProcess startup task was rejected: " + err)
     })
 
     this.execTask(this.startupTask)
@@ -225,9 +225,11 @@ export class BatchProcess {
     if (task == null) {
       task = this.currentTask
     }
-    // make a new Error rather than pollute the arg:
-    const error = new Error(source + ": " + _error.message)
-    error.stack = _error.stack
+    const error = new Error(source + ": " + cleanError(_error.message))
+    if (_error.stack) {
+      // Error stacks, if set, will not be redefined from a rethrow:
+      error.stack = cleanError(_error.stack)
+    }
 
     // clear the task before ending so the onExit from end() doesn't retry the task:
     this.clearCurrentTask()
@@ -258,7 +260,10 @@ export class BatchProcess {
 
   private onExit() {
     if (this.running) {
-      throw new Error("BatchProcess.onExit() called on a running process")
+      logger().error("BatchProcess.onExit() called on a running process", {
+        pid: this.pid,
+        currentTask: map(this.currentTask, ea => ea.command)
+      })
     }
     this._ended = true
     const task = this.currentTask
@@ -278,7 +283,7 @@ export class BatchProcess {
     } else {
       const fail = this.opts.failRE.exec(this.buff)
       if (fail != null) {
-        const err = new Error(fail[1].trim() || "command error")
+        const err = new Error(cleanError(fail[1]) || "command error")
         this.onError("onData", err, true, this.currentTask)
       }
     }
@@ -309,6 +314,20 @@ export class BatchProcess {
       this.observer.onIdle()
     }
   }
+}
+
+function map<T, R>(obj: T | null | undefined, f: (t: T) => R): R | undefined {
+  return obj != null ? f(obj) : undefined
+}
+
+/**
+ * When we wrap errors, an Error always prefixes the toString() and stack with
+ * "Error: ", so we can remove that prefix.
+ */
+function cleanError(s: any): string {
+  return String(s)
+    .trim()
+    .replace(/^error:? ?/gi, "")
 }
 
 function ensureSuffix(s: string, suffix: string): string {

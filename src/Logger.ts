@@ -13,13 +13,22 @@ export interface Logger {
   error: Log
 }
 
+export const LogLevels: (keyof Logger)[] = [
+  "trace",
+  "debug",
+  "info",
+  "warn",
+  "error"
+]
+
 const _debuglog = debuglog("batch-cluster")
 
-const noop = () => {}
+const noop = () => undefined
 
 /**
  * Default `Logger` implementation.  `debug` and `info` go to
- * util.debuglog("batch-cluster")`. `warn` and `error` go to `console`.
+ * util.debuglog("batch-cluster")`. `warn` and `error` go to `console.warn` and
+ * `console.error`.
  */
 export const ConsoleLogger: Logger = Object.freeze({
   /**
@@ -61,12 +70,49 @@ export const NoLogger: Logger = Object.freeze({
 let _logger: Logger = ConsoleLogger
 
 export function setLogger(l: Logger) {
-  if ([l.debug, l.info, l.warn, l.error].some(f => typeof f !== "function")) {
-    throw new Error("invalid logger")
+  if (LogLevels.some(ea => typeof l[ea] !== "function")) {
+    throw new Error("invalid logger, must implement " + LogLevels)
   }
   _logger = l
 }
 
 export function logger() {
   return _logger
+}
+
+export function withLevels(delegate: Logger): Logger {
+  const timestamped: any = {}
+  LogLevels.forEach(ea => {
+    const prefix = (ea + " ").substring(0, 5) + " | "
+    timestamped[ea] = (message?: any, ...optionalParams: any[]) =>
+      message != null && delegate[ea](prefix + message, ...optionalParams)
+  })
+  return timestamped
+}
+
+export function withTimestamps(delegate: Logger): Logger {
+  const timestamped: any = {}
+  LogLevels.forEach(
+    ea =>
+      (timestamped[ea] = (message?: any, ...optionalParams: any[]) =>
+        message != null &&
+        delegate[ea](
+          new Date().toISOString() + " | " + message,
+          ...optionalParams
+        ))
+  )
+  return timestamped
+}
+
+export function filterLevels(
+  logger: Logger,
+  minLogLevel: keyof Logger
+): Logger {
+  const minLogLevelIndex = LogLevels.indexOf(minLogLevel)
+  const filtered: any = {}
+  LogLevels.forEach(
+    (ea, idx) =>
+      (filtered[ea] = idx < minLogLevelIndex ? noop : logger[ea].bind(logger))
+  )
+  return filtered
 }
