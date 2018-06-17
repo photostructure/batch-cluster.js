@@ -80,39 +80,41 @@ export function logger() {
   return _logger
 }
 
-export function withLevels(delegate: Logger): Logger {
-  const timestamped: any = {}
-  LogLevels.forEach(ea => {
-    const prefix = (ea + " ").substring(0, 5) + " | "
-    timestamped[ea] = (message?: any, ...optionalParams: any[]) =>
-      message != null && delegate[ea](prefix + message, ...optionalParams)
-  })
-  return timestamped
-}
+export namespace Logger {
+  export function withLevels(delegate: Logger): Logger {
+    const timestamped: any = {}
+    LogLevels.forEach(ea => {
+      const prefix = (ea + " ").substring(0, 5) + " | "
+      timestamped[ea] = (message?: any, ...optionalParams: any[]) =>
+        message != null && delegate[ea](prefix + message, ...optionalParams)
+    })
+    return timestamped
+  }
 
-export function withTimestamps(delegate: Logger): Logger {
-  const timestamped: any = {}
-  LogLevels.forEach(
-    ea =>
-      (timestamped[ea] = (message?: any, ...optionalParams: any[]) =>
-        message != null &&
-        delegate[ea](
-          new Date().toISOString() + " | " + message,
-          ...optionalParams
-        ))
-  )
-  return timestamped
-}
+  export function withTimestamps(delegate: Logger): Logger {
+    const timestamped: any = {}
+    LogLevels.forEach(
+      ea =>
+        (timestamped[ea] = (message?: any, ...optionalParams: any[]) =>
+          message != null &&
+          delegate[ea](
+            new Date().toISOString() + " | " + message,
+            ...optionalParams
+          ))
+    )
+    return timestamped
+  }
 
-export function filterLevels(
-  logger: Logger,
-  minLogLevel: keyof Logger
-): Logger {
-  const minLogLevelIndex = LogLevels.indexOf(minLogLevel)
-  const filtered: any = {}
-  LogLevels.forEach(
-    (ea, idx) =>
-      (filtered[ea] = idx < minLogLevelIndex ? noop : logger[ea].bind(logger))
-  )
-  return filtered
+  export function filterLevels(
+    logger: Logger,
+    minLogLevel: keyof Logger
+  ): Logger {
+    const minLogLevelIndex = LogLevels.indexOf(minLogLevel)
+    const filtered: any = {}
+    LogLevels.forEach(
+      (ea, idx) =>
+        (filtered[ea] = idx < minLogLevelIndex ? noop : logger[ea].bind(logger))
+    )
+    return filtered
+  }
 }

@@ -1,6 +1,6 @@
 import { env } from "process"
 
-import { filterLevels, setLogger, withLevels, withTimestamps } from "./Logger"
+import { Logger, setLogger } from "./Logger"
 
 const _chai = require("chai")
 _chai.use(require("chai-string"))
@@ -13,9 +13,9 @@ require("source-map-support").install()
 
 // Tests should be quiet unless LOG is set
 setLogger(
-  withLevels(
-    withTimestamps(
-      filterLevels(
+  Logger.withLevels(
+    Logger.withTimestamps(
+      Logger.filterLevels(
         {
           trace: console.log,
           debug: console.log,

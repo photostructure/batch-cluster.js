@@ -86,6 +86,11 @@ order to test BatchCluster's retry and error handling code.
 
 ## Changelog
 
+### v3.2.0
+
+- 📦 New `Logger` methods, `withLevels`, `withTimestamps`, and `filterLevels`
+  were shoved into a new `Logger` namespace.
+
 ### v3.1.0
 
 - ✨ Added simple timestamp and levels logger prefixer for tests
