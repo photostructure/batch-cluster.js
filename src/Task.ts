@@ -61,7 +61,7 @@ export class Task<T> {
    * This is for use by `BatchProcess` only, and will only be called when the
    * process has errored after N retries
    */
-  onError(error: any): void {
+  onError(error: Error): void {
     logger().warn("Task.onError(): rejected", { command: this.command, error })
     this.d.reject(error)
   }

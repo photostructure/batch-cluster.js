@@ -1,6 +1,6 @@
 {
   "name": "batch-cluster",
-  "version": "2.1.1",
+  "version": "3.2.0",
   "description": "Manage a cluster of child processes",
   "main": "dist/BatchCluster.js",
   "homepage": "https://batch-cluster.js.org/",
@@ -20,7 +20,7 @@
     "pretest": "yarn clean && yarn compile",
     "test": "mocha --opts .mocha.opts",
     "predocs": "typedoc --name batch-cluster --out ./docs --readme ./README.md --exclude \"**/*+(test|spec).ts\" --excludePrivate --excludeProtected --theme minimal src",
-    "docs": "echo batch-cluster.js.org > docs/CNAME && touch docs/.nojekyll && serve docs"
+    "docs": "echo batch-cluster.js.org > docs/CNAME && touch docs/.nojekyll && yarn serve docs"
   },
   "author": "Matthew McEachen <matthew-batchcluster@mceachen.org>",
   "license": "MIT",
@@ -28,24 +28,24 @@
     "node": ">= 6"
   },
   "devDependencies": {
-    "@types/chai": "^4.1.3",
+    "@types/chai": "^4.1.4",
     "@types/chai-as-promised": "^7.1.0",
     "@types/chai-string": "^1.4.1",
-    "@types/mocha": "^5.2.0",
-    "@types/node": "^10.0.0",
+    "@types/mocha": "^5.2.2",
+    "@types/node": "^10.3.3",
     "chai": "^4.1.2",
     "chai-as-promised": "^7.1.1",
     "chai-string": "^1.4.0",
     "chai-withintoleranceof": "^1.0.1",
-    "mocha": "^5.1.1",
-    "prettier": "^1.12.1",
+    "mocha": "^5.2.0",
+    "prettier": "^1.13.5",
     "rimraf": "^2.6.2",
     "seedrandom": "^2.4.3",
-    "serve": "^6.5.6",
-    "source-map-support": "^0.5.5",
-    "timekeeper": "^2.1.1",
+    "serve": "^9.0.0",
+    "source-map-support": "^0.5.6",
+    "timekeeper": "^2.1.2",
     "typedoc": "^0.11.1",
-    "typescript": "^2.8.3",
-    "wtfnode": "^0.6.0"
+    "typescript": "^2.9.2",
+    "wtfnode": "^0.7.0"
   }
 }

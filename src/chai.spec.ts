@@ -1,6 +1,6 @@
 import { env } from "process"
 
-import { setLogger } from "./Logger"
+import { Logger, setLogger } from "./Logger"
 
 const _chai = require("chai")
 _chai.use(require("chai-string"))
@@ -11,32 +11,23 @@ export { expect } from "chai"
 
 require("source-map-support").install()
 
-const noop = () => undefined
-function log(level: string, ...args: any[]) {
-  console.log(
-    new Date().toISOString() + ": " + level + ": " + args[0],
-    ...args.slice(1)
-  )
-}
-
 // Tests should be quiet unless LOG is set
-if (!!env.LOG) {
-  setLogger({
-    trace: (...args: any[]) => log("trace", ...args),
-    debug: (...args: any[]) => log("debug", ...args),
-    info: (...args: any[]) => log("info ", ...args),
-    warn: (...args: any[]) => log("warn ", ...args),
-    error: (...args: any[]) => log("error", ...args)
-  })
-} else {
-  setLogger({
-    trace: noop,
-    debug: noop,
-    info: noop,
-    warn: noop,
-    error: (...args: any[]) => log("error", ...args)
-  })
-}
+setLogger(
+  Logger.withLevels(
+    Logger.withTimestamps(
+      Logger.filterLevels(
+        {
+          trace: console.log,
+          debug: console.log,
+          info: console.log,
+          warn: console.warn,
+          error: console.error
+        },
+        (env.LOG as any) || "error"
+      )
+    )
+  )
+)
 
 export const parser = (ea: string) => ea.trim()
 

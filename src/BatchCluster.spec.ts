@@ -130,8 +130,8 @@ describe("BatchCluster", function() {
           expect(runningSpawnedPids()).to.eql([])
           const startErrorEvent = events.find(ea => ea.event === "startError")
           if (startErrorEvent != null) {
-            expect(startErrorEvent.args[0]).to.startWith(
-              "stderr.data: EUNLUCKY",
+            expect(String(startErrorEvent.args[0])).to.startWith(
+              "Error: stderr.data: EUNLUCKY",
               JSON.stringify(events)
             )
           }
@@ -195,9 +195,9 @@ describe("BatchCluster", function() {
             const lastEvent = events[events.length - 1]
             expect(lastEvent.event).to.eql("taskError", JSON.stringify(events))
             const err = String(lastEvent.args[0])
-            if (!err.startsWith("stderr.data: EUNLUCKY:")) {
+            if (!err.startsWith("Error: stderr.data: EUNLUCKY")) {
               expect(err).to.eql(
-                "stderr.data: COMMAND MISSING for input invalid",
+                "Error: stderr.data: COMMAND MISSING for input invalid",
                 JSON.stringify(events)
               )
             }

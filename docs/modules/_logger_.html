@@ -984,7 +984,7 @@ img { max-width: 100%; }
 				<div class="tsd-signature tsd-kind-icon">Log<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">function</span></div>
 				<aside class="tsd-sources">
 					<ul>
-						<li>Defined in <a href="https://github.com/mceachen/batch-cluster.js/blob/709fdd6/src/Logger.ts#L3">Logger.ts:3</a></li>
+						<li>Defined in <a href="https://github.com/mceachen/batch-cluster.js/blob/c2aa74e/src/Logger.ts#L3">Logger.ts:3</a></li>
 					</ul>
 				</aside>
 				<div class="tsd-type-declaration">
@@ -1018,10 +1018,10 @@ img { max-width: 100%; }
 			<section class="tsd-panel tsd-member tsd-kind-variable tsd-parent-kind-external-module">
 				<a name="consolelogger" class="tsd-anchor"></a>
 				<h3><span class="tsd-flag ts-flagConst">Const</span> Console<wbr>Logger</h3>
-				<div class="tsd-signature tsd-kind-icon">Console<wbr>Logger<span class="tsd-signature-symbol">:</span> <a href="../interfaces/_logger_.logger.html" class="tsd-signature-type">Logger</a><span class="tsd-signature-symbol"> =&nbsp;Object.freeze({/*** Delegates to &#x60;util.debuglog(&quot;batch-cluster&quot;)&#x60;:* &lt;https://nodejs.org/api/util.html#util_util_debuglog_section&gt;*/debug: _debuglog,/*** Delegates to &#x60;util.debuglog(&quot;batch-cluster&quot;)&#x60;:* &lt;https://nodejs.org/api/util.html#util_util_debuglog_section&gt;*/info: _debuglog,/*** Delegates to &#x60;console.warn&#x60;*/warn: console.warn,/*** Delegates to &#x60;console.error&#x60;*/error: console.error})</span></div>
+				<div class="tsd-signature tsd-kind-icon">Console<wbr>Logger<span class="tsd-signature-symbol">:</span> <a href="../interfaces/_logger_.logger.html" class="tsd-signature-type">Logger</a><span class="tsd-signature-symbol"> =&nbsp;Object.freeze({/*** No-ops by default, as this is very low-level information.*/trace: noop,/*** Delegates to &#x60;util.debuglog(&quot;batch-cluster&quot;)&#x60;:* &lt;https://nodejs.org/api/util.html#util_util_debuglog_section&gt;*/debug: _debuglog,/*** Delegates to &#x60;util.debuglog(&quot;batch-cluster&quot;)&#x60;:* &lt;https://nodejs.org/api/util.html#util_util_debuglog_section&gt;*/info: _debuglog,/*** Delegates to &#x60;console.warn&#x60;*/warn: console.warn,/*** Delegates to &#x60;console.error&#x60;*/error: console.error})</span></div>
 				<aside class="tsd-sources">
 					<ul>
-						<li>Defined in <a href="https://github.com/mceachen/batch-cluster.js/blob/709fdd6/src/Logger.ts#L21">Logger.ts:21</a></li>
+						<li>Defined in <a href="https://github.com/mceachen/batch-cluster.js/blob/c2aa74e/src/Logger.ts#L24">Logger.ts:24</a></li>
 					</ul>
 				</aside>
 				<div class="tsd-comment tsd-typography">
@@ -1034,10 +1034,10 @@ img { max-width: 100%; }
 			<section class="tsd-panel tsd-member tsd-kind-variable tsd-parent-kind-external-module">
 				<a name="nologger" class="tsd-anchor"></a>
 				<h3><span class="tsd-flag ts-flagConst">Const</span> No<wbr>Logger</h3>
-				<div class="tsd-signature tsd-kind-icon">No<wbr>Logger<span class="tsd-signature-symbol">:</span> <a href="../interfaces/_logger_.logger.html" class="tsd-signature-type">Logger</a><span class="tsd-signature-symbol"> =&nbsp;Object.freeze({debug: noop,info: noop,warn: noop,error: noop})</span></div>
+				<div class="tsd-signature tsd-kind-icon">No<wbr>Logger<span class="tsd-signature-symbol">:</span> <a href="../interfaces/_logger_.logger.html" class="tsd-signature-type">Logger</a><span class="tsd-signature-symbol"> =&nbsp;Object.freeze({trace: noop,debug: noop,info: noop,warn: noop,error: noop})</span></div>
 				<aside class="tsd-sources">
 					<ul>
-						<li>Defined in <a href="https://github.com/mceachen/batch-cluster.js/blob/709fdd6/src/Logger.ts#L46">Logger.ts:46</a></li>
+						<li>Defined in <a href="https://github.com/mceachen/batch-cluster.js/blob/c2aa74e/src/Logger.ts#L53">Logger.ts:53</a></li>
 					</ul>
 				</aside>
 				<div class="tsd-comment tsd-typography">
@@ -1052,7 +1052,7 @@ img { max-width: 100%; }
 				<div class="tsd-signature tsd-kind-icon">_debuglog<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">function</span><span class="tsd-signature-symbol"> =&nbsp;debuglog(&quot;batch-cluster&quot;)</span></div>
 				<aside class="tsd-sources">
 					<ul>
-						<li>Defined in <a href="https://github.com/mceachen/batch-cluster.js/blob/709fdd6/src/Logger.ts#L15">Logger.ts:15</a></li>
+						<li>Defined in <a href="https://github.com/mceachen/batch-cluster.js/blob/c2aa74e/src/Logger.ts#L16">Logger.ts:16</a></li>
 					</ul>
 				</aside>
 				<div class="tsd-type-declaration">
@@ -1086,7 +1086,7 @@ img { max-width: 100%; }
 				<div class="tsd-signature tsd-kind-icon">_logger<span class="tsd-signature-symbol">:</span> <a href="../interfaces/_logger_.logger.html" class="tsd-signature-type">Logger</a><span class="tsd-signature-symbol"> =&nbsp;ConsoleLogger</span></div>
 				<aside class="tsd-sources">
 					<ul>
-						<li>Defined in <a href="https://github.com/mceachen/batch-cluster.js/blob/709fdd6/src/Logger.ts#L53">Logger.ts:53</a></li>
+						<li>Defined in <a href="https://github.com/mceachen/batch-cluster.js/blob/c2aa74e/src/Logger.ts#L61">Logger.ts:61</a></li>
 					</ul>
 				</aside>
 			</section>
@@ -1103,7 +1103,7 @@ img { max-width: 100%; }
 					<li class="tsd-description">
 						<aside class="tsd-sources">
 							<ul>
-								<li>Defined in <a href="https://github.com/mceachen/batch-cluster.js/blob/709fdd6/src/Logger.ts#L62">Logger.ts:62</a></li>
+								<li>Defined in <a href="https://github.com/mceachen/batch-cluster.js/blob/c2aa74e/src/Logger.ts#L70">Logger.ts:70</a></li>
 							</ul>
 						</aside>
 						<h4 class="tsd-returns-title">Returns <a href="../interfaces/_logger_.logger.html" class="tsd-signature-type">Logger</a></h4>
@@ -1120,7 +1120,7 @@ img { max-width: 100%; }
 					<li class="tsd-description">
 						<aside class="tsd-sources">
 							<ul>
-								<li>Defined in <a href="https://github.com/mceachen/batch-cluster.js/blob/709fdd6/src/Logger.ts#L41">Logger.ts:41</a></li>
+								<li>Defined in <a href="https://github.com/mceachen/batch-cluster.js/blob/c2aa74e/src/Logger.ts#L18">Logger.ts:18</a></li>
 							</ul>
 						</aside>
 						<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
@@ -1137,7 +1137,7 @@ img { max-width: 100%; }
 					<li class="tsd-description">
 						<aside class="tsd-sources">
 							<ul>
-								<li>Defined in <a href="https://github.com/mceachen/batch-cluster.js/blob/709fdd6/src/Logger.ts#L55">Logger.ts:55</a></li>
+								<li>Defined in <a href="https://github.com/mceachen/batch-cluster.js/blob/c2aa74e/src/Logger.ts#L63">Logger.ts:63</a></li>
 							</ul>
 						</aside>
 						<h4 class="tsd-parameters-title">Parameters</h4>
