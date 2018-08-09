@@ -1,4 +1,5 @@
 import { setTimeout } from "timers"
+import { logger } from "./Logger"
 
 export function delay(millis: number, unref = false): Promise<void> {
   return new Promise<void>(resolve => {
@@ -16,13 +17,18 @@ export async function until(
   timeoutMs: number
 ): Promise<boolean> {
   const timeoutAt = Date.now() + timeoutMs
+  logger().info("until(): timeout in " + timeoutMs)
   while (Date.now() < timeoutAt) {
     const result = await f()
     if (result === true) {
+      logger().info("until(): returning true")
       return true
     } else {
+      logger().info("until(): waiting...")
       await delay(50)
+      logger().info("until(): done waiting...")
     }
   }
+  logger().info("until(): returning false")
   return false
 }

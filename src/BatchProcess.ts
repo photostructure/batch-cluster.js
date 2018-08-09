@@ -1,5 +1,4 @@
 import * as _cp from "child_process"
-import * as _os from "os"
 import * as _p from "process"
 import { Writable } from "stream"
 
@@ -10,6 +9,7 @@ import {
 } from "./BatchCluster"
 import { Deferred } from "./Deferred"
 import { until } from "./Delay"
+import { kill, running } from "./Procs"
 import { Task } from "./Task"
 
 /**
@@ -100,31 +100,39 @@ export class BatchProcess {
     return this._exited.promise
   }
 
-  get idle(): boolean {
-    return !this.ended && this.currentTask == null
+  async idle(): Promise<boolean> {
+    return this.currentTask == null && this.notEnded()
   }
 
-  get busy(): boolean {
-    return !this.ended && this.currentTask != null
+  async busy(): Promise<boolean> {
+    return this.currentTask != null && this.notEnded()
   }
 
   /**
    * @return true if the child process is in the process table
    */
-  get running(): boolean {
+  running(): Promise<boolean> {
     return running(this.pid)
+  }
+
+  notRunning(): Promise<boolean> {
+    return this.running().then(ea => !ea)
   }
 
   /**
    * @return {boolean} true if `this.end()` has been requested or the child
    * process has exited.
    */
-  get ended(): boolean {
-    return this._ended || !this.running
+  async ended(): Promise<boolean> {
+    return this._ended || this.notRunning()
   }
 
-  execTask(task: Task<any>): boolean {
-    if (!this.idle) {
+  async notEnded(): Promise<boolean> {
+    return this.ended().then(ea => !ea)
+  }
+
+  async execTask(task: Task<any>): Promise<boolean> {
+    if (await this.busy()) {
       return false
     }
     this._taskCount++
@@ -159,6 +167,7 @@ export class BatchProcess {
       const cmd = this.opts.exitCommand
         ? ensureSuffix(this.opts.exitCommand, "\n")
         : undefined
+      logger().info("Ending...", { pid: this.pid, cmd })
       await end(this.proc.stdin, cmd)
     }
 
@@ -174,15 +183,25 @@ export class BatchProcess {
       () => this.proc.disconnect()
     ])
 
-    if (this.running && gracefully && this.opts.endGracefulWaitTimeMillis > 0) {
-      await this.awaitNotRunning(this.opts.endGracefulWaitTimeMillis / 2)
-      if (this.running) kill(this.proc.pid, false)
-      await this.awaitNotRunning(this.opts.endGracefulWaitTimeMillis / 2)
+    if (
+      (await this.running()) &&
+      gracefully &&
+      this.opts.endGracefulWaitTimeMillis > 0
+    ) {
+      await this.awaitNotRunning(this.opts.endGracefulWaitTimeMillis)
+      if (await this.running()) await kill(this.proc.pid)
+      await this.awaitNotRunning(this.opts.endGracefulWaitTimeMillis)
     }
 
-    if (this.running) {
-      logger().info("BatchProcess.end(): killing PID " + this.pid)
-      kill(this.proc.pid, true)
+    if (this.running()) {
+      logger().info(
+        "BatchProcess.end(): killing child PID " +
+          this.pid +
+          " (process.pid: " +
+          _p.pid +
+          ")"
+      )
+      await kill(this.proc.pid, true)
     }
 
     // The OS is srsly f@rked if `kill` doesn't respond within a couple ms. 5s
@@ -196,8 +215,19 @@ export class BatchProcess {
     return this.exitedPromise
   }
 
-  private awaitNotRunning(timeout: number) {
-    return until(() => !this.running, timeout)
+  private async awaitNotRunning(timeout: number) {
+    logger().info(
+      "BatchProcess.awaitNotRunning(): waiting for " +
+        this.pid +
+        " to shut down..."
+    )
+    await until(() => this.running().then(ea => !ea), timeout)
+    logger().info(
+      "BatchProcess.awaitNotRunning(): " + (await this.running())
+        ? "still running"
+        : "shut down"
+    )
+    return
   }
 
   private onTimeout(task: Task<any>, timeoutMs: number): void {
@@ -258,8 +288,8 @@ export class BatchProcess {
     }
   }
 
-  private onExit() {
-    if (this.running) {
+  private async onExit() {
+    if (await this.running()) {
       logger().error("BatchProcess.onExit() called on a running process", {
         pid: this.pid,
         currentTask: map(this.currentTask, ea => ea.command)
@@ -332,46 +362,6 @@ function cleanError(s: any): string {
 
 function ensureSuffix(s: string, suffix: string): string {
   return s.endsWith(suffix) ? s : s + suffix
-}
-
-/**
- * @export
- * @param {number} pid process id. Required.
- * @returns {boolean} true if the given process id is in the local process
- * table.
- */
-export function running(pid: number): boolean {
-  const r = (() => {
-    try {
-      const result = process.kill(pid, 0) as any // node 7 and 8 return a boolean, but types are borked
-      return typeof result === "boolean" ? result : true
-    } catch (e) {
-      return e.code === "EPERM" || e.errno === "EPERM"
-    }
-  })()
-  return r
-}
-
-const isWin = _os.platform().startsWith("win")
-
-/**
- * Send a signal to the given process id.
- *
- * @export
- * @param {number} pid the process id. Required.
- * @param {boolean} [force=false] if true, and the current user has
- * permissions to send the signal, the pid will be forced to shut down.
- */
-export function kill(pid: number, force: boolean = false): void {
-  if (isWin) {
-    const args = ["/PID", pid.toString(), "/T"]
-    if (force) {
-      args.push("/F")
-    }
-    _cp.execFile("taskkill", args)
-  } else {
-    _p.kill(pid, force ? "SIGKILL" : "SIGTERM")
-  }
 }
 
 function end(endable: Writable, contents?: string): Promise<void> {

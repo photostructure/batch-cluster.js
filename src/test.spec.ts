@@ -2,10 +2,10 @@ import { ChildProcess, spawn } from "child_process"
 import { join } from "path"
 import * as _p from "process"
 
-import { kill, running } from "./BatchProcess"
 import { expect } from "./chai.spec"
 import { Deferred } from "./Deferred"
 import { until } from "./Delay"
+import { kill, running } from "./Procs"
 
 export const procs: ChildProcess[] = []
 
@@ -42,14 +42,14 @@ describe("test.js", () => {
     }
     async end(): Promise<void> {
       this.child.stdin.end(null)
-      await until(() => !this.running, 1000)
-      if (this.running) {
+      await until(() => this.running().then(ea => !ea), 1000)
+      if (await this.running()) {
         console.error("Ack, I had to kill child pid " + this.child.pid)
         kill(this.child.pid)
       }
       return
     }
-    get running(): boolean {
+    async running(): Promise<boolean> {
       return running(this.child.pid)
     }
     assertStdout(expectedOutput: string) {

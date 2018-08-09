@@ -112,7 +112,7 @@ describe("BatchCluster", function() {
 
         it("calling .end() when new no-ops", async () => {
           await bc.end()
-          expect(bc.pids.length).to.eql(0)
+          expect((await bc.pids()).length).to.eql(0)
           expect(bc.spawnedProcs).to.eql(0)
           expect(events).to.eql(expectedEndEvents)
           return
@@ -126,7 +126,7 @@ describe("BatchCluster", function() {
           )
           await bc.end()
           expect(bc.spawnedProcs).to.be.within(maxProcs, maxProcs + 8) // because EUNLUCKY
-          expect(bc.pids.length).to.eql(0)
+          expect((await bc.pids()).length).to.eql(0)
           expect(runningSpawnedPids()).to.eql([])
           const startErrorEvent = events.find(ea => ea.event === "startError")
           if (startErrorEvent != null) {
@@ -148,14 +148,14 @@ describe("BatchCluster", function() {
             " before recycling",
           async () => {
             await Promise.all(runTasks(bc, maxProcs))
-            const pids = bc.pids
+            const pids = await bc.pids()
             const tasks = await Promise.all(
               runTasks(bc, opts.maxTasksPerProcess * maxProcs)
             )
             expect(tasks).to.eql(
               expectedResults(opts.maxTasksPerProcess * maxProcs)
             )
-            expect(bc.pids).to.not.include.members(pids)
+            expect(await bc.pids()).to.not.include.members(pids)
             const upperBoundSpawnedProcs =
               maxProcs * (taskRetries === 0 ? 2 : 10) // because fail rate
             expect(bc.spawnedProcs).to.be.within(
@@ -178,9 +178,9 @@ describe("BatchCluster", function() {
             expect(
               await bc.enqueueTask(new Task("downcase Hello", parser))
             ).to.eql("hello")
-            const pidsBefore = bc.pids
+            const pidsBefore = (await bc.pids())
             const spawnedProcsBefore = bc.spawnedProcs
-            expect(bc.pids.length).to.be.within(1, 3) // we may have spun up another proc due to EUNLUCKY
+            expect((await bc.pids()).length).to.be.within(1, 3) // we may have spun up another proc due to EUNLUCKY
             const task = new Task("invalid", parser)
             await expect(bc.enqueueTask(task)).to.eventually.be.rejectedWith(
               /invalid|EUNLUCKY/
@@ -190,7 +190,7 @@ describe("BatchCluster", function() {
               1,
               opts.taskRetries + 5 // because EUNLUCKY
             )
-            expect(bc.pids).to.not.eql(pidsBefore) // at least one pid should be shut down now
+            expect((await bc.pids())).to.not.eql(pidsBefore) // at least one pid should be shut down now
             expect(task.retries).to.eql(opts.taskRetries)
             const lastEvent = events[events.length - 1]
             expect(lastEvent.event).to.eql("taskError", JSON.stringify(events))
@@ -291,15 +291,15 @@ describe("BatchCluster", function() {
       expect(await Promise.all(runTasks(bc, 2 * opts.maxProcs))).to.eql(
         expectedResults(2 * opts.maxProcs)
       )
-      expect(bc.pids.length).to.be.within(1, opts.maxProcs)
+      expect((await bc.pids()).length).to.be.within(1, opts.maxProcs)
       await delay(opts.maxProcAgeMillis)
       // Calling .pids calls .procs(), which culls old procs
-      expect(bc.pids.length).to.be.within(0, opts.maxProcs)
+      expect((await bc.pids()).length).to.be.within(0, opts.maxProcs)
       // Wait for the procs to shut down:
-      if (bc.pids.length > 0) {
+      if ((await bc.pids()).length > 0) {
         await delay(500)
       }
-      expect(bc.pids).to.be.empty
+      expect((await bc.pids())).to.be.empty
       // expect(events).to.eql({})
       return
     })
@@ -319,13 +319,13 @@ describe("BatchCluster", function() {
       expect(task.pending).to.be.true
       expect(processes.length).to.eql(1)
       const proc = processes[0]!
-      expect(proc.running).to.be.true
+      expect(proc.running()).to.be.true
       expect(proc.ended).to.be.false
       await result
       const end = bc.end()
       expect(proc.ended).to.be.true
       await end
-      expect(proc.running).to.be.false
+      expect(proc.running()).to.be.false
       expect(proc.ended).to.be.true
       // expect(events).to.eql({})
       return

@@ -12,8 +12,9 @@ import { logger } from "./Logger"
 import { Mean } from "./Mean"
 import { Rate } from "./Rate"
 import { Task } from "./Task"
+import { serial } from "./Serial"
 
-export { kill, running } from "./BatchProcess"
+export { kill, running } from "./Procs"
 export { Deferred } from "./Deferred"
 export { delay } from "./Delay"
 export * from "./Logger"
@@ -95,9 +96,9 @@ export class BatchClusterOptions {
    * This is the minimum interval between calls to `this.onIdle`, which
    * runs pending tasks and shuts down old child processes.
    *
-   * Must be &gt; 0. Defaults to 1 second.
+   * Must be &gt; 0. Defaults to 5 seconds.
    */
-  readonly onIdleIntervalMillis: number = 1000
+  readonly onIdleIntervalMillis: number = 5000
 
   /**
    * Tasks that result in errors will be retried at most `taskRetries`
@@ -346,8 +347,8 @@ export class BatchCluster {
    * @return the current, non-ended child process PIDs. Useful for integration
    * tests, but most likely not generally interesting.
    */
-  get pids(): number[] {
-    return this.procs().map(p => p.pid)
+  pids(): number[] {
+    return this._procs.map(p => p.pid)
   }
 
   /**
@@ -424,23 +425,25 @@ export class BatchCluster {
     }
   }
 
-  private procs(): BatchProcess[] {
+  // This should only be called by onIdle, as it mutates state (and onIdle is
+  // guaranteed to be run serially)
+  private async procs(): Promise<BatchProcess[]> {
     const minStart = Date.now() - this.opts.maxProcAgeMillis
     // Iterate the array backwards, as we'll be removing _procs as we go:
     for (let i = this._procs.length - 1; i >= 0; i--) {
       const proc = this._procs[i]
       // Don't end procs that are currently servicing requests:
       if (
-        proc.idle &&
+        (await proc.idle()) &&
         (proc.start < minStart ||
           proc.taskCount >= this.opts.maxTasksPerProcess)
       ) {
         // No need to be graceful, just shut down.
         const gracefully = false
-        proc.end(gracefully)
+        await proc.end(gracefully)
       }
       // Only remove exited processes from _procs:
-      if (!proc.running) {
+      if (!(await proc.running())) {
         proc.end() // make sure any pending task is re-enqueued
         this._tasksPerProc.push(proc.taskCount)
         this._procs.splice(i, 1)
@@ -449,12 +452,12 @@ export class BatchCluster {
     return this._procs
   }
 
-  private onIdle(): void {
+  private readonly onIdle = serial(async () => {
     if (this._ended) {
       return
     }
 
-    const procs = this.procs()
+    const procs = await this.procs()
     const idleProcs = procs.filter(proc => proc.idle)
 
     const execNextTask = () =>
@@ -486,5 +489,5 @@ export class BatchCluster {
       this._spawnedProcs++
       // onIdle() will be called by the new proc when its startup task completes.
     }
-  }
+  })
 }
