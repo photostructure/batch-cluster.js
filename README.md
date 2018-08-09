@@ -14,9 +14,13 @@ these tools can be fairly large, spinning them up can be expensive (especially
 on Windows).
 
 This module expedites these commands, or "Tasks," by managing a cluster of these
-"batch" processes, feeding tasks to idle processes, retrying tasks when the tool
-crashes, and preventing memory leaks by restarting tasks after performing a
-given number of tasks or after a given set of time has elapsed.
+"batch" processes and queue of pending tasks, feeding processes pending tasks
+when they are idle. Tasks are monitored for errors and have timeouts, which
+cause the host process to be recycled. Batch processes are also recycled after
+processing N tasks or running for N seconds, in an effort to minimize the impact
+of memory leaks.
+
+As of version 4, retry logic for tasks is a separate concern from this module.
 
 This package powers
 [exiftool-vendored](https://github.com/mceachen/exiftool-vendored.js), whose
