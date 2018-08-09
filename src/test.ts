@@ -107,4 +107,6 @@ async function onLine(line: string): Promise<void> {
 
 let prior = Promise.resolve()
 
+// Quick and dirty request serializer, but leaks Promises (as all prior promises
+// are held):
 rl.on("line", line => (prior = prior.then(() => onLine(line))))

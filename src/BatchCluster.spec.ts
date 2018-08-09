@@ -2,10 +2,16 @@ import { inspect } from "util"
 
 import { BatchCluster, BatchClusterOptions } from "./BatchCluster"
 import { BatchProcess } from "./BatchProcess"
-import { expect, parser, times } from "./chai.spec"
+import {
+  currentTestPids,
+  expect,
+  parser,
+  procs,
+  testProcessFactory,
+  times
+} from "./chai.spec"
 import { delay } from "./Delay"
 import { Task } from "./Task"
-import { processFactory, procs, runningSpawnedPids } from "./test.spec"
 
 describe("BatchCluster", function() {
   function runTasks(
@@ -96,7 +102,7 @@ describe("BatchCluster", function() {
               // seed needs to change for each process, or we'll always be
               // lucky or unlucky
               processFactory: () =>
-                processFactory({
+                testProcessFactory({
                   newline,
                   failrate,
                   ignoreExit: ignoreExit ? "1" : "0"
@@ -127,7 +133,7 @@ describe("BatchCluster", function() {
           await bc.end()
           expect(bc.spawnedProcs).to.be.within(maxProcs, maxProcs + 8) // because EUNLUCKY
           expect((await bc.pids()).length).to.eql(0)
-          expect(runningSpawnedPids()).to.eql([])
+          expect(await currentTestPids()).to.eql([])
           const startErrorEvent = events.find(ea => ea.event === "startError")
           if (startErrorEvent != null) {
             expect(String(startErrorEvent.args[0])).to.startWith(
@@ -167,7 +173,7 @@ describe("BatchCluster", function() {
               opts.maxTasksPerProcess
             )
             await bc.pendingMaintenance
-            expect(runningSpawnedPids().length).to.lte(maxProcs)
+            expect((await currentTestPids()).length).to.lte(maxProcs)
             return
           }
         )
@@ -178,7 +184,7 @@ describe("BatchCluster", function() {
             expect(
               await bc.enqueueTask(new Task("downcase Hello", parser))
             ).to.eql("hello")
-            const pidsBefore = (await bc.pids())
+            const pidsBefore = await bc.pids()
             const spawnedProcsBefore = bc.spawnedProcs
             expect((await bc.pids()).length).to.be.within(1, 3) // we may have spun up another proc due to EUNLUCKY
             const task = new Task("invalid", parser)
@@ -190,7 +196,7 @@ describe("BatchCluster", function() {
               1,
               opts.taskRetries + 5 // because EUNLUCKY
             )
-            expect((await bc.pids())).to.not.eql(pidsBefore) // at least one pid should be shut down now
+            expect(await bc.pids()).to.not.eql(pidsBefore) // at least one pid should be shut down now
             expect(task.retries).to.eql(opts.taskRetries)
             const lastEvent = events[events.length - 1]
             expect(lastEvent.event).to.eql("taskError", JSON.stringify(events))
@@ -258,7 +264,7 @@ describe("BatchCluster", function() {
     const bc = new BatchCluster({
       ...defaultOpts,
       taskRetries,
-      processFactory
+      processFactory: testProcessFactory
     })
 
     after(() => {
@@ -284,7 +290,7 @@ describe("BatchCluster", function() {
 
     const bc = new BatchCluster({
       ...opts,
-      processFactory
+      processFactory: testProcessFactory
     })
 
     it("culls old child procs", async () => {
@@ -299,7 +305,7 @@ describe("BatchCluster", function() {
       if ((await bc.pids()).length > 0) {
         await delay(500)
       }
-      expect((await bc.pids())).to.be.empty
+      expect(await bc.pids()).to.be.empty
       // expect(events).to.eql({})
       return
     })
@@ -309,7 +315,7 @@ describe("BatchCluster", function() {
     const bc = new BatchCluster({
       ...defaultOpts,
       taskTimeoutMillis: 500,
-      processFactory: () => processFactory({ failrate: "0" })
+      processFactory: () => testProcessFactory({ failrate: "0" })
     })
 
     it("correctly reports that child procs are running", async () => {
@@ -344,7 +350,7 @@ describe("BatchCluster", function() {
       const spawnTimeoutMillis = defaultOpts.taskTimeoutMillis + 1
       try {
         new BatchCluster({
-          processFactory,
+          processFactory: testProcessFactory,
           ...defaultOpts,
           spawnTimeoutMillis,
           maxProcAgeMillis: spawnTimeoutMillis - 1
@@ -364,7 +370,7 @@ describe("BatchCluster", function() {
       const taskTimeoutMillis = defaultOpts.spawnTimeoutMillis + 1
       try {
         new BatchCluster({
-          processFactory,
+          processFactory: testProcessFactory,
           ...defaultOpts,
           taskTimeoutMillis,
           maxProcAgeMillis: taskTimeoutMillis - 1
@@ -383,8 +389,7 @@ describe("BatchCluster", function() {
     it("reports on invalid opts", () => {
       try {
         new BatchCluster({
-          processFactory,
-
+          processFactory: testProcessFactory,
           versionCommand: "",
           pass: "",
           fail: "",

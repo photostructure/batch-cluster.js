@@ -1,6 +1,9 @@
-import { env } from "process"
+import { ChildProcess, spawn } from "child_process"
+import { join } from "path"
+import { env, execPath } from "process"
 
 import { Logger, setLogger } from "./Logger"
+import { running } from "./Procs"
 
 const _chai = require("chai")
 _chai.use(require("chai-string"))
@@ -54,4 +57,22 @@ declare namespace Chai {
     withinToleranceOf: WithinTolerance
     withinTolOf: WithinTolerance
   }
+}
+
+export const procs: ChildProcess[] = []
+
+export function testPids(): number[] {
+  return procs.map(proc => proc.pid)
+}
+
+export function currentTestPids(): Promise<number[]> {
+  return Promise.all(
+    procs.map(async ea => ({ pid: ea.pid, alive: await running(ea.pid) }))
+  ).then(arr => arr.filter(ea => ea.alive).map(ea => ea.pid))
+}
+
+export const testProcessFactory = (env: any = {}) => {
+  const proc = spawn(execPath, [join(__dirname, "test.js")], { env })
+  procs.push(proc)
+  return proc
 }

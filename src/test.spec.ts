@@ -1,34 +1,16 @@
-import { ChildProcess, spawn } from "child_process"
-import { join } from "path"
-import * as _p from "process"
+import { ChildProcess } from "child_process"
 
-import { expect } from "./chai.spec"
+import { expect, testProcessFactory } from "./chai.spec"
 import { Deferred } from "./Deferred"
 import { until } from "./Delay"
 import { kill, running } from "./Procs"
-
-export const procs: ChildProcess[] = []
-
-export function spawnedPids(): number[] {
-  return procs.map(proc => proc.pid)
-}
-
-export function runningSpawnedPids(): number[] {
-  return procs.filter(proc => running(proc.pid)).map(proc => proc.pid)
-}
-
-export function processFactory(env: any = {}): ChildProcess {
-  const proc = spawn(_p.execPath, [join(__dirname, "test.js")], { env })
-  procs.push(proc)
-  return proc
-}
 
 describe("test.js", () => {
   class Harness {
     readonly child: ChildProcess
     public output: string = ""
     constructor(env: any = {}) {
-      this.child = processFactory({ rngseed: "hello", ...env })
+      this.child = testProcessFactory({ rngseed: "hello", ...env })
       this.child.on("error", (err: any) => {
         throw err
       })
@@ -52,13 +34,16 @@ describe("test.js", () => {
     async running(): Promise<boolean> {
       return running(this.child.pid)
     }
-    assertStdout(expectedOutput: string) {
-      expect(running(this.child.pid)).to.be.true
+    async notRunning(): Promise<boolean> {
+      return this.running().then(ea => !ea)
+    }
+    async assertStdout(expectedOutput: string) {
+      expect(await running(this.child.pid)).to.be.true
       const d = new Deferred()
       this.child.on("exit", async () => {
         try {
           expect(this.output.trim()).to.eql(expectedOutput)
-          expect(this.running).to.be.false
+          expect(await this.running()).to.be.false
           d.resolve()
         } catch (err) {
           d.reject(err)
@@ -80,8 +65,8 @@ describe("test.js", () => {
     h.child.stdin.write("upcase fuzzy\nexit\n")
     await h.untilOutput(9)
     expect(h.output).to.eql("FUZZY\nPASS\n")
-    await until(() => !h.running, 500)
-    expect(h.running).to.be.false
+    await until(() => h.notRunning(), 500)
+    expect(await h.running()).to.be.false
     return
   })
 
@@ -90,8 +75,8 @@ describe("test.js", () => {
     h.child.stdin.write("upcase fuzzy\n")
     await h.untilOutput()
     kill(h.child.pid, false)
-    await until(() => !h.running, 500)
-    expect(h.running).to.be.true
+    await until(() => h.notRunning(), 500)
+    expect(await h.running()).to.be.true
     return h.end()
   })
 
@@ -100,8 +85,8 @@ describe("test.js", () => {
     h.child.stdin.write("upcase fuzzy\n")
     await h.untilOutput()
     kill(h.child.pid, true)
-    await until(() => !h.running, 500)
-    expect(h.running).to.be.false
+    await until(() => h.notRunning(), 500)
+    expect(await h.running()).to.be.false
     return
   })
 
@@ -110,8 +95,8 @@ describe("test.js", () => {
     h.child.stdin.write("upcase fuzzy\n")
     await h.untilOutput()
     kill(h.child.pid, true)
-    await until(() => !h.running, 500)
-    expect(h.running).to.be.false
+    await until(() => h.notRunning(), 500)
+    expect(await h.running()).to.be.false
     return
   })
 
@@ -120,15 +105,15 @@ describe("test.js", () => {
     h.child.stdin.write("upcase Boink\nexit\n")
     await h.untilOutput("BOINK\nPASS\nignore".length)
     expect(h.output).to.eql("BOINK\nPASS\nignoreExit is set\n")
-    expect(h.running).to.be.true
+    expect(await h.running()).to.be.true
     await h.end()
-    expect(h.running).to.be.false
+    expect(await h.running()).to.be.false
     return
   })
 
   it("returns a valid pid", async () => {
     const h = new Harness()
-    expect(running(h.child.pid)).to.be.true
+    expect(await running(h.child.pid)).to.be.true
     await h.end()
     return
   })

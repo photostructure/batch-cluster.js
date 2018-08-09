@@ -188,12 +188,12 @@ export class BatchProcess {
       gracefully &&
       this.opts.endGracefulWaitTimeMillis > 0
     ) {
-      await this.awaitNotRunning(this.opts.endGracefulWaitTimeMillis)
+      await this.awaitNotRunning(this.opts.endGracefulWaitTimeMillis / 2)
       if (await this.running()) await kill(this.proc.pid)
-      await this.awaitNotRunning(this.opts.endGracefulWaitTimeMillis)
+      await this.awaitNotRunning(this.opts.endGracefulWaitTimeMillis / 2)
     }
 
-    if (this.running()) {
+    if (await this.running()) {
       logger().info(
         "BatchProcess.end(): killing child PID " +
           this.pid +
@@ -221,7 +221,7 @@ export class BatchProcess {
         this.pid +
         " to shut down..."
     )
-    await until(() => this.running().then(ea => !ea), timeout)
+    await until(() => this.notRunning(), timeout)
     logger().info(
       "BatchProcess.awaitNotRunning(): " + (await this.running())
         ? "still running"
