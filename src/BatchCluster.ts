@@ -378,8 +378,8 @@ export class BatchCluster {
     }
   }
 
-  // This should only be called by onIdle, as it mutates state (and onIdle is
-  // guaranteed to be run serially)
+  // This should only be called by onIdle, as it mutates state and onIdle is
+  // guaranteed to be run serially (thanks to being wrapped in serial())
   private async procs(): Promise<BatchProcess[]> {
     const minStart = Date.now() - this.opts.maxProcAgeMillis
     // Iterate the array backwards, as we'll be removing _procs as we go:
@@ -419,14 +419,14 @@ export class BatchCluster {
       pendingTasks: this.tasks.map(ea => ea.command)
     })
 
-    const execNextTask = async () => {
+    const execNextTask = () => {
       const idleProc = idleProcs.shift()
       if (idleProc == null) return
 
       const task = this.tasks.shift()
       if (task == null) return
 
-      if (await idleProc.execTask(task)) {
+      if (idleProc.execTask(task)) {
         logger().trace(
           "BatchCluster.onIdle(): submitted " +
             task.command +
@@ -446,20 +446,17 @@ export class BatchCluster {
       return true
     }
 
-    while (!this._ended && (await execNextTask())) {}
-    if (this.tasks.length > 0) this.addProc()
-    return
-  })
+    while (!this._ended && execNextTask()) {}
 
-  private addProc() {
-    if (this._ended || this._procs.length >= this.opts.maxProcs) {
-      return false
-    } else {
+    if (
+      !this._ended &&
+      this.tasks.length > 0 &&
+      this._procs.length < this.opts.maxProcs
+    ) {
       this._procs.push(
         new BatchProcess(this.opts.processFactory(), this.opts, this.observer)
       )
       this._spawnedProcs++
-      return true
     }
-  }
+  })
 }

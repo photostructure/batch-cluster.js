@@ -87,13 +87,11 @@ export class BatchProcess {
         logger().warn(this.name + " startup task was rejected: " + err)
       })
 
-    this.execTask(this.startupTask).then(submitted => {
-      if (!submitted) {
-        logger().error(
-          this.name + " INTERNAL ERROR startup task was not submitted"
-        )
-      }
-    })
+    if (!this.execTask(this.startupTask)) {
+      logger().error(
+        this.name + " INTERNAL ERROR startup task was not submitted"
+      )
+    }
   }
 
   get pid(): number {
@@ -142,8 +140,11 @@ export class BatchProcess {
     return this.ended().then(ea => !ea)
   }
 
-  async execTask(task: Task<any>): Promise<boolean> {
-    if (await this.busy()) {
+  execTask(task: Task<any>): boolean {
+    // We're not going to run this.running() here, because BatchCluster will
+    // already have pruned the processes that have exitted unexpectedly just
+    // milliseconds ago.
+    if (this._ended || this.currentTask != null) {
       logger().warn(
         this.name +
           ".execTask(" +
