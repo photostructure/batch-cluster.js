@@ -19,12 +19,18 @@ describe("BatchCluster", function() {
     iterations: number
   ): Array<Promise<string>> {
     return times(iterations, i =>
-      bc.enqueueTask(new Task("upcase abc " + i, parser))
+      bc
+        .enqueueTask(new Task("upcase abc " + i, parser))
+        .catch(err => String(err))
     )
   }
 
-  function expectedResults(iterations: number): string[] {
-    return times(iterations, i => "ABC " + i)
+  function assertExpectedResults(results: string[]) {
+    results.forEach((result, index) => {
+      if (!result.includes("EUNLUCKY")) {
+        expect(result).to.eql("ABC " + index)
+      }
+    })
   }
 
   const events: Event[] = []
@@ -68,168 +74,158 @@ describe("BatchCluster", function() {
     args?: any
   }
 
-  function specsWithOptions(
-    newline: string,
-    maxProcs: number,
-    ignoreExit: boolean
-  ) {
-    describe(
-      inspect(
-        { newline, maxProcs, ignoreExit },
-        { colors: true, breakLength: 100 }
-      ),
-      () => {
-        let bc: BatchCluster
-        const opts = {
-          ...defaultOpts,
-          maxProcs
-        }
+  ;["lf", "crlf"].forEach(newline =>
+    [3, 1].forEach(maxProcs =>
+      [true, false].forEach(ignoreExit =>
+        describe(
+          inspect(
+            { newline, maxProcs, ignoreExit },
+            { colors: true, breakLength: 100 }
+          ),
+          () => {
+            let bc: BatchCluster
+            const opts = {
+              ...defaultOpts,
+              maxProcs
+            }
 
-        // failrate needs to be high enough to trigger but low enough to allow
-        // retries to succeed.
-        let failrate: string
+            // failrate needs to be high enough to trigger but low enough to allow
+            // retries to succeed.
+            let failrate: string
 
-        beforeEach(() => {
-          // Seeding the RNG deterministically gives us repeatable flakiness/successes.
-          failrate = "0.1"
+            beforeEach(() => {
+              // Seeding the RNG deterministically gives us repeatable flakiness/successes.
+              failrate = "0.1"
 
-          bc = listen(
-            new BatchCluster({
-              ...opts,
-              // seed needs to change for each process, or we'll always be
-              // lucky or unlucky
-              processFactory: () =>
-                testProcessFactory({
-                  newline,
-                  failrate,
-                  ignoreExit: ignoreExit ? "1" : "0"
+              bc = listen(
+                new BatchCluster({
+                  ...opts,
+                  // seed needs to change for each process, or we'll always be
+                  // lucky or unlucky
+                  processFactory: () =>
+                    testProcessFactory({
+                      newline,
+                      failrate,
+                      ignoreExit: ignoreExit ? "1" : "0"
+                    })
                 })
+              )
+              procs.length = 0
             })
-          )
-          procs.length = 0
-        })
 
-        afterEach(() => {
-          return bc.end(false)
-        })
+            afterEach(() => {
+              return bc.end(false)
+            })
 
-        it("calling .end() when new no-ops", async () => {
-          await bc.end()
-          expect((await bc.pids()).length).to.eql(0)
-          expect(bc.spawnedProcs).to.eql(0)
-          expect(events).to.eql(expectedEndEvents)
-          return
-        })
+            it("calling .end() when new no-ops", async () => {
+              await bc.end()
+              expect((await bc.pids()).length).to.eql(0)
+              expect(bc.spawnedProcs).to.eql(0)
+              expect(events).to.eql(expectedEndEvents)
+              return
+            })
 
-        xit("calling .end() after running shuts down child procs", async () => {
-          // This just warms up bc to make child procs:
-          const iterations = maxProcs
-          expect(await Promise.all(runTasks(bc, iterations))).to.eql(
-            expectedResults(iterations)
-          )
-          await bc.end()
-          expect(bc.spawnedProcs).to.be.within(maxProcs, maxProcs + 8) // because EUNLUCKY
-          expect((await bc.pids()).length).to.eql(0)
-          expect(await currentTestPids()).to.eql([])
-          const startErrorEvent = events.find(ea => ea.event === "startError")
-          if (startErrorEvent != null) {
-            expect(String(startErrorEvent.args[0])).to.startWith(
-              "Error: stderr.data: EUNLUCKY",
-              JSON.stringify(events)
-            )
-          }
-          expect(events.slice(-2)).to.eql(
-            expectedEndEvents,
-            JSON.stringify(events)
-          )
-          return
-        })
+            it("calling .end() after running shuts down child procs", async () => {
+              // This just warms up bc to make child procs:
+              const iterations = maxProcs
+              const tasks = await Promise.all(runTasks(bc, iterations * 2))
+              assertExpectedResults(tasks)
+              await bc.end()
+              expect(bc.spawnedProcs).to.be.within(maxProcs, maxProcs + 8) // because EUNLUCKY
+              expect((await bc.pids()).length).to.eql(0)
+              expect(await currentTestPids()).to.eql([])
+              expect(events.filter(ea => !ea.event.includes("Error"))).to.eql([
+                { event: "beforeEnd" },
+                { event: "end" }
+              ])
+              return
+            })
 
-        xit(
-          "runs a given batch process roughly " +
-            opts.maxTasksPerProcess +
-            " before recycling",
-          async () => {
-            await Promise.all(runTasks(bc, maxProcs))
-            const pids = await bc.pids()
-            const tasks = await Promise.all(
-              runTasks(bc, opts.maxTasksPerProcess * maxProcs)
+            it(
+              "runs a given batch process roughly " +
+                opts.maxTasksPerProcess +
+                " before recycling",
+              async () => {
+                await Promise.all(runTasks(bc, maxProcs))
+                const pids = await bc.pids()
+                const tasks = await Promise.all(
+                  runTasks(bc, opts.maxTasksPerProcess * maxProcs + 30) // < make sure we hit an EUNLUCKY
+                )
+                assertExpectedResults(tasks)
+                // Expect some errors:
+                expect(tasks.filter(ea => ea.includes("EUNLUCKY"))).to.not.eql(
+                  []
+                )
+                expect(await bc.pids()).to.not.include.members(pids)
+                expect(bc.spawnedProcs).to.be.within(
+                  maxProcs,
+                  tasks.length
+                )
+                expect(bc.meanTasksPerProc).to.be.within(
+                  0.5, // because flaky
+                  opts.maxTasksPerProcess
+                )
+                expect((await currentTestPids()).length).to.be.lte(maxProcs)
+                return
+              }
             )
-            expect(tasks).to.eql(
-              expectedResults(opts.maxTasksPerProcess * maxProcs)
-            )
-            expect(await bc.pids()).to.not.include.members(pids)
-            const upperBoundSpawnedProcs = maxProcs * 2 // because fail rate
-            expect(bc.spawnedProcs).to.be.within(
-              maxProcs,
-              upperBoundSpawnedProcs
-            )
-            expect(bc.meanTasksPerProc).to.be.within(
-              0.5, // because flaky
-              opts.maxTasksPerProcess
-            )
-            expect((await currentTestPids()).length).to.be.lte(maxProcs)
-            return
+
+            it("recycles procs if the command is invalid", async () => {
+              // we need to run one task to "prime the pid pump"
+              await expect(
+                bc
+                  .enqueueTask(new Task("downcase Hello", parser))
+                  .catch(err => err)
+              ).to.eventually.match(/hello|UNLUCKY/)
+              const pidsBefore = await bc.pids()
+              const spawnedProcsBefore = bc.spawnedProcs
+              expect((await bc.pids()).length).to.be.within(1, 3) // we may have spun up another proc due to EUNLUCKY
+              for (let i = 0; i < maxProcs * 2; i++) {
+                await expect(
+                  bc.enqueueTask(new Task("invalid", parser))
+                ).to.eventually.be.rejectedWith(/invalid|EUNLUCKY/)
+              }
+              const newSpawnedProcs = bc.spawnedProcs - spawnedProcsBefore
+              expect(newSpawnedProcs).to.be.within(1, maxProcs * 4) // < because EUNLUCKY
+              expect(await bc.pids()).to.not.eql(pidsBefore) // at least one pid should be shut down now
+              const lastEvent = events[events.length - 1]
+              expect(lastEvent.event).to.eql(
+                "taskError",
+                JSON.stringify(events)
+              )
+              const err = String(lastEvent.args[0])
+              if (!err.startsWith("Error: stderr.data: EUNLUCKY")) {
+                expect(err).to.eql(
+                  "Error: stderr.data: COMMAND MISSING for input invalid",
+                  JSON.stringify(events)
+                )
+              }
+              return
+            })
+
+            it("times out slow requests", async () => {
+              const task = new Task(
+                "sleep " + (opts.taskTimeoutMillis + 250), // < make sure it times out
+                parser
+              )
+              await expect(bc.enqueueTask(task)).to.eventually.be.rejectedWith(
+                /timeout|EUNLUCKY/
+              )
+              return
+            })
+
+            it("rejects a command that emits to stderr", async () => {
+              const task = new Task("stderr omg this should fail", parser)
+              await expect(bc.enqueueTask(task)).to.eventually.be.rejectedWith(
+                /omg this should fail|UNLUCKY/
+              )
+              return
+            })
           }
         )
-
-        xit("recycles procs if the command is invalid", async () => {
-          // we need to run one task to "prime the pid pump"
-          expect(
-            await bc.enqueueTask(new Task("downcase Hello", parser))
-          ).to.eql("hello")
-          const pidsBefore = await bc.pids()
-          const spawnedProcsBefore = bc.spawnedProcs
-          expect((await bc.pids()).length).to.be.within(1, 3) // we may have spun up another proc due to EUNLUCKY
-          const task = new Task("invalid", parser)
-          await expect(bc.enqueueTask(task)).to.eventually.be.rejectedWith(
-            /invalid|EUNLUCKY/
-          )
-          const newSpawnedProcs = bc.spawnedProcs - spawnedProcsBefore
-          expect(newSpawnedProcs).to.be.within(1, 5) // < because EUNLUCKY
-          expect(await bc.pids()).to.not.eql(pidsBefore) // at least one pid should be shut down now
-          const lastEvent = events[events.length - 1]
-          expect(lastEvent.event).to.eql("taskError", JSON.stringify(events))
-          const err = String(lastEvent.args[0])
-          if (!err.startsWith("Error: stderr.data: EUNLUCKY")) {
-            expect(err).to.eql(
-              "Error: stderr.data: COMMAND MISSING for input invalid",
-              JSON.stringify(events)
-            )
-          }
-          return
-        })
-
-        xit("times out slow requests", async () => {
-          const task = new Task(
-            "sleep " + (opts.taskTimeoutMillis + 250), // < make sure it times out
-            parser
-          )
-          await expect(bc.enqueueTask(task)).to.eventually.be.rejectedWith(
-            /timeout|EUNLUCKY/
-          )
-          return
-        })
-
-        xit("rejects a command that emits to stderr", async () => {
-          const task = new Task("stderr omg this should fail", parser)
-          await expect(bc.enqueueTask(task)).to.eventually.be.rejectedWith(
-            /omg this should fail|UNLUCKY/
-          )
-          return
-        })
-      }
+      )
     )
-  }
-
-  // specsWithOptions("lf", 5, 2, true, true)
-  ;["lf", "crlf"].forEach(newline => {
-    ;[3, 1].forEach(maxProcs => {
-      ;[true, false].forEach(ignoreExit => {
-        specsWithOptions(newline, maxProcs, ignoreExit)
-      })
-    })
-  })
+  )
 
   describe("flaky results", () => {
     const bc = new BatchCluster({
@@ -291,9 +287,7 @@ describe("BatchCluster", function() {
     })
 
     it("culls old child procs", async () => {
-      expect(await Promise.all(runTasks(bc, 2 * opts.maxProcs))).to.eql(
-        expectedResults(2 * opts.maxProcs)
-      )
+      assertExpectedResults(await Promise.all(runTasks(bc, opts.maxProcs + 20)))
       expect((await bc.pids()).length).to.be.within(1, opts.maxProcs)
       await delay(opts.maxProcAgeMillis)
       // Calling .pids calls .procs(), which culls old procs

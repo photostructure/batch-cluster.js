@@ -17,6 +17,7 @@ import { Task } from "./Task"
  */
 export interface BatchProcessObserver {
   onIdle(): void
+  onTaskError(error: Error, task: Task<any>): void
   onStartError(error: Error): void
 }
 
@@ -190,7 +191,9 @@ export class BatchProcess {
       }
     }
     if (this.currentTask != null) {
-      this.currentTask.reject(new Error("end() called on host process"))
+      const err = new Error("end() called on host process")
+      this.observer.onTaskError(err, this.currentTask)
+      this.currentTask.reject(err)
     }
     this.clearCurrentTask()
 
@@ -256,6 +259,7 @@ export class BatchProcess {
         pid: this.pid,
         taskCount: this.taskCount
       })
+      this.observer.onTaskError(error, task)
       task.reject(error)
     }
   }

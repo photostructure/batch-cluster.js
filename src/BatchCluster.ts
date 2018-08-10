@@ -252,7 +252,8 @@ export class BatchCluster {
     }
     this.observer = {
       onIdle: () => this.onIdle(),
-      onStartError: err => this.onStartError(err)
+      onStartError: err => this.onStartError(err),
+      onTaskError: (err, task) => this.emitter.emit("taskError", err, task)
     }
     _p.once("beforeExit", this.beforeExitListener)
     _p.once("exit", this.exitListener)
