@@ -17,7 +17,7 @@ Yeah, it's just [Semver](http://semver.org/).
 - 🐞 Backwards-compatible bug fixes
 - 📦 Minor packaging changes
 
-## v4.0.0
+## v4.0.0 (not yet released)
 
 - 💔 Using Node 8+ to determine if a process is running with `kill(pid, 0)`
   turns out to be unreliable (as it returns true even after the process exits).
@@ -28,6 +28,9 @@ Yeah, it's just [Semver](http://semver.org/).
   The TL;DR: is that `running(pid)` now returns a `Promise<boolean>`, which had
   far-reaching signature changes to accomodate the new asynchronicity, hence the
   major version bump.
+
+- 💔 In an effort to reduce this library's complexity, I'm removing retry
+  functionality. All parameters associated to retries are now gone.
 
 ## v3.2.0
 

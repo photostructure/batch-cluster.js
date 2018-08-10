@@ -11,8 +11,8 @@ import {
 import { logger } from "./Logger"
 import { Mean } from "./Mean"
 import { Rate } from "./Rate"
-import { Task } from "./Task"
 import { serial } from "./Serial"
+import { Task } from "./Task"
 
 export { kill, running } from "./Procs"
 export { Deferred } from "./Deferred"
@@ -101,14 +101,6 @@ export class BatchClusterOptions {
   readonly onIdleIntervalMillis: number = 5000
 
   /**
-   * Tasks that result in errors will be retried at most `taskRetries`
-   * times.
-   *
-   * Must be &gt;= 0. Defaults to 0.
-   */
-  readonly taskRetries: number = 0
-
-  /**
    * If the initial `versionCommand` fails for new spawned processes more
    * than this rate, end this BatchCluster and throw an error, because
    * something is terribly wrong.
@@ -132,23 +124,14 @@ export class BatchClusterOptions {
   readonly spawnTimeoutMillis: number = 15000
 
   /**
-   * If commands take longer than this, presume the underlying process is
-   * dead and we should fail or retry the task.
+   * If commands take longer than this, presume the underlying process is dead
+   * and we should fail the task.
    *
    * This should be set to something on the order of seconds.
    *
    * Must be &gt;= 10ms. Defaults to 10 seconds.
    */
   readonly taskTimeoutMillis: number = 10000
-
-  /**
-   * When tasks don't complete in `taskTimeoutMillis`, should they be
-   * retried (a maximum of `taskRetries`)? If taskRetries is set to 0, this
-   * value is meaningless.
-   *
-   * Defaults to false.
-   */
-  readonly retryTasksAfterTimeout: boolean = false
 
   /**
    * Processes will be recycled after processing `maxTasksPerProcess`
@@ -217,7 +200,6 @@ function verifyOptions(
   )
   gte("onIdleIntervalMillis", 0)
   gte("endGracefulWaitTimeMillis", 0)
-  gte("taskRetries", 0)
   gte("maxReasonableProcessFailuresPerMinute", 0)
 
   if (errors.length > 0) {
@@ -232,10 +214,6 @@ function verifyOptions(
 type AllOpts = BatchClusterOptions &
   InternalBatchProcessOptions &
   ChildProcessFactory
-
-function map<T, R>(obj: T | undefined, f: (t: T) => R): R | undefined {
-  return obj != null ? f(obj) : undefined
-}
 
 /**
  * BatchCluster instances manage 0 or more homogenious child processes, and
@@ -253,7 +231,7 @@ export class BatchCluster {
   private readonly opts: AllOpts
   private readonly observer: BatchProcessObserver
   private readonly _procs: BatchProcess[] = []
-  private readonly _pendingTasks: Array<Task<any>> = []
+  private readonly tasks: Task<any>[] = []
   private readonly onIdleInterval?: NodeJS.Timer
   private readonly startErrorRate = new Rate()
   private _spawnedProcs = 0
@@ -273,20 +251,22 @@ export class BatchCluster {
       this.onIdleInterval.unref() // < don't prevent node from exiting
     }
     this.observer = {
-      onIdle: this.onIdle.bind(this),
-      onStartError: this.onStartError.bind(this),
-      retryTask: this.retryTask.bind(this)
+      onIdle: () => this.onIdle(),
+      onStartError: err => this.onStartError(err)
     }
     _p.once("beforeExit", this.beforeExitListener)
     _p.once("exit", this.exitListener)
   }
+
+  private readonly beforeExitListener = () => this.end(true)
+  private readonly exitListener = () => this.end(false)
 
   /**
    * Emitted when a child process has an error when spawning
    */
   on(event: "startError", listener: (err: Error) => void): void
   /**
-   * Emitted when a task has an error even after retries
+   * Emitted when a task has an error
    */
   on(event: "taskError", listener: (err: Error, task: Task<any>) => void): void
   /**
@@ -310,7 +290,7 @@ export class BatchCluster {
     return this._ended
   }
 
-  end(gracefully: boolean = true): Promise<void> {
+  async end(gracefully: boolean = true): Promise<void> {
     const alreadyEnded = this._ended
     this._ended = true
 
@@ -322,10 +302,12 @@ export class BatchCluster {
     }
 
     if (!gracefully || !alreadyEnded) {
-      // We don't need to wait for these promises:
-      this._procs.forEach(p =>
-        p.end(gracefully).catch(err => this.emitter.emit("endError", err))
+      await Promise.all(
+        this._procs.map(p =>
+          p.end(gracefully).catch(err => this.emitter.emit("endError", err))
+        )
       )
+      this._procs.length = 0
     }
 
     return this.endPromise().then(() => {
@@ -335,11 +317,12 @@ export class BatchCluster {
 
   enqueueTask<T>(task: Task<T>): Promise<T> {
     if (this._ended) {
-      task.onError(new Error("BatchCluster has ended"))
+      task.reject(new Error("BatchCluster has ended"))
       throw new Error("Cannot enqueue task " + task.command)
     }
-    this._pendingTasks.push(task)
-    this.onIdle()
+    logger().trace("BatchCluster.enqueueTask(" + task.command + ")")
+    this.tasks.push(task)
+    setTimeout(() => this.onIdle(), 1)
     return task.promise
   }
 
@@ -355,7 +338,7 @@ export class BatchCluster {
    * @return the number of pending tasks
    */
   get pendingTasks(): number {
-    return this._pendingTasks.length
+    return this.tasks.length
   }
 
   /**
@@ -369,42 +352,12 @@ export class BatchCluster {
     return this._spawnedProcs
   }
 
-  get pendingMaintenance(): Promise<void> {
-    return Promise.all(this._procs.filter(p => p.ended).map(p => p.end())).then(
-      () => undefined
-    )
-  }
-
-  private readonly beforeExitListener = () => this.end(true)
-  private readonly exitListener = () => this.end(false)
-
   private endPromise(): Promise<void> {
     return Promise.all(this._procs.map(p => p.exitedPromise))
       .then(() => {})
       .catch(err => {
         this.emitter.emit("endError", err)
       })
-  }
-
-  private retryTask(task: Task<any>, error: Error) {
-    if (task != null) {
-      logger().debug("BatchCluster.retryTask()", {
-        cmd: task.command,
-        error: error.stack || error,
-        retries: task.retries
-      })
-      if (task.retries < this.opts.taskRetries && !this.ended) {
-        task.retries++
-        // fix for rapid-retry failure from mktags:
-        setTimeout(() => this.enqueueTask(task), 20)
-      } else {
-        if (error != null) {
-          // Only notify the observer if the task can't be retried:
-          this.emitter.emit("taskError", error, task)
-        }
-        task.onError(error)
-      }
-    }
   }
 
   private onStartError(error: Error): void {
@@ -431,6 +384,8 @@ export class BatchCluster {
     const minStart = Date.now() - this.opts.maxProcAgeMillis
     // Iterate the array backwards, as we'll be removing _procs as we go:
     for (let i = this._procs.length - 1; i >= 0; i--) {
+      if (this._ended) return []
+
       const proc = this._procs[i]
       // Don't end procs that are currently servicing requests:
       if (
@@ -453,41 +408,58 @@ export class BatchCluster {
   }
 
   private readonly onIdle = serial(async () => {
-    if (this._ended) {
-      return
-    }
-
+    if (this._ended) return
+    const beforeProcLen = this._procs.length
     const procs = await this.procs()
     const idleProcs = procs.filter(proc => proc.idle)
+    logger().trace("BatchCluster.onIdle()", {
+      beforeProcLen,
+      procs: procs.map(ea => ea.pid),
+      idleProcs: idleProcs.map(ea => ea.pid),
+      pendingTasks: this.tasks.map(ea => ea.command)
+    })
 
-    const execNextTask = () =>
-      map(idleProcs.shift(), idleProc =>
-        map(this._pendingTasks.shift(), task => {
-          if (!idleProc.execTask(task)) {
-            this.enqueueTask(task)
-          } else {
-            logger().debug(
-              "BatchCluster.execNextTask(): submitted " +
-                task.command +
-                " to child pid " +
-                idleProc.pid
-            )
-          }
-          return true
-        })
-      )
+    const execNextTask = async () => {
+      const idleProc = idleProcs.shift()
+      if (idleProc == null) return
 
-    while (!this._ended && execNextTask()) {}
+      const task = this.tasks.shift()
+      if (task == null) return
 
-    if (this._pendingTasks.length > 0 && procs.length < this.opts.maxProcs) {
-      const bp = new BatchProcess(
-        this.opts.processFactory(),
-        this.opts,
-        this.observer
-      )
-      this._procs.push(bp)
-      this._spawnedProcs++
-      // onIdle() will be called by the new proc when its startup task completes.
+      if (await idleProc.execTask(task)) {
+        logger().trace(
+          "BatchCluster.onIdle(): submitted " +
+            task.command +
+            " to child pid " +
+            idleProc.pid
+        )
+      } else {
+        logger().warn(
+          "BatchCluster.onIdle(): execTask for " +
+            task.command +
+            " to pid " +
+            idleProc.pid +
+            " returned false, re-enqueing."
+        )
+        this.enqueueTask(task)
+      }
+      return true
     }
+
+    while (!this._ended && (await execNextTask())) {}
+    if (this.tasks.length > 0) this.addProc()
+    return
   })
+
+  private addProc() {
+    if (this._ended || this._procs.length >= this.opts.maxProcs) {
+      return false
+    } else {
+      this._procs.push(
+        new BatchProcess(this.opts.processFactory(), this.opts, this.observer)
+      )
+      this._spawnedProcs++
+      return true
+    }
+  }
 }

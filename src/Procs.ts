@@ -75,6 +75,10 @@ export function kill(pid: number, force: boolean = false): void {
     }
     _cp.execFile("taskkill", args)
   } else {
-    _p.kill(pid, force ? "SIGKILL" : "SIGTERM")
+    try {
+      _p.kill(pid, force ? "SIGKILL" : "SIGTERM")
+    } catch (err) {
+      if (!String(err).includes("ESRCH")) throw err
+    }
   }
 }

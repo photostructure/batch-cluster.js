@@ -8,7 +8,7 @@ export function serial<T>(f: () => Promise<T>): (() => Promise<T | undefined>) {
     if (running) return
     running = true
     try {
-      return f()
+      return await f()
     } finally {
       running = false
     }

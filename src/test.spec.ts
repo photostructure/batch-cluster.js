@@ -133,11 +133,11 @@ describe("test.js", () => {
     // These random numbers are consistent because we have a consistent rngseed:
     const a = h.assertStdout(
       [
-        "flaky response (r: 0.55, flakeRate: 0.50)",
+        "flaky response (PASS, r: 0.55, flakeRate: 0.50)",
         "PASS",
-        "flaky response (r: 0.44, flakeRate: 0.00)",
+        "flaky response (PASS, r: 0.44, flakeRate: 0.00)",
         "PASS",
-        "flaky response (r: 0.55, flakeRate: 1.00)",
+        "flaky response (FAIL, r: 0.55, flakeRate: 1.00)",
         "FAIL"
       ].join("\n")
     )

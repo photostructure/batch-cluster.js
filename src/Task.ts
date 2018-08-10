@@ -14,7 +14,6 @@ export type Parser<T> = (data: string) => T
  * result of the task.
  */
 export class Task<T> {
-  retries = 0
   private readonly d = new Deferred<T>()
   /**
    * @param {string} command is the value written to stdin to perform the given
@@ -43,7 +42,7 @@ export class Task<T> {
    * This is for use by `BatchProcess` only, and will only be called when the
    * process is complete for this task's command
    */
-  onData(data: string): void {
+  resolve(data: string): void {
     try {
       const result = this.parser(data)
       logger().trace("Task.onData(): resolved", {
@@ -61,7 +60,7 @@ export class Task<T> {
    * This is for use by `BatchProcess` only, and will only be called when the
    * process has errored after N retries
    */
-  onError(error: Error): void {
+  reject(error: Error): void {
     logger().warn("Task.onError(): rejected", { command: this.command, error })
     this.d.reject(error)
   }

@@ -1,7 +1,8 @@
 #!/usr/bin/env node
-import { delay } from "./Delay"
-import { createInterface } from "readline"
 import * as _p from "process"
+import { createInterface } from "readline"
+
+import { delay } from "./Delay"
 
 /**
  * This is a script written to behave similarly to ExifTool or
@@ -9,10 +10,6 @@ import * as _p from "process"
  *
  * The complexity comes from introducing predictable flakiness.
  */
-
-function stripPrefix(s: string, prefix: string): string {
-  return s.startsWith(prefix) ? s.slice(prefix.length) : s
-}
 
 const rl = createInterface({
   input: process.stdin
@@ -53,54 +50,77 @@ async function onLine(line: string): Promise<void> {
     return
   }
   line = line.trim()
-  if (line.startsWith("flaky ")) {
-    const flakeRate = parseFloat(stripPrefix(line, "flaky "))
-    write(
-      "flaky response (r: " +
-        r.toFixed(2) +
-        ", flakeRate: " +
-        flakeRate.toFixed(2) +
-        ")"
-    )
-    if (r < flakeRate) {
-      write("FAIL")
-    } else {
+  const tokens = line.split(/\s+/)
+
+  switch (tokens[0]) {
+    case "flaky":
+      const flakeRate = parseFloat(tokens[1])
+      write(
+        "flaky response (" +
+          (r < flakeRate ? "FAIL" : "PASS") +
+          ", r: " +
+          r.toFixed(2) +
+          ", flakeRate: " +
+          flakeRate.toFixed(2) +
+          // Extra information is used for context:
+          (tokens.length > 2 ? ", " + tokens.slice(2).join(" ") : "") +
+          ")"
+      )
+      if (r < flakeRate) {
+        write("FAIL")
+      } else {
+        write("PASS")
+      }
+      break
+
+    case "upcase":
+      write(
+        tokens
+          .slice(1)
+          .join(" ")
+          .toUpperCase()
+      )
       write("PASS")
-    }
-  } else if (line.startsWith("upcase ")) {
-    write(
-      stripPrefix(line, "upcase ")
-        .trim()
-        .toUpperCase()
-    )
-    write("PASS")
-  } else if (line.startsWith("downcase ")) {
-    write(
-      stripPrefix(line, "downcase ")
-        .trim()
-        .toLowerCase()
-    )
-    write("PASS")
-  } else if (line.startsWith("sleep ")) {
-    const millis = parseInt(stripPrefix(line, "sleep").trim(), 10)
-    await delay(millis)
-    write("slept " + millis)
-    write("PASS")
-  } else if (line === "version") {
-    write("v1.2.3")
-    write("PASS")
-  } else if (line.trim() === "exit") {
-    if (ignoreExit) {
-      write("ignoreExit is set")
-    } else {
-      process.exit(0)
-    }
-  } else if (line.startsWith("stderr")) {
-    console.error("Error: " + line)
-    write("PASS")
-  } else {
-    console.error("COMMAND MISSING for input", line)
-    write("FAIL")
+      break
+
+    case "downcase":
+      write(
+        tokens
+          .slice(1)
+          .join(" ")
+          .toLowerCase()
+      )
+      write("PASS")
+      break
+
+    case "sleep":
+      const millis = parseInt(tokens[1])
+      await delay(millis)
+      write("slept " + millis)
+      write("PASS")
+      break
+
+    case "version":
+      write("v1.2.3")
+      write("PASS")
+      break
+
+    case "exit":
+      if (ignoreExit) {
+        write("ignoreExit is set")
+      } else {
+        process.exit(0)
+      }
+      break
+
+    case "stderr":
+      console.error("Error: " + tokens.slice(1).join(" "))
+      write("PASS")
+      break
+
+    default:
+      console.error("COMMAND MISSING for input", line)
+      write("FAIL")
   }
   return
 }
