@@ -1,3 +1,5 @@
+require("source-map-support").install()
+
 import { ChildProcess, spawn } from "child_process"
 import { join } from "path"
 import { env, execPath } from "process"
@@ -11,8 +13,6 @@ _chai.use(require("chai-as-promised"))
 _chai.use(require("chai-withintoleranceof"))
 
 export { expect } from "chai"
-
-require("source-map-support").install()
 
 // Tests should be quiet unless LOG is set
 setLogger(
