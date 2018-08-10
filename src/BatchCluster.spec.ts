@@ -157,14 +157,12 @@ describe("BatchCluster", function() {
                   []
                 )
                 expect(await bc.pids()).to.not.include.members(pids)
-                expect(bc.spawnedProcs).to.be.within(
-                  maxProcs,
-                  tasks.length
-                )
+                expect(bc.spawnedProcs).to.be.within(maxProcs, tasks.length)
                 expect(bc.meanTasksPerProc).to.be.within(
                   0.5, // because flaky
                   opts.maxTasksPerProcess
                 )
+                expect((await bc.pids()).length).to.be.lte(maxProcs)
                 expect((await currentTestPids()).length).to.be.lte(maxProcs)
                 return
               }
@@ -315,7 +313,7 @@ describe("BatchCluster", function() {
       expect(task.pending).to.be.true
       // Wait for onIdle() to run:
       await delay(10)
-      const pids = bc.pids()
+      const pids = await bc.pids()
       expect(pids).to.not.eql([])
       expect(await running(pids[0])).to.be.true
       await result

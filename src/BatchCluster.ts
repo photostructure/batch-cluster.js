@@ -327,13 +327,6 @@ export class BatchCluster {
     return task.promise
   }
 
-  /**
-   * @return the current, non-ended child process PIDs. Useful for integration
-   * tests, but most likely not generally interesting.
-   */
-  pids(): number[] {
-    return this._procs.map(p => p.pid)
-  }
 
   /**
    * @return the number of pending tasks
@@ -353,6 +346,13 @@ export class BatchCluster {
     return this._spawnedProcs
   }
 
+  /**
+   * Exposed only for unit tests
+   */
+  async pids(): Promise<number[]> {
+    return this.procs().then(ea => ea.map(p => p.pid))
+  }
+  
   private endPromise(): Promise<void> {
     return Promise.all(this._procs.map(p => p.exitedPromise))
       .then(() => {})
