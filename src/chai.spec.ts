@@ -5,7 +5,7 @@ import { join } from "path"
 import { env, execPath } from "process"
 
 import { Logger, setLogger } from "./Logger"
-import { running } from "./Procs"
+import { runningPids } from "./Procs"
 
 const _chai = require("chai")
 _chai.use(require("chai-string"))
@@ -65,10 +65,9 @@ export function testPids(): number[] {
   return procs.map(proc => proc.pid)
 }
 
-export function currentTestPids(): Promise<number[]> {
-  return Promise.all(
-    procs.map(async ea => ({ pid: ea.pid, alive: await running(ea.pid) }))
-  ).then(arr => arr.filter(ea => ea.alive).map(ea => ea.pid))
+export async function currentTestPids(): Promise<number[]> {
+  const alivePids = new Set(await runningPids())
+  return procs.map(ea => ea.pid).filter(ea => alivePids.has(ea))
 }
 
 export const testProcessFactory = (env: any = {}) => {

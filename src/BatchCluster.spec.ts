@@ -162,7 +162,7 @@ describe("BatchCluster", function() {
                 // pids spawned.
                 expect(procs.length).to.eql(bc.spawnedProcs)
                 expect(bc.spawnedProcs).to.be.within(
-                  Math.floor((0.5 * iters) / opts.maxTasksPerProcess), // < because we only check for overuse every half second
+                  iters / opts.maxTasksPerProcess,
                   iters
                 )
 
@@ -172,7 +172,7 @@ describe("BatchCluster", function() {
                 expect(bc.spawnedProcs).to.be.within(maxProcs, tasks.length)
                 expect(bc.meanTasksPerProc).to.be.within(
                   0.5, // because flaky
-                  opts.maxTasksPerProcess * 2 // < because we only check for overuse every half second
+                  opts.maxTasksPerProcess
                 )
                 expect((await bc.pids()).length).to.be.lte(maxProcs)
                 expect((await currentTestPids()).length).to.be.lte(maxProcs)
