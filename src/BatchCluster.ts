@@ -3,6 +3,8 @@ import { EventEmitter } from "events"
 import * as _p from "process"
 import { clearInterval, setInterval } from "timers"
 
+import { filterInPlace } from "./Array"
+import { serial } from "./Async"
 import {
   BatchProcess,
   BatchProcessObserver,
@@ -11,12 +13,10 @@ import {
 import { logger } from "./Logger"
 import { Mean } from "./Mean"
 import { Rate } from "./Rate"
-import { serial } from "./Serial"
 import { Task } from "./Task"
 
-export { kill, running } from "./Procs"
+export { kill, running, runningPids } from "./Procs"
 export { Deferred } from "./Deferred"
-export { delay } from "./Delay"
 export * from "./Logger"
 export { Task, Parser } from "./Task"
 
@@ -305,7 +305,9 @@ export class BatchCluster {
     if (!gracefully || !alreadyEnded) {
       await Promise.all(
         this._procs.map(p =>
-          p.end(gracefully).catch(err => this.emitter.emit("endError", err))
+          p
+            .end(gracefully, "BatchCluster.end()")
+            .catch(err => this.emitter.emit("endError", err))
         )
       )
       this._procs.length = 0
@@ -327,7 +329,6 @@ export class BatchCluster {
     return task.promise
   }
 
-
   /**
    * @return the number of pending tasks
    */
@@ -346,13 +347,6 @@ export class BatchCluster {
     return this._spawnedProcs
   }
 
-  /**
-   * Exposed only for unit tests
-   */
-  async pids(): Promise<number[]> {
-    return this.procs().then(ea => ea.map(p => p.pid))
-  }
-  
   private endPromise(): Promise<void> {
     return Promise.all(this._procs.map(p => p.exitedPromise))
       .then(() => {})
@@ -379,49 +373,39 @@ export class BatchCluster {
     }
   }
 
-  // This should only be called by onIdle, as it mutates state and onIdle is
-  // guaranteed to be run serially (thanks to being wrapped in serial())
-  private async procs(): Promise<BatchProcess[]> {
-    const minStart = Date.now() - this.opts.maxProcAgeMillis
-    // Iterate the array backwards, as we'll be removing _procs as we go:
-    for (let i = this._procs.length - 1; i >= 0; i--) {
-      if (this._ended) return []
-
-      const proc = this._procs[i]
-      // Don't end procs that are currently servicing requests:
-      if (
-        (await proc.idle()) &&
-        (proc.start < minStart ||
-          proc.taskCount >= this.opts.maxTasksPerProcess)
-      ) {
-        // No need to be graceful, just shut down.
-        const gracefully = false
-        await proc.end(gracefully)
-      }
-      // Only remove exited processes from _procs:
-      if (!(await proc.running())) {
-        proc.end() // make sure any pending task is re-enqueued
-        this._tasksPerProc.push(proc.taskCount)
-        this._procs.splice(i, 1)
-      }
-    }
-    return this._procs
+  /**
+   * Exposed only for unit tests
+   */
+  async pids(): Promise<number[]> {
+    return this._procs.map(p => p.pid)
   }
 
   private readonly onIdle = serial(async () => {
     if (this._ended) return
     const beforeProcLen = this._procs.length
-    const procs = await this.procs()
-    const idleProcs = procs.filter(proc => proc.idle)
+
+    const minStart = Date.now() - this.opts.maxProcAgeMillis
+    filterInPlace(this._procs, proc => {
+      const old = proc.start < minStart && this.opts.maxProcAgeMillis > 0
+      const worn = proc.taskCount >= this.opts.maxTasksPerProcess
+      const broken = proc.exited
+      if (old || worn || broken) {
+        proc.end(true, old ? "old" : worn ? "worn" : "broken")
+        return false
+      } else {
+        return true
+      }
+    })
+    const readyProcs = this._procs.filter(proc => proc.ready)
     logger().trace("BatchCluster.onIdle()", {
       beforeProcLen,
-      procs: procs.map(ea => ea.pid),
-      idleProcs: idleProcs.map(ea => ea.pid),
-      pendingTasks: this.tasks.map(ea => ea.command)
+      readyProcs: readyProcs.map(ea => ea.pid),
+      pendingTasks: this.tasks.slice(0, 3).map(ea => ea.command),
+      pendingTaskCount: this.tasks.length
     })
 
     const execNextTask = () => {
-      const idleProc = idleProcs.shift()
+      const idleProc = readyProcs.shift()
       if (idleProc == null) return
 
       const task = this.tasks.shift()
@@ -454,10 +438,17 @@ export class BatchCluster {
       this.tasks.length > 0 &&
       this._procs.length < this.opts.maxProcs
     ) {
-      this._procs.push(
-        new BatchProcess(this.opts.processFactory(), this.opts, this.observer)
+      const proc = new BatchProcess(
+        this.opts.processFactory(),
+        this.opts,
+        this.observer
       )
+      proc.exitedPromise.then(() => this._tasksPerProc.push(proc.taskCount))
+      this._procs.push(proc)
       this._spawnedProcs++
     }
+
+    logger().trace("BatchCluster.onIdle() finished")
+    return
   })
 }

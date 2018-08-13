@@ -1,5 +1,6 @@
 import { inspect } from "util"
 
+import { delay, until } from "./Async"
 import { BatchCluster, BatchClusterOptions } from "./BatchCluster"
 import {
   currentTestPids,
@@ -9,7 +10,6 @@ import {
   testProcessFactory,
   times
 } from "./chai.spec"
-import { delay, until } from "./Delay"
 import { running } from "./Procs"
 import { Task } from "./Task"
 
@@ -27,7 +27,7 @@ describe("BatchCluster", function() {
 
   function assertExpectedResults(results: string[]) {
     results.forEach((result, index) => {
-      if (!result.includes("EUNLUCKY")) {
+      if (!result.includes("Error")) {
         expect(result).to.eql("ABC " + index)
       }
     })
@@ -146,21 +146,33 @@ describe("BatchCluster", function() {
                 opts.maxTasksPerProcess +
                 " before recycling",
               async () => {
+                // make sure we hit an EUNLUCKY:
+                const iters = opts.maxTasksPerProcess * maxProcs + 50
                 await Promise.all(runTasks(bc, maxProcs))
                 const pids = await bc.pids()
-                const tasks = await Promise.all(
-                  runTasks(bc, opts.maxTasksPerProcess * maxProcs + 30) // < make sure we hit an EUNLUCKY
-                )
+                const tasks = await Promise.all(runTasks(bc, iters))
                 assertExpectedResults(tasks)
-                // Expect some errors:
+                // And expect some errors:
                 expect(tasks.filter(ea => ea.includes("EUNLUCKY"))).to.not.eql(
                   []
                 )
+
+                // Expect a reasonable number of new pids. Worst case, we
+                // errored after every start, so there may be more then iters
+                // pids spawned.
+                expect(procs.length).to.eql(bc.spawnedProcs)
+                expect(bc.spawnedProcs).to.be.within(
+                  Math.floor((0.5 * iters) / opts.maxTasksPerProcess), // < because we only check for overuse every half second
+                  iters
+                )
+
+                // Expect no prior pids to remain:
                 expect(await bc.pids()).to.not.include.members(pids)
+
                 expect(bc.spawnedProcs).to.be.within(maxProcs, tasks.length)
                 expect(bc.meanTasksPerProc).to.be.within(
                   0.5, // because flaky
-                  opts.maxTasksPerProcess
+                  opts.maxTasksPerProcess * 2 // < because we only check for overuse every half second
                 )
                 expect((await bc.pids()).length).to.be.lte(maxProcs)
                 expect((await currentTestPids()).length).to.be.lte(maxProcs)

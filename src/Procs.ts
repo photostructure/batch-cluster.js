@@ -14,14 +14,13 @@ function sanitize(n: number) {
 
 /*
 
->tasklist /FI "PID eq 8204"
+Windows 10:
 
-Image Name                     PID Session Name        Session#    Mem Usage
-========================= ======== ================ =========== ============
-bash.exe                      8204 Console                    1     10,260 K
-
->tasklist /FI "PID eq 8204"
+>tasklist /NH /FO "CSV" /FI "PID eq 15524"
 INFO: No tasks are running which match the specified criteria.
+
+>tasklist /NH /FO "CSV" /FI "PID eq 11968" 
+"bash.exe","11968","Console","1","5,340 K"
 
 Linux:
 
@@ -48,12 +47,43 @@ export function running(pid: number): Promise<boolean> {
   return new Promise(resolve => {
     _cp.execFile(
       isWin ? "tasklist" : "ps",
-      isWin ? ["/FI", "PID eq " + needle] : [isMac ? "-p" : "-q", needle],
+      isWin
+        ? ["/NH", "/FO", "CSV", "/FI", "PID eq " + needle]
+        : [isMac ? "-p" : "-q", needle],
       (error: Error | null, stdout: string) => {
         const result =
           error == null &&
-          new RegExp("\\b" + needle + "\\b", "m").exec(stdout) != null
+          new RegExp(isWin ? '"' + needle + '"' : "$" + needle + "\\b").exec(
+            String(stdout).trim()
+          ) != null
         resolve(result)
+      }
+    )
+  })
+}
+
+const winRe = /^".+?","(\d+)"/
+const posixRe = /^\s*(\d+)/
+
+export function runningPids(): Promise<number[]> {
+  return new Promise((resolve, reject) => {
+    _cp.execFile(
+      isWin ? "tasklist" : "ps",
+      isWin ? ["/NH", "/FO", "CSV"] : ["-e"],
+      (error: Error | null, stdout: string, stderr: string) => {
+        if (error) {
+          reject(error)
+        } else if (("" + stderr).trim().length > 0) {
+          reject(new Error(stderr))
+        } else
+          resolve(
+            ("" + stdout)
+              .trim()
+              .split(/[\n\r]+/)
+              .map(ea => ea.match(isWin ? winRe : posixRe))
+              .filter(m => m != null)
+              .map(m => parseInt(m![1]))
+          )
       }
     )
   })

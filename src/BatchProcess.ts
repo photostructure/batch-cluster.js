@@ -1,14 +1,14 @@
 import * as _cp from "child_process"
 import { Writable } from "stream"
 
+import { until } from "./Async"
 import {
   BatchClusterOptions,
   BatchProcessOptions,
   logger
 } from "./BatchCluster"
 import { Deferred } from "./Deferred"
-import { until } from "./Delay"
-import { map } from "./Map"
+import { map } from "./Object"
 import { kill, running } from "./Procs"
 import { Task } from "./Task"
 
@@ -65,9 +65,9 @@ export class BatchProcess {
     this.proc.unref()
 
     this.proc.on("error", err => this.onError("proc.error", err))
-    this.proc.on("close", () => this.onExit())
-    this.proc.on("exit", () => this.onExit())
-    this.proc.on("disconnect", () => this.onExit())
+    this.proc.on("close", () => this.onExit("close"))
+    this.proc.on("exit", () => this.onExit("exit"))
+    this.proc.on("disconnect", () => this.onExit("disconnect"))
 
     this.proc.stdin.on("error", err => this.onError("stdin.error", err))
 
@@ -103,12 +103,16 @@ export class BatchProcess {
     return this._taskCount
   }
 
+  get exited(): boolean {
+    return !this._exited.pending
+  }
+
   get exitedPromise(): Promise<void> {
     return this._exited.promise
   }
 
-  async idle(): Promise<boolean> {
-    return this.currentTask == null && this.notEnded()
+  get ready(): boolean {
+    return this.currentTask == null && !this._ended && !this.startupTask.pending
   }
 
   async busy(): Promise<boolean> {
@@ -141,6 +145,8 @@ export class BatchProcess {
     return this.ended().then(ea => !ea)
   }
 
+  // This must not be async, or new instances aren't started as busy (until the
+  // startup task is complete)
   execTask(task: Task<any>): boolean {
     // We're not going to run this.running() here, because BatchCluster will
     // already have pruned the processes that have exitted unexpectedly just
@@ -173,25 +179,38 @@ export class BatchProcess {
         timeoutMs
       )
     }
-    logger().trace(this.name + ".execTask(): starting", {
-      cmd
-    })
+    logger().trace(this.name + ".execTask(): starting", { cmd })
     this.proc.stdin.write(cmd)
     return true
   }
 
-  async end(gracefully: boolean = true): Promise<void> {
-    logger().debug(this.name + ".end()", { pid: this.pid, gracefully })
+  end(gracefully: boolean = true, source: string): Promise<void> {
+    const firstEnd = !this._ended
+    this._ended = true
+    return this._end(gracefully, source, firstEnd)
+  }
 
-    if (!this._ended) {
-      this._ended = true
+  private async _end(
+    gracefully: boolean = true,
+    source: string,
+    firstEnd: boolean
+  ): Promise<void> {
+    logger().debug(this.name + ".end()", { gracefully, source })
+    this._ended = true
+
+    if (firstEnd) {
       const cmd = map(this.opts.exitCommand, ea => ensureSuffix(ea, "\n"))
       if (this.proc.stdin.writable) {
         await end(this.proc.stdin, cmd)
       }
     }
     if (this.currentTask != null) {
-      const err = new Error("end() called on host process")
+      logger().warn(this.name + ".end(): called while not idle", {
+        source,
+        gracefully,
+        cmd: this.currentTask.command
+      })
+      const err = new Error("end() called when not idle")
       this.observer.onTaskError(err, this.currentTask)
       this.currentTask.reject(err)
     }
@@ -240,6 +259,12 @@ export class BatchProcess {
       task = this.currentTask
     }
     const error = new Error(source + ": " + cleanError(_error.message))
+    logger().warn(this.name + ".onError()", {
+      source,
+      task: map(task, t => t.command),
+      error
+    })
+
     if (_error.stack) {
       // Error stacks, if set, will not be redefined from a rethrow:
       error.stack = cleanError(_error.stack)
@@ -247,7 +272,7 @@ export class BatchProcess {
 
     // clear the task before ending so the onExit from end() doesn't retry the task:
     this.clearCurrentTask()
-    this.end(false) // no need for grace (there isn't a pending job)
+    this.end(false, "onError(" + source + ")") // no need for grace (there isn't a pending job)
     if (task === this.startupTask) {
       logger().warn(this.name + ".onError(): startup task failed: " + error)
       this.observer.onStartError(error)
@@ -264,14 +289,8 @@ export class BatchProcess {
     }
   }
 
-  private async onExit() {
-    if (await this.running()) {
-      logger().error(this.name + ".onExit() called on a running process", {
-        pid: this.pid,
-        currentTask: map(this.currentTask, ea => ea.command)
-      })
-    }
-    this.end(false) // no need to be graceful, just do the bookkeeping.
+  private onExit(source: string) {
+    this.end(false, "onExit(" + source + ")") // no need to be graceful, just do the bookkeeping.
     this._exited.resolve()
   }
 
@@ -309,7 +328,7 @@ export class BatchProcess {
           { result, pid: this.pid }
         )
       }
-      this.end()
+      this.end(false, "resolveCurrentTask(no current task)")
     } else {
       logger().trace(this.name + ".resolveCurrentTask()", {
         task: task.command,
