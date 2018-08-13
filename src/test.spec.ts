@@ -1,8 +1,8 @@
 import { ChildProcess } from "child_process"
 
+import { until } from "./Async"
 import { expect, testProcessFactory } from "./chai.spec"
 import { Deferred } from "./Deferred"
-import { until } from "./Delay"
 import { kill, running } from "./Procs"
 
 describe("test.js", () => {

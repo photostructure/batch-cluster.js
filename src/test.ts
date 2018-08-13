@@ -2,7 +2,7 @@
 import * as _p from "process"
 import { createInterface } from "readline"
 
-import { delay } from "./Delay"
+import { delay } from "./Async"
 
 /**
  * This is a script written to behave similarly to ExifTool or
