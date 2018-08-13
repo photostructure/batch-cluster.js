@@ -175,7 +175,7 @@ describe("BatchCluster", function() {
                   opts.maxTasksPerProcess
                 )
                 expect((await bc.pids()).length).to.be.lte(maxProcs)
-                expect((await currentTestPids()).length).to.be.lte(maxProcs)
+                expect((await currentTestPids()).length).to.be.lte(maxProcs + 1)
                 return
               }
             )
