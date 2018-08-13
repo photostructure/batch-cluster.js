@@ -44,21 +44,24 @@ $ ps -p 32183
  */
 export function running(pid: number): Promise<boolean> {
   const needle = sanitize(pid)
+  const cmd = isWin ? "tasklist" : "ps"
+  const args = isWin
+    ? // NoHeader, FOrmat CSV, FIlter on pid:
+      ["/NH", "/FO", "CSV", "/FI", "PID eq " + needle]
+    : // linux has "quick" mode (-q) but mac doesn't. We add the ",1" to avoid ps
+      // returning exit code 1, which generates an extraneous Error.
+      [isMac ? "-p" : "-q", needle + ",1"]
   return new Promise(resolve => {
-    _cp.execFile(
-      isWin ? "tasklist" : "ps",
-      isWin
-        ? ["/NH", "/FO", "CSV", "/FI", "PID eq " + needle]
-        : [isMac ? "-p" : "-q", needle],
-      (error: Error | null, stdout: string) => {
-        const result =
-          error == null &&
-          new RegExp(isWin ? '"' + needle + '"' : "$" + needle + "\\b").exec(
-            String(stdout).trim()
-          ) != null
-        resolve(result)
-      }
-    )
+    _cp.execFile(cmd, args, (error: Error | null, stdout: string) => {
+      const result =
+        error == null &&
+        new RegExp(
+          isWin ? '"' + needle + '"' : "^\\s*" + needle + "\\b",
+          // The posix regex pattern needs multiline support:
+          "m"
+        ).exec(String(stdout).trim()) != null
+      resolve(result)
+    })
   })
 }
 
