@@ -34,6 +34,7 @@ export interface InternalBatchProcessOptions
 export class BatchProcess {
   readonly name: string
   readonly start = Date.now()
+  private dead = false
   private _taskCount = -1 // don't count the startupTask
   /**
    * true if `this.end()` has been called, or this process is no longer in the
@@ -122,9 +123,14 @@ export class BatchProcess {
   /**
    * @return true if the child process is in the process table
    */
-  running(): Promise<boolean> {
-    return running(this.pid).then(alive => {
-      if (!alive) this._ended = true
+  async running(): Promise<boolean> {
+    if (this.dead) return false
+    else return running(this.pid).then(alive => {
+      if (!alive) {
+        // once a PID leaves the process table, it's gone for good:
+        this.dead = true
+        this._ended = true
+      }
       return alive
     })
   }
@@ -223,11 +229,7 @@ export class BatchProcess {
       () => this.proc.disconnect()
     ])
 
-    if (
-      (await this.running()) &&
-      gracefully &&
-      this.opts.endGracefulWaitTimeMillis > 0
-    ) {
+    if (await this.running() && gracefully && this.opts.endGracefulWaitTimeMillis > 0) {
       // Wait for the end command to take effect:
       await this.awaitNotRunning(this.opts.endGracefulWaitTimeMillis / 2)
       // If it's still running, send the pid a signal:
