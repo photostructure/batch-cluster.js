@@ -2,7 +2,7 @@ require("source-map-support").install()
 
 import { ChildProcess, spawn } from "child_process"
 import { join } from "path"
-import { env, execPath } from "process"
+import * as _p from "process"
 
 import { Logger, setLogger } from "./Logger"
 import { runningPids } from "./Procs"
@@ -26,7 +26,7 @@ setLogger(
           warn: console.warn,
           error: console.error
         },
-        (env.LOG as any) || "error"
+        (_p.env.LOG as any) || "error"
       )
     )
   )
@@ -70,8 +70,14 @@ export async function currentTestPids(): Promise<number[]> {
   return procs.map(ea => ea.pid).filter(ea => alivePids.has(ea))
 }
 
+// We want a rngseed that is stable for consecutive tests, but changes sometimes
+// to make sure different error pathways are exercised. YYYYMM should do it.
+
+const rngseed = new Date().toISOString().substr(0, 7)
+
 export const testProcessFactory = (env: any = {}) => {
-  const proc = spawn(execPath, [join(__dirname, "test.js")], { env })
+  env.rngseed = env.rngseed || _p.env.RNGSEED || rngseed
+  const proc = spawn(_p.execPath, [join(__dirname, "test.js")], { env })
   procs.push(proc)
   return proc
 }
