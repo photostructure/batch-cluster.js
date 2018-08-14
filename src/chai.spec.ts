@@ -71,12 +71,19 @@ export async function currentTestPids(): Promise<number[]> {
 }
 
 // We want a rngseed that is stable for consecutive tests, but changes sometimes
-// to make sure different error pathways are exercised. YYYYMM should do it.
+// to make sure different error pathways are exercised. YYYY-MM-$callcount should do it.
 
-const rngseed = new Date().toISOString().substr(0, 7)
+const rngseedPrefix = new Date().toISOString().substr(0, 8)
+let rngseedCounter = 0
+
+function rngseed() {
+  // We need a new rngseed for every execution, or all runs will either pass or
+  // fail:
+  return rngseedPrefix + rngseedCounter++
+}
 
 export const testProcessFactory = (env: any = {}) => {
-  env.rngseed = env.rngseed || _p.env.RNGSEED || rngseed
+  env.rngseed = env.rngseed || _p.env.RNGSEED || rngseed()
   const proc = spawn(_p.execPath, [join(__dirname, "test.js")], { env })
   procs.push(proc)
   return proc
