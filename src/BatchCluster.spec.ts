@@ -13,10 +13,7 @@ import {
 import { Task } from "./Task"
 
 describe("BatchCluster", function() {
-  function runTasks(
-    bc: BatchCluster,
-    iterations: number
-  ): Array<Promise<string>> {
+  function runTasks(bc: BatchCluster, iterations: number): Promise<string>[] {
     return times(iterations, i =>
       bc
         .enqueueTask(new Task("upcase abc " + i, parser))
@@ -113,6 +110,7 @@ describe("BatchCluster", function() {
             })
 
             afterEach(() => {
+              expect(bc.internalErrorCount).to.eql(0)
               return bc.end(false)
             })
 
@@ -174,10 +172,12 @@ describe("BatchCluster", function() {
                   opts.maxTasksPerProcess
                 )
                 expect((await bc.pids()).length).to.be.lte(maxProcs)
-                expect((await currentTestPids()).length).to.be.lte(bc.spawnedProcs) // because flaky
+                expect((await currentTestPids()).length).to.be.lte(
+                  bc.spawnedProcs
+                ) // because flaky
                 await bc.end()
-                expect((await bc.pids())).to.eql([])
-                expect((await currentTestPids())).to.eql([]) // because flaky
+                expect(await bc.pids()).to.eql([])
+                expect(await currentTestPids()).to.eql([]) // because flaky
                 return
               }
             )
@@ -212,6 +212,7 @@ describe("BatchCluster", function() {
                   JSON.stringify(events)
                 )
               }
+              expect(bc.internalErrorCount).to.eql(0)
               return
             })
 
@@ -250,7 +251,7 @@ describe("BatchCluster", function() {
     })
 
     it("retries a flaky task", async function() {
-      const iters = 20
+      const iters = 100
       const completedTasks: Task<string>[] = []
       const failedTasks: Task<string>[] = []
       const results: string[] = []
@@ -281,6 +282,7 @@ describe("BatchCluster", function() {
       expect(errs).to.not.eql([])
       errs.forEach(ea => expect(String(ea)).to.match(/FAIL|Error/i))
       expect(bc.spawnedProcs).to.be.within(2, iters)
+      expect(bc.internalErrorCount).to.eql(0)
       return
     })
   })
@@ -293,13 +295,23 @@ describe("BatchCluster", function() {
       maxProcAgeMillis: 1000
     }
 
-    const bc = new BatchCluster({
-      ...opts,
-      processFactory: testProcessFactory
+    let bc: BatchCluster
+
+    beforeEach(() =>
+      (bc = new BatchCluster({
+        ...opts,
+        processFactory: testProcessFactory
+      })))
+
+    afterEach(() => {
+      expect(bc.internalErrorCount).to.eql(0)
+      bc.end(false)
     })
 
     it("culls old child procs", async () => {
-      assertExpectedResults(await Promise.all(runTasks(bc, opts.maxProcs + 20)))
+      assertExpectedResults(
+        await Promise.all(runTasks(bc, opts.maxProcs + 100))
+      )
       expect((await bc.pids()).length).to.be.within(1, opts.maxProcs)
       await delay(opts.maxProcAgeMillis)
       // Calling .pids calls .procs(), which culls old procs
@@ -309,7 +321,6 @@ describe("BatchCluster", function() {
         await delay(500)
       }
       expect(await bc.pids()).to.be.empty
-      // expect(events).to.eql({})
       return
     })
   })

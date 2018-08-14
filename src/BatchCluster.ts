@@ -236,6 +236,7 @@ export class BatchCluster {
   private readonly startErrorRate = new Rate()
   private _spawnedProcs = 0
   private _ended = false
+  private _internalErrorCount = 0
 
   constructor(
     opts: Partial<BatchClusterOptions> &
@@ -253,7 +254,8 @@ export class BatchCluster {
     this.observer = {
       onIdle: () => this.onIdle(),
       onStartError: err => this.onStartError(err),
-      onTaskError: (err, task) => this.emitter.emit("taskError", err, task)
+      onTaskError: (err, task) => this.emitter.emit("taskError", err, task),
+      onInternalError: err => this.onInternalError(err)
     }
     _p.once("beforeExit", this.beforeExitListener)
     _p.once("exit", this.exitListener)
@@ -347,12 +349,24 @@ export class BatchCluster {
     return this._spawnedProcs
   }
 
+  /**
+   * For integration tests:
+   */
+  get internalErrorCount(): number {
+    return this._internalErrorCount
+  }
+
   private endPromise(): Promise<void> {
     return Promise.all(this._procs.map(p => p.exitedPromise))
       .then(() => {})
       .catch(err => {
         this.emitter.emit("endError", err)
       })
+  }
+
+  private onInternalError(error: Error): void {
+    logger().error("BatchCluster: INTERNAL ERROR: " + error)
+    this._internalErrorCount++
   }
 
   private onStartError(error: Error): void {
@@ -389,7 +403,7 @@ export class BatchCluster {
       const old = proc.start < minStart && this.opts.maxProcAgeMillis > 0
       const worn = proc.taskCount >= this.opts.maxTasksPerProcess
       const broken = proc.exited
-      if (old || worn || broken) {
+      if (proc.idle && (old || worn || broken)) {
         proc.end(true, old ? "old" : worn ? "worn" : "broken")
         return false
       } else {

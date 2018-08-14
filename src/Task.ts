@@ -34,6 +34,14 @@ export class Task<T> {
     return this.d.pending
   }
 
+  get state(): string {
+    return this.d.pending
+      ? "pending"
+      : this.d.fulfilled
+        ? "resolved"
+        : "rejected"
+  }
+
   toString() {
     return this.constructor.name + "(" + this.command + ")"
   }
@@ -43,26 +51,19 @@ export class Task<T> {
    * process is complete for this task's command
    */
   resolve(data: string): void {
-    if (!this.d.pending) {
-      logger().warn("Task.onData(): INTERNAL ERROR", {
-        cmd: this.command,
-        priorResult: this.d.rejected ? "rejected" : "resolved"
+    try {
+      const result = this.parser(data)
+      logger().trace("Task.onData(): resolved", {
+        command: this.command,
+        result
       })
-    } else {
-      try {
-        const result = this.parser(data)
-        logger().trace("Task.onData(): resolved", {
-          command: this.command,
-          result
-        })
-        this.d.resolve(result)
-      } catch (error) {
-        logger().warn("Task.onData(): rejected", {
-          command: this.command,
-          error
-        })
-        this.d.reject(error)
-      }
+      this.d.resolve(result)
+    } catch (error) {
+      logger().warn("Task.onData(): rejected", {
+        command: this.command,
+        error
+      })
+      this.d.reject(error)
     }
   }
 
@@ -71,17 +72,10 @@ export class Task<T> {
    * process has errored after N retries
    */
   reject(error: Error): void {
-    if (!this.d.pending) {
-      logger().warn("Task.reject(): INTERNAL ERROR", {
-        cmd: this.command,
-        priorResult: this.d.rejected ? "rejected" : "resolved"
-      })
-    } else {
-      logger().warn("Task.reject()", {
-        cmd: this.command,
-        error
-      })
-      this.d.reject(error)
-    }
+    logger().warn("Task.reject()", {
+      cmd: this.command,
+      error
+    })
+    this.d.reject(error)
   }
 }

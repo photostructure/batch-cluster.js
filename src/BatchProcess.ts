@@ -19,6 +19,7 @@ export interface BatchProcessObserver {
   onIdle(): void
   onTaskError(error: Error, task: Task<any>): void
   onStartError(error: Error): void
+  onInternalError(error: Error): void
 }
 
 export interface InternalBatchProcessOptions
@@ -90,8 +91,8 @@ export class BatchProcess {
       })
 
     if (!this.execTask(this.startupTask)) {
-      logger().error(
-        this.name + " INTERNAL ERROR startup task was not submitted"
+      this.observer.onInternalError(
+        new Error(this.name + " startup task was not submitted")
       )
     }
   }
@@ -116,8 +117,8 @@ export class BatchProcess {
     return this.currentTask == null && !this._ended && !this.startupTask.pending
   }
 
-  async busy(): Promise<boolean> {
-    return this.currentTask != null && this.notEnded()
+  get idle(): boolean {
+    return this.currentTask == null
   }
 
   /**
@@ -125,14 +126,15 @@ export class BatchProcess {
    */
   async running(): Promise<boolean> {
     if (this.dead) return false
-    else return running(this.pid).then(alive => {
-      if (!alive) {
-        // once a PID leaves the process table, it's gone for good:
-        this.dead = true
-        this._ended = true
-      }
-      return alive
-    })
+    else
+      return running(this.pid).then(alive => {
+        if (!alive) {
+          // once a PID leaves the process table, it's gone for good:
+          this.dead = true
+          this._ended = true
+        }
+        return alive
+      })
   }
 
   notRunning(): Promise<boolean> {
@@ -158,12 +160,14 @@ export class BatchProcess {
     // already have pruned the processes that have exitted unexpectedly just
     // milliseconds ago.
     if (this._ended || this.currentTask != null) {
-      logger().warn(
-        this.name +
-          ".execTask(" +
-          task.command +
-          "): INTERNAL ERROR, already working on " +
-          this.currentTask
+      this.observer.onInternalError(
+        new Error(
+          this.name +
+            ".execTask(" +
+            task.command +
+            "): already working on " +
+            this.currentTask
+        )
       )
       return false
     }
@@ -211,6 +215,8 @@ export class BatchProcess {
       }
     }
     if (this.currentTask != null) {
+      // This isn't an internal error, as this state would be expected if
+      // the user calls .end() when there are pending tasks.
       logger().warn(this.name + ".end(): called while not idle", {
         source,
         gracefully,
@@ -229,7 +235,11 @@ export class BatchProcess {
       () => this.proc.disconnect()
     ])
 
-    if (await this.running() && gracefully && this.opts.endGracefulWaitTimeMillis > 0) {
+    if (
+      (await this.running()) &&
+      gracefully &&
+      this.opts.endGracefulWaitTimeMillis > 0
+    ) {
       // Wait for the end command to take effect:
       await this.awaitNotRunning(this.opts.endGracefulWaitTimeMillis / 2)
       // If it's still running, send the pid a signal:
@@ -287,7 +297,19 @@ export class BatchProcess {
         taskCount: this.taskCount
       })
       this.observer.onTaskError(error, task)
-      task.reject(error)
+      if (task.pending) {
+        task.reject(error)
+      } else {
+        this.observer.onInternalError(
+          new Error(
+            this.name +
+              ".onError(): cannot reject task " +
+              task.command +
+              " is it is already " +
+              task.state
+          )
+        )
+      }
     }
   }
 
@@ -325,9 +347,8 @@ export class BatchProcess {
     this.clearCurrentTask()
     if (task == null) {
       if (result.length > 0 && !this._ended) {
-        logger().error(
-          this.name + ".resolveCurrentTask(): INTERNAL ERROR: no current task",
-          { result, pid: this.pid }
+        this.observer.onInternalError(
+          new Error(this.name + ".resolveCurrentTask(): no current task")
         )
       }
       this.end(false, "resolveCurrentTask(no current task)")
@@ -336,7 +357,19 @@ export class BatchProcess {
         task: task.command,
         result
       })
-      task.resolve(result)
+      if (task.pending) {
+        task.resolve(result)
+      } else {
+        this.observer.onInternalError(
+          new Error(
+            this.name +
+              ".resolveCurrentTask(): cannot resolve task " +
+              task.command +
+              " as it is already " +
+              task.state
+          )
+        )
+      }
       this.observer.onIdle()
     }
   }
