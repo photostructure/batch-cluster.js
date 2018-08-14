@@ -174,7 +174,10 @@ describe("BatchCluster", function() {
                   opts.maxTasksPerProcess
                 )
                 expect((await bc.pids()).length).to.be.lte(maxProcs)
-                expect((await currentTestPids()).length).to.be.lte(maxProcs + 1)
+                expect((await currentTestPids()).length).to.be.lte(maxProcs * 2) // because flaky
+                await bc.end()
+                expect((await bc.pids())).to.eql([])
+                expect((await currentTestPids())).to.eql([]) // because flaky
                 return
               }
             )
