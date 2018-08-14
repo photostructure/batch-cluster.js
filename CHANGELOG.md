@@ -32,6 +32,10 @@ Yeah, it's just [Semver](http://semver.org/).
 - 💔 In an effort to reduce this library's complexity, I'm removing retry
   functionality. All parameters associated to retries are now gone.
 
+- ✨ Internal state validation is now exposed by BatchCluster, and is used by
+  tests to ensure no internal errors happen during integration tests. Previously
+  these errors were simply logged.
+
 ## v3.2.0
 
 - 📦 New `Logger` methods, `withLevels`, `withTimestamps`, and `filterLevels`
