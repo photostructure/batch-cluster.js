@@ -38,7 +38,9 @@ describe("test.js", () => {
       return this.running().then(ea => !ea)
     }
     async assertStdout(expectedOutput: string) {
-      expect(await running(this.child.pid)).to.be.true
+      // The OS may take a bit before the PID shows up in the process table:
+      const alive = await until(() => running(this.child.pid), 2000)
+      expect(alive).to.be.true
       const d = new Deferred()
       this.child.on("exit", async () => {
         try {
