@@ -176,8 +176,12 @@ describe("BatchCluster", function() {
                   bc.spawnedProcs
                 ) // because flaky
                 await bc.end()
+                await until(
+                  () => currentTestPids().then(arr => arr.length == 0),
+                  5000
+                )
                 expect(await bc.pids()).to.eql([])
-                expect(await currentTestPids()).to.eql([]) // because flaky
+                expect(await currentTestPids()).to.eql([])
                 return
               }
             )
