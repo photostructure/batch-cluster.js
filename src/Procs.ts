@@ -50,7 +50,7 @@ export function running(pid: number): Promise<boolean> {
       ["/NH", "/FO", "CSV", "/FI", "PID eq " + needle]
     : // linux has "quick" mode (-q) but mac doesn't. We add the ",1" to avoid ps
       // returning exit code 1, which generates an extraneous Error.
-      [isMac ? "-p" : "-q", needle + ",1"]
+      ["-p", needle + ",1"]
   return new Promise(resolve => {
     _cp.execFile(cmd, args, (error: Error | null, stdout: string) => {
       const result =

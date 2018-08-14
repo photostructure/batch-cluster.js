@@ -10,7 +10,6 @@ import {
   testProcessFactory,
   times
 } from "./chai.spec"
-import { running } from "./Procs"
 import { Task } from "./Task"
 
 describe("BatchCluster", function() {
@@ -277,7 +276,7 @@ describe("BatchCluster", function() {
       expect(results).to.not.eql([])
       results.forEach(ea => expect(ea).to.include("flaky response"))
       expect(errs).to.not.eql([])
-      errs.forEach(ea => expect(String(ea)).to.match(/FAIL|write after end/i))
+      errs.forEach(ea => expect(String(ea)).to.match(/FAIL|Error/i))
       expect(bc.spawnedProcs).to.be.within(2, iters)
       return
     })
@@ -308,29 +307,6 @@ describe("BatchCluster", function() {
       }
       expect(await bc.pids()).to.be.empty
       // expect(events).to.eql({})
-      return
-    })
-  })
-
-  describe("BatchProcess", () => {
-    const bc = new BatchCluster({
-      ...defaultOpts,
-      taskTimeoutMillis: 500,
-      processFactory: () => testProcessFactory({ failrate: "0" })
-    })
-
-    it("correctly reports that child procs are running", async () => {
-      const task = new Task("sleep 250", parser) // long enough to
-      const result = bc.enqueueTask(task)
-      expect(task.pending).to.be.true
-      // Wait for onIdle() to run:
-      await delay(10)
-      const pids = await bc.pids()
-      expect(pids).to.not.eql([])
-      expect(await running(pids[0])).to.be.true
-      await result
-      await bc.end()
-      expect(await running(pids[0])).to.be.false
       return
     })
   })
