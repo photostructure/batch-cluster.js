@@ -1,4 +1,4 @@
-import { expect } from "./chai.spec"
+import { expect } from "./_chai.spec"
 import { map } from "./Object"
 
 describe("Object", () => {

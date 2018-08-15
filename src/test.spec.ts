@@ -1,9 +1,9 @@
 import { ChildProcess } from "child_process"
 
+import { expect, testProcessFactory } from "./_chai.spec"
 import { until } from "./Async"
-import { expect, testProcessFactory } from "./chai.spec"
 import { Deferred } from "./Deferred"
-import { kill, running } from "./Procs"
+import { kill, pidExists } from "./Pids"
 
 describe("test.js", () => {
   class Harness {
@@ -32,14 +32,14 @@ describe("test.js", () => {
       return
     }
     async running(): Promise<boolean> {
-      return running(this.child.pid)
+      return pidExists(this.child.pid)
     }
     async notRunning(): Promise<boolean> {
       return this.running().then(ea => !ea)
     }
     async assertStdout(expectedOutput: string) {
       // The OS may take a bit before the PID shows up in the process table:
-      const alive = await until(() => running(this.child.pid), 2000)
+      const alive = await until(() => pidExists(this.child.pid), 2000)
       expect(alive).to.be.true
       const d = new Deferred()
       this.child.on("exit", async () => {
@@ -115,7 +115,7 @@ describe("test.js", () => {
 
   it("returns a valid pid", async () => {
     const h = new Harness()
-    expect(await running(h.child.pid)).to.be.true
+    expect(await pidExists(h.child.pid)).to.be.true
     await h.end()
     return
   })

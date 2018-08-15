@@ -15,7 +15,7 @@ import { Mean } from "./Mean"
 import { Rate } from "./Rate"
 import { Task } from "./Task"
 
-export { kill, running, runningPids } from "./Procs"
+export { kill, pidExists, pids } from "./Pids"
 export { Deferred } from "./Deferred"
 export * from "./Logger"
 export { Task, Parser } from "./Task"

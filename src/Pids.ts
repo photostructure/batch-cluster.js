@@ -1,9 +1,8 @@
 import * as _cp from "child_process"
-import { platform } from "os"
+import * as _os from "os"
 import * as _p from "process"
 
-export const isWin = platform().startsWith("win")
-export const isMac = platform() === "darwin"
+const isWin = _os.platform().startsWith("win")
 
 /**
  * Sanitizes `n`
@@ -40,9 +39,9 @@ $ ps -p 32183
  * @export
  * @param {number} pid process id. Required.
  * @returns {Promise<boolean>} true if the given process id is in the local
- * process table.
+ * process table. The PID may be paused or a zombie, though.
  */
-export function running(pid: number): Promise<boolean> {
+export function pidExists(pid: number): Promise<boolean> {
   const needle = sanitize(pid)
   const cmd = isWin ? "tasklist" : "ps"
   const args = isWin
@@ -68,7 +67,11 @@ export function running(pid: number): Promise<boolean> {
 const winRe = /^".+?","(\d+)"/
 const posixRe = /^\s*(\d+)/
 
-export function runningPids(): Promise<number[]> {
+/**
+ * @export
+ * @returns {Promise<number[]>} all the Process IDs in the process table.
+ */
+export function pids(): Promise<number[]> {
   return new Promise((resolve, reject) => {
     _cp.execFile(
       isWin ? "tasklist" : "ps",

@@ -1,4 +1,3 @@
-
 /**
  * Only call and return the result of `f` if `obj` is defined (not null nor
  * undefined)
@@ -9,4 +8,3 @@ export function map<T, R>(
 ): R | undefined {
   return obj != null ? f(obj) : undefined
 }
-

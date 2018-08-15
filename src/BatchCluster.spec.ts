@@ -1,7 +1,5 @@
 import { inspect } from "util"
 
-import { delay, until } from "./Async"
-import { BatchCluster, BatchClusterOptions } from "./BatchCluster"
 import {
   currentTestPids,
   expect,
@@ -9,7 +7,9 @@ import {
   procs,
   testProcessFactory,
   times
-} from "./chai.spec"
+} from "./_chai.spec"
+import { delay, until } from "./Async"
+import { BatchCluster, BatchClusterOptions } from "./BatchCluster"
 import { Task } from "./Task"
 
 describe("BatchCluster", function() {

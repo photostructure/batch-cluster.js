@@ -1,5 +1,5 @@
+import { expect, times } from "./_chai.spec"
 import { filterInPlace } from "./Array"
-import { expect, times } from "./chai.spec"
 
 describe("Array", () => {
   describe("filterInPlace()", () => {

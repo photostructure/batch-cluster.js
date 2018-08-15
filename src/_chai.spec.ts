@@ -5,7 +5,7 @@ import { join } from "path"
 import * as _p from "process"
 
 import { Logger, setLogger } from "./Logger"
-import { runningPids } from "./Procs"
+import { pids } from "./Pids"
 
 const _chai = require("chai")
 _chai.use(require("chai-string"))
@@ -66,7 +66,7 @@ export function testPids(): number[] {
 }
 
 export async function currentTestPids(): Promise<number[]> {
-  const alivePids = new Set(await runningPids())
+  const alivePids = new Set(await pids())
   return procs.map(ea => ea.pid).filter(ea => alivePids.has(ea))
 }
 

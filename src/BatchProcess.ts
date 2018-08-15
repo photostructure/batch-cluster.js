@@ -9,7 +9,7 @@ import {
 } from "./BatchCluster"
 import { Deferred } from "./Deferred"
 import { map } from "./Object"
-import { kill, running } from "./Procs"
+import { kill, pidExists } from "./Pids"
 import { Task } from "./Task"
 
 /**
@@ -127,7 +127,7 @@ export class BatchProcess {
   async running(): Promise<boolean> {
     if (this.dead) return false
     else
-      return running(this.pid).then(alive => {
+      return pidExists(this.pid).then(alive => {
         if (!alive) {
           // once a PID leaves the process table, it's gone for good:
           this.dead = true
