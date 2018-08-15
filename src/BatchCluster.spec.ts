@@ -197,13 +197,14 @@ describe("BatchCluster", function() {
               const pidsBefore = await bc.pids()
               const spawnedProcsBefore = bc.spawnedProcs
               expect((await bc.pids()).length).to.be.within(0, maxProcs)
-              for (let i = 0; i < maxProcs * 4 + 10; i++) {
+              const iters = maxProcs * 4 + 10
+              for (let i = 0; i < iters; i++) {
                 await expect(
                   bc.enqueueTask(new Task("invalid", parser))
                 ).to.eventually.be.rejectedWith(/invalid|EUNLUCKY/)
               }
               const newSpawnedProcs = bc.spawnedProcs - spawnedProcsBefore
-              expect(newSpawnedProcs).to.be.within(2, 4 * maxProcs + 15) // < because EUNLUCKY
+              expect(newSpawnedProcs).to.be.within(2, iters * 1.5) // < because EUNLUCKY
               // if maxProcs is 1, we may not have any running before-pids.
               if (bc.pids.length > 0)
                 expect(await bc.pids()).to.not.eql(pidsBefore) // at least one pid should be shut down now
