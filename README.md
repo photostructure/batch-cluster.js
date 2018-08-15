@@ -39,7 +39,7 @@ $ npm install --save batch-cluster
 
 ## Changelog
 
-See [CHANGELOG.md](CHANGELOG.md).
+See [CHANGELOG.md](https://github.com/mceachen/batch-cluster.js/blob/master/CHANGELOG.md).
 
 ## Usage
 
