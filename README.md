@@ -24,7 +24,7 @@ of memory leaks.
 As of version 4, retry logic for tasks is a separate concern from this module.
 
 This package powers
-[exiftool-vendored](https://github.com/mceachen/exiftool-vendored.js), whose
+[exiftool-vendored](https://exiftool-vendored.js.org/), whose
 source you can examine as an example consumer.
 
 ## Installation
@@ -46,7 +46,7 @@ See [CHANGELOG.md](https://github.com/mceachen/batch-cluster.js/blob/master/CHAN
 The child process must use `stdin` and `stdout` for control/response.
 BatchCluster will ensure a given process is only given one task at a time.
 
-_If these links are broken, use <https://batch-cluster.js.org/>_
+_If links are broken, please read this on [batch-cluster.js.org](https://batch-cluster.js.org/)._
 
 1.  Create a singleton instance of
     [BatchCluster](/classes/_batchcluster_.batchcluster.html).
