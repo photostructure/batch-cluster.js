@@ -1,4 +1,5 @@
 import { inspect } from "util"
+import { env } from "process"
 
 import {
   currentTestPids,
@@ -14,6 +15,9 @@ import { BatchCluster, BatchClusterOptions } from "./BatchCluster"
 import { Task } from "./Task"
 
 describe("BatchCluster", function() {
+  // Unflake Appveyor:
+  if (env.APPVEYOR === "true") this.retries(2)
+
   function runTasks(bc: BatchCluster, iterations: number): Promise<string>[] {
     return times(iterations, i =>
       bc
