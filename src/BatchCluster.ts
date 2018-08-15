@@ -12,6 +12,7 @@ import {
 } from "./BatchProcess"
 import { logger } from "./Logger"
 import { Mean } from "./Mean"
+import { pidExists } from "./Pids"
 import { Rate } from "./Rate"
 import { Task } from "./Task"
 
@@ -389,9 +390,15 @@ export class BatchCluster {
 
   /**
    * Exposed only for unit tests
+   *
+   * @return the spawned PIDs that are still in the process table.
    */
   async pids(): Promise<number[]> {
-    return this._procs.map(p => p.pid)
+    const arr: number[] = []
+    for (const pid of this._procs.map(p => p.pid)) {
+      if (await pidExists(pid)) arr.push(pid)
+    }
+    return arr
   }
 
   private readonly onIdle = serial(async () => {
