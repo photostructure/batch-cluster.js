@@ -4,6 +4,8 @@ import { ChildProcess, spawn } from "child_process"
 import { join } from "path"
 import * as _p from "process"
 
+import { until } from "./Async"
+import { BatchCluster } from "./BatchCluster"
 import { Logger, setLogger } from "./Logger"
 import { pids } from "./Pids"
 
@@ -68,6 +70,18 @@ export function testPids(): number[] {
 export async function currentTestPids(): Promise<number[]> {
   const alivePids = new Set(await pids())
   return procs.map(ea => ea.pid).filter(ea => alivePids.has(ea))
+}
+
+export async function shutdown(
+  bc: BatchCluster,
+  timeoutMs = 10000
+): Promise<boolean> {
+  await bc.end(true)
+  return until(
+    async () =>
+      (await bc.pids()).length == 0 && (await currentTestPids()).length == 0,
+    timeoutMs
+  )
 }
 
 // We want a rngseed that is stable for consecutive tests, but changes sometimes

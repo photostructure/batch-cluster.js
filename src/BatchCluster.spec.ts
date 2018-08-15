@@ -5,6 +5,7 @@ import {
   expect,
   parser,
   procs,
+  shutdown,
   testProcessFactory,
   times
 } from "./_chai.spec"
@@ -109,9 +110,10 @@ describe("BatchCluster", function() {
               procs.length = 0
             })
 
-            afterEach(() => {
+            afterEach(async () => {
+              expect(await shutdown(bc)).to.be.true
               expect(bc.internalErrorCount).to.eql(0)
-              return bc.end(false)
+              return
             })
 
             it("calling .end() when new no-ops", async () => {
@@ -124,13 +126,11 @@ describe("BatchCluster", function() {
 
             it("calling .end() after running shuts down child procs", async () => {
               // This just warms up bc to make child procs:
-              const iterations = maxProcs
-              const tasks = await Promise.all(runTasks(bc, iterations * 2))
+              const iterations = maxProcs * 2
+              const tasks = await Promise.all(runTasks(bc, iterations))
               assertExpectedResults(tasks)
-              await bc.end()
-              expect(bc.spawnedProcs).to.be.within(maxProcs, maxProcs + 8) // because EUNLUCKY
-              expect((await bc.pids()).length).to.eql(0)
-              expect(await currentTestPids()).to.eql([])
+              expect(await shutdown(bc)).to.be.true
+              expect(bc.spawnedProcs).to.be.within(maxProcs, iterations + 1)
               expect(events.filter(ea => !ea.event.includes("Error"))).to.eql([
                 { event: "beforeEnd" },
                 { event: "end" }
@@ -176,13 +176,7 @@ describe("BatchCluster", function() {
                 expect((await currentTestPids()).length).to.be.lte(
                   bc.spawnedProcs
                 ) // because flaky
-                await bc.end()
-                await until(
-                  () => currentTestPids().then(arr => arr.length == 0),
-                  5000
-                )
-                expect(await bc.pids()).to.eql([])
-                expect(await currentTestPids()).to.eql([])
+                expect(await shutdown(bc)).to.be.true
                 return
               }
             )
@@ -221,6 +215,7 @@ describe("BatchCluster", function() {
                   JSON.stringify(events)
                 )
               }
+              expect(await shutdown(bc)).to.be.true
               expect(bc.internalErrorCount).to.eql(0)
               return
             })
@@ -255,8 +250,10 @@ describe("BatchCluster", function() {
       processFactory: testProcessFactory
     })
 
-    after(() => {
-      return bc.end(false)
+    after(async () => {
+      expect(await shutdown(bc)).to.be.true
+      expect(bc.internalErrorCount).to.eql(0)
+      return
     })
 
     it("retries a flaky task", async function() {
@@ -312,9 +309,10 @@ describe("BatchCluster", function() {
         processFactory: testProcessFactory
       })))
 
-    afterEach(() => {
+    afterEach(async () => {
+      expect(await shutdown(bc)).to.be.true
       expect(bc.internalErrorCount).to.eql(0)
-      bc.end(false)
+      return
     })
 
     it("culls old child procs", async () => {
@@ -325,11 +323,6 @@ describe("BatchCluster", function() {
       await delay(opts.maxProcAgeMillis)
       // Calling .pids calls .procs(), which culls old procs
       expect((await bc.pids()).length).to.be.within(0, opts.maxProcs)
-      // Wait for the procs to shut down:
-      if ((await bc.pids()).length > 0) {
-        await delay(500)
-      }
-      expect(await bc.pids()).to.be.empty
       return
     })
   })
