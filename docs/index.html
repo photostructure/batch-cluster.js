@@ -918,17 +918,21 @@ img { max-width: 100%; }
 			<p><strong>Support external batch-mode tools within Node.js.</strong></p>
 			<p><a href="https://badge.fury.io/js/batch-cluster"><img src="https://badge.fury.io/js/batch-cluster.svg" alt="npm version"></a>
 				<a href="https://travis-ci.org/mceachen/batch-cluster.js"><img src="https://travis-ci.org/mceachen/batch-cluster.js.svg?branch=master" alt="Build status"></a>
-			<a href="https://ci.appveyor.com/project/mceachen/batch-cluster-js/branch/master"><img src="https://ci.appveyor.com/api/projects/status/4564x6lvc8s6a55l/branch/master?svg=true" alt="Build status"></a></p>
+				<a href="https://ci.appveyor.com/project/mceachen/batch-cluster-js/branch/master"><img src="https://ci.appveyor.com/api/projects/status/4564x6lvc8s6a55l/branch/master?svg=true" alt="Build status"></a>
+			<img src="https://img.shields.io/badge/dependencies-0-brightgreen.svg" alt="no dependencies"></p>
 			<p>Many command line tools, like
 				<a href="https://sno.phy.queensu.ca/~phil/exiftool/">ExifTool</a> and
 				<a href="http://www.graphicsmagick.org/">GraphicsMagick</a>, support running in a &quot;batch
-				mode&quot; that accept commands provided through stdin and results through stdout. As
-				these tools can be fairly large, spinning them up can be expensive (especially
-			on Windows).</p>
+				mode&quot; that accept a series of discrete commands provided through stdin and
+				results through stdout. As these tools can be fairly large, spinning them up can
+			be expensive (especially on Windows).</p>
 			<p>This module expedites these commands, or &quot;Tasks,&quot; by managing a cluster of these
-				&quot;batch&quot; processes, feeding tasks to idle processes, retrying tasks when the tool
-				crashes, and preventing memory leaks by restarting tasks after performing a
-			given number of tasks or after a given set of time has elapsed.</p>
+				&quot;batch&quot; processes and queue of pending tasks, feeding processes pending tasks
+				when they are idle. Tasks are monitored for errors and have timeouts, which
+				cause the host process to be recycled. Batch processes are also recycled after
+				processing N tasks or running for N seconds, in an effort to minimize the impact
+			of memory leaks.</p>
+			<p>As of version 4, retry logic for tasks is a separate concern from this module.</p>
 			<p>This package powers
 				<a href="https://github.com/mceachen/exiftool-vendored.js">exiftool-vendored</a>, whose
 			source you can examine as an example consumer.</p>
@@ -938,6 +942,8 @@ img { max-width: 100%; }
 <span class="hljs-comment"># or</span>
 $ npm install --save batch-cluster
 </code></pre>
+			<h2 id="changelog">Changelog</h2>
+			<p>See <a href="CHANGELOG.md">CHANGELOG.md</a>.</p>
 			<h2 id="usage">Usage</h2>
 			<p>The child process must use <code>stdin</code> and <code>stdout</code> for control/response.
 			BatchCluster will ensure a given process is only given one task at a time.</p>
@@ -973,193 +979,6 @@ $ npm install --save batch-cluster
 				<a href="https://github.com/mceachen/batch-cluster.js/blob/master/src/test.ts">src/test.ts</a>
 				for an example child process. Note that the script is <em>designed</em> to be flaky on
 			order to test BatchCluster&#39;s retry and error handling code.</p>
-			<h2 id="versioning">Versioning</h2>
-			<h3 id="the-major-or-api-version-is-incremented-for">The <code>MAJOR</code> or <code>API</code> version is incremented for</h3>
-			<ul>
-				<li>💔 Non-backwards-compatible API changes</li>
-			</ul>
-			<h3 id="the-minor-or-update-version-is-incremented-for">The <code>MINOR</code> or <code>UPDATE</code> version is incremented for</h3>
-			<ul>
-				<li>✨ Backwards-compatible features</li>
-			</ul>
-			<h3 id="the-patch-version-is-incremented-for">The <code>PATCH</code> version is incremented for</h3>
-			<ul>
-				<li>🐞 Backwards-compatible bug fixes</li>
-				<li>📦 Minor packaging changes</li>
-			</ul>
-			<h2 id="changelog">Changelog</h2>
-			<h3 id="v3-0-0">v3.0.0</h3>
-			<ul>
-				<li>✨/💔 <strong><code>Task</code> promises are only rejected with <code>Error</code> instances now.</strong> Note
-					that also means that <code>BatchProcessObserver</code> types are more strict. It could be
-					argued that this isn&#39;t an API breaking change as it only makes rejection
-					values more strict, but people may need to change their error handling, so I&#39;m
-					bumping the major version to highlight that. Resolves
-					<a href="https://github.com/mceachen/batch-cluster.js/issues/3">#3</a>. Thanks for the
-				issue, <a href="https://github.com/nknapp">Nils Knappmeier</a>!</li>
-			</ul>
-			<h3 id="v2-2-0">v2.2.0</h3>
-			<ul>
-				<li>🐞 Windows taskkill <code>/PID</code> option seemed to work downcased, but the docs say
-				to use uppercase, so I&#39;ve updated it.</li>
-				<li>📦 Upgrade all deps including TypeScript to 2.9</li>
-			</ul>
-			<p>(v2.1.2 is the same contents, but <code>np</code> had a crashbug during publish)</p>
-			<h3 id="v2-1-1">v2.1.1</h3>
-			<ul>
-				<li>📦 More robust <code>end</code> for <code>BatchProcess</code>, which may prevent very long-lived
-				consumers from sporadically leaking child processes on Mac and linux.</li>
-				<li>📦 Added Node 10 to the build matrix.</li>
-			</ul>
-			<h3 id="v2-1-0">v2.1.0</h3>
-			<ul>
-				<li>📦 Introduced <code>Logger.trace</code> and moved logging related to per-task items down
-					to <code>trace</code>, as heavy load and large request or response payloads could
-					overwhelm loggers. If you really want to see on-the-wire requests and results,
-					enable <code>trace</code> in your debugger implementation. By default, the
-				<code>ConsoleLogger</code> omits log messages with this level.</li>
-			</ul>
-			<h3 id="v2-0-0">v2.0.0</h3>
-			<ul>
-				<li>💔 Replaced <code>BatchClusterObserver</code> with a simple EventEmitter API on
-				<code>BatchCluster</code> to be more idiomatic with node&#39;s API</li>
-				<li>💔 v1.11.0 added &quot;process reuse&quot; after errors, but that turned out to be
-					problematic in recovery, so that change was reverted (and with it, the
-				<code>maxTaskErrorsPerProcess</code> parameter was removed)</li>
-				<li>✨ <code>Rate</code> is simpler and more accurate now.</li>
-			</ul>
-			<h3 id="v1-11-0">v1.11.0</h3>
-			<ul>
-				<li>✨ Added new <code>BatchClusterObserver</code> for error and lifecycle monitoring</li>
-				<li>📦 Added a number of additional logging calls</li>
-			</ul>
-			<h3 id="v1-10-0">v1.10.0</h3>
-			<ul>
-				<li>🐞 Explicitly use <code>timers.setInterval</code>. May address <a href="https://stackoverflow.com/questions/48961238/electron-setinterval-implementation-difference-between-chrome-and-node">this
-					issue</a>.
-				Thanks for the PR, <a href="https://github.com/timfish">Tim Fish</a>!</li>
-			</ul>
-			<h3 id="v1-9-1">v1.9.1</h3>
-			<ul>
-				<li>📦 Changed <code>BatchProcess.end()</code> to use <code>until()</code> rather than <code>Promise.race</code>,
-					and always use <code>kill(pid, forced)</code> after waiting the shutdown grace period
-				to prevent child process leaks.</li>
-			</ul>
-			<h3 id="v1-9-0">v1.9.0</h3>
-			<ul>
-				<li>✨ New <code>Logger.setLogger()</code> for debug, info, warning, and errors. <code>debug</code> and
-					<code>info</code> defaults to Node&#39;s
-					<a href="https://nodejs.org/api/util.html#util_util_debuglog_section">debuglog</a>,
-					<code>warn</code> and <code>error</code> default to <code>console.warn</code> and <code>console.error</code>,
-				respectively.</li>
-				<li>📦 docs generated by <a href="http://typedoc.org/">typedoc</a></li>
-				<li>📦 Upgraded dependencies (including TypeScript 2.7, which has more strict
-				verifications)</li>
-				<li>📦 Removed tslint, as <code>tsc</code> provides good lint coverage now</li>
-				<li>📦 The code is now <a href="https://github.com/prettier/prettier">prettier</a></li>
-				<li>🐞 <code>delay</code> now allows
-					<a href="https://nodejs.org/api/timers.html#timers_timeout_unref">unref</a>ing the
-					timer, which, in certain circumstances, could prevent node processes from
-				exiting gracefully until their timeouts expired</li>
-			</ul>
-			<h3 id="v1-8-0">v1.8.0</h3>
-			<ul>
-				<li>✨ onIdle now runs as many tasks as it can, rather than just one. This should
-				provide higher throughput.</li>
-				<li>🐞 Removed stderr emit on race condition between onIdle and execTask. The
-				error condition was already handled appropriately--no need to console.error.</li>
-			</ul>
-			<h3 id="v1-7-0">v1.7.0</h3>
-			<ul>
-				<li>📦 Exported <code>kill()</code> and <code>running()</code> from <code>BatchProcess</code></li>
-			</ul>
-			<h3 id="v1-6-1">v1.6.1</h3>
-			<ul>
-				<li>📦 De-flaked some tests on mac, and added Node 8 to the build matrix.</li>
-			</ul>
-			<h3 id="v1-6-0">v1.6.0</h3>
-			<ul>
-				<li>✨ Processes are forcefully shut down with <code>taskkill</code> on windows and <code>kill -9</code>
-					on other unix-like platforms if they don&#39;t terminate after sending the
-					<code>exitCommand</code>, closing <code>stdin</code>, and sending the proc a <code>SIGTERM</code>. Added a test
-				harness to exercise.</li>
-				<li>📦 Upgrade to TypeScript 2.6.1</li>
-				<li>🐞 <code>mocha</code> tests don&#39;t require the <code>--exit</code> hack anymore 🎉</li>
-			</ul>
-			<h3 id="v1-5-0">v1.5.0</h3>
-			<ul>
-				<li>✨ <code>.running()</code> works correctly for PIDs with different owners now.</li>
-				<li>📦 <code>yarn upgrade --latest</code></li>
-			</ul>
-			<h3 id="v1-4-2">v1.4.2</h3>
-			<ul>
-				<li>📦 Ran code through <code>prettier</code> and delinted</li>
-				<li>📦 Massaged test assertions to pass through slower CI systems</li>
-			</ul>
-			<h3 id="v1-4-1">v1.4.1</h3>
-			<ul>
-				<li>📦 Replaced an errant <code>console.log</code> with a call to <code>log</code>.</li>
-			</ul>
-			<h3 id="v1-4-0">v1.4.0</h3>
-			<ul>
-				<li>🐞 Discovered <code>maxProcs</code> wasn&#39;t always utilized by <code>onIdle</code>, which meant in
-					certain circumstances, only 1 child process would be servicing pending
-				requests. Added breaking tests and fixed impl.</li>
-			</ul>
-			<h3 id="v1-3-0">v1.3.0</h3>
-			<ul>
-				<li>📦 Added tests to verify that the <code>kill(0)</code> calls to verify the child
-				processes are still running work across different node version and OSes</li>
-				<li>📦 Removed unused methods in <code>BatchProcess</code> (whose API should not be accessed
-				directly by consumers, so the major version remains at 1)</li>
-				<li>📦 Switched to yarn and upgraded dependencies</li>
-			</ul>
-			<h3 id="v1-2-0">v1.2.0</h3>
-			<ul>
-				<li>✨ Added a configurable cleanup signal to ensure child processes shut down on
-				<code>.end()</code></li>
-				<li>📦 Moved child process management from <code>BatchCluster</code> to <code>BatchProcess</code></li>
-				<li>✨ More test coverage around batch process concurrency, reuse, flaky task
-				retries, and proper process shutdown</li>
-			</ul>
-			<h3 id="v1-1-0">v1.1.0</h3>
-			<ul>
-				<li>✨ <code>BatchCluster</code> now has a force-shutdown <code>exit</code> handler to accompany the
-					graceful-shutdown <code>beforeExit</code> handler. For reference, from the
-				<a href="https://nodejs.org/api/process.html#process_event_beforeexit">Node docs</a>:</li>
-			</ul>
-			<blockquote>
-				<p>The &#39;beforeExit&#39; event is not emitted for conditions causing explicit
-				termination, such as calling process.exit() or uncaught exceptions.</p>
-			</blockquote>
-			<ul>
-				<li>✨ Remove <code>Rate</code>&#39;s time decay in the interests of simplicity</li>
-			</ul>
-			<h3 id="v1-0-0">v1.0.0</h3>
-			<ul>
-				<li>✨ Integration tests now throw deterministically random errors to simulate
-				flaky child procs, and ensure retries and disaster recovery work as expected.</li>
-				<li>✨ If the <code>processFactory</code> or <code>versionCommand</code> fails more often than a given
-					rate, <code>BatchCluster</code> will shut down and raise exceptions to subsequent
-					<code>enqueueTask</code> callers, rather than try forever to spin up processes that are
-				most likely misconfigured.</li>
-				<li>✨ Given the proliferation of construction options, those options are now
-					sanity-checked at construction time, and an error will be raised whose message
-				contains all incorrect option values.</li>
-			</ul>
-			<h3 id="v0-0-2">v0.0.2</h3>
-			<ul>
-				<li>✨ Added support and explicit tests for
-					<a href="https://en.wikipedia.org/wiki/Newline">CR LF, CR, and LF</a> encoded streams
-				from spawned processes</li>
-				<li>✨ child processes are ended after <code>maxProcAgeMillis</code>, and restarted as needed</li>
-				<li>🐞 <code>BatchCluster</code> now practices good listener hygene for <code>process.beforeExit</code></li>
-			</ul>
-			<h3 id="v0-0-1">v0.0.1</h3>
-			<ul>
-				<li>✨ Extracted implementation and tests from
-				<a href="https://github.com/mceachen/exiftool-vendored.js">exiftool-vendored</a></li>
-			</ul>
 		</div>
 		<div style="position:relative;"><a name="typedoc-main-index" class="tsd-anchor"></a></div>
 		<section class="tsd-panel-group tsd-index-group">
@@ -1169,12 +988,15 @@ $ npm install --save batch-cluster
 					<section class="tsd-index-section ">
 						<h3>External modules</h3>
 						<ul class="tsd-index-list">
+							<li class="tsd-kind-external-module"><a href="modules/_array_.html" class="tsd-kind-icon">"<wbr>Array"</a></li>
+							<li class="tsd-kind-external-module"><a href="modules/_async_.html" class="tsd-kind-icon">"<wbr>Async"</a></li>
 							<li class="tsd-kind-external-module"><a href="modules/_batchcluster_.html" class="tsd-kind-icon">"<wbr>Batch<wbr>Cluster"</a></li>
 							<li class="tsd-kind-external-module"><a href="modules/_batchprocess_.html" class="tsd-kind-icon">"<wbr>Batch<wbr>Process"</a></li>
 							<li class="tsd-kind-external-module"><a href="modules/_deferred_.html" class="tsd-kind-icon">"<wbr>Deferred"</a></li>
-							<li class="tsd-kind-external-module"><a href="modules/_delay_.html" class="tsd-kind-icon">"<wbr>Delay"</a></li>
 							<li class="tsd-kind-external-module"><a href="modules/_logger_.html" class="tsd-kind-icon">"<wbr>Logger"</a></li>
 							<li class="tsd-kind-external-module"><a href="modules/_mean_.html" class="tsd-kind-icon">"<wbr>Mean"</a></li>
+							<li class="tsd-kind-external-module"><a href="modules/_object_.html" class="tsd-kind-icon">"<wbr>Object"</a></li>
+							<li class="tsd-kind-external-module"><a href="modules/_pids_.html" class="tsd-kind-icon">"<wbr>Pids"</a></li>
 							<li class="tsd-kind-external-module"><a href="modules/_rate_.html" class="tsd-kind-icon">"<wbr>Rate"</a></li>
 							<li class="tsd-kind-external-module"><a href="modules/_task_.html" class="tsd-kind-icon">"<wbr>Task"</a></li>
 						</ul>

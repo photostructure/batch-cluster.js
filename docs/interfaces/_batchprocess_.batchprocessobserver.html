@@ -919,30 +919,27 @@ img { max-width: 100%; }
 					<a href="_batchprocess_.batchprocessobserver.html#onidle" class="tsd-kind-icon">on<wbr>Idle</a>
 				</li>
 				<li class=" tsd-kind-method tsd-parent-kind-interface">
+					<a href="_batchprocess_.batchprocessobserver.html#oninternalerror" class="tsd-kind-icon">on<wbr>Internal<wbr>Error</a>
+				</li>
+				<li class=" tsd-kind-method tsd-parent-kind-interface">
 					<a href="_batchprocess_.batchprocessobserver.html#onstarterror" class="tsd-kind-icon">on<wbr>Start<wbr>Error</a>
 				</li>
 				<li class=" tsd-kind-method tsd-parent-kind-interface">
-					<a href="_batchprocess_.batchprocessobserver.html#retrytask" class="tsd-kind-icon">retry<wbr>Task</a>
+					<a href="_batchprocess_.batchprocessobserver.html#ontaskerror" class="tsd-kind-icon">on<wbr>Task<wbr>Error</a>
 				</li>
 			</ul>
 		</li>
 		<li class=" tsd-kind-interface tsd-parent-kind-external-module">
 			<a href="_batchprocess_.internalbatchprocessoptions.html" class="tsd-kind-icon">Internal<wbr>Batch<wbr>Process<wbr>Options</a>
 		</li>
-		<li class=" tsd-kind-variable tsd-parent-kind-external-module tsd-is-not-exported">
-			<a href="../modules/_batchprocess_.html#iswin" class="tsd-kind-icon">is<wbr>Win</a>
+		<li class=" tsd-kind-function tsd-parent-kind-external-module tsd-is-not-exported">
+			<a href="../modules/_batchprocess_.html#cleanerror" class="tsd-kind-icon">clean<wbr>Error</a>
 		</li>
 		<li class=" tsd-kind-function tsd-parent-kind-external-module tsd-is-not-exported">
 			<a href="../modules/_batchprocess_.html#end" class="tsd-kind-icon">end</a>
 		</li>
 		<li class=" tsd-kind-function tsd-parent-kind-external-module tsd-is-not-exported">
 			<a href="../modules/_batchprocess_.html#ensuresuffix" class="tsd-kind-icon">ensure<wbr>Suffix</a>
-		</li>
-		<li class=" tsd-kind-function tsd-parent-kind-external-module">
-			<a href="../modules/_batchprocess_.html#kill" class="tsd-kind-icon">kill</a>
-		</li>
-		<li class=" tsd-kind-function tsd-parent-kind-external-module">
-			<a href="../modules/_batchprocess_.html#running" class="tsd-kind-icon">running</a>
 		</li>
 		<li class=" tsd-kind-function tsd-parent-kind-external-module tsd-is-not-exported">
 			<a href="../modules/_batchprocess_.html#tryeach" class="tsd-kind-icon">try<wbr>Each</a>
@@ -974,8 +971,9 @@ img { max-width: 100%; }
 						<h3>Methods</h3>
 						<ul class="tsd-index-list">
 							<li class="tsd-kind-method tsd-parent-kind-interface"><a href="_batchprocess_.batchprocessobserver.html#onidle" class="tsd-kind-icon">on<wbr>Idle</a></li>
+							<li class="tsd-kind-method tsd-parent-kind-interface"><a href="_batchprocess_.batchprocessobserver.html#oninternalerror" class="tsd-kind-icon">on<wbr>Internal<wbr>Error</a></li>
 							<li class="tsd-kind-method tsd-parent-kind-interface"><a href="_batchprocess_.batchprocessobserver.html#onstarterror" class="tsd-kind-icon">on<wbr>Start<wbr>Error</a></li>
-							<li class="tsd-kind-method tsd-parent-kind-interface"><a href="_batchprocess_.batchprocessobserver.html#retrytask" class="tsd-kind-icon">retry<wbr>Task</a></li>
+							<li class="tsd-kind-method tsd-parent-kind-interface"><a href="_batchprocess_.batchprocessobserver.html#ontaskerror" class="tsd-kind-icon">on<wbr>Task<wbr>Error</a></li>
 						</ul>
 					</section>
 				</div>
@@ -993,9 +991,32 @@ img { max-width: 100%; }
 					<li class="tsd-description">
 						<aside class="tsd-sources">
 							<ul>
-								<li>Defined in <a href="https://github.com/mceachen/batch-cluster.js/blob/c2aa74e/src/BatchProcess.ts#L19">BatchProcess.ts:19</a></li>
+								<li>Defined in <a href="https://github.com/mceachen/batch-cluster.js/blob/7307b59/src/BatchProcess.ts#L19">BatchProcess.ts:19</a></li>
 							</ul>
 						</aside>
+						<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
+					</li>
+				</ul>
+			</section>
+			<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-interface">
+				<a name="oninternalerror" class="tsd-anchor"></a>
+				<h3>on<wbr>Internal<wbr>Error</h3>
+				<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-interface">
+					<li class="tsd-signature tsd-kind-icon">on<wbr>Internal<wbr>Error<span class="tsd-signature-symbol">(</span>error<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Error</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
+				</ul>
+				<ul class="tsd-descriptions">
+					<li class="tsd-description">
+						<aside class="tsd-sources">
+							<ul>
+								<li>Defined in <a href="https://github.com/mceachen/batch-cluster.js/blob/7307b59/src/BatchProcess.ts#L22">BatchProcess.ts:22</a></li>
+							</ul>
+						</aside>
+						<h4 class="tsd-parameters-title">Parameters</h4>
+						<ul class="tsd-parameters">
+							<li>
+								<h5>error: <span class="tsd-signature-type">Error</span></h5>
+							</li>
+						</ul>
 						<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
 					</li>
 				</ul>
@@ -1010,7 +1031,7 @@ img { max-width: 100%; }
 					<li class="tsd-description">
 						<aside class="tsd-sources">
 							<ul>
-								<li>Defined in <a href="https://github.com/mceachen/batch-cluster.js/blob/c2aa74e/src/BatchProcess.ts#L20">BatchProcess.ts:20</a></li>
+								<li>Defined in <a href="https://github.com/mceachen/batch-cluster.js/blob/7307b59/src/BatchProcess.ts#L21">BatchProcess.ts:21</a></li>
 							</ul>
 						</aside>
 						<h4 class="tsd-parameters-title">Parameters</h4>
@@ -1024,25 +1045,25 @@ img { max-width: 100%; }
 				</ul>
 			</section>
 			<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-interface">
-				<a name="retrytask" class="tsd-anchor"></a>
-				<h3>retry<wbr>Task</h3>
+				<a name="ontaskerror" class="tsd-anchor"></a>
+				<h3>on<wbr>Task<wbr>Error</h3>
 				<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-interface">
-					<li class="tsd-signature tsd-kind-icon">retry<wbr>Task<span class="tsd-signature-symbol">(</span>task<span class="tsd-signature-symbol">: </span><a href="../classes/_task_.task.html" class="tsd-signature-type">Task</a><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">any</span><span class="tsd-signature-symbol">&gt;</span>, error<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Error</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
+					<li class="tsd-signature tsd-kind-icon">on<wbr>Task<wbr>Error<span class="tsd-signature-symbol">(</span>error<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Error</span>, task<span class="tsd-signature-symbol">: </span><a href="../classes/_task_.task.html" class="tsd-signature-type">Task</a><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">any</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
 				</ul>
 				<ul class="tsd-descriptions">
 					<li class="tsd-description">
 						<aside class="tsd-sources">
 							<ul>
-								<li>Defined in <a href="https://github.com/mceachen/batch-cluster.js/blob/c2aa74e/src/BatchProcess.ts#L21">BatchProcess.ts:21</a></li>
+								<li>Defined in <a href="https://github.com/mceachen/batch-cluster.js/blob/7307b59/src/BatchProcess.ts#L20">BatchProcess.ts:20</a></li>
 							</ul>
 						</aside>
 						<h4 class="tsd-parameters-title">Parameters</h4>
 						<ul class="tsd-parameters">
 							<li>
-								<h5>task: <a href="../classes/_task_.task.html" class="tsd-signature-type">Task</a><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">any</span><span class="tsd-signature-symbol">&gt;</span></h5>
+								<h5>error: <span class="tsd-signature-type">Error</span></h5>
 							</li>
 							<li>
-								<h5>error: <span class="tsd-signature-type">Error</span></h5>
+								<h5>task: <a href="../classes/_task_.task.html" class="tsd-signature-type">Task</a><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">any</span><span class="tsd-signature-symbol">&gt;</span></h5>
 							</li>
 						</ul>
 						<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
