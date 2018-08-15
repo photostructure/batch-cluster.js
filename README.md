@@ -61,7 +61,7 @@ _If these links are broken, use <https://batch-cluster.js.org/>_
     - [BatchClusterOptions](/classes/_batchcluster_.batchclusteroptions.html),
       which has defaults that may or may not be relevant to your application.
 
-1.  The [default](/modules/_logger_.consolelogger.html) logger writes warning and
+1.  The [default](/modules/_logger_#consolelogger) logger writes warning and
     error messages to `console.warn` and `console.error`. You can change this to
     your logger by using [setLogger](/modules/_logger_.html#setlogger).
 

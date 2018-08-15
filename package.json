@@ -19,8 +19,8 @@
     "tscw": "rimraf dist & tsc -w",
     "pretest": "yarn clean && yarn compile",
     "test": "mocha --opts .mocha.opts",
-    "predocs": "typedoc --name batch-cluster --out ./docs --readme ./README.md --exclude \"**/*+(test|spec).ts\" --excludePrivate --excludeProtected --theme minimal src",
-    "docs": "echo batch-cluster.js.org > docs/CNAME && touch docs/.nojekyll && yarn serve docs"
+    "predocs": "typedoc --options ./.typedoc.js",
+    "docs": "echo batch-cluster.js.org > ./docs/CNAME && touch ./docs/.nojekyll && yarn serve docs"
   },
   "author": "Matthew McEachen <matthew-batchcluster@mceachen.org>",
   "license": "MIT",
