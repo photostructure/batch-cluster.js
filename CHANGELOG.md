@@ -17,7 +17,7 @@ Yeah, it's just [Semver](http://semver.org/).
 - 🐞 Backwards-compatible bug fixes
 - 📦 Minor packaging changes
 
-## v4.0.0 (not yet released)
+## v4.0.0
 
 - 💔 Using Node 8+ to determine if a process is running with `kill(pid, 0)`
   turns out to be unreliable (as it returns true even after the process exits).
