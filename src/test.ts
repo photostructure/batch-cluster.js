@@ -17,9 +17,8 @@ const rl = createInterface({
 
 const newline = _p.env.newline === "crlf" ? "\r\n" : "\n"
 
-function write(s: string): void {
-  // Don't use console.log so we can test different newlines:
-  _p.stdout.write(s + newline)
+function write(s: string): boolean {
+  return _p.stdout.write(s + newline)
 }
 
 const ignoreExit = _p.env.ignoreExit === "1"
@@ -51,76 +50,76 @@ async function onLine(line: string): Promise<void> {
   }
   line = line.trim()
   const tokens = line.split(/\s+/)
+  const firstToken = tokens.shift()
 
-  switch (tokens[0]) {
-    case "flaky":
-      const flakeRate = parseFloat(tokens[1])
-      write(
-        "flaky response (" +
-          (r < flakeRate ? "FAIL" : "PASS") +
-          ", r: " +
-          r.toFixed(2) +
-          ", flakeRate: " +
-          flakeRate.toFixed(2) +
-          // Extra information is used for context:
-          (tokens.length > 2 ? ", " + tokens.slice(2).join(" ") : "") +
-          ")"
-      )
-      if (r < flakeRate) {
-        write("FAIL")
-      } else {
+  try {
+    switch (firstToken) {
+      case "flaky":
+        const flakeRate = parseFloat(tokens.shift()!)
+        write(
+          "flaky response (" +
+            (r < flakeRate ? "FAIL" : "PASS") +
+            ", r: " +
+            r.toFixed(2) +
+            ", flakeRate: " +
+            flakeRate.toFixed(2) +
+            // Extra information is used for context:
+            (tokens.length > 0 ? ", " + tokens.join(" ") : "") +
+            ")"
+        )
+        if (r < flakeRate) {
+          write("FAIL")
+        } else {
+          write("PASS")
+        }
+        break
+
+      case "upcase":
+        write(tokens.join(" ").toUpperCase())
         write("PASS")
-      }
-      break
+        break
 
-    case "upcase":
-      write(
-        tokens
-          .slice(1)
-          .join(" ")
-          .toUpperCase()
-      )
-      write("PASS")
-      break
+      case "downcase":
+        write(tokens.join(" ").toLowerCase())
+        write("PASS")
+        break
 
-    case "downcase":
-      write(
-        tokens
-          .slice(1)
-          .join(" ")
-          .toLowerCase()
-      )
-      write("PASS")
-      break
+      case "sleep":
+        const millis = parseInt(tokens[0])
+        await delay(millis)
+        write("slept " + millis)
+        write("PASS")
+        break
 
-    case "sleep":
-      const millis = parseInt(tokens[1])
-      await delay(millis)
-      write("slept " + millis)
-      write("PASS")
-      break
+      case "version":
+        write("v1.2.3")
+        write("PASS")
+        break
 
-    case "version":
-      write("v1.2.3")
-      write("PASS")
-      break
+      case "exit":
+        if (ignoreExit) {
+          write("ignoreExit is set")
+        } else {
+          process.exit(0)
+        }
+        break
 
-    case "exit":
-      if (ignoreExit) {
-        write("ignoreExit is set")
-      } else {
-        process.exit(0)
-      }
-      break
+      case "stderr":
+        console.error("Error: " + tokens.join(" "))
+        // Make sure the error is received before the PASS:
+        await delay(50)
+        write("PASS")
+        break
 
-    case "stderr":
-      console.error("Error: " + tokens.slice(1).join(" "))
-      write("PASS")
-      break
-
-    default:
-      console.error("COMMAND MISSING for input", line)
-      write("FAIL")
+      default:
+        console.error("invalid/missing command for input", line)
+        // Make sure the error is received before the FAIL:
+        await delay(50)
+        write("FAIL")
+    }
+  } catch (err) {
+    console.error("Error: " + err)
+    write("FAIL")
   }
   return
 }

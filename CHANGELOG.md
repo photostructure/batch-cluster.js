@@ -17,6 +17,16 @@ Yeah, it's just [Semver](http://semver.org/).
 - 🐞 Backwards-compatible bug fixes
 - 📦 Minor packaging changes
 
+## v4.1.0
+
+- ✨ Support for demoting task errors from `stderr` emissions:
+  `BatchProcess.rejectTaskOnStderr` is a per-task, per-error predicate which
+  allows for a given error to be handled without always rejecting the task. This
+  can be handy if the script you're wrapping (like ExifTool) writes non-fatal
+  warnings to stderr.
+- ✨ `BatchProcessOptions.pass` and `BatchProcessOptions.fail` can be RegExp
+  instances now, if you have more exotic parsing needs.
+
 ## v4.0.0
 
 - 💔 Using Node 8+ to determine if a process is running with `kill(pid, 0)`

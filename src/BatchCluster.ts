@@ -45,19 +45,19 @@ export interface BatchProcessOptions {
    * Will be invoked immediately after spawn. This command must return
    * before any tasks will be given to a given process.
    */
-  readonly versionCommand: string
+  versionCommand: string
 
   /**
-   * Expected text to print if a command passes. Cannot be blank. Will be
-   * interpreted as a regular expression fragment.
+   * Expected text to print if a command passes. Cannot be blank. Strings will
+   * be interpreted as a regular expression fragment.
    */
-  readonly pass: string
+  pass: string | RegExp
 
   /**
-   * Expected text to print if a command fails. Cannot be blank. Will be
+   * Expected text to print if a command fails. Cannot be blank. Strings will be
    * interpreted as a regular expression fragment.
    */
-  readonly fail: string
+  fail: string | RegExp
 
   /**
    * Command to end the child batch process. If not provided, stdin will be
@@ -65,7 +65,7 @@ export interface BatchProcessOptions {
    * does not shut down within `endGracefulWaitTimeMillis`, it will be
    * SIGHUP'ed.
    */
-  readonly exitCommand?: string
+  exitCommand?: string
 }
 
 /**
@@ -157,13 +157,27 @@ export class BatchClusterOptions {
    * Must be &gt;= 0. Defaults to 500ms.
    */
   readonly endGracefulWaitTimeMillis: number = 500
+
+  /**
+   * Some tools emit non-fatal warnings to stderr. If this predicate returns
+   * false, the task will not be rejected.
+   *
+   * This defaults to a function that always returns true, which makes all
+   * stderr writes reject tasks.
+   */
+  readonly rejectTaskOnStderr: (
+    task: Task<any>,
+    error: string | Error
+  ) => boolean = () => true
 }
 
 function verifyOptions(
   opts: Partial<BatchClusterOptions> & BatchProcessOptions & ChildProcessFactory
 ): AllOpts {
-  function toRe(s: string) {
-    return new RegExp("^([\\s\\S]*?)[\\n\\r]+" + s + "[\\n\\r]*$")
+  function toRe(s: string | RegExp) {
+    return s instanceof RegExp
+      ? s
+      : new RegExp("^((?:[\\s\\S]*[\\n\\r]+)?)" + s + "[\\n\\r]*$")
   }
 
   const result = {
@@ -256,7 +270,8 @@ export class BatchCluster {
       onIdle: () => this.onIdle(),
       onStartError: err => this.onStartError(err),
       onTaskError: (err, task) => this.emitter.emit("taskError", err, task),
-      onInternalError: err => this.onInternalError(err)
+      onInternalError: err => this.onInternalError(err),
+      rejectTaskOnStderr: this.opts.rejectTaskOnStderr
     }
     _p.once("beforeExit", this.beforeExitListener)
     _p.once("exit", this.exitListener)

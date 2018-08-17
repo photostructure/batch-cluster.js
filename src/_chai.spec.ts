@@ -84,21 +84,61 @@ export async function shutdown(
   )
 }
 
+// Seeding the RNG deterministically _should_ give us repeatable
+// flakiness/successes.
+
 // We want a rngseed that is stable for consecutive tests, but changes sometimes
-// to make sure different error pathways are exercised. YYYY-MM-$callcount should do it.
+// to make sure different error pathways are exercised. YYYY-MM-$callcount
+// should do it.
 
 const rngseedPrefix = new Date().toISOString().substr(0, 8)
 let rngseedCounter = 0
+let rngseed_override: string | undefined
+
+export function setRngseed(seed: string | undefined = undefined) {
+  rngseed_override = seed
+}
 
 function rngseed() {
   // We need a new rngseed for every execution, or all runs will either pass or
   // fail:
-  return rngseedPrefix + rngseedCounter++
+  return rngseed_override || rngseedPrefix + rngseedCounter++
 }
 
-export const testProcessFactory = (env: any = {}) => {
-  env.rngseed = env.rngseed || _p.env.RNGSEED || rngseed()
-  const proc = spawn(_p.execPath, [join(__dirname, "test.js")], { env })
+let failrate = "0.1" // 10%
+
+export function setFailrate(percent: number = 0) {
+  failrate = (percent / 100).toFixed(2)
+}
+
+let newline = "lf"
+
+export function setNewline(eol: "lf" | "crlf" = "lf") {
+  newline = eol
+}
+
+let ignoreExit: "1" | "0" = "0"
+
+export function setIgnoreExit(ignore: boolean = false) {
+  ignoreExit = ignore ? "1" : "0"
+}
+
+afterEach(() => {
+  setFailrate()
+  setNewline()
+  setIgnoreExit()
+  setRngseed()
+})
+
+export const processFactory = () => {
+  const proc = spawn(_p.execPath, [join(__dirname, "test.js")], {
+    env: {
+      rngseed: rngseed(),
+      failrate,
+      newline,
+      ignoreExit
+    }
+  })
   procs.push(proc)
   return proc
 }

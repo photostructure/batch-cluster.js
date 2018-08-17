@@ -1,6 +1,12 @@
 import { ChildProcess } from "child_process"
 
-import { expect, testProcessFactory } from "./_chai.spec"
+import {
+  expect,
+  processFactory,
+  setFailrate,
+  setIgnoreExit,
+  setRngseed
+} from "./_chai.spec"
 import { until } from "./Async"
 import { Deferred } from "./Deferred"
 import { kill, pidExists } from "./Pids"
@@ -9,8 +15,9 @@ describe("test.js", () => {
   class Harness {
     readonly child: ChildProcess
     public output: string = ""
-    constructor(env: any = {}) {
-      this.child = testProcessFactory({ rngseed: "hello", ...env })
+    constructor() {
+      setFailrate(0)
+      this.child = processFactory()
       this.child.on("error", (err: any) => {
         throw err
       })
@@ -73,7 +80,8 @@ describe("test.js", () => {
   })
 
   it("kill(!force) with ignoreExit set doesn't cause the process to end", async () => {
-    const h = new Harness({ ignoreExit: "1" })
+    setIgnoreExit(true)
+    const h = new Harness()
     h.child.stdin.write("upcase fuzzy\n")
     await h.untilOutput()
     kill(h.child.pid, false)
@@ -83,7 +91,8 @@ describe("test.js", () => {
   })
 
   it("kill(!force) with ignoreExit unset causes the process to end", async () => {
-    const h = new Harness({ ignoreExit: "0" })
+    setIgnoreExit(false)
+    const h = new Harness()
     h.child.stdin.write("upcase fuzzy\n")
     await h.untilOutput()
     kill(h.child.pid, true)
@@ -93,7 +102,8 @@ describe("test.js", () => {
   })
 
   it("kill(force) even with ignoreExit set causes the process to end", async () => {
-    const h = new Harness({ ignoreExit: "1" })
+    setIgnoreExit(true)
+    const h = new Harness()
     h.child.stdin.write("upcase fuzzy\n")
     await h.untilOutput()
     kill(h.child.pid, true)
@@ -103,7 +113,8 @@ describe("test.js", () => {
   })
 
   it("doesn't exit if ignoreExit is set", async () => {
-    const h = new Harness({ ignoreExit: "1" })
+    setIgnoreExit(true)
+    const h = new Harness()
     h.child.stdin.write("upcase Boink\nexit\n")
     await h.untilOutput("BOINK\nPASS\nignore".length)
     expect(h.output).to.eql("BOINK\nPASS\nignoreExit is set\n")
@@ -131,6 +142,8 @@ describe("test.js", () => {
   })
 
   it("flakes out the first N responses", () => {
+    setFailrate(0)
+    setRngseed("hello")
     const h = new Harness()
     // These random numbers are consistent because we have a consistent rngseed:
     const a = h.assertStdout(

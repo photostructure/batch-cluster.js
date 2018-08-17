@@ -20,6 +20,7 @@ export interface BatchProcessObserver {
   onTaskError(error: Error, task: Task<any>): void
   onStartError(error: Error): void
   onInternalError(error: Error): void
+  rejectTaskOnStderr: (task: Task<any>, error: string | Error) => boolean
 }
 
 export interface InternalBatchProcessOptions
@@ -222,6 +223,7 @@ export class BatchProcess {
         gracefully,
         cmd: this.currentTask.command
       })
+      // We're ending, so there's no point in asking if this error is fatal. It is.
       const err = new Error("end() called when not idle")
       this.observer.onTaskError(err, this.currentTask)
       this.currentTask.reject(err)
@@ -282,6 +284,17 @@ export class BatchProcess {
       error.stack = cleanError(_error.stack)
     }
 
+    if (task != null) {
+      const fatal =
+        source !== "stderr.data" ||
+        this.observer.rejectTaskOnStderr(task, error)
+      if (!fatal) {
+        logger().info("Error permitted by observer, will continue with task.")
+        this.onData("")
+        return
+      }
+    }
+
     // clear the task before ending so the onExit from end() doesn't retry the task:
     this.clearCurrentTask()
     this.end(false, "onError(" + source + ")") // no need for grace (there isn't a pending job)
@@ -319,14 +332,18 @@ export class BatchProcess {
   }
 
   private onData(data: string | Buffer) {
+    logger().trace(this.name + ".onData(" + data.toString() + ")")
+
     this.buff = this.buff + data.toString()
     const pass = this.opts.passRE.exec(this.buff)
     if (pass != null) {
+      logger().trace(this.name + " found PASS")
       this.resolveCurrentTask(pass[1].trim())
       this.observer.onIdle()
     } else {
       const fail = this.opts.failRE.exec(this.buff)
       if (fail != null) {
+        logger().trace(this.name + " found FAIL")
         const err = new Error(cleanError(fail[1]) || "command error")
         this.onError("onData", err)
       }

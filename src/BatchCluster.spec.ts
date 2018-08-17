@@ -6,13 +6,17 @@ import {
   expect,
   parser,
   procs,
+  setFailrate,
+  setIgnoreExit,
+  setNewline,
   shutdown,
-  testProcessFactory,
+  processFactory,
   times
 } from "./_chai.spec"
 import { delay, until } from "./Async"
 import { BatchCluster, BatchClusterOptions } from "./BatchCluster"
 import { Task } from "./Task"
+import { randomBytes } from "crypto"
 
 describe("BatchCluster", function() {
   // Unflake Appveyor:
@@ -92,25 +96,13 @@ describe("BatchCluster", function() {
 
             // failrate needs to be high enough to trigger but low enough to allow
             // retries to succeed.
-            let failrate: string
 
             beforeEach(() => {
-              // Seeding the RNG deterministically gives us repeatable flakiness/successes.
-              failrate = "0.1"
+              setFailrate(10) // 10%
+              setNewline(newline as any)
+              setIgnoreExit(ignoreExit)
 
-              bc = listen(
-                new BatchCluster({
-                  ...opts,
-                  // seed needs to change for each process, or we'll always be
-                  // lucky or unlucky
-                  processFactory: () =>
-                    testProcessFactory({
-                      newline,
-                      failrate,
-                      ignoreExit: ignoreExit ? "1" : "0"
-                    })
-                })
-              )
+              bc = listen(new BatchCluster({ ...opts, processFactory }))
               procs.length = 0
             })
 
@@ -216,7 +208,7 @@ describe("BatchCluster", function() {
               const err = String(lastEvent.args[0])
               if (!err.startsWith("Error: stderr.data: EUNLUCKY")) {
                 expect(err).to.eql(
-                  "Error: stderr.data: COMMAND MISSING for input invalid",
+                  "Error: stderr.data: invalid/missing command for input invalid",
                   JSON.stringify(events)
                 )
               }
@@ -250,9 +242,16 @@ describe("BatchCluster", function() {
   )
 
   describe("flaky results", () => {
-    const bc = new BatchCluster({
-      ...defaultOpts,
-      processFactory: testProcessFactory
+    let bc: BatchCluster
+
+    beforeEach(() => {
+      setFailrate(25)
+      setNewline()
+      setIgnoreExit()
+      bc = new BatchCluster({
+        ...defaultOpts,
+        processFactory
+      })
     })
 
     after(async () => {
@@ -298,6 +297,49 @@ describe("BatchCluster", function() {
     })
   })
 
+  describe("rejectTaskOnError", () => {
+    const errtasks: Task<any>[] = []
+    const errs: string[] = []
+    const opts = {
+      ...defaultOpts,
+      rejectTaskOnStderr: (t: Task<any>, err: any) => {
+        errtasks.push(t)
+        errs.push(String(err))
+        return !String(err).includes("warning")
+      }
+    }
+
+    let bc: BatchCluster
+
+    beforeEach(() => {
+      setFailrate(0)
+      bc = new BatchCluster({
+        ...opts,
+        processFactory
+      })
+    })
+
+    afterEach(async () => {
+      expect(await shutdown(bc)).to.be.true
+      expect(bc.internalErrorCount).to.eql(0)
+      return
+    })
+
+    it("allows for tasks to not be rejected", async () => {
+      const expected = "warning from " + randomBytes(4).toString("hex")
+      const r = await bc.enqueueTask(new Task("stderr " + expected, parser))
+      expect(r).to.eql("")
+      expect(errs).to.eql(["Error: stderr.data: " + expected])
+    })
+
+    it("doesn't stop non-warning tasks from being rejected", async () => {
+      const expected = "error from " + randomBytes(4).toString("hex")
+      return expect(
+        bc.enqueueTask(new Task("stderr " + expected, parser))
+      ).to.be.rejectedWith(new RegExp(expected))
+    })
+  })
+
   describe("maxProcAgeMillis", () => {
     const opts = {
       ...defaultOpts,
@@ -311,7 +353,7 @@ describe("BatchCluster", function() {
     beforeEach(() =>
       (bc = new BatchCluster({
         ...opts,
-        processFactory: testProcessFactory
+        processFactory
       })))
 
     afterEach(async () => {
@@ -344,7 +386,7 @@ describe("BatchCluster", function() {
       const spawnTimeoutMillis = defaultOpts.taskTimeoutMillis + 1
       try {
         new BatchCluster({
-          processFactory: testProcessFactory,
+          processFactory,
           ...defaultOpts,
           spawnTimeoutMillis,
           maxProcAgeMillis: spawnTimeoutMillis - 1
@@ -364,7 +406,7 @@ describe("BatchCluster", function() {
       const taskTimeoutMillis = defaultOpts.spawnTimeoutMillis + 1
       try {
         new BatchCluster({
-          processFactory: testProcessFactory,
+          processFactory,
           ...defaultOpts,
           taskTimeoutMillis,
           maxProcAgeMillis: taskTimeoutMillis - 1
@@ -383,7 +425,7 @@ describe("BatchCluster", function() {
     it("reports on invalid opts", () => {
       try {
         new BatchCluster({
-          processFactory: testProcessFactory,
+          processFactory,
           versionCommand: "",
           pass: "",
           fail: "",
