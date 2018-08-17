@@ -52,10 +52,7 @@
 					<a href="../globals.html">Globals</a>
 				</li>
 				<li>
-					<a href="../modules/_batchcluster_.html">&quot;BatchCluster&quot;</a>
-				</li>
-				<li>
-					<a href="_batchcluster_.batchprocessoptions.html">BatchProcessOptions</a>
+					<a href="batchprocessoptions.html">BatchProcessOptions</a>
 				</li>
 			</ul>
 			<h1>Interface BatchProcessOptions</h1>
@@ -81,7 +78,7 @@
 						<span class="target">BatchProcessOptions</span>
 						<ul class="tsd-hierarchy">
 							<li>
-								<a href="_batchprocess_.internalbatchprocessoptions.html" class="tsd-signature-type">InternalBatchProcessOptions</a>
+								<a href="internalbatchprocessoptions.html" class="tsd-signature-type">InternalBatchProcessOptions</a>
 							</li>
 						</ul>
 					</li>
@@ -94,10 +91,10 @@
 						<section class="tsd-index-section ">
 							<h3>Properties</h3>
 							<ul class="tsd-index-list">
-								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_batchcluster_.batchprocessoptions.html#exitcommand" class="tsd-kind-icon">exit<wbr>Command</a></li>
-								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_batchcluster_.batchprocessoptions.html#fail" class="tsd-kind-icon">fail</a></li>
-								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_batchcluster_.batchprocessoptions.html#pass" class="tsd-kind-icon">pass</a></li>
-								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_batchcluster_.batchprocessoptions.html#versioncommand" class="tsd-kind-icon">version<wbr>Command</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="batchprocessoptions.html#exitcommand" class="tsd-kind-icon">exit<wbr>Command</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="batchprocessoptions.html#fail" class="tsd-kind-icon">fail</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="batchprocessoptions.html#pass" class="tsd-kind-icon">pass</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="batchprocessoptions.html#versioncommand" class="tsd-kind-icon">version<wbr>Command</a></li>
 							</ul>
 						</section>
 					</div>
@@ -111,7 +108,7 @@
 					<div class="tsd-signature tsd-kind-icon">exit<wbr>Command<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">undefined</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">string</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/mceachen/batch-cluster.js/blob/4a1a364/src/BatchCluster.ts#L68">BatchCluster.ts:68</a></li>
+							<li>Defined in <a href="https://github.com/mceachen/batch-cluster.js/blob/master/src/BatchCluster.ts#L68">BatchCluster.ts:68</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-comment tsd-typography">
@@ -126,15 +123,15 @@
 				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
 					<a name="fail" class="tsd-anchor"></a>
 					<h3>fail</h3>
-					<div class="tsd-signature tsd-kind-icon">fail<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span></div>
+					<div class="tsd-signature tsd-kind-icon">fail<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">RegExp</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/mceachen/batch-cluster.js/blob/4a1a364/src/BatchCluster.ts#L60">BatchCluster.ts:60</a></li>
+							<li>Defined in <a href="https://github.com/mceachen/batch-cluster.js/blob/master/src/BatchCluster.ts#L60">BatchCluster.ts:60</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-comment tsd-typography">
 						<div class="lead">
-							<p>Expected text to print if a command fails. Cannot be blank. Will be
+							<p>Expected text to print if a command fails. Cannot be blank. Strings will be
 							interpreted as a regular expression fragment.</p>
 						</div>
 					</div>
@@ -142,16 +139,16 @@
 				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
 					<a name="pass" class="tsd-anchor"></a>
 					<h3>pass</h3>
-					<div class="tsd-signature tsd-kind-icon">pass<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span></div>
+					<div class="tsd-signature tsd-kind-icon">pass<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">RegExp</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/mceachen/batch-cluster.js/blob/4a1a364/src/BatchCluster.ts#L54">BatchCluster.ts:54</a></li>
+							<li>Defined in <a href="https://github.com/mceachen/batch-cluster.js/blob/master/src/BatchCluster.ts#L54">BatchCluster.ts:54</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-comment tsd-typography">
 						<div class="lead">
-							<p>Expected text to print if a command passes. Cannot be blank. Will be
-							interpreted as a regular expression fragment.</p>
+							<p>Expected text to print if a command passes. Cannot be blank. Strings will
+							be interpreted as a regular expression fragment.</p>
 						</div>
 					</div>
 				</section>
@@ -161,7 +158,7 @@
 					<div class="tsd-signature tsd-kind-icon">version<wbr>Command<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/mceachen/batch-cluster.js/blob/4a1a364/src/BatchCluster.ts#L48">BatchCluster.ts:48</a></li>
+							<li>Defined in <a href="https://github.com/mceachen/batch-cluster.js/blob/master/src/BatchCluster.ts#L48">BatchCluster.ts:48</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-comment tsd-typography">
@@ -180,72 +177,108 @@
 					<li class="globals  ">
 						<a href="../globals.html"><em>Globals</em></a>
 					</li>
-					<li class=" tsd-kind-external-module">
-						<a href="../modules/_array_.html">"<wbr>Array"</a>
-					</li>
-					<li class=" tsd-kind-external-module">
-						<a href="../modules/_async_.html">"<wbr>Async"</a>
-					</li>
-					<li class="current tsd-kind-external-module">
-						<a href="../modules/_batchcluster_.html">"<wbr>Batch<wbr>Cluster"</a>
-					</li>
-					<li class=" tsd-kind-external-module">
-						<a href="../modules/_batchprocess_.html">"<wbr>Batch<wbr>Process"</a>
-					</li>
-					<li class=" tsd-kind-external-module">
-						<a href="../modules/_deferred_.html">"<wbr>Deferred"</a>
-					</li>
-					<li class=" tsd-kind-external-module">
-						<a href="../modules/_logger_.html">"<wbr>Logger"</a>
-					</li>
-					<li class=" tsd-kind-external-module">
-						<a href="../modules/_mean_.html">"<wbr>Mean"</a>
-					</li>
-					<li class=" tsd-kind-external-module">
-						<a href="../modules/_object_.html">"<wbr>Object"</a>
-					</li>
-					<li class=" tsd-kind-external-module">
-						<a href="../modules/_pids_.html">"<wbr>Pids"</a>
-					</li>
-					<li class=" tsd-kind-external-module">
-						<a href="../modules/_rate_.html">"<wbr>Rate"</a>
-					</li>
-					<li class=" tsd-kind-external-module">
-						<a href="../modules/_task_.html">"<wbr>Task"</a>
-					</li>
 				</ul>
 			</nav>
 			<nav class="tsd-navigation secondary menu-sticky">
 				<ul class="before-current">
-					<li class=" tsd-kind-class tsd-parent-kind-external-module">
-						<a href="../classes/_batchcluster_.batchcluster.html" class="tsd-kind-icon">Batch<wbr>Cluster</a>
+					<li class=" tsd-kind-class">
+						<a href="../classes/batchcluster.html" class="tsd-kind-icon">Batch<wbr>Cluster</a>
 					</li>
-					<li class=" tsd-kind-class tsd-parent-kind-external-module">
-						<a href="../classes/_batchcluster_.batchclusteroptions.html" class="tsd-kind-icon">Batch<wbr>Cluster<wbr>Options</a>
+					<li class=" tsd-kind-class">
+						<a href="../classes/batchclusteroptions.html" class="tsd-kind-icon">Batch<wbr>Cluster<wbr>Options</a>
+					</li>
+					<li class=" tsd-kind-class">
+						<a href="../classes/batchprocess.html" class="tsd-kind-icon">Batch<wbr>Process</a>
+					</li>
+					<li class=" tsd-kind-class tsd-has-type-parameter">
+						<a href="../classes/deferred.html" class="tsd-kind-icon">Deferred</a>
+					</li>
+					<li class=" tsd-kind-class">
+						<a href="../classes/mean.html" class="tsd-kind-icon">Mean</a>
+					</li>
+					<li class=" tsd-kind-class">
+						<a href="../classes/rate.html" class="tsd-kind-icon">Rate</a>
+					</li>
+					<li class=" tsd-kind-class tsd-has-type-parameter">
+						<a href="../classes/task.html" class="tsd-kind-icon">Task</a>
+					</li>
+					<li class=" tsd-kind-interface">
+						<a href="batchprocessobserver.html" class="tsd-kind-icon">Batch<wbr>Process<wbr>Observer</a>
 					</li>
 				</ul>
 				<ul class="current">
-					<li class="current tsd-kind-interface tsd-parent-kind-external-module">
-						<a href="_batchcluster_.batchprocessoptions.html" class="tsd-kind-icon">Batch<wbr>Process<wbr>Options</a>
+					<li class="current tsd-kind-interface">
+						<a href="batchprocessoptions.html" class="tsd-kind-icon">Batch<wbr>Process<wbr>Options</a>
 						<ul>
 							<li class=" tsd-kind-property tsd-parent-kind-interface">
-								<a href="_batchcluster_.batchprocessoptions.html#exitcommand" class="tsd-kind-icon">exit<wbr>Command</a>
+								<a href="batchprocessoptions.html#exitcommand" class="tsd-kind-icon">exit<wbr>Command</a>
 							</li>
 							<li class=" tsd-kind-property tsd-parent-kind-interface">
-								<a href="_batchcluster_.batchprocessoptions.html#fail" class="tsd-kind-icon">fail</a>
+								<a href="batchprocessoptions.html#fail" class="tsd-kind-icon">fail</a>
 							</li>
 							<li class=" tsd-kind-property tsd-parent-kind-interface">
-								<a href="_batchcluster_.batchprocessoptions.html#pass" class="tsd-kind-icon">pass</a>
+								<a href="batchprocessoptions.html#pass" class="tsd-kind-icon">pass</a>
 							</li>
 							<li class=" tsd-kind-property tsd-parent-kind-interface">
-								<a href="_batchcluster_.batchprocessoptions.html#versioncommand" class="tsd-kind-icon">version<wbr>Command</a>
+								<a href="batchprocessoptions.html#versioncommand" class="tsd-kind-icon">version<wbr>Command</a>
 							</li>
 						</ul>
 					</li>
 				</ul>
 				<ul class="after-current">
-					<li class=" tsd-kind-interface tsd-parent-kind-external-module">
-						<a href="_batchcluster_.childprocessfactory.html" class="tsd-kind-icon">Child<wbr>Process<wbr>Factory</a>
+					<li class=" tsd-kind-interface">
+						<a href="childprocessfactory.html" class="tsd-kind-icon">Child<wbr>Process<wbr>Factory</a>
+					</li>
+					<li class=" tsd-kind-interface">
+						<a href="internalbatchprocessoptions.html" class="tsd-kind-icon">Internal<wbr>Batch<wbr>Process<wbr>Options</a>
+					</li>
+					<li class=" tsd-kind-type-alias">
+						<a href="../globals.html#log" class="tsd-kind-icon">Log</a>
+					</li>
+					<li class=" tsd-kind-type-alias tsd-has-type-parameter">
+						<a href="../globals.html#parser" class="tsd-kind-icon">Parser</a>
+					</li>
+					<li class=" tsd-kind-variable">
+						<a href="../globals.html#consolelogger" class="tsd-kind-icon">Console<wbr>Logger</a>
+					</li>
+					<li class=" tsd-kind-variable">
+						<a href="../globals.html#loglevels" class="tsd-kind-icon">Log<wbr>Levels</a>
+					</li>
+					<li class=" tsd-kind-variable">
+						<a href="../globals.html#nologger" class="tsd-kind-icon">No<wbr>Logger</a>
+					</li>
+					<li class=" tsd-kind-function">
+						<a href="../globals.html#delay" class="tsd-kind-icon">delay</a>
+					</li>
+					<li class=" tsd-kind-function tsd-has-type-parameter">
+						<a href="../globals.html#filterinplace" class="tsd-kind-icon">filter<wbr>InPlace</a>
+					</li>
+					<li class=" tsd-kind-function">
+						<a href="../globals.html#kill" class="tsd-kind-icon">kill</a>
+					</li>
+					<li class=" tsd-kind-function">
+						<a href="../globals.html#logger" class="tsd-kind-icon">logger</a>
+					</li>
+					<li class=" tsd-kind-function tsd-has-type-parameter">
+						<a href="../globals.html#map" class="tsd-kind-icon">map</a>
+					</li>
+					<li class=" tsd-kind-function">
+						<a href="../globals.html#pidexists" class="tsd-kind-icon">pid<wbr>Exists</a>
+					</li>
+					<li class=" tsd-kind-function">
+						<a href="../globals.html#pids" class="tsd-kind-icon">pids</a>
+					</li>
+					<li class=" tsd-kind-function tsd-has-type-parameter">
+						<a href="../globals.html#ratelimit" class="tsd-kind-icon">ratelimit</a>
+					</li>
+					<li class=" tsd-kind-function tsd-has-type-parameter">
+						<a href="../globals.html#serial" class="tsd-kind-icon">serial</a>
+					</li>
+					<li class=" tsd-kind-function">
+						<a href="../globals.html#setlogger" class="tsd-kind-icon">set<wbr>Logger</a>
+					</li>
+					<li class=" tsd-kind-function">
+						<a href="../globals.html#until" class="tsd-kind-icon">until</a>
 					</li>
 				</ul>
 			</nav>

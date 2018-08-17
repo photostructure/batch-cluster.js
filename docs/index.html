@@ -61,6 +61,7 @@
 		<div class="col-8 col-content">
 			<div class="tsd-panel tsd-typography">
 				<h1 id="batch-cluster">batch-cluster</h1>
+				<base href="https://batch-cluster.js.org/">
 				<p><strong>Support external batch-mode tools within Node.js.</strong></p>
 				<p><a href="https://badge.fury.io/js/batch-cluster"><img src="https://badge.fury.io/js/batch-cluster.svg" alt="npm version"></a>
 					<a href="https://travis-ci.org/mceachen/batch-cluster.js"><img src="https://travis-ci.org/mceachen/batch-cluster.js.svg?branch=master" alt="Build status"></a>
@@ -84,16 +85,14 @@
 				source you can examine as an example consumer.</p>
 				<h2 id="installation">Installation</h2>
 				<p>Depending on your yarn/npm preference:</p>
-				<pre><code class="lang-bash">$ yarn add batch-cluster
+				<pre><code class="language-bash">$ yarn add batch-cluster
 <span class="hljs-comment"># or</span>
-$ npm install --save batch-cluster
-</code></pre>
+$ npm install --save batch-cluster</code></pre>
 				<h2 id="changelog">Changelog</h2>
 				<p>See <a href="https://github.com/mceachen/batch-cluster.js/blob/master/CHANGELOG.md">CHANGELOG.md</a>.</p>
 				<h2 id="usage">Usage</h2>
 				<p>The child process must use <code>stdin</code> and <code>stdout</code> for control/response.
 				BatchCluster will ensure a given process is only given one task at a time.</p>
-				<p><em>If links are broken, please read this on <a href="https://batch-cluster.js.org/">batch-cluster.js.org</a>.</em></p>
 				<ol>
 					<li><p>Create a singleton instance of
 						<a href="/classes/_batchcluster_.batchcluster.html">BatchCluster</a>.</p>
@@ -133,43 +132,94 @@ $ npm install --save batch-cluster
 					<li class="globals  ">
 						<a href="globals.html"><em>Globals</em></a>
 					</li>
-					<li class=" tsd-kind-external-module">
-						<a href="modules/_array_.html">"<wbr>Array"</a>
-					</li>
-					<li class=" tsd-kind-external-module">
-						<a href="modules/_async_.html">"<wbr>Async"</a>
-					</li>
-					<li class=" tsd-kind-external-module">
-						<a href="modules/_batchcluster_.html">"<wbr>Batch<wbr>Cluster"</a>
-					</li>
-					<li class=" tsd-kind-external-module">
-						<a href="modules/_batchprocess_.html">"<wbr>Batch<wbr>Process"</a>
-					</li>
-					<li class=" tsd-kind-external-module">
-						<a href="modules/_deferred_.html">"<wbr>Deferred"</a>
-					</li>
-					<li class=" tsd-kind-external-module">
-						<a href="modules/_logger_.html">"<wbr>Logger"</a>
-					</li>
-					<li class=" tsd-kind-external-module">
-						<a href="modules/_mean_.html">"<wbr>Mean"</a>
-					</li>
-					<li class=" tsd-kind-external-module">
-						<a href="modules/_object_.html">"<wbr>Object"</a>
-					</li>
-					<li class=" tsd-kind-external-module">
-						<a href="modules/_pids_.html">"<wbr>Pids"</a>
-					</li>
-					<li class=" tsd-kind-external-module">
-						<a href="modules/_rate_.html">"<wbr>Rate"</a>
-					</li>
-					<li class=" tsd-kind-external-module">
-						<a href="modules/_task_.html">"<wbr>Task"</a>
+					<li class=" tsd-kind-module">
+						<a href="modules/logger.html">Logger</a>
 					</li>
 				</ul>
 			</nav>
 			<nav class="tsd-navigation secondary menu-sticky">
 				<ul class="before-current">
+					<li class=" tsd-kind-class">
+						<a href="classes/batchcluster.html" class="tsd-kind-icon">Batch<wbr>Cluster</a>
+					</li>
+					<li class=" tsd-kind-class">
+						<a href="classes/batchclusteroptions.html" class="tsd-kind-icon">Batch<wbr>Cluster<wbr>Options</a>
+					</li>
+					<li class=" tsd-kind-class">
+						<a href="classes/batchprocess.html" class="tsd-kind-icon">Batch<wbr>Process</a>
+					</li>
+					<li class=" tsd-kind-class tsd-has-type-parameter">
+						<a href="classes/deferred.html" class="tsd-kind-icon">Deferred</a>
+					</li>
+					<li class=" tsd-kind-class">
+						<a href="classes/mean.html" class="tsd-kind-icon">Mean</a>
+					</li>
+					<li class=" tsd-kind-class">
+						<a href="classes/rate.html" class="tsd-kind-icon">Rate</a>
+					</li>
+					<li class=" tsd-kind-class tsd-has-type-parameter">
+						<a href="classes/task.html" class="tsd-kind-icon">Task</a>
+					</li>
+					<li class=" tsd-kind-interface">
+						<a href="interfaces/batchprocessobserver.html" class="tsd-kind-icon">Batch<wbr>Process<wbr>Observer</a>
+					</li>
+					<li class=" tsd-kind-interface">
+						<a href="interfaces/batchprocessoptions.html" class="tsd-kind-icon">Batch<wbr>Process<wbr>Options</a>
+					</li>
+					<li class=" tsd-kind-interface">
+						<a href="interfaces/childprocessfactory.html" class="tsd-kind-icon">Child<wbr>Process<wbr>Factory</a>
+					</li>
+					<li class=" tsd-kind-interface">
+						<a href="interfaces/internalbatchprocessoptions.html" class="tsd-kind-icon">Internal<wbr>Batch<wbr>Process<wbr>Options</a>
+					</li>
+					<li class=" tsd-kind-type-alias">
+						<a href="globals.html#log" class="tsd-kind-icon">Log</a>
+					</li>
+					<li class=" tsd-kind-type-alias tsd-has-type-parameter">
+						<a href="globals.html#parser" class="tsd-kind-icon">Parser</a>
+					</li>
+					<li class=" tsd-kind-variable">
+						<a href="globals.html#consolelogger" class="tsd-kind-icon">Console<wbr>Logger</a>
+					</li>
+					<li class=" tsd-kind-variable">
+						<a href="globals.html#loglevels" class="tsd-kind-icon">Log<wbr>Levels</a>
+					</li>
+					<li class=" tsd-kind-variable">
+						<a href="globals.html#nologger" class="tsd-kind-icon">No<wbr>Logger</a>
+					</li>
+					<li class=" tsd-kind-function">
+						<a href="globals.html#delay" class="tsd-kind-icon">delay</a>
+					</li>
+					<li class=" tsd-kind-function tsd-has-type-parameter">
+						<a href="globals.html#filterinplace" class="tsd-kind-icon">filter<wbr>InPlace</a>
+					</li>
+					<li class=" tsd-kind-function">
+						<a href="globals.html#kill" class="tsd-kind-icon">kill</a>
+					</li>
+					<li class=" tsd-kind-function">
+						<a href="globals.html#logger" class="tsd-kind-icon">logger</a>
+					</li>
+					<li class=" tsd-kind-function tsd-has-type-parameter">
+						<a href="globals.html#map" class="tsd-kind-icon">map</a>
+					</li>
+					<li class=" tsd-kind-function">
+						<a href="globals.html#pidexists" class="tsd-kind-icon">pid<wbr>Exists</a>
+					</li>
+					<li class=" tsd-kind-function">
+						<a href="globals.html#pids" class="tsd-kind-icon">pids</a>
+					</li>
+					<li class=" tsd-kind-function tsd-has-type-parameter">
+						<a href="globals.html#ratelimit" class="tsd-kind-icon">ratelimit</a>
+					</li>
+					<li class=" tsd-kind-function tsd-has-type-parameter">
+						<a href="globals.html#serial" class="tsd-kind-icon">serial</a>
+					</li>
+					<li class=" tsd-kind-function">
+						<a href="globals.html#setlogger" class="tsd-kind-icon">set<wbr>Logger</a>
+					</li>
+					<li class=" tsd-kind-function">
+						<a href="globals.html#until" class="tsd-kind-icon">until</a>
+					</li>
 				</ul>
 			</nav>
 		</div>

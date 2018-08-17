@@ -3,7 +3,7 @@
 <head>
 	<meta charset="utf-8">
 	<meta http-equiv="X-UA-Compatible" content="IE=edge">
-	<title>BatchProcessObserver | batch-cluster</title>
+	<title>Logger | batch-cluster</title>
 	<meta name="description" content="">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<link rel="stylesheet" href="../assets/css/main.css">
@@ -52,13 +52,10 @@
 					<a href="../globals.html">Globals</a>
 				</li>
 				<li>
-					<a href="../modules/_batchprocess_.html">&quot;BatchProcess&quot;</a>
-				</li>
-				<li>
-					<a href="_batchprocess_.batchprocessobserver.html">BatchProcessObserver</a>
+					<a href="logger.html">Logger</a>
 				</li>
 			</ul>
-			<h1>Interface BatchProcessObserver</h1>
+			<h1>Module Logger</h1>
 		</div>
 	</div>
 </header>
@@ -68,122 +65,159 @@
 			<section class="tsd-panel tsd-comment">
 				<div class="tsd-comment tsd-typography">
 					<div class="lead">
-						<p>This interface decouples BatchProcess from BatchCluster.</p>
+						<p>Simple interface for logging.</p>
 					</div>
 				</div>
-			</section>
-			<section class="tsd-panel tsd-hierarchy">
-				<h3>Hierarchy</h3>
-				<ul class="tsd-hierarchy">
-					<li>
-						<span class="target">BatchProcessObserver</span>
-					</li>
-				</ul>
 			</section>
 			<section class="tsd-panel-group tsd-index-group">
 				<h2>Index</h2>
 				<section class="tsd-panel tsd-index-panel">
 					<div class="tsd-index-content">
 						<section class="tsd-index-section ">
-							<h3>Methods</h3>
+							<h3>Properties</h3>
 							<ul class="tsd-index-list">
-								<li class="tsd-kind-method tsd-parent-kind-interface"><a href="_batchprocess_.batchprocessobserver.html#onidle" class="tsd-kind-icon">on<wbr>Idle</a></li>
-								<li class="tsd-kind-method tsd-parent-kind-interface"><a href="_batchprocess_.batchprocessobserver.html#oninternalerror" class="tsd-kind-icon">on<wbr>Internal<wbr>Error</a></li>
-								<li class="tsd-kind-method tsd-parent-kind-interface"><a href="_batchprocess_.batchprocessobserver.html#onstarterror" class="tsd-kind-icon">on<wbr>Start<wbr>Error</a></li>
-								<li class="tsd-kind-method tsd-parent-kind-interface"><a href="_batchprocess_.batchprocessobserver.html#ontaskerror" class="tsd-kind-icon">on<wbr>Task<wbr>Error</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-module"><a href="logger.html#debug" class="tsd-kind-icon">debug</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-module"><a href="logger.html#error" class="tsd-kind-icon">error</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-module"><a href="logger.html#info" class="tsd-kind-icon">info</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-module"><a href="logger.html#trace" class="tsd-kind-icon">trace</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-module"><a href="logger.html#warn" class="tsd-kind-icon">warn</a></li>
+							</ul>
+						</section>
+						<section class="tsd-index-section ">
+							<h3>Functions</h3>
+							<ul class="tsd-index-list">
+								<li class="tsd-kind-function tsd-parent-kind-module"><a href="logger.html#filterlevels" class="tsd-kind-icon">filter<wbr>Levels</a></li>
+								<li class="tsd-kind-function tsd-parent-kind-module"><a href="logger.html#withlevels" class="tsd-kind-icon">with<wbr>Levels</a></li>
+								<li class="tsd-kind-function tsd-parent-kind-module"><a href="logger.html#withtimestamps" class="tsd-kind-icon">with<wbr>Timestamps</a></li>
 							</ul>
 						</section>
 					</div>
 				</section>
 			</section>
 			<section class="tsd-panel-group tsd-member-group ">
-				<h2>Methods</h2>
-				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-interface">
-					<a name="onidle" class="tsd-anchor"></a>
-					<h3>on<wbr>Idle</h3>
-					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-interface">
-						<li class="tsd-signature tsd-kind-icon">on<wbr>Idle<span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
-					</ul>
-					<ul class="tsd-descriptions">
-						<li class="tsd-description">
-							<aside class="tsd-sources">
-								<ul>
-									<li>Defined in <a href="https://github.com/mceachen/batch-cluster.js/blob/4a1a364/src/BatchProcess.ts#L19">BatchProcess.ts:19</a></li>
-								</ul>
-							</aside>
-							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
-						</li>
-					</ul>
+				<h2>Properties</h2>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-module">
+					<a name="debug" class="tsd-anchor"></a>
+					<h3>debug</h3>
+					<div class="tsd-signature tsd-kind-icon">debug<span class="tsd-signature-symbol">:</span> <a href="../globals.html#log" class="tsd-signature-type">Log</a></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li>Defined in <a href="https://github.com/mceachen/batch-cluster.js/blob/master/src/Logger.ts#L10">Logger.ts:10</a></li>
+						</ul>
+					</aside>
 				</section>
-				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-interface">
-					<a name="oninternalerror" class="tsd-anchor"></a>
-					<h3>on<wbr>Internal<wbr>Error</h3>
-					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-interface">
-						<li class="tsd-signature tsd-kind-icon">on<wbr>Internal<wbr>Error<span class="tsd-signature-symbol">(</span>error<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Error</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-module">
+					<a name="error" class="tsd-anchor"></a>
+					<h3>error</h3>
+					<div class="tsd-signature tsd-kind-icon">error<span class="tsd-signature-symbol">:</span> <a href="../globals.html#log" class="tsd-signature-type">Log</a></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li>Defined in <a href="https://github.com/mceachen/batch-cluster.js/blob/master/src/Logger.ts#L13">Logger.ts:13</a></li>
+						</ul>
+					</aside>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-module">
+					<a name="info" class="tsd-anchor"></a>
+					<h3>info</h3>
+					<div class="tsd-signature tsd-kind-icon">info<span class="tsd-signature-symbol">:</span> <a href="../globals.html#log" class="tsd-signature-type">Log</a></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li>Defined in <a href="https://github.com/mceachen/batch-cluster.js/blob/master/src/Logger.ts#L11">Logger.ts:11</a></li>
+						</ul>
+					</aside>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-module">
+					<a name="trace" class="tsd-anchor"></a>
+					<h3>trace</h3>
+					<div class="tsd-signature tsd-kind-icon">trace<span class="tsd-signature-symbol">:</span> <a href="../globals.html#log" class="tsd-signature-type">Log</a></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li>Defined in <a href="https://github.com/mceachen/batch-cluster.js/blob/master/src/Logger.ts#L9">Logger.ts:9</a></li>
+						</ul>
+					</aside>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-module">
+					<a name="warn" class="tsd-anchor"></a>
+					<h3>warn</h3>
+					<div class="tsd-signature tsd-kind-icon">warn<span class="tsd-signature-symbol">:</span> <a href="../globals.html#log" class="tsd-signature-type">Log</a></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li>Defined in <a href="https://github.com/mceachen/batch-cluster.js/blob/master/src/Logger.ts#L12">Logger.ts:12</a></li>
+						</ul>
+					</aside>
+				</section>
+			</section>
+			<section class="tsd-panel-group tsd-member-group ">
+				<h2>Functions</h2>
+				<section class="tsd-panel tsd-member tsd-kind-function tsd-parent-kind-module">
+					<a name="filterlevels" class="tsd-anchor"></a>
+					<h3>filter<wbr>Levels</h3>
+					<ul class="tsd-signatures tsd-kind-function tsd-parent-kind-module">
+						<li class="tsd-signature tsd-kind-icon">filter<wbr>Levels<span class="tsd-signature-symbol">(</span>logger<span class="tsd-signature-symbol">: </span><a href="logger.html" class="tsd-signature-type">Logger</a>, minLogLevel<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">keyof Logger</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><a href="logger.html" class="tsd-signature-type">Logger</a></li>
 					</ul>
 					<ul class="tsd-descriptions">
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/mceachen/batch-cluster.js/blob/4a1a364/src/BatchProcess.ts#L22">BatchProcess.ts:22</a></li>
+									<li>Defined in <a href="https://github.com/mceachen/batch-cluster.js/blob/master/src/Logger.ts#L108">Logger.ts:108</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-parameters-title">Parameters</h4>
 							<ul class="tsd-parameters">
 								<li>
-									<h5>error: <span class="tsd-signature-type">Error</span></h5>
+									<h5>logger: <a href="logger.html" class="tsd-signature-type">Logger</a></h5>
+								</li>
+								<li>
+									<h5>minLogLevel: <span class="tsd-signature-type">keyof Logger</span></h5>
 								</li>
 							</ul>
-							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
+							<h4 class="tsd-returns-title">Returns <a href="logger.html" class="tsd-signature-type">Logger</a></h4>
 						</li>
 					</ul>
 				</section>
-				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-interface">
-					<a name="onstarterror" class="tsd-anchor"></a>
-					<h3>on<wbr>Start<wbr>Error</h3>
-					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-interface">
-						<li class="tsd-signature tsd-kind-icon">on<wbr>Start<wbr>Error<span class="tsd-signature-symbol">(</span>error<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Error</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
+				<section class="tsd-panel tsd-member tsd-kind-function tsd-parent-kind-module">
+					<a name="withlevels" class="tsd-anchor"></a>
+					<h3>with<wbr>Levels</h3>
+					<ul class="tsd-signatures tsd-kind-function tsd-parent-kind-module">
+						<li class="tsd-signature tsd-kind-icon">with<wbr>Levels<span class="tsd-signature-symbol">(</span>delegate<span class="tsd-signature-symbol">: </span><a href="logger.html" class="tsd-signature-type">Logger</a><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><a href="logger.html" class="tsd-signature-type">Logger</a></li>
 					</ul>
 					<ul class="tsd-descriptions">
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/mceachen/batch-cluster.js/blob/4a1a364/src/BatchProcess.ts#L21">BatchProcess.ts:21</a></li>
+									<li>Defined in <a href="https://github.com/mceachen/batch-cluster.js/blob/master/src/Logger.ts#L84">Logger.ts:84</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-parameters-title">Parameters</h4>
 							<ul class="tsd-parameters">
 								<li>
-									<h5>error: <span class="tsd-signature-type">Error</span></h5>
+									<h5>delegate: <a href="logger.html" class="tsd-signature-type">Logger</a></h5>
 								</li>
 							</ul>
-							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
+							<h4 class="tsd-returns-title">Returns <a href="logger.html" class="tsd-signature-type">Logger</a></h4>
 						</li>
 					</ul>
 				</section>
-				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-interface">
-					<a name="ontaskerror" class="tsd-anchor"></a>
-					<h3>on<wbr>Task<wbr>Error</h3>
-					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-interface">
-						<li class="tsd-signature tsd-kind-icon">on<wbr>Task<wbr>Error<span class="tsd-signature-symbol">(</span>error<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Error</span>, task<span class="tsd-signature-symbol">: </span><a href="../classes/_task_.task.html" class="tsd-signature-type">Task</a><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">any</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
+				<section class="tsd-panel tsd-member tsd-kind-function tsd-parent-kind-module">
+					<a name="withtimestamps" class="tsd-anchor"></a>
+					<h3>with<wbr>Timestamps</h3>
+					<ul class="tsd-signatures tsd-kind-function tsd-parent-kind-module">
+						<li class="tsd-signature tsd-kind-icon">with<wbr>Timestamps<span class="tsd-signature-symbol">(</span>delegate<span class="tsd-signature-symbol">: </span><a href="logger.html" class="tsd-signature-type">Logger</a><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><a href="logger.html" class="tsd-signature-type">Logger</a></li>
 					</ul>
 					<ul class="tsd-descriptions">
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/mceachen/batch-cluster.js/blob/4a1a364/src/BatchProcess.ts#L20">BatchProcess.ts:20</a></li>
+									<li>Defined in <a href="https://github.com/mceachen/batch-cluster.js/blob/master/src/Logger.ts#L94">Logger.ts:94</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-parameters-title">Parameters</h4>
 							<ul class="tsd-parameters">
 								<li>
-									<h5>error: <span class="tsd-signature-type">Error</span></h5>
-								</li>
-								<li>
-									<h5>task: <a href="../classes/_task_.task.html" class="tsd-signature-type">Task</a><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">any</span><span class="tsd-signature-symbol">&gt;</span></h5>
+									<h5>delegate: <a href="logger.html" class="tsd-signature-type">Logger</a></h5>
 								</li>
 							</ul>
-							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
+							<h4 class="tsd-returns-title">Returns <a href="logger.html" class="tsd-signature-type">Logger</a></h4>
 						</li>
 					</ul>
 				</section>
@@ -195,69 +229,36 @@
 					<li class="globals  ">
 						<a href="../globals.html"><em>Globals</em></a>
 					</li>
-					<li class=" tsd-kind-external-module">
-						<a href="../modules/_array_.html">"<wbr>Array"</a>
-					</li>
-					<li class=" tsd-kind-external-module">
-						<a href="../modules/_async_.html">"<wbr>Async"</a>
-					</li>
-					<li class=" tsd-kind-external-module">
-						<a href="../modules/_batchcluster_.html">"<wbr>Batch<wbr>Cluster"</a>
-					</li>
-					<li class="current tsd-kind-external-module">
-						<a href="../modules/_batchprocess_.html">"<wbr>Batch<wbr>Process"</a>
-					</li>
-					<li class=" tsd-kind-external-module">
-						<a href="../modules/_deferred_.html">"<wbr>Deferred"</a>
-					</li>
-					<li class=" tsd-kind-external-module">
-						<a href="../modules/_logger_.html">"<wbr>Logger"</a>
-					</li>
-					<li class=" tsd-kind-external-module">
-						<a href="../modules/_mean_.html">"<wbr>Mean"</a>
-					</li>
-					<li class=" tsd-kind-external-module">
-						<a href="../modules/_object_.html">"<wbr>Object"</a>
-					</li>
-					<li class=" tsd-kind-external-module">
-						<a href="../modules/_pids_.html">"<wbr>Pids"</a>
-					</li>
-					<li class=" tsd-kind-external-module">
-						<a href="../modules/_rate_.html">"<wbr>Rate"</a>
-					</li>
-					<li class=" tsd-kind-external-module">
-						<a href="../modules/_task_.html">"<wbr>Task"</a>
+					<li class="current tsd-kind-module">
+						<a href="logger.html">Logger</a>
 					</li>
 				</ul>
 			</nav>
 			<nav class="tsd-navigation secondary menu-sticky">
 				<ul class="before-current">
-					<li class=" tsd-kind-class tsd-parent-kind-external-module">
-						<a href="../classes/_batchprocess_.batchprocess.html" class="tsd-kind-icon">Batch<wbr>Process</a>
+					<li class=" tsd-kind-property tsd-parent-kind-module">
+						<a href="logger.html#debug" class="tsd-kind-icon">debug</a>
 					</li>
-				</ul>
-				<ul class="current">
-					<li class="current tsd-kind-interface tsd-parent-kind-external-module">
-						<a href="_batchprocess_.batchprocessobserver.html" class="tsd-kind-icon">Batch<wbr>Process<wbr>Observer</a>
-						<ul>
-							<li class=" tsd-kind-method tsd-parent-kind-interface">
-								<a href="_batchprocess_.batchprocessobserver.html#onidle" class="tsd-kind-icon">on<wbr>Idle</a>
-							</li>
-							<li class=" tsd-kind-method tsd-parent-kind-interface">
-								<a href="_batchprocess_.batchprocessobserver.html#oninternalerror" class="tsd-kind-icon">on<wbr>Internal<wbr>Error</a>
-							</li>
-							<li class=" tsd-kind-method tsd-parent-kind-interface">
-								<a href="_batchprocess_.batchprocessobserver.html#onstarterror" class="tsd-kind-icon">on<wbr>Start<wbr>Error</a>
-							</li>
-							<li class=" tsd-kind-method tsd-parent-kind-interface">
-								<a href="_batchprocess_.batchprocessobserver.html#ontaskerror" class="tsd-kind-icon">on<wbr>Task<wbr>Error</a>
-							</li>
-						</ul>
+					<li class=" tsd-kind-property tsd-parent-kind-module">
+						<a href="logger.html#error" class="tsd-kind-icon">error</a>
 					</li>
-				</ul>
-				<ul class="after-current">
-					<li class=" tsd-kind-interface tsd-parent-kind-external-module">
-						<a href="_batchprocess_.internalbatchprocessoptions.html" class="tsd-kind-icon">Internal<wbr>Batch<wbr>Process<wbr>Options</a>
+					<li class=" tsd-kind-property tsd-parent-kind-module">
+						<a href="logger.html#info" class="tsd-kind-icon">info</a>
+					</li>
+					<li class=" tsd-kind-property tsd-parent-kind-module">
+						<a href="logger.html#trace" class="tsd-kind-icon">trace</a>
+					</li>
+					<li class=" tsd-kind-property tsd-parent-kind-module">
+						<a href="logger.html#warn" class="tsd-kind-icon">warn</a>
+					</li>
+					<li class=" tsd-kind-function tsd-parent-kind-module">
+						<a href="logger.html#filterlevels" class="tsd-kind-icon">filter<wbr>Levels</a>
+					</li>
+					<li class=" tsd-kind-function tsd-parent-kind-module">
+						<a href="logger.html#withlevels" class="tsd-kind-icon">with<wbr>Levels</a>
+					</li>
+					<li class=" tsd-kind-function tsd-parent-kind-module">
+						<a href="logger.html#withtimestamps" class="tsd-kind-icon">with<wbr>Timestamps</a>
 					</li>
 				</ul>
 			</nav>
