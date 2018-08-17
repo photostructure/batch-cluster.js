@@ -1,7 +1,5 @@
 # batch-cluster
 
-<base href="https://batch-cluster.js.org/" />
-
 **Support external batch-mode tools within Node.js.**
 
 [![npm version](https://badge.fury.io/js/batch-cluster.svg)](https://badge.fury.io/js/batch-cluster)
@@ -44,6 +42,9 @@ $ npm install --save batch-cluster
 See [CHANGELOG.md](https://github.com/mceachen/batch-cluster.js/blob/master/CHANGELOG.md).
 
 ## Usage
+
+_If links are broken, please read this on
+[batch-cluster.js.org](https://batch-cluster.js.org/)._
 
 The child process must use `stdin` and `stdout` for control/response.
 BatchCluster will ensure a given process is only given one task at a time.
