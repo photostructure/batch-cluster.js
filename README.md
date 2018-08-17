@@ -49,26 +49,26 @@ The child process must use `stdin` and `stdout` for control/response.
 BatchCluster will ensure a given process is only given one task at a time.
 
 1.  Create a singleton instance of
-    [BatchCluster](/classes/_batchcluster_.batchcluster.html).
+    [BatchCluster](/classes/batchcluster.html).
 
     Note the [constructor
-    options](/classes/_batchcluster_.batchcluster.html#constructor) takes a union
+    options](/classes/batchcluster.html#constructor) takes a union
     type of
 
-    - [ChildProcessFactory](/interfaces/_batchcluster_.childprocessfactory.html) and
-    - [BatchProcessOptions](/interfaces/_batchcluster_.batchprocessoptions.html),
+    - [ChildProcessFactory](/interfaces/childprocessfactory.html) and
+    - [BatchProcessOptions](/interfaces/batchprocessoptions.html),
       both of which have no defaults, and
-    - [BatchClusterOptions](/classes/_batchcluster_.batchclusteroptions.html),
+    - [BatchClusterOptions](/classes/batchclusteroptions.html),
       which has defaults that may or may not be relevant to your application.
 
-1.  The [default](/modules/_logger_#consolelogger) logger writes warning and
+1.  The [default](/modules/logger.html) logger writes warning and
     error messages to `console.warn` and `console.error`. You can change this to
-    your logger by using [setLogger](/modules/_logger_.html#setlogger).
+    your logger by using [setLogger](/globals.html#setlogger).
 
-1.  Implement the [Parser](/modules/_task_.html#parser) class to parse results from your child
+1.  Implement the [Parser](/globals.html#parser) class to parse results from your child
     process.
 
-1.  Construct a [Task](/classes/_task_.task.html) with the desired command and
+1.  Construct a [Task](/classes/task.html) with the desired command and
     the parser you built in the previous step, and submit it to your BatchCluster
     singleton's
     [enqueueTask](/classes/_batchcluster_.batchcluster.html#enqueuetask) method.

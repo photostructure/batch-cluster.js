@@ -309,6 +309,11 @@ export class BatchCluster {
     return this._ended
   }
 
+  /**
+   * Shut down this instance, and all child processes.
+   * @param gracefully should an attempt be made to finish in-flight tasks, or
+   * should we force-kill child PIDs.
+   */
   async end(gracefully: boolean = true): Promise<void> {
     const alreadyEnded = this._ended
     this._ended = true
@@ -336,6 +341,12 @@ export class BatchCluster {
     })
   }
 
+  /**
+   * Submits `task` for processing by a `BatchProcess` instance
+   *
+   * @return a Promise that is resolved or rejected once the task has been
+   * attemped on an idle BatchProcess
+   */
   enqueueTask<T>(task: Task<T>): Promise<T> {
     if (this._ended) {
       task.reject(new Error("BatchCluster has ended"))
