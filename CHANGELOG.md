@@ -17,6 +17,12 @@ Yeah, it's just [Semver](http://semver.org/).
 - 🐞 Backwards-compatible bug fixes
 - 📦 Minor packaging changes
 
+## v4.2.0
+
+- 📦 In the interests of less noise, the default logger is now the `NoLogger`.
+  Consumers may use the `ConsoleLogger` or another `Logger` implementation as
+  they see fit.
+
 ## v4.1.0
 
 - ✨ Support for demoting task errors from `stderr` emissions:
