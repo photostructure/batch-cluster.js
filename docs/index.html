@@ -61,7 +61,6 @@
 		<div class="col-8 col-content">
 			<div class="tsd-panel tsd-typography">
 				<h1 id="batch-cluster">batch-cluster</h1>
-				<base href="https://batch-cluster.js.org/" />
 				<p><strong>Support external batch-mode tools within Node.js.</strong></p>
 				<p><a href="https://badge.fury.io/js/batch-cluster"><img src="https://badge.fury.io/js/batch-cluster.svg" alt="npm version"></a>
 					<a href="https://travis-ci.org/mceachen/batch-cluster.js"><img src="https://travis-ci.org/mceachen/batch-cluster.js.svg?branch=master" alt="Build status"></a>
@@ -80,9 +79,8 @@
 					processing N tasks or running for N seconds, in an effort to minimize the impact
 				of memory leaks.</p>
 				<p>As of version 4, retry logic for tasks is a separate concern from this module.</p>
-				<p>This package powers
-					<a href="https://exiftool-vendored.js.org/">exiftool-vendored</a>, whose
-				source you can examine as an example consumer.</p>
+				<p>This package powers <a href="https://exiftool-vendored.js.org/">exiftool-vendored</a>,
+				whose source you can examine as an example consumer.</p>
 				<h2 id="installation">Installation</h2>
 				<p>Depending on your yarn/npm preference:</p>
 				<pre><code class="language-bash">$ yarn add batch-cluster
@@ -95,29 +93,31 @@ $ npm install --save batch-cluster</code></pre>
 				BatchCluster will ensure a given process is only given one task at a time.</p>
 				<ol>
 					<li><p>Create a singleton instance of
-						<a href="/classes/batchcluster.html">BatchCluster</a>.</p>
-						<p>Note the <a href="/classes/batchcluster.html#constructor">constructor
-							options</a> takes a union
-						type of</p>
+						<a href="https://batch-cluster.js.org/classes/batchcluster.html">BatchCluster</a>.</p>
+						<p>Note the <a href="https://batch-cluster.js.org/classes/batchcluster.html#constructor">constructor
+							options</a>
+						takes a union type of</p>
 						<ul>
-							<li><a href="/interfaces/childprocessfactory.html">ChildProcessFactory</a> and</li>
-							<li><a href="/interfaces/batchprocessoptions.html">BatchProcessOptions</a>,
+							<li><a href="https://batch-cluster.js.org/interfaces/childprocessfactory.html">ChildProcessFactory</a>
+							and</li>
+							<li><a href="https://batch-cluster.js.org/interfaces/batchprocessoptions.html">BatchProcessOptions</a>,
 							both of which have no defaults, and</li>
-							<li><a href="/classes/batchclusteroptions.html">BatchClusterOptions</a>,
+							<li><a href="https://batch-cluster.js.org/classes/batchclusteroptions.html">BatchClusterOptions</a>,
 							which has defaults that may or may not be relevant to your application.</li>
 						</ul>
 					</li>
-					<li><p>The <a href="/modules/logger.html">default</a> logger writes warning and
-							error messages to <code>console.warn</code> and <code>console.error</code>. You can change this to
-						your logger by using <a href="/globals.html#setlogger">setLogger</a>.</p>
+					<li><p>The <a href="https://batch-cluster.js.org/modules/logger.html">default</a> logger
+							writes warning and error messages to <code>console.warn</code> and <code>console.error</code>. You
+							can change this to your logger by using
+						<a href="/globals.html#setlogger">setLogger</a>.</p>
 					</li>
-					<li><p>Implement the <a href="/globals.html#parser">Parser</a> class to parse results from your child
-						process.</p>
+					<li><p>Implement the <a href="https://batch-cluster.js.org/globals.html#parser">Parser</a>
+						class to parse results from your child process.</p>
 					</li>
-					<li><p>Construct a <a href="/classes/task.html">Task</a> with the desired command and
+					<li><p>Construct a <a href="https://batch-cluster.js.org/classes/task.html">Task</a> with the desired command and
 							the parser you built in the previous step, and submit it to your BatchCluster
 							singleton&#39;s
-						<a href="/classes/_batchcluster_.batchcluster.html#enqueuetask">enqueueTask</a> method.</p>
+						<a href="https://batch-cluster.js.org/classes/batchcluster#enqueuetask">enqueueTask</a> method.</p>
 					</li>
 				</ol>
 				<p>See

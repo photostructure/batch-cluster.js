@@ -23,9 +23,8 @@ of memory leaks.
 
 As of version 4, retry logic for tasks is a separate concern from this module.
 
-This package powers
-[exiftool-vendored](https://exiftool-vendored.js.org/), whose
-source you can examine as an example consumer.
+This package powers [exiftool-vendored](https://exiftool-vendored.js.org/),
+whose source you can examine as an example consumer.
 
 ## Installation
 
@@ -43,36 +42,35 @@ See [CHANGELOG.md](https://github.com/mceachen/batch-cluster.js/blob/master/CHAN
 
 ## Usage
 
-_If links are broken, please read this on
-[batch-cluster.js.org](https://batch-cluster.js.org/)._
-
 The child process must use `stdin` and `stdout` for control/response.
 BatchCluster will ensure a given process is only given one task at a time.
 
 1.  Create a singleton instance of
-    [BatchCluster](/classes/batchcluster.html).
+    [BatchCluster](https://batch-cluster.js.org/classes/batchcluster.html).
 
     Note the [constructor
-    options](/classes/batchcluster.html#constructor) takes a union
-    type of
+    options](https://batch-cluster.js.org/classes/batchcluster.html#constructor)
+    takes a union type of
 
-    - [ChildProcessFactory](/interfaces/childprocessfactory.html) and
-    - [BatchProcessOptions](/interfaces/batchprocessoptions.html),
+    - [ChildProcessFactory](https://batch-cluster.js.org/interfaces/childprocessfactory.html)
+      and
+    - [BatchProcessOptions](https://batch-cluster.js.org/interfaces/batchprocessoptions.html),
       both of which have no defaults, and
-    - [BatchClusterOptions](/classes/batchclusteroptions.html),
+    - [BatchClusterOptions](https://batch-cluster.js.org/classes/batchclusteroptions.html),
       which has defaults that may or may not be relevant to your application.
 
-1.  The [default](/modules/logger.html) logger writes warning and
-    error messages to `console.warn` and `console.error`. You can change this to
-    your logger by using [setLogger](/globals.html#setlogger).
+1.  The [default](https://batch-cluster.js.org/modules/logger.html) logger
+    writes warning and error messages to `console.warn` and `console.error`. You
+    can change this to your logger by using
+    [setLogger](/globals.html#setlogger).
 
-1.  Implement the [Parser](/globals.html#parser) class to parse results from your child
-    process.
+1.  Implement the [Parser](https://batch-cluster.js.org/globals.html#parser)
+    class to parse results from your child process.
 
-1.  Construct a [Task](/classes/task.html) with the desired command and
+1.  Construct a [Task](https://batch-cluster.js.org/classes/task.html) with the desired command and
     the parser you built in the previous step, and submit it to your BatchCluster
     singleton's
-    [enqueueTask](/classes/_batchcluster_.batchcluster.html#enqueuetask) method.
+    [enqueueTask](https://batch-cluster.js.org/classes/batchcluster#enqueuetask) method.
 
 See
 [src/test.ts](https://github.com/mceachen/batch-cluster.js/blob/master/src/test.ts)

@@ -93,6 +93,7 @@
 								<li class="tsd-kind-method tsd-parent-kind-interface"><a href="batchprocessobserver.html#onidle" class="tsd-kind-icon">on<wbr>Idle</a></li>
 								<li class="tsd-kind-method tsd-parent-kind-interface"><a href="batchprocessobserver.html#oninternalerror" class="tsd-kind-icon">on<wbr>Internal<wbr>Error</a></li>
 								<li class="tsd-kind-method tsd-parent-kind-interface"><a href="batchprocessobserver.html#onstarterror" class="tsd-kind-icon">on<wbr>Start<wbr>Error</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-interface"><a href="batchprocessobserver.html#ontaskdata" class="tsd-kind-icon">on<wbr>Task<wbr>Data</a></li>
 								<li class="tsd-kind-method tsd-parent-kind-interface"><a href="batchprocessobserver.html#ontaskerror" class="tsd-kind-icon">on<wbr>Task<wbr>Error</a></li>
 							</ul>
 						</section>
@@ -107,7 +108,7 @@
 					<div class="tsd-signature tsd-kind-icon">reject<wbr>Task<wbr>OnStderr<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">function</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/mceachen/batch-cluster.js/blob/master/src/BatchProcess.ts#L23">BatchProcess.ts:23</a></li>
+							<li>Defined in <a href="https://github.com/mceachen/batch-cluster.js/blob/master/src/BatchProcess.ts#L24">BatchProcess.ts:24</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-type-declaration">
@@ -165,7 +166,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/mceachen/batch-cluster.js/blob/master/src/BatchProcess.ts#L22">BatchProcess.ts:22</a></li>
+									<li>Defined in <a href="https://github.com/mceachen/batch-cluster.js/blob/master/src/BatchProcess.ts#L23">BatchProcess.ts:23</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-parameters-title">Parameters</h4>
@@ -188,13 +189,39 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/mceachen/batch-cluster.js/blob/master/src/BatchProcess.ts#L21">BatchProcess.ts:21</a></li>
+									<li>Defined in <a href="https://github.com/mceachen/batch-cluster.js/blob/master/src/BatchProcess.ts#L22">BatchProcess.ts:22</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-parameters-title">Parameters</h4>
 							<ul class="tsd-parameters">
 								<li>
 									<h5>error: <span class="tsd-signature-type">Error</span></h5>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-interface">
+					<a name="ontaskdata" class="tsd-anchor"></a>
+					<h3>on<wbr>Task<wbr>Data</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-interface">
+						<li class="tsd-signature tsd-kind-icon">on<wbr>Task<wbr>Data<span class="tsd-signature-symbol">(</span>data<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Buffer</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">string</span>, task<span class="tsd-signature-symbol">: </span><a href="../classes/task.html" class="tsd-signature-type">Task</a><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">any</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">undefined</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/mceachen/batch-cluster.js/blob/master/src/BatchProcess.ts#L20">BatchProcess.ts:20</a></li>
+								</ul>
+							</aside>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>data: <span class="tsd-signature-type">Buffer</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">string</span></h5>
+								</li>
+								<li>
+									<h5>task: <a href="../classes/task.html" class="tsd-signature-type">Task</a><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">any</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">undefined</span></h5>
 								</li>
 							</ul>
 							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
@@ -211,7 +238,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/mceachen/batch-cluster.js/blob/master/src/BatchProcess.ts#L20">BatchProcess.ts:20</a></li>
+									<li>Defined in <a href="https://github.com/mceachen/batch-cluster.js/blob/master/src/BatchProcess.ts#L21">BatchProcess.ts:21</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-parameters-title">Parameters</h4>
@@ -276,6 +303,9 @@
 							</li>
 							<li class=" tsd-kind-method tsd-parent-kind-interface">
 								<a href="batchprocessobserver.html#onstarterror" class="tsd-kind-icon">on<wbr>Start<wbr>Error</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-interface">
+								<a href="batchprocessobserver.html#ontaskdata" class="tsd-kind-icon">on<wbr>Task<wbr>Data</a>
 							</li>
 							<li class=" tsd-kind-method tsd-parent-kind-interface">
 								<a href="batchprocessobserver.html#ontaskerror" class="tsd-kind-icon">on<wbr>Task<wbr>Error</a>
