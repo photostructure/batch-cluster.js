@@ -31,28 +31,39 @@ describe("BatchCluster", function() {
   }
 
   function assertExpectedResults(results: string[]) {
+    const dataResults = data.split(/[\n\r]+/)
     results.forEach((result, index) => {
       if (!result.includes("Error")) {
         expect(result).to.eql("ABC " + index)
+        expect(dataResults).to.include(result)
       }
     })
   }
 
   const events: Event[] = []
+  let data: string = ""
   const expectedEndEvents = [{ event: "beforeEnd" }, { event: "end" }]
 
   function listen(bc: BatchCluster) {
-    ;["startError", "taskError", "endError", "beforeEnd", "end"].forEach(
-      event => {
-        bc.on(event as any, (...args: any[]) => {
-          const ev: Event = { event }
-          if (args.length > 0) {
-            ev.args = args
-          }
-          events.push(ev)
-        })
-      }
-    )
+    ;[
+      "startError",
+      "taskData",
+      "taskError",
+      "endError",
+      "beforeEnd",
+      "end"
+    ].forEach(event => {
+      bc.on(event as any, (...args: any[]) => {
+        const ev: Event = { event }
+        if (event === "taskData") {
+          ev.args = args[0].toString()
+          data = data + args[0].toString()
+        } else if (args.length > 0) {
+          ev.args = args
+        }
+        events.push(ev)
+      })
+    })
     return bc
   }
 
@@ -72,6 +83,7 @@ describe("BatchCluster", function() {
 
   afterEach(() => {
     events.length = 0
+    data = ""
   })
 
   interface Event {
@@ -127,10 +139,11 @@ describe("BatchCluster", function() {
               assertExpectedResults(tasks)
               expect(await shutdown(bc)).to.be.true
               expect(bc.spawnedProcs).to.be.within(maxProcs, iterations + 1)
-              expect(events.filter(ea => !ea.event.includes("Error"))).to.eql([
-                { event: "beforeEnd" },
-                { event: "end" }
-              ])
+              expect(
+                events.filter(
+                  ea => ea.event !== "taskData" && !ea.event.includes("Error")
+                )
+              ).to.eql([{ event: "beforeEnd" }, { event: "end" }])
               return
             })
 
@@ -351,10 +364,12 @@ describe("BatchCluster", function() {
     let bc: BatchCluster
 
     beforeEach(() =>
-      (bc = new BatchCluster({
-        ...opts,
-        processFactory
-      })))
+      (bc = listen(
+        new BatchCluster({
+          ...opts,
+          processFactory
+        })
+      )))
 
     afterEach(async () => {
       expect(await shutdown(bc)).to.be.true

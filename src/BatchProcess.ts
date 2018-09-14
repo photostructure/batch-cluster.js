@@ -17,6 +17,7 @@ import { Task } from "./Task"
  */
 export interface BatchProcessObserver {
   onIdle(): void
+  onTaskData(data: Buffer | string, task: Task<any> | undefined): void
   onTaskError(error: Error, task: Task<any>): void
   onStartError(error: Error): void
   onInternalError(error: Error): void
@@ -333,7 +334,7 @@ export class BatchProcess {
 
   private onData(data: string | Buffer) {
     logger().trace(this.name + ".onData(" + data.toString() + ")")
-
+    this.observer.onTaskData(data, this.currentTask)
     this.buff = this.buff + data.toString()
     const pass = this.opts.passRE.exec(this.buff)
     if (pass != null) {

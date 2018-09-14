@@ -17,6 +17,13 @@ Yeah, it's just [Semver](http://semver.org/).
 - 🐞 Backwards-compatible bug fixes
 - 📦 Minor packaging changes
 
+## v4.3.0
+
+- ✨ If your tasks return interim progress and you want to capture that data
+  as it happens, BatchCluster now emits `taskData` events with the data and the
+  current task (which may be undefined) as soon as the stream data is emitted.
+- 📦 Pulled in latest dependency versions
+
 ## v4.2.0
 
 - 📦 In the interests of less noise, the default logger is now the `NoLogger`.
