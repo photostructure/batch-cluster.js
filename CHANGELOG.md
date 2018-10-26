@@ -17,6 +17,17 @@ Yeah, it's just [Semver](http://semver.org/).
 - 🐞 Backwards-compatible bug fixes
 - 📦 Minor packaging changes
 
+## v5.0.0
+
+- 💔  The `rejectTaskOnStderr` API, which was added in v4.1.0 and applied to all
+  tasks for a given `BatchCluster` instance, proved to be a poor decision, and
+  has been removed. The `Parser` API, which is task-specific, now receives
+  **both** stdin and stderr streams. Parsers then have the necessary context to
+  decide what to do on a per task or per task-type basis.
+- 🐞 In previous versions, batch processes were recycled if any task had any
+  type of error. This version allows pids to live even if they emit data to
+  stderr.
+
 ## v4.3.0
 
 - ✨ If your tasks return interim progress and you want to capture that data

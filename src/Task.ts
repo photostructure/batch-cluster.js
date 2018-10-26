@@ -1,12 +1,6 @@
 import { Deferred } from "./Deferred"
 import { logger } from "./Logger"
-
-/**
- * Parser implementations convert stdout from the underlying child process to
- * a more useable format. This can be a no-op passthrough if no parsing is
- * necessary.
- */
-export type Parser<T> = (data: string) => T
+import { Parser } from "./Parser"
 
 /**
  * Tasks embody individual jobs given to the underlying child processes. Each
@@ -15,6 +9,7 @@ export type Parser<T> = (data: string) => T
  */
 export class Task<T> {
   private readonly d = new Deferred<T>()
+
   /**
    * @param {string} command is the value written to stdin to perform the given
    * task.
@@ -50,9 +45,10 @@ export class Task<T> {
    * This is for use by `BatchProcess` only, and will only be called when the
    * process is complete for this task's command
    */
-  resolve(data: string): void {
+  resolve(stdin: string, stderr: string): void {
     try {
-      const result = this.parser(data)
+      
+      const result = this.parser(stdin, stderr)
       logger().trace("Task.onData(): resolved", {
         command: this.command,
         result

@@ -1,22 +1,22 @@
-import { inspect } from "util"
 import { env } from "process"
+import { inspect } from "util"
 
 import {
   currentTestPids,
   expect,
   parser,
+  parserErrors,
+  processFactory,
   procs,
   setFailrate,
   setIgnoreExit,
   setNewline,
   shutdown,
-  processFactory,
   times
 } from "./_chai.spec"
 import { delay, until } from "./Async"
 import { BatchCluster, BatchClusterOptions } from "./BatchCluster"
 import { Task } from "./Task"
-import { randomBytes } from "crypto"
 
 describe("BatchCluster", function() {
   // Unflake Appveyor:
@@ -42,6 +42,12 @@ describe("BatchCluster", function() {
 
   const events: Event[] = []
   let data: string = ""
+
+  afterEach(() => {
+    events.length = 0
+    data = ""
+  })
+
   const expectedEndEvents = [{ event: "beforeEnd" }, { event: "end" }]
 
   function listen(bc: BatchCluster) {
@@ -81,11 +87,6 @@ describe("BatchCluster", function() {
     maxReasonableProcessFailuresPerMinute: 2000 // this is so high because failrate is so high
   })
 
-  afterEach(() => {
-    events.length = 0
-    data = ""
-  })
-
   interface Event {
     event: string
     args?: any
@@ -110,7 +111,6 @@ describe("BatchCluster", function() {
             // retries to succeed.
 
             beforeEach(() => {
-              setFailrate(10) // 10%
               setNewline(newline as any)
               setIgnoreExit(ignoreExit)
 
@@ -153,13 +153,14 @@ describe("BatchCluster", function() {
                 " before recycling",
               async () => {
                 // make sure we hit an EUNLUCKY:
-                const iters = opts.maxTasksPerProcess * maxProcs + 50
+                setFailrate(25) // 25%
+                const iters = opts.maxTasksPerProcess * maxProcs + 10
                 await Promise.all(runTasks(bc, maxProcs))
                 const pids = await bc.pids()
                 const tasks = await Promise.all(runTasks(bc, iters))
                 assertExpectedResults(tasks)
                 // And expect some errors:
-                expect(tasks.filter(ea => ea.includes("EUNLUCKY"))).to.not.eql(
+                expect(events.filter(ea => ea.event == "taskError")).to.not.eql(
                   []
                 )
 
@@ -190,41 +191,28 @@ describe("BatchCluster", function() {
               }
             )
 
-            it("recycles procs if the command is invalid", async () => {
-              // we need to run some tasks to "prime the pid pump":
-              await Promise.all(
-                times(20, () =>
-                  bc
-                    .enqueueTask(new Task("downcase Hello", parser))
-                    .catch(err => err)
+            it("recovers from invalid commands", async () => {
+              assertExpectedResults(
+                await Promise.all(runTasks(bc, maxProcs * 4))
+              )
+              const errors = await Promise.all(
+                times(maxProcs * 2, () =>
+                  bc.enqueueTask(new Task("nonsense", parser)).catch(err => err)
                 )
               )
-              const pidsBefore = await bc.pids()
-              const spawnedProcsBefore = bc.spawnedProcs
-              expect((await bc.pids()).length).to.be.within(0, maxProcs)
-              const iters = maxProcs * 4 + 10
-              for (let i = 0; i < iters; i++) {
-                await expect(
-                  bc.enqueueTask(new Task("invalid", parser))
-                ).to.eventually.be.rejectedWith(/invalid|EUNLUCKY/)
-              }
-              const newSpawnedProcs = bc.spawnedProcs - spawnedProcsBefore
-              expect(newSpawnedProcs).to.be.within(2, iters * 1.5) // < because EUNLUCKY
-              // if maxProcs is 1, we may not have any running before-pids.
-              if (bc.pids.length > 0)
-                expect(await bc.pids()).to.not.eql(pidsBefore) // at least one pid should be shut down now
-              const lastEvent = events[events.length - 1]
-              expect(lastEvent.event).to.eql(
-                "taskError",
-                JSON.stringify(events)
+              expect(errors.some(ea => String(ea).includes("nonsense"))).to.eql(
+                true,
+                JSON.stringify(errors)
               )
-              const err = String(lastEvent.args[0])
-              if (!err.startsWith("Error: stderr.data: EUNLUCKY")) {
-                expect(err).to.eql(
-                  "Error: stderr.data: invalid/missing command for input invalid",
-                  JSON.stringify(events)
-                )
-              }
+              expect(parserErrors.some(ea => ea.includes("nonsense"))).to.eql(
+                true,
+                JSON.stringify(parserErrors)
+              )
+              parserErrors.length = 0
+              assertExpectedResults(
+                await Promise.all(runTasks(bc, maxProcs * 4))
+              )
+              expect(parserErrors).is.empty
               expect(await shutdown(bc)).to.be.true
               expect(bc.internalErrorCount).to.eql(0)
               return
@@ -307,49 +295,6 @@ describe("BatchCluster", function() {
       expect(bc.spawnedProcs).to.be.within(2, iters)
       expect(bc.internalErrorCount).to.eql(0)
       return
-    })
-  })
-
-  describe("rejectTaskOnError", () => {
-    const errtasks: Task<any>[] = []
-    const errs: string[] = []
-    const opts = {
-      ...defaultOpts,
-      rejectTaskOnStderr: (t: Task<any>, err: any) => {
-        errtasks.push(t)
-        errs.push(String(err))
-        return !String(err).includes("warning")
-      }
-    }
-
-    let bc: BatchCluster
-
-    beforeEach(() => {
-      setFailrate(0)
-      bc = new BatchCluster({
-        ...opts,
-        processFactory
-      })
-    })
-
-    afterEach(async () => {
-      expect(await shutdown(bc)).to.be.true
-      expect(bc.internalErrorCount).to.eql(0)
-      return
-    })
-
-    it("allows for tasks to not be rejected", async () => {
-      const expected = "warning from " + randomBytes(4).toString("hex")
-      const r = await bc.enqueueTask(new Task("stderr " + expected, parser))
-      expect(r).to.eql("")
-      expect(errs).to.eql(["Error: stderr.data: " + expected])
-    })
-
-    it("doesn't stop non-warning tasks from being rejected", async () => {
-      const expected = "error from " + randomBytes(4).toString("hex")
-      return expect(
-        bc.enqueueTask(new Task("stderr " + expected, parser))
-      ).to.be.rejectedWith(new RegExp(expected))
     })
   })
 

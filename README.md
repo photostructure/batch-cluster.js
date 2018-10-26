@@ -5,7 +5,6 @@
 [![npm version](https://badge.fury.io/js/batch-cluster.svg)](https://badge.fury.io/js/batch-cluster)
 [![Build status](https://travis-ci.org/mceachen/batch-cluster.js.svg?branch=master)](https://travis-ci.org/mceachen/batch-cluster.js)
 [![Build status](https://ci.appveyor.com/api/projects/status/4564x6lvc8s6a55l/branch/master?svg=true)](https://ci.appveyor.com/project/mceachen/batch-cluster-js/branch/master)
-![no dependencies](https://img.shields.io/badge/dependencies-0-brightgreen.svg)
 
 Many command line tools, like
 [ExifTool](https://sno.phy.queensu.ca/~phil/exiftool/) and
@@ -64,7 +63,7 @@ BatchCluster will ensure a given process is only given one task at a time.
     can change this to your logger by using
     [setLogger](/globals.html#setlogger).
 
-1.  Implement the [Parser](https://batch-cluster.js.org/globals.html#parser)
+1.  Implement the [Parser](https://batch-cluster.js.org/interfaces/parser)
     class to parse results from your child process.
 
 1.  Construct a [Task](https://batch-cluster.js.org/classes/task.html) with the desired command and

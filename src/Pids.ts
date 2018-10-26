@@ -104,6 +104,10 @@ export function pids(): Promise<number[]> {
  * permissions to send the signal, the pid will be forced to shut down.
  */
 export function kill(pid: number, force: boolean = false): void {
+  if (pid == _p.pid || pid == _p.ppid) {
+    throw new Error("cannot self-terminate")
+  }
+
   if (isWin) {
     const args = ["/PID", sanitize(pid), "/T"]
     if (force) {

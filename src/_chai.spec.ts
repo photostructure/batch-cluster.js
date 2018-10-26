@@ -34,7 +34,17 @@ setLogger(
   )
 )
 
-export const parser = (ea: string) => ea.trim()
+export const parserErrors: string[] = []
+
+beforeEach(() => (parserErrors.length = 0))
+
+export const parser = (result: string, stderr?: string) => {
+  if (stderr != null && stderr.length > 0) {
+    parserErrors.push(stderr)
+    throw new Error(stderr)
+  }
+  return result.trim()
+}
 
 process.on("unhandledRejection", (reason: any) => {
   console.error("unhandledRejection:", reason.stack || reason)
@@ -91,7 +101,7 @@ export async function shutdown(
 // to make sure different error pathways are exercised. YYYY-MM-$callcount
 // should do it.
 
-const rngseedPrefix = new Date().toISOString().substr(0, 8)
+const rngseedPrefix = new Date().toISOString().substr(0, 7) + "."
 let rngseedCounter = 0
 let rngseed_override: string | undefined
 
@@ -110,6 +120,8 @@ let failrate = "0.1" // 10%
 export function setFailrate(percent: number = 0) {
   failrate = (percent / 100).toFixed(2)
 }
+
+afterEach(() => setFailrate(10))
 
 let newline = "lf"
 

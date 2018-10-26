@@ -16,10 +16,11 @@ import { pidExists } from "./Pids"
 import { Rate } from "./Rate"
 import { Task } from "./Task"
 
-export { kill, pidExists, pids } from "./Pids"
 export { Deferred } from "./Deferred"
 export * from "./Logger"
-export { Task, Parser } from "./Task"
+export { Parser } from "./Parser"
+export { kill, pidExists, pids } from "./Pids"
+export { Task } from "./Task"
 
 /**
  * These are required parameters for a given BatchCluster.
@@ -157,18 +158,6 @@ export class BatchClusterOptions {
    * Must be &gt;= 0. Defaults to 500ms.
    */
   readonly endGracefulWaitTimeMillis: number = 500
-
-  /**
-   * Some tools emit non-fatal warnings to stderr. If this predicate returns
-   * false, the task will not be rejected.
-   *
-   * This defaults to a function that always returns true, which makes all
-   * stderr writes reject tasks.
-   */
-  readonly rejectTaskOnStderr: (
-    task: Task<any>,
-    error: string | Error
-  ) => boolean = () => true
 }
 
 function verifyOptions(
@@ -272,8 +261,7 @@ export class BatchCluster {
       onTaskData: (data: Buffer | string, task: Task<any> | undefined) =>
         this.emitter.emit("taskData", data, task),
       onTaskError: (err, task) => this.emitter.emit("taskError", err, task),
-      onInternalError: err => this.onInternalError(err),
-      rejectTaskOnStderr: this.opts.rejectTaskOnStderr
+      onInternalError: err => this.onInternalError(err)
     }
     _p.once("beforeExit", this.beforeExitListener)
     _p.once("exit", this.exitListener)

@@ -21,7 +21,6 @@ export interface BatchProcessObserver {
   onTaskError(error: Error, task: Task<any>): void
   onStartError(error: Error): void
   onInternalError(error: Error): void
-  rejectTaskOnStderr: (task: Task<any>, error: string | Error) => boolean
 }
 
 export interface InternalBatchProcessOptions
@@ -51,7 +50,9 @@ export class BatchProcess {
   /**
    * Data from stdout, to be given to _currentTask
    */
-  private buff = ""
+  private stdinBuff = ""
+  private stderrBuff = ""
+
   /**
    * Should be undefined if this instance is not currently processing a task.
    */
@@ -76,12 +77,10 @@ export class BatchProcess {
     this.proc.stdin.on("error", err => this.onError("stdin.error", err))
 
     this.proc.stdout.on("error", err => this.onError("stdout.error", err))
-    this.proc.stdout.on("data", d => this.onData(d))
+    this.proc.stdout.on("data", d => this.onStdout(d))
 
     this.proc.stderr.on("error", err => this.onError("stderr.error", err))
-    this.proc.stderr.on("data", err =>
-      this.onError("stderr.data", new Error(cleanError(err)))
-    )
+    this.proc.stderr.on("data", err => this.onStderr(err))
 
     this.startupTask = new Task(opts.versionCommand, ea => ea)
 
@@ -255,7 +254,6 @@ export class BatchProcess {
       logger().warn(this.name + ".end(): force-killing still-running child.")
       await kill(this.proc.pid, true)
     }
-
     return this.exitedPromise
   }
 
@@ -283,17 +281,6 @@ export class BatchProcess {
     if (_error.stack) {
       // Error stacks, if set, will not be redefined from a rethrow:
       error.stack = cleanError(_error.stack)
-    }
-
-    if (task != null) {
-      const fatal =
-        source !== "stderr.data" ||
-        this.observer.rejectTaskOnStderr(task, error)
-      if (!fatal) {
-        logger().info("Error permitted by observer, will continue with task.")
-        this.onData("")
-        return
-      }
     }
 
     // clear the task before ending so the onExit from end() doesn't retry the task:
@@ -332,21 +319,37 @@ export class BatchProcess {
     this._exited.resolve()
   }
 
-  private onData(data: string | Buffer) {
-    logger().trace(this.name + ".onData(" + data.toString() + ")")
+  private onStderr(data: string | Buffer) {
+    const s = data == null ? "" : data.toString()
+    this.stderrBuff += s
+    if (s.trim().length == 0) return
+    const err = new Error(cleanError(s))
+    if (this.currentTask != null) {
+      this.observer.onTaskError(err, this.currentTask)
+    } else {
+      this.observer.onInternalError(err)
+    }
+    this.onData()
+  }
+
+  private onStdout(data: string | Buffer) {
+    logger().trace(this.name + ".onStdout(" + data.toString() + ")")
     this.observer.onTaskData(data, this.currentTask)
-    this.buff = this.buff + data.toString()
-    const pass = this.opts.passRE.exec(this.buff)
+    this.stdinBuff += data.toString()
+    this.onData()
+  }
+
+  private onData() {
+    const pass = this.opts.passRE.exec(this.stdinBuff)
     if (pass != null) {
       logger().trace(this.name + " found PASS")
-      this.resolveCurrentTask(pass[1].trim())
-      this.observer.onIdle()
+      this.resolveCurrentTask(pass[1].trim(), this.stderrBuff)
     } else {
-      const fail = this.opts.failRE.exec(this.buff)
+      const fail =
+        this.opts.failRE.exec(this.stdinBuff) ||
+        this.opts.failRE.exec(this.stderrBuff)
       if (fail != null) {
-        logger().trace(this.name + " found FAIL")
-        const err = new Error(cleanError(fail[1]) || "command error")
-        this.onError("onData", err)
+        this.resolveCurrentTask(this.stdinBuff, this.stderrBuff)
       }
     }
   }
@@ -359,8 +362,9 @@ export class BatchProcess {
     this.currentTask = undefined
   }
 
-  private resolveCurrentTask(result: string): void {
-    this.buff = ""
+  private resolveCurrentTask(result: string, stderr: string): void {
+    this.stdinBuff = ""
+    this.stderrBuff = ""
     const task = this.currentTask
     this.clearCurrentTask()
     if (task == null) {
@@ -373,10 +377,11 @@ export class BatchProcess {
     } else {
       logger().trace(this.name + ".resolveCurrentTask()", {
         task: task.command,
-        result
+        result,
+        stderr
       })
       if (task.pending) {
-        task.resolve(result)
+        task.resolve(result, stderr)
       } else {
         this.observer.onInternalError(
           new Error(
