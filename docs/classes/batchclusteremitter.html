@@ -3,7 +3,7 @@
 <head>
 	<meta charset="utf-8">
 	<meta http-equiv="X-UA-Compatible" content="IE=edge">
-	<title>BatchCluster | batch-cluster</title>
+	<title>BatchClusterEmitter | batch-cluster</title>
 	<meta name="description" content="">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<link rel="stylesheet" href="../assets/css/main.css">
@@ -52,37 +52,24 @@
 					<a href="../globals.html">Globals</a>
 				</li>
 				<li>
-					<a href="batchcluster.html">BatchCluster</a>
+					<a href="batchclusteremitter.html">BatchClusterEmitter</a>
 				</li>
 			</ul>
-			<h1>Class BatchCluster</h1>
+			<h1>Class BatchClusterEmitter</h1>
 		</div>
 	</div>
 </header>
 <div class="container container-main">
 	<div class="row">
 		<div class="col-8 col-content">
-			<section class="tsd-panel tsd-comment">
-				<div class="tsd-comment tsd-typography">
-					<div class="lead">
-						<p>BatchCluster instances manage 0 or more homogenious child processes, and
-						provide the main interface for enqueing <code>Task</code>s via <code>enqueueTask</code>.</p>
-					</div>
-					<p>Given the large number of configuration options, the constructor
-						receives a single options hash. The most important of these are the
-						<code>ChildProcessFactory</code>, which specifies the factory that creates
-						ChildProcess instances, and <code>BatchProcessOptions</code>, which specifies how
-					child tasks can be verified and shut down.</p>
-				</div>
-			</section>
 			<section class="tsd-panel tsd-hierarchy">
 				<h3>Hierarchy</h3>
 				<ul class="tsd-hierarchy">
 					<li>
-						<a href="batchclusteremitter.html" class="tsd-signature-type">BatchClusterEmitter</a>
+						<span class="target">BatchClusterEmitter</span>
 						<ul class="tsd-hierarchy">
 							<li>
-								<span class="target">BatchCluster</span>
+								<a href="batchcluster.html" class="tsd-signature-type">BatchCluster</a>
 							</li>
 						</ul>
 					</li>
@@ -93,73 +80,27 @@
 				<section class="tsd-panel tsd-index-panel">
 					<div class="tsd-index-content">
 						<section class="tsd-index-section ">
-							<h3>Constructors</h3>
-							<ul class="tsd-index-list">
-								<li class="tsd-kind-constructor tsd-parent-kind-class"><a href="batchcluster.html#constructor" class="tsd-kind-icon">constructor</a></li>
-							</ul>
-						</section>
-						<section class="tsd-index-section tsd-is-inherited">
 							<h3>Properties</h3>
 							<ul class="tsd-index-list">
-								<li class="tsd-kind-property tsd-parent-kind-class tsd-is-inherited"><a href="batchcluster.html#emitter" class="tsd-kind-icon">emitter</a></li>
-							</ul>
-						</section>
-						<section class="tsd-index-section ">
-							<h3>Accessors</h3>
-							<ul class="tsd-index-list">
-								<li class="tsd-kind-get-signature tsd-parent-kind-class"><a href="batchcluster.html#ended" class="tsd-kind-icon">ended</a></li>
-								<li class="tsd-kind-get-signature tsd-parent-kind-class"><a href="batchcluster.html#internalerrorcount" class="tsd-kind-icon">internal<wbr>Error<wbr>Count</a></li>
-								<li class="tsd-kind-get-signature tsd-parent-kind-class"><a href="batchcluster.html#meantasksperproc" class="tsd-kind-icon">mean<wbr>Tasks<wbr>Per<wbr>Proc</a></li>
-								<li class="tsd-kind-get-signature tsd-parent-kind-class"><a href="batchcluster.html#pendingtasks" class="tsd-kind-icon">pending<wbr>Tasks</a></li>
-								<li class="tsd-kind-get-signature tsd-parent-kind-class"><a href="batchcluster.html#spawnedprocs" class="tsd-kind-icon">spawned<wbr>Procs</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-class"><a href="batchclusteremitter.html#emitter" class="tsd-kind-icon">emitter</a></li>
 							</ul>
 						</section>
 						<section class="tsd-index-section ">
 							<h3>Methods</h3>
 							<ul class="tsd-index-list">
-								<li class="tsd-kind-method tsd-parent-kind-class"><a href="batchcluster.html#end" class="tsd-kind-icon">end</a></li>
-								<li class="tsd-kind-method tsd-parent-kind-class tsd-has-type-parameter"><a href="batchcluster.html#enqueuetask" class="tsd-kind-icon">enqueue<wbr>Task</a></li>
-								<li class="tsd-kind-method tsd-parent-kind-class tsd-is-inherited"><a href="batchcluster.html#on" class="tsd-kind-icon">on</a></li>
-								<li class="tsd-kind-method tsd-parent-kind-class"><a href="batchcluster.html#pids" class="tsd-kind-icon">pids</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class"><a href="batchclusteremitter.html#on" class="tsd-kind-icon">on</a></li>
 							</ul>
 						</section>
 					</div>
 				</section>
 			</section>
 			<section class="tsd-panel-group tsd-member-group ">
-				<h2>Constructors</h2>
-				<section class="tsd-panel tsd-member tsd-kind-constructor tsd-parent-kind-class">
-					<a name="constructor" class="tsd-anchor"></a>
-					<h3>constructor</h3>
-					<ul class="tsd-signatures tsd-kind-constructor tsd-parent-kind-class">
-						<li class="tsd-signature tsd-kind-icon">new <wbr>Batch<wbr>Cluster<span class="tsd-signature-symbol">(</span>opts<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Partial</span><span class="tsd-signature-symbol">&lt;</span><a href="batchclusteroptions.html" class="tsd-signature-type">BatchClusterOptions</a><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol"> &amp; </span><a href="../interfaces/batchprocessoptions.html" class="tsd-signature-type">BatchProcessOptions</a><span class="tsd-signature-symbol"> &amp; </span><a href="../interfaces/childprocessfactory.html" class="tsd-signature-type">ChildProcessFactory</a><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><a href="batchcluster.html" class="tsd-signature-type">BatchCluster</a></li>
-					</ul>
-					<ul class="tsd-descriptions">
-						<li class="tsd-description">
-							<aside class="tsd-sources">
-								<ul>
-									<li>Defined in <a href="https://github.com/mceachen/batch-cluster.js/blob/master/src/BatchCluster.ts#L62">BatchCluster.ts:62</a></li>
-								</ul>
-							</aside>
-							<h4 class="tsd-parameters-title">Parameters</h4>
-							<ul class="tsd-parameters">
-								<li>
-									<h5>opts: <span class="tsd-signature-type">Partial</span><span class="tsd-signature-symbol">&lt;</span><a href="batchclusteroptions.html" class="tsd-signature-type">BatchClusterOptions</a><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol"> &amp; </span><a href="../interfaces/batchprocessoptions.html" class="tsd-signature-type">BatchProcessOptions</a><span class="tsd-signature-symbol"> &amp; </span><a href="../interfaces/childprocessfactory.html" class="tsd-signature-type">ChildProcessFactory</a></h5>
-								</li>
-							</ul>
-							<h4 class="tsd-returns-title">Returns <a href="batchcluster.html" class="tsd-signature-type">BatchCluster</a></h4>
-						</li>
-					</ul>
-				</section>
-			</section>
-			<section class="tsd-panel-group tsd-member-group tsd-is-inherited">
 				<h2>Properties</h2>
-				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class tsd-is-inherited">
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class">
 					<a name="emitter" class="tsd-anchor"></a>
 					<h3>emitter</h3>
 					<div class="tsd-signature tsd-kind-icon">emitter<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">EventEmitter</span><span class="tsd-signature-symbol"> =&nbsp;new EventEmitter()</span></div>
 					<aside class="tsd-sources">
-						<p>Inherited from <a href="batchclusteremitter.html">BatchClusterEmitter</a>.<a href="batchclusteremitter.html#emitter">emitter</a></p>
 						<ul>
 							<li>Defined in <a href="https://github.com/mceachen/batch-cluster.js/blob/master/src/BatchClusterEmitter.ts#L6">BatchClusterEmitter.ts:6</a></li>
 						</ul>
@@ -167,178 +108,11 @@
 				</section>
 			</section>
 			<section class="tsd-panel-group tsd-member-group ">
-				<h2>Accessors</h2>
-				<section class="tsd-panel tsd-member tsd-kind-get-signature tsd-parent-kind-class">
-					<a name="ended" class="tsd-anchor"></a>
-					<h3>ended</h3>
-					<ul class="tsd-signatures tsd-kind-get-signature tsd-parent-kind-class">
-						<li class="tsd-signature tsd-kind-icon"><span class="tsd-signature-symbol">get</span> ended<span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">boolean</span></li>
-					</ul>
-					<ul class="tsd-descriptions">
-						<li class="tsd-description">
-							<aside class="tsd-sources">
-								<ul>
-									<li>Defined in <a href="https://github.com/mceachen/batch-cluster.js/blob/master/src/BatchCluster.ts#L93">BatchCluster.ts:93</a></li>
-								</ul>
-							</aside>
-							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">boolean</span></h4>
-						</li>
-					</ul>
-				</section>
-				<section class="tsd-panel tsd-member tsd-kind-get-signature tsd-parent-kind-class">
-					<a name="internalerrorcount" class="tsd-anchor"></a>
-					<h3>internal<wbr>Error<wbr>Count</h3>
-					<ul class="tsd-signatures tsd-kind-get-signature tsd-parent-kind-class">
-						<li class="tsd-signature tsd-kind-icon"><span class="tsd-signature-symbol">get</span> internalErrorCount<span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span></li>
-					</ul>
-					<ul class="tsd-descriptions">
-						<li class="tsd-description">
-							<aside class="tsd-sources">
-								<ul>
-									<li>Defined in <a href="https://github.com/mceachen/batch-cluster.js/blob/master/src/BatchCluster.ts#L166">BatchCluster.ts:166</a></li>
-								</ul>
-							</aside>
-							<div class="tsd-comment tsd-typography">
-								<div class="lead">
-									<p>For integration tests:</p>
-								</div>
-							</div>
-							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">number</span></h4>
-						</li>
-					</ul>
-				</section>
-				<section class="tsd-panel tsd-member tsd-kind-get-signature tsd-parent-kind-class">
-					<a name="meantasksperproc" class="tsd-anchor"></a>
-					<h3>mean<wbr>Tasks<wbr>Per<wbr>Proc</h3>
-					<ul class="tsd-signatures tsd-kind-get-signature tsd-parent-kind-class">
-						<li class="tsd-signature tsd-kind-icon"><span class="tsd-signature-symbol">get</span> meanTasksPerProc<span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span></li>
-					</ul>
-					<ul class="tsd-descriptions">
-						<li class="tsd-description">
-							<aside class="tsd-sources">
-								<ul>
-									<li>Defined in <a href="https://github.com/mceachen/batch-cluster.js/blob/master/src/BatchCluster.ts#L155">BatchCluster.ts:155</a></li>
-								</ul>
-							</aside>
-							<div class="tsd-comment tsd-typography">
-							</div>
-							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">number</span></h4>
-							<p>the mean number of tasks completed by child processes</p>
-						</li>
-					</ul>
-				</section>
-				<section class="tsd-panel tsd-member tsd-kind-get-signature tsd-parent-kind-class">
-					<a name="pendingtasks" class="tsd-anchor"></a>
-					<h3>pending<wbr>Tasks</h3>
-					<ul class="tsd-signatures tsd-kind-get-signature tsd-parent-kind-class">
-						<li class="tsd-signature tsd-kind-icon"><span class="tsd-signature-symbol">get</span> pendingTasks<span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span></li>
-					</ul>
-					<ul class="tsd-descriptions">
-						<li class="tsd-description">
-							<aside class="tsd-sources">
-								<ul>
-									<li>Defined in <a href="https://github.com/mceachen/batch-cluster.js/blob/master/src/BatchCluster.ts#L148">BatchCluster.ts:148</a></li>
-								</ul>
-							</aside>
-							<div class="tsd-comment tsd-typography">
-							</div>
-							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">number</span></h4>
-							<p>the number of pending tasks</p>
-						</li>
-					</ul>
-				</section>
-				<section class="tsd-panel tsd-member tsd-kind-get-signature tsd-parent-kind-class">
-					<a name="spawnedprocs" class="tsd-anchor"></a>
-					<h3>spawned<wbr>Procs</h3>
-					<ul class="tsd-signatures tsd-kind-get-signature tsd-parent-kind-class">
-						<li class="tsd-signature tsd-kind-icon"><span class="tsd-signature-symbol">get</span> spawnedProcs<span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span></li>
-					</ul>
-					<ul class="tsd-descriptions">
-						<li class="tsd-description">
-							<aside class="tsd-sources">
-								<ul>
-									<li>Defined in <a href="https://github.com/mceachen/batch-cluster.js/blob/master/src/BatchCluster.ts#L159">BatchCluster.ts:159</a></li>
-								</ul>
-							</aside>
-							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">number</span></h4>
-						</li>
-					</ul>
-				</section>
-			</section>
-			<section class="tsd-panel-group tsd-member-group ">
 				<h2>Methods</h2>
 				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class">
-					<a name="end" class="tsd-anchor"></a>
-					<h3>end</h3>
-					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
-						<li class="tsd-signature tsd-kind-icon">end<span class="tsd-signature-symbol">(</span>gracefully<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">void</span><span class="tsd-signature-symbol">&gt;</span></li>
-					</ul>
-					<ul class="tsd-descriptions">
-						<li class="tsd-description">
-							<aside class="tsd-sources">
-								<ul>
-									<li>Defined in <a href="https://github.com/mceachen/batch-cluster.js/blob/master/src/BatchCluster.ts#L102">BatchCluster.ts:102</a></li>
-								</ul>
-							</aside>
-							<div class="tsd-comment tsd-typography">
-								<div class="lead">
-									<p>Shut down this instance, and all child processes.</p>
-								</div>
-							</div>
-							<h4 class="tsd-parameters-title">Parameters</h4>
-							<ul class="tsd-parameters">
-								<li>
-									<h5><span class="tsd-flag ts-flagDefault value">Default value</span> gracefully: <span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol"> =&nbsp;true</span></h5>
-									<div class="tsd-comment tsd-typography">
-										<p>should an attempt be made to finish in-flight tasks, or
-										should we force-kill child PIDs.</p>
-									</div>
-								</li>
-							</ul>
-							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">void</span><span class="tsd-signature-symbol">&gt;</span></h4>
-						</li>
-					</ul>
-				</section>
-				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class tsd-has-type-parameter">
-					<a name="enqueuetask" class="tsd-anchor"></a>
-					<h3>enqueue<wbr>Task</h3>
-					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class tsd-has-type-parameter">
-						<li class="tsd-signature tsd-kind-icon">enqueue<wbr>Task&lt;T&gt;<span class="tsd-signature-symbol">(</span>task<span class="tsd-signature-symbol">: </span><a href="task.html" class="tsd-signature-type">Task</a><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">T</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">T</span><span class="tsd-signature-symbol">&gt;</span></li>
-					</ul>
-					<ul class="tsd-descriptions">
-						<li class="tsd-description">
-							<aside class="tsd-sources">
-								<ul>
-									<li>Defined in <a href="https://github.com/mceachen/batch-cluster.js/blob/master/src/BatchCluster.ts#L135">BatchCluster.ts:135</a></li>
-								</ul>
-							</aside>
-							<div class="tsd-comment tsd-typography">
-								<div class="lead">
-									<p>Submits <code>task</code> for processing by a <code>BatchProcess</code> instance</p>
-								</div>
-							</div>
-							<h4 class="tsd-type-parameters-title">Type parameters</h4>
-							<ul class="tsd-type-parameters">
-								<li>
-									<h4>T</h4>
-								</li>
-							</ul>
-							<h4 class="tsd-parameters-title">Parameters</h4>
-							<ul class="tsd-parameters">
-								<li>
-									<h5>task: <a href="task.html" class="tsd-signature-type">Task</a><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">T</span><span class="tsd-signature-symbol">&gt;</span></h5>
-								</li>
-							</ul>
-							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">T</span><span class="tsd-signature-symbol">&gt;</span></h4>
-							<p>a Promise that is resolved or rejected once the task has been
-							attemped on an idle BatchProcess</p>
-						</li>
-					</ul>
-				</section>
-				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class tsd-is-inherited">
 					<a name="on" class="tsd-anchor"></a>
 					<h3>on</h3>
-					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class tsd-is-inherited">
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
 						<li class="tsd-signature tsd-kind-icon">on<span class="tsd-signature-symbol">(</span>event<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">"startError"</span>, listener<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">function</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
 						<li class="tsd-signature tsd-kind-icon">on<span class="tsd-signature-symbol">(</span>event<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">"taskData"</span>, listener<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">function</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
 						<li class="tsd-signature tsd-kind-icon">on<span class="tsd-signature-symbol">(</span>event<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">"taskError"</span>, listener<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">function</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
@@ -349,7 +123,6 @@
 					<ul class="tsd-descriptions">
 						<li class="tsd-description">
 							<aside class="tsd-sources">
-								<p>Inherited from <a href="batchclusteremitter.html">BatchClusterEmitter</a>.<a href="batchclusteremitter.html#on">on</a></p>
 								<ul>
 									<li>Defined in <a href="https://github.com/mceachen/batch-cluster.js/blob/master/src/BatchClusterEmitter.ts#L11">BatchClusterEmitter.ts:11</a></li>
 								</ul>
@@ -390,7 +163,6 @@
 						</li>
 						<li class="tsd-description">
 							<aside class="tsd-sources">
-								<p>Inherited from <a href="batchclusteremitter.html">BatchClusterEmitter</a>.<a href="batchclusteremitter.html#on">on</a></p>
 								<ul>
 									<li>Defined in <a href="https://github.com/mceachen/batch-cluster.js/blob/master/src/BatchClusterEmitter.ts#L17">BatchClusterEmitter.ts:17</a></li>
 								</ul>
@@ -435,7 +207,6 @@
 						</li>
 						<li class="tsd-description">
 							<aside class="tsd-sources">
-								<p>Inherited from <a href="batchclusteremitter.html">BatchClusterEmitter</a>.<a href="batchclusteremitter.html#on">on</a></p>
 								<ul>
 									<li>Defined in <a href="https://github.com/mceachen/batch-cluster.js/blob/master/src/BatchClusterEmitter.ts#L25">BatchClusterEmitter.ts:25</a></li>
 								</ul>
@@ -479,7 +250,6 @@
 						</li>
 						<li class="tsd-description">
 							<aside class="tsd-sources">
-								<p>Inherited from <a href="batchclusteremitter.html">BatchClusterEmitter</a>.<a href="batchclusteremitter.html#on">on</a></p>
 								<ul>
 									<li>Defined in <a href="https://github.com/mceachen/batch-cluster.js/blob/master/src/BatchClusterEmitter.ts#L30">BatchClusterEmitter.ts:30</a></li>
 								</ul>
@@ -520,7 +290,6 @@
 						</li>
 						<li class="tsd-description">
 							<aside class="tsd-sources">
-								<p>Inherited from <a href="batchclusteremitter.html">BatchClusterEmitter</a>.<a href="batchclusteremitter.html#on">on</a></p>
 								<ul>
 									<li>Defined in <a href="https://github.com/mceachen/batch-cluster.js/blob/master/src/BatchClusterEmitter.ts#L35">BatchClusterEmitter.ts:35</a></li>
 								</ul>
@@ -555,7 +324,6 @@
 						</li>
 						<li class="tsd-description">
 							<aside class="tsd-sources">
-								<p>Inherited from <a href="batchclusteremitter.html">BatchClusterEmitter</a>.<a href="batchclusteremitter.html#on">on</a></p>
 								<ul>
 									<li>Defined in <a href="https://github.com/mceachen/batch-cluster.js/blob/master/src/BatchClusterEmitter.ts#L41">BatchClusterEmitter.ts:41</a></li>
 								</ul>
@@ -591,29 +359,6 @@
 						</li>
 					</ul>
 				</section>
-				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class">
-					<a name="pids" class="tsd-anchor"></a>
-					<h3>pids</h3>
-					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
-						<li class="tsd-signature tsd-kind-icon">pids<span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol">&gt;</span></li>
-					</ul>
-					<ul class="tsd-descriptions">
-						<li class="tsd-description">
-							<aside class="tsd-sources">
-								<ul>
-									<li>Defined in <a href="https://github.com/mceachen/batch-cluster.js/blob/master/src/BatchCluster.ts#L206">BatchCluster.ts:206</a></li>
-								</ul>
-							</aside>
-							<div class="tsd-comment tsd-typography">
-								<div class="lead">
-									<p>Exposed only for unit tests</p>
-								</div>
-							</div>
-							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol">&gt;</span></h4>
-							<p>the spawned PIDs that are still in the process table.</p>
-						</li>
-					</ul>
-				</section>
 			</section>
 		</div>
 		<div class="col-4 col-menu menu-sticky-wrap menu-highlight">
@@ -626,51 +371,24 @@
 			</nav>
 			<nav class="tsd-navigation secondary menu-sticky">
 				<ul class="before-current">
+					<li class=" tsd-kind-class">
+						<a href="batchcluster.html" class="tsd-kind-icon">Batch<wbr>Cluster</a>
+					</li>
 				</ul>
 				<ul class="current">
 					<li class="current tsd-kind-class">
-						<a href="batchcluster.html" class="tsd-kind-icon">Batch<wbr>Cluster</a>
+						<a href="batchclusteremitter.html" class="tsd-kind-icon">Batch<wbr>Cluster<wbr>Emitter</a>
 						<ul>
-							<li class=" tsd-kind-constructor tsd-parent-kind-class">
-								<a href="batchcluster.html#constructor" class="tsd-kind-icon">constructor</a>
-							</li>
-							<li class=" tsd-kind-property tsd-parent-kind-class tsd-is-inherited">
-								<a href="batchcluster.html#emitter" class="tsd-kind-icon">emitter</a>
-							</li>
-							<li class=" tsd-kind-get-signature tsd-parent-kind-class">
-								<a href="batchcluster.html#ended" class="tsd-kind-icon">ended</a>
-							</li>
-							<li class=" tsd-kind-get-signature tsd-parent-kind-class">
-								<a href="batchcluster.html#internalerrorcount" class="tsd-kind-icon">internal<wbr>Error<wbr>Count</a>
-							</li>
-							<li class=" tsd-kind-get-signature tsd-parent-kind-class">
-								<a href="batchcluster.html#meantasksperproc" class="tsd-kind-icon">mean<wbr>Tasks<wbr>Per<wbr>Proc</a>
-							</li>
-							<li class=" tsd-kind-get-signature tsd-parent-kind-class">
-								<a href="batchcluster.html#pendingtasks" class="tsd-kind-icon">pending<wbr>Tasks</a>
-							</li>
-							<li class=" tsd-kind-get-signature tsd-parent-kind-class">
-								<a href="batchcluster.html#spawnedprocs" class="tsd-kind-icon">spawned<wbr>Procs</a>
+							<li class=" tsd-kind-property tsd-parent-kind-class">
+								<a href="batchclusteremitter.html#emitter" class="tsd-kind-icon">emitter</a>
 							</li>
 							<li class=" tsd-kind-method tsd-parent-kind-class">
-								<a href="batchcluster.html#end" class="tsd-kind-icon">end</a>
-							</li>
-							<li class=" tsd-kind-method tsd-parent-kind-class tsd-has-type-parameter">
-								<a href="batchcluster.html#enqueuetask" class="tsd-kind-icon">enqueue<wbr>Task</a>
-							</li>
-							<li class=" tsd-kind-method tsd-parent-kind-class tsd-is-inherited">
-								<a href="batchcluster.html#on" class="tsd-kind-icon">on</a>
-							</li>
-							<li class=" tsd-kind-method tsd-parent-kind-class">
-								<a href="batchcluster.html#pids" class="tsd-kind-icon">pids</a>
+								<a href="batchclusteremitter.html#on" class="tsd-kind-icon">on</a>
 							</li>
 						</ul>
 					</li>
 				</ul>
 				<ul class="after-current">
-					<li class=" tsd-kind-class">
-						<a href="batchclusteremitter.html" class="tsd-kind-icon">Batch<wbr>Cluster<wbr>Emitter</a>
-					</li>
 					<li class=" tsd-kind-class">
 						<a href="batchclusteroptions.html" class="tsd-kind-icon">Batch<wbr>Cluster<wbr>Options</a>
 					</li>

@@ -110,11 +110,15 @@
 								<li class="tsd-kind-get-signature tsd-parent-kind-class"><a href="task.html#pending" class="tsd-kind-icon">pending</a></li>
 								<li class="tsd-kind-get-signature tsd-parent-kind-class"><a href="task.html#promise" class="tsd-kind-icon">promise</a></li>
 								<li class="tsd-kind-get-signature tsd-parent-kind-class"><a href="task.html#state" class="tsd-kind-icon">state</a></li>
+								<li class="tsd-kind-get-signature tsd-parent-kind-class"><a href="task.html#stderr" class="tsd-kind-icon">stderr</a></li>
+								<li class="tsd-kind-get-signature tsd-parent-kind-class"><a href="task.html#stdout" class="tsd-kind-icon">stdout</a></li>
 							</ul>
 						</section>
 						<section class="tsd-index-section ">
 							<h3>Methods</h3>
 							<ul class="tsd-index-list">
+								<li class="tsd-kind-method tsd-parent-kind-class"><a href="task.html#onstderr" class="tsd-kind-icon">on<wbr>Stderr</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class"><a href="task.html#onstdout" class="tsd-kind-icon">on<wbr>Stdout</a></li>
 								<li class="tsd-kind-method tsd-parent-kind-class"><a href="task.html#reject" class="tsd-kind-icon">reject</a></li>
 								<li class="tsd-kind-method tsd-parent-kind-class"><a href="task.html#resolve" class="tsd-kind-icon">resolve</a></li>
 								<li class="tsd-kind-method tsd-parent-kind-class"><a href="task.html#tostring" class="tsd-kind-icon">to<wbr>String</a></li>
@@ -135,7 +139,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/mceachen/batch-cluster.js/blob/master/src/Task.ts#L11">Task.ts:11</a></li>
+									<li>Defined in <a href="https://github.com/mceachen/batch-cluster.js/blob/master/src/Task.ts#L13">Task.ts:13</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -174,7 +178,7 @@
 					<div class="tsd-signature tsd-kind-icon">command<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/mceachen/batch-cluster.js/blob/master/src/Task.ts#L19">Task.ts:19</a></li>
+							<li>Defined in <a href="https://github.com/mceachen/batch-cluster.js/blob/master/src/Task.ts#L21">Task.ts:21</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-comment tsd-typography">
@@ -190,7 +194,7 @@
 					<div class="tsd-signature tsd-kind-icon">parser<span class="tsd-signature-symbol">:</span> <a href="../interfaces/parser.html" class="tsd-signature-type">Parser</a><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">T</span><span class="tsd-signature-symbol">&gt;</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/mceachen/batch-cluster.js/blob/master/src/Task.ts#L19">Task.ts:19</a></li>
+							<li>Defined in <a href="https://github.com/mceachen/batch-cluster.js/blob/master/src/Task.ts#L21">Task.ts:21</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-comment tsd-typography">
@@ -213,7 +217,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/mceachen/batch-cluster.js/blob/master/src/Task.ts#L28">Task.ts:28</a></li>
+									<li>Defined in <a href="https://github.com/mceachen/batch-cluster.js/blob/master/src/Task.ts#L30">Task.ts:30</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">boolean</span></h4>
@@ -230,7 +234,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/mceachen/batch-cluster.js/blob/master/src/Task.ts#L24">Task.ts:24</a></li>
+									<li>Defined in <a href="https://github.com/mceachen/batch-cluster.js/blob/master/src/Task.ts#L26">Task.ts:26</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -250,7 +254,41 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/mceachen/batch-cluster.js/blob/master/src/Task.ts#L32">Task.ts:32</a></li>
+									<li>Defined in <a href="https://github.com/mceachen/batch-cluster.js/blob/master/src/Task.ts#L34">Task.ts:34</a></li>
+								</ul>
+							</aside>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">string</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-get-signature tsd-parent-kind-class">
+					<a name="stderr" class="tsd-anchor"></a>
+					<h3>stderr</h3>
+					<ul class="tsd-signatures tsd-kind-get-signature tsd-parent-kind-class">
+						<li class="tsd-signature tsd-kind-icon"><span class="tsd-signature-symbol">get</span> stderr<span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/mceachen/batch-cluster.js/blob/master/src/Task.ts#L58">Task.ts:58</a></li>
+								</ul>
+							</aside>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">string</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-get-signature tsd-parent-kind-class">
+					<a name="stdout" class="tsd-anchor"></a>
+					<h3>stdout</h3>
+					<ul class="tsd-signatures tsd-kind-get-signature tsd-parent-kind-class">
+						<li class="tsd-signature tsd-kind-icon"><span class="tsd-signature-symbol">get</span> stdout<span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/mceachen/batch-cluster.js/blob/master/src/Task.ts#L54">Task.ts:54</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">string</span></h4>
@@ -261,16 +299,62 @@
 			<section class="tsd-panel-group tsd-member-group ">
 				<h2>Methods</h2>
 				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class">
-					<a name="reject" class="tsd-anchor"></a>
-					<h3>reject</h3>
+					<a name="onstderr" class="tsd-anchor"></a>
+					<h3>on<wbr>Stderr</h3>
 					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
-						<li class="tsd-signature tsd-kind-icon">reject<span class="tsd-signature-symbol">(</span>error<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Error</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
+						<li class="tsd-signature tsd-kind-icon">on<wbr>Stderr<span class="tsd-signature-symbol">(</span>buf<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">Buffer</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
 					</ul>
 					<ul class="tsd-descriptions">
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/mceachen/batch-cluster.js/blob/master/src/Task.ts#L70">Task.ts:70</a></li>
+									<li>Defined in <a href="https://github.com/mceachen/batch-cluster.js/blob/master/src/Task.ts#L50">Task.ts:50</a></li>
+								</ul>
+							</aside>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>buf: <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">Buffer</span></h5>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class">
+					<a name="onstdout" class="tsd-anchor"></a>
+					<h3>on<wbr>Stdout</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
+						<li class="tsd-signature tsd-kind-icon">on<wbr>Stdout<span class="tsd-signature-symbol">(</span>buf<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">Buffer</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/mceachen/batch-cluster.js/blob/master/src/Task.ts#L46">Task.ts:46</a></li>
+								</ul>
+							</aside>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>buf: <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">Buffer</span></h5>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class">
+					<a name="reject" class="tsd-anchor"></a>
+					<h3>reject</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
+						<li class="tsd-signature tsd-kind-icon">reject<span class="tsd-signature-symbol">(</span>error<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Error</span>, source<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/mceachen/batch-cluster.js/blob/master/src/Task.ts#L83">Task.ts:83</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -284,6 +368,9 @@
 								<li>
 									<h5>error: <span class="tsd-signature-type">Error</span></h5>
 								</li>
+								<li>
+									<h5><span class="tsd-flag ts-flagDefault value">Default value</span> source: <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol"> =&nbsp;&quot;Task.reject()&quot;</span></h5>
+								</li>
 							</ul>
 							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
 						</li>
@@ -293,13 +380,13 @@
 					<a name="resolve" class="tsd-anchor"></a>
 					<h3>resolve</h3>
 					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
-						<li class="tsd-signature tsd-kind-icon">resolve<span class="tsd-signature-symbol">(</span>stdin<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span>, stderr<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
+						<li class="tsd-signature tsd-kind-icon">resolve<span class="tsd-signature-symbol">(</span>result<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span>, stderr<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
 					</ul>
 					<ul class="tsd-descriptions">
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/mceachen/batch-cluster.js/blob/master/src/Task.ts#L48">Task.ts:48</a></li>
+									<li>Defined in <a href="https://github.com/mceachen/batch-cluster.js/blob/master/src/Task.ts#L66">Task.ts:66</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -311,7 +398,7 @@
 							<h4 class="tsd-parameters-title">Parameters</h4>
 							<ul class="tsd-parameters">
 								<li>
-									<h5>stdin: <span class="tsd-signature-type">string</span></h5>
+									<h5>result: <span class="tsd-signature-type">string</span></h5>
 								</li>
 								<li>
 									<h5>stderr: <span class="tsd-signature-type">string</span></h5>
@@ -331,7 +418,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/mceachen/batch-cluster.js/blob/master/src/Task.ts#L40">Task.ts:40</a></li>
+									<li>Defined in <a href="https://github.com/mceachen/batch-cluster.js/blob/master/src/Task.ts#L42">Task.ts:42</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">string</span></h4>
@@ -352,6 +439,9 @@
 				<ul class="before-current">
 					<li class=" tsd-kind-class">
 						<a href="batchcluster.html" class="tsd-kind-icon">Batch<wbr>Cluster</a>
+					</li>
+					<li class=" tsd-kind-class">
+						<a href="batchclusteremitter.html" class="tsd-kind-icon">Batch<wbr>Cluster<wbr>Emitter</a>
 					</li>
 					<li class=" tsd-kind-class">
 						<a href="batchclusteroptions.html" class="tsd-kind-icon">Batch<wbr>Cluster<wbr>Options</a>
@@ -391,6 +481,18 @@
 							<li class=" tsd-kind-get-signature tsd-parent-kind-class">
 								<a href="task.html#state" class="tsd-kind-icon">state</a>
 							</li>
+							<li class=" tsd-kind-get-signature tsd-parent-kind-class">
+								<a href="task.html#stderr" class="tsd-kind-icon">stderr</a>
+							</li>
+							<li class=" tsd-kind-get-signature tsd-parent-kind-class">
+								<a href="task.html#stdout" class="tsd-kind-icon">stdout</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class">
+								<a href="task.html#onstderr" class="tsd-kind-icon">on<wbr>Stderr</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class">
+								<a href="task.html#onstdout" class="tsd-kind-icon">on<wbr>Stdout</a>
+							</li>
 							<li class=" tsd-kind-method tsd-parent-kind-class">
 								<a href="task.html#reject" class="tsd-kind-icon">reject</a>
 							</li>
@@ -420,6 +522,9 @@
 						<a href="../interfaces/parser.html" class="tsd-kind-icon">Parser</a>
 					</li>
 					<li class=" tsd-kind-type-alias">
+						<a href="../globals.html#allopts" class="tsd-kind-icon">All<wbr>Opts</a>
+					</li>
+					<li class=" tsd-kind-type-alias">
 						<a href="../globals.html#log" class="tsd-kind-icon">Log</a>
 					</li>
 					<li class=" tsd-kind-variable">
@@ -432,7 +537,19 @@
 						<a href="../globals.html#nologger" class="tsd-kind-icon">No<wbr>Logger</a>
 					</li>
 					<li class=" tsd-kind-function">
+						<a href="../globals.html#blank" class="tsd-kind-icon">blank</a>
+					</li>
+					<li class=" tsd-kind-function">
+						<a href="../globals.html#cleanerror" class="tsd-kind-icon">clean<wbr>Error</a>
+					</li>
+					<li class=" tsd-kind-function">
 						<a href="../globals.html#delay" class="tsd-kind-icon">delay</a>
+					</li>
+					<li class=" tsd-kind-function">
+						<a href="../globals.html#end" class="tsd-kind-icon">end</a>
+					</li>
+					<li class=" tsd-kind-function">
+						<a href="../globals.html#ensuresuffix" class="tsd-kind-icon">ensure<wbr>Suffix</a>
 					</li>
 					<li class=" tsd-kind-function tsd-has-type-parameter">
 						<a href="../globals.html#filterinplace" class="tsd-kind-icon">filter<wbr>InPlace</a>
@@ -462,7 +579,16 @@
 						<a href="../globals.html#setlogger" class="tsd-kind-icon">set<wbr>Logger</a>
 					</li>
 					<li class=" tsd-kind-function">
+						<a href="../globals.html#tos" class="tsd-kind-icon">toS</a>
+					</li>
+					<li class=" tsd-kind-function">
+						<a href="../globals.html#tryeach" class="tsd-kind-icon">try<wbr>Each</a>
+					</li>
+					<li class=" tsd-kind-function">
 						<a href="../globals.html#until" class="tsd-kind-icon">until</a>
+					</li>
+					<li class=" tsd-kind-function">
+						<a href="../globals.html#verifyoptions" class="tsd-kind-icon">verify<wbr>Options</a>
 					</li>
 				</ul>
 			</nav>

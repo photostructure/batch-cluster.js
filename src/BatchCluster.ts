@@ -19,6 +19,7 @@ import { pidExists } from "./Pids"
 import { Rate } from "./Rate"
 import { Task } from "./Task"
 
+export { BatchClusterOptions } from "./BatchClusterOptions"
 export { BatchProcessOptions } from "./BatchProcessOptions"
 export { Deferred } from "./Deferred"
 export * from "./Logger"

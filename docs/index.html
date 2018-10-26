@@ -64,8 +64,7 @@
 				<p><strong>Support external batch-mode tools within Node.js.</strong></p>
 				<p><a href="https://badge.fury.io/js/batch-cluster"><img src="https://badge.fury.io/js/batch-cluster.svg" alt="npm version"></a>
 					<a href="https://travis-ci.org/mceachen/batch-cluster.js"><img src="https://travis-ci.org/mceachen/batch-cluster.js.svg?branch=master" alt="Build status"></a>
-					<a href="https://ci.appveyor.com/project/mceachen/batch-cluster-js/branch/master"><img src="https://ci.appveyor.com/api/projects/status/4564x6lvc8s6a55l/branch/master?svg=true" alt="Build status"></a>
-				<img src="https://img.shields.io/badge/dependencies-0-brightgreen.svg" alt="no dependencies"></p>
+				<a href="https://ci.appveyor.com/project/mceachen/batch-cluster-js/branch/master"><img src="https://ci.appveyor.com/api/projects/status/4564x6lvc8s6a55l/branch/master?svg=true" alt="Build status"></a></p>
 				<p>Many command line tools, like
 					<a href="https://sno.phy.queensu.ca/~phil/exiftool/">ExifTool</a> and
 					<a href="http://www.graphicsmagick.org/">GraphicsMagick</a>, support running in a &quot;batch
@@ -111,7 +110,7 @@ $ npm install --save batch-cluster</code></pre>
 							can change this to your logger by using
 						<a href="/globals.html#setlogger">setLogger</a>.</p>
 					</li>
-					<li><p>Implement the <a href="https://batch-cluster.js.org/globals.html#parser">Parser</a>
+					<li><p>Implement the <a href="https://batch-cluster.js.org/interfaces/parser">Parser</a>
 						class to parse results from your child process.</p>
 					</li>
 					<li><p>Construct a <a href="https://batch-cluster.js.org/classes/task.html">Task</a> with the desired command and
@@ -141,6 +140,9 @@ $ npm install --save batch-cluster</code></pre>
 				<ul class="before-current">
 					<li class=" tsd-kind-class">
 						<a href="classes/batchcluster.html" class="tsd-kind-icon">Batch<wbr>Cluster</a>
+					</li>
+					<li class=" tsd-kind-class">
+						<a href="classes/batchclusteremitter.html" class="tsd-kind-icon">Batch<wbr>Cluster<wbr>Emitter</a>
 					</li>
 					<li class=" tsd-kind-class">
 						<a href="classes/batchclusteroptions.html" class="tsd-kind-icon">Batch<wbr>Cluster<wbr>Options</a>
@@ -176,6 +178,9 @@ $ npm install --save batch-cluster</code></pre>
 						<a href="interfaces/parser.html" class="tsd-kind-icon">Parser</a>
 					</li>
 					<li class=" tsd-kind-type-alias">
+						<a href="globals.html#allopts" class="tsd-kind-icon">All<wbr>Opts</a>
+					</li>
+					<li class=" tsd-kind-type-alias">
 						<a href="globals.html#log" class="tsd-kind-icon">Log</a>
 					</li>
 					<li class=" tsd-kind-variable">
@@ -188,7 +193,19 @@ $ npm install --save batch-cluster</code></pre>
 						<a href="globals.html#nologger" class="tsd-kind-icon">No<wbr>Logger</a>
 					</li>
 					<li class=" tsd-kind-function">
+						<a href="globals.html#blank" class="tsd-kind-icon">blank</a>
+					</li>
+					<li class=" tsd-kind-function">
+						<a href="globals.html#cleanerror" class="tsd-kind-icon">clean<wbr>Error</a>
+					</li>
+					<li class=" tsd-kind-function">
 						<a href="globals.html#delay" class="tsd-kind-icon">delay</a>
+					</li>
+					<li class=" tsd-kind-function">
+						<a href="globals.html#end" class="tsd-kind-icon">end</a>
+					</li>
+					<li class=" tsd-kind-function">
+						<a href="globals.html#ensuresuffix" class="tsd-kind-icon">ensure<wbr>Suffix</a>
 					</li>
 					<li class=" tsd-kind-function tsd-has-type-parameter">
 						<a href="globals.html#filterinplace" class="tsd-kind-icon">filter<wbr>InPlace</a>
@@ -218,7 +235,16 @@ $ npm install --save batch-cluster</code></pre>
 						<a href="globals.html#setlogger" class="tsd-kind-icon">set<wbr>Logger</a>
 					</li>
 					<li class=" tsd-kind-function">
+						<a href="globals.html#tos" class="tsd-kind-icon">toS</a>
+					</li>
+					<li class=" tsd-kind-function">
+						<a href="globals.html#tryeach" class="tsd-kind-icon">try<wbr>Each</a>
+					</li>
+					<li class=" tsd-kind-function">
 						<a href="globals.html#until" class="tsd-kind-icon">until</a>
+					</li>
+					<li class=" tsd-kind-function">
+						<a href="globals.html#verifyoptions" class="tsd-kind-icon">verify<wbr>Options</a>
 					</li>
 				</ul>
 			</nav>
