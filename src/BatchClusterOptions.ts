@@ -1,3 +1,7 @@
+import { BatchProcessOptions } from "./BatchProcessOptions"
+import { ChildProcessFactory } from "./BatchCluster"
+import { InternalBatchProcessOptions } from "./InternalBatchProcessOptions"
+import { toS, blank } from "./String"
 
 /**
  * These parameter values have somewhat sensible defaults, but can be
@@ -88,4 +92,63 @@ export class BatchClusterOptions {
    * Must be &gt;= 0. Defaults to 500ms.
    */
   readonly endGracefulWaitTimeMillis: number = 500
+}
+
+export type AllOpts = BatchClusterOptions &
+  InternalBatchProcessOptions &
+  ChildProcessFactory
+
+export function verifyOptions(
+  opts: Partial<BatchClusterOptions> & BatchProcessOptions & ChildProcessFactory
+): AllOpts {
+  function toRe(s: string | RegExp) {
+    return s instanceof RegExp
+      ? s
+      : new RegExp("^((?:[\\s\\S]*[\\n\\r]+)?)" + s + "[\\n\\r]*$")
+  }
+
+  const result = {
+    ...new BatchClusterOptions(),
+    ...opts,
+    passRE: toRe(opts.pass),
+    failRE: toRe(opts.fail)
+  }
+
+  const errors: string[] = []
+  function notBlank(fieldName: keyof AllOpts) {
+    const v = toS(result[fieldName])
+    if (blank(v)) {
+      errors.push(fieldName + " must not be blank")
+    }
+  }
+  function gte(fieldName: keyof AllOpts, value: number) {
+    const v = result[fieldName] as number
+    if (v < value) {
+      errors.push(fieldName + " must be greater than or equal to " + value)
+    }
+  }
+  notBlank("versionCommand")
+  notBlank("pass")
+  notBlank("fail")
+
+  gte("spawnTimeoutMillis", 100)
+  gte("taskTimeoutMillis", 10)
+  gte("maxTasksPerProcess", 1)
+
+  gte("maxProcs", 1)
+  gte(
+    "maxProcAgeMillis",
+    Math.max(result.spawnTimeoutMillis, result.taskTimeoutMillis)
+  )
+  gte("onIdleIntervalMillis", 0)
+  gte("endGracefulWaitTimeMillis", 0)
+  gte("maxReasonableProcessFailuresPerMinute", 0)
+
+  if (errors.length > 0) {
+    throw new Error(
+      "BatchCluster was given invalid options: " + errors.join(", ")
+    )
+  }
+
+  return result
 }
