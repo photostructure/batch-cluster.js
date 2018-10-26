@@ -282,11 +282,6 @@ export class BatchProcess {
     }
 
     if (task != null) {
-      logger().debug(this.name + ".onError(): task failed", {
-        command: task.command,
-        pid: this.pid,
-        taskCount: this.taskCount
-      })
       this.observer.onTaskError(error, task)
       if (task.pending) {
         task.reject(error)
@@ -294,7 +289,9 @@ export class BatchProcess {
         this.observer.onInternalError(
           new Error(
             this.name +
-              ".onError(): cannot reject task " +
+              ".failTask(" +
+              source +
+              "): cannot reject task " +
               task.command +
               " is it is already " +
               task.state
@@ -376,9 +373,9 @@ export class BatchProcess {
         this.observer.onInternalError(
           new Error(
             this.name +
-              ".resolveCurrentTask(): cannot resolve task " +
+              ".resolveCurrentTask(): " +
               task.command +
-              " as it is already " +
+              " is already " +
               task.state
           )
         )
