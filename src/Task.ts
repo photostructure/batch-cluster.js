@@ -9,6 +9,8 @@ import { Parser } from "./Parser"
  */
 export class Task<T> {
   private readonly d = new Deferred<T>()
+  private _stdout = ""
+  private _stderr = ""
 
   /**
    * @param {string} command is the value written to stdin to perform the given
@@ -41,19 +43,34 @@ export class Task<T> {
     return this.constructor.name + "(" + this.command + ")"
   }
 
+  onStdout(buf: string | Buffer) {
+    this._stdout += buf.toString()
+  }
+
+  onStderr(buf: string | Buffer) {
+    this._stderr += buf.toString()
+  }
+
+  get stdout() {
+    return this._stdout
+  }
+
+  get stderr() {
+    return this._stderr
+  }
+
   /**
    * This is for use by `BatchProcess` only, and will only be called when the
    * process is complete for this task's command
    */
-  resolve(stdin: string, stderr: string): void {
+  resolve(result: string, stderr: string): void {
     try {
-
-      const result = this.parser(stdin, stderr)
+      const parseResult = this.parser(result, stderr)
       logger().trace("Task.onData(): resolved", {
         command: this.command,
-        result
+        parseResult
       })
-      this.d.resolve(result)
+      this.d.resolve(parseResult)
     } catch (error) {
       this.reject(error, "Task.onData(): rejected")
     }
@@ -63,7 +80,7 @@ export class Task<T> {
    * This is for use by `BatchProcess` only, and will only be called when the
    * process has errored after N retries
    */
-  reject(error: Error, source ="Task.reject()" ): void {
+  reject(error: Error, source = "Task.reject()"): void {
     logger().warn(source, {
       cmd: this.command,
       error

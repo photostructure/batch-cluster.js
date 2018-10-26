@@ -2,23 +2,15 @@ import * as _cp from "child_process"
 
 import { until } from "./Async"
 import { logger } from "./BatchCluster"
-import { BatchClusterOptions } from "./BatchClusterOptions"
 import { BatchProcessObserver } from "./BatchProcessObserver"
-import { BatchProcessOptions } from "./BatchProcessOptions"
 import { Deferred } from "./Deferred"
 import { cleanError, tryEach } from "./Error"
+import { InternalBatchProcessOptions } from "./InternalBatchProcessOptions"
 import { map } from "./Object"
 import { kill, pidExists } from "./Pids"
 import { end } from "./Stream"
 import { ensureSuffix } from "./String"
 import { Task } from "./Task"
-
-export interface InternalBatchProcessOptions
-  extends BatchProcessOptions,
-    BatchClusterOptions {
-  readonly passRE: RegExp
-  readonly failRE: RegExp
-}
 
 /**
  * BatchProcess manages the care and feeding of a single child process.
@@ -37,12 +29,6 @@ export class BatchProcess {
    * Supports non-polling notification of process shutdown
    */
   private _exited = new Deferred<void>()
-  /**
-   * Data from stdout, to be given to _currentTask
-   */
-  private stdinBuff = ""
-  private stderrBuff = ""
-
   /**
    * Should be undefined if this instance is not currently processing a task.
    */
@@ -63,17 +49,12 @@ export class BatchProcess {
     this.proc.on("close", () => this.onExit("close"))
     this.proc.on("exit", () => this.onExit("exit"))
     this.proc.on("disconnect", () => this.onExit("disconnect"))
-
     this.proc.stdin.on("error", err => this.onError("stdin.error", err))
-
     this.proc.stdout.on("error", err => this.onError("stdout.error", err))
     this.proc.stdout.on("data", d => this.onStdout(d))
-
     this.proc.stderr.on("error", err => this.onError("stderr.error", err))
     this.proc.stderr.on("data", err => this.onStderr(err))
-
     this.startupTask = new Task(opts.versionCommand, ea => ea)
-
     this.startupTask.promise
       .then(() => logger().trace(this.name + " is ready"))
       // Prevent unhandled startup task rejections from killing node:
@@ -87,27 +68,21 @@ export class BatchProcess {
       )
     }
   }
-
   get pid(): number {
     return this.proc.pid
   }
-
   get taskCount(): number {
     return this._taskCount
   }
-
   get exited(): boolean {
     return !this._exited.pending
   }
-
   get exitedPromise(): Promise<void> {
     return this._exited.promise
   }
-
   get ready(): boolean {
     return this.currentTask == null && !this._ended && !this.startupTask.pending
   }
-
   get idle(): boolean {
     return this.currentTask == null
   }
@@ -153,11 +128,9 @@ export class BatchProcess {
     if (this._ended || this.currentTask != null) {
       this.observer.onInternalError(
         new Error(
-          this.name +
-            ".execTask(" +
-            task.command +
-            "): already working on " +
+          `${this.name}.execTask(${task.command}): already working on ${
             this.currentTask
+          }`
         )
       )
       return false
@@ -288,13 +261,9 @@ export class BatchProcess {
       } else {
         this.observer.onInternalError(
           new Error(
-            this.name +
-              ".failTask(" +
-              source +
-              "): cannot reject task " +
-              task.command +
-              " is it is already " +
-              task.state
+            `${
+              this.name
+            }.onError(${error}) cannot reject already-fulfilled task.`
           )
         )
       }
@@ -307,80 +276,66 @@ export class BatchProcess {
   }
 
   private onStderr(data: string | Buffer) {
-    const s = data == null ? "" : data.toString()
-    this.stderrBuff += s
-    if (s.trim().length == 0) return
-    const err = new Error(cleanError(s))
     if (this.currentTask != null) {
-      this.observer.onTaskError(err, this.currentTask)
+      this.currentTask.onStderr(data)
+      this.onData(this.currentTask)
     } else {
-      this.observer.onInternalError(err)
+      this.observer.onInternalError(
+        new Error("onStderr() with no current task: " + data)
+      )
     }
-    this.onData()
   }
 
   private onStdout(data: string | Buffer) {
-    logger().trace(this.name + ".onStdout(" + data.toString() + ")")
-    this.observer.onTaskData(data, this.currentTask)
-    this.stdinBuff += data.toString()
-    this.onData()
+    if (this.currentTask != null) {
+      this.observer.onTaskData(data, this.currentTask)
+      this.currentTask.onStdout(data)
+      this.onData(this.currentTask)
+    } else {
+      this.observer.onInternalError(
+        new Error("onStdout() with no current task: " + data)
+      )
+    }
   }
 
-  private onData() {
-    const pass = this.opts.passRE.exec(this.stdinBuff)
+  private onData(task: Task<any>) {
+    const pass = this.opts.passRE.exec(task.stdout)
     if (pass != null) {
-      logger().trace(this.name + " found PASS")
-      this.resolveCurrentTask(pass[1].trim(), this.stderrBuff)
-    } else {
-      const fail =
-        this.opts.failRE.exec(this.stdinBuff) ||
-        this.opts.failRE.exec(this.stderrBuff)
-      if (fail != null) {
-        this.resolveCurrentTask(this.stdinBuff, this.stderrBuff)
-      }
+      this.resolveCurrentTask(task, pass[1].trim(), task.stderr)
+      return
+    }
+    const failout = this.opts.failRE.exec(task.stdout)
+    if (failout != null) {
+      this.resolveCurrentTask(task, failout[1].trim(), task.stderr)
+      return
+    }
+    const failerr = this.opts.failRE.exec(task.stderr)
+    if (failerr != null) {
+      this.resolveCurrentTask(task, task.stdout, failerr[1].trim())
     }
   }
 
   private clearCurrentTask() {
-    if (this.currentTaskTimeout != null) {
-      clearTimeout(this.currentTaskTimeout)
-      this.currentTaskTimeout = undefined
-    }
+    map(this.currentTaskTimeout, ea => clearTimeout(ea))
+    this.currentTaskTimeout = undefined
     this.currentTask = undefined
   }
 
-  private resolveCurrentTask(result: string, stderr: string): void {
-    this.stdinBuff = ""
-    this.stderrBuff = ""
-    const task = this.currentTask
+  private resolveCurrentTask(task: Task<any>, result: string, stderr: string) {
     this.clearCurrentTask()
-    if (task == null) {
-      if (result.length > 0 && !this._ended) {
-        this.observer.onInternalError(
-          new Error(this.name + ".resolveCurrentTask(): no current task")
-        )
-      }
-      this.end(false, "resolveCurrentTask(no current task)")
+    if (task.pending) {
+      task.resolve(result, stderr)
     } else {
-      logger().trace(this.name + ".resolveCurrentTask()", {
-        task: task.command,
-        result,
-        stderr
-      })
-      if (task.pending) {
-        task.resolve(result, stderr)
-      } else {
-        this.observer.onInternalError(
-          new Error(
-            this.name +
-              ".resolveCurrentTask(): " +
-              task.command +
-              " is already " +
-              task.state
-          )
+      this.observer.onInternalError(
+        new Error(
+          this.name +
+            ".resolveCurrentTask(): " +
+            task.command +
+            " is already " +
+            task.state
         )
-      }
-      this.observer.onIdle()
+      )
     }
+    this.observer.onIdle()
   }
 }
