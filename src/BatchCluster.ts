@@ -5,17 +5,18 @@ import { clearInterval, setInterval } from "timers"
 
 import { filterInPlace } from "./Array"
 import { serial } from "./Async"
-import {
-  BatchProcess,
-  BatchProcessObserver,
-  InternalBatchProcessOptions
-} from "./BatchProcess"
+import { BatchClusterOptions } from "./BatchClusterOptions"
+import { BatchProcess, InternalBatchProcessOptions } from "./BatchProcess"
+import { BatchProcessObserver } from "./BatchProcessObserver"
+import { BatchProcessOptions } from "./BatchProcessOptions"
 import { logger } from "./Logger"
 import { Mean } from "./Mean"
 import { pidExists } from "./Pids"
 import { Rate } from "./Rate"
+import { blank, toS } from "./String"
 import { Task } from "./Task"
 
+export { BatchProcessOptions } from "./BatchProcessOptions"
 export { Deferred } from "./Deferred"
 export * from "./Logger"
 export { Parser } from "./Parser"
@@ -32,132 +33,6 @@ export interface ChildProcessFactory {
    * appropriate.
    */
   readonly processFactory: () => ChildProcess
-}
-
-/**
- * `BatchProcessOptions` have no reasonable defaults, as they are specific
- * to the API of the command that BatchCluster is spawning.
- *
- * All fields must be set.
- */
-export interface BatchProcessOptions {
-  /**
-   * Low-overhead command to verify the child batch process has started.
-   * Will be invoked immediately after spawn. This command must return
-   * before any tasks will be given to a given process.
-   */
-  versionCommand: string
-
-  /**
-   * Expected text to print if a command passes. Cannot be blank. Strings will
-   * be interpreted as a regular expression fragment.
-   */
-  pass: string | RegExp
-
-  /**
-   * Expected text to print if a command fails. Cannot be blank. Strings will be
-   * interpreted as a regular expression fragment.
-   */
-  fail: string | RegExp
-
-  /**
-   * Command to end the child batch process. If not provided, stdin will be
-   * closed to signal to the child process that it may terminate, and if it
-   * does not shut down within `endGracefulWaitTimeMillis`, it will be
-   * SIGHUP'ed.
-   */
-  exitCommand?: string
-}
-
-/**
- * These parameter values have somewhat sensible defaults, but can be
- * overridden for a given BatchCluster.
- */
-export class BatchClusterOptions {
-  /**
-   * No more than `maxProcs` child processes will be run at a given time
-   * to serve pending tasks.
-   *
-   * Defaults to 1.
-   */
-  readonly maxProcs: number = 1
-
-  /**
-   * Child processes will be recycled when they reach this age.
-   *
-   * If this value is set to 0, child processes will not "age out".
-   *
-   * This value must not be less than `spawnTimeoutMillis` or
-   * `taskTimeoutMillis`.
-   *
-   * Defaults to 5 minutes.
-   */
-  readonly maxProcAgeMillis: number = 5 * 60 * 1000
-
-  /**
-   * This is the minimum interval between calls to `this.onIdle`, which
-   * runs pending tasks and shuts down old child processes.
-   *
-   * Must be &gt; 0. Defaults to 5 seconds.
-   */
-  readonly onIdleIntervalMillis: number = 5000
-
-  /**
-   * If the initial `versionCommand` fails for new spawned processes more
-   * than this rate, end this BatchCluster and throw an error, because
-   * something is terribly wrong.
-   *
-   * If this backstop didn't exist, new (failing) child processes would be
-   * created indefinitely.
-   *
-   * Must be &gt;= 0. Defaults to 10.
-   */
-  readonly maxReasonableProcessFailuresPerMinute: number = 10
-
-  /**
-   * Spawning new child processes and servicing a "version" task must not
-   * take longer than `spawnTimeoutMillis` before the process is considered
-   * failed, and need to be restarted. Be pessimistic here--windows can
-   * regularly take several seconds to spin up a process, thanks to
-   * antivirus shenanigans.
-   *
-   * Must be &gt;= 100ms. Defaults to 15 seconds.
-   */
-  readonly spawnTimeoutMillis: number = 15000
-
-  /**
-   * If commands take longer than this, presume the underlying process is dead
-   * and we should fail the task.
-   *
-   * This should be set to something on the order of seconds.
-   *
-   * Must be &gt;= 10ms. Defaults to 10 seconds.
-   */
-  readonly taskTimeoutMillis: number = 10000
-
-  /**
-   * Processes will be recycled after processing `maxTasksPerProcess`
-   * tasks. Depending on the commands and platform, batch mode commands
-   * shouldn't exhibit unduly memory leaks for at least tens if not
-   * hundreds of tasks. Setting this to a low number (like less than 10)
-   * will impact performance markedly, due to OS process start/stop
-   * maintenance. Setting this to a very high number (> 1000) may result in
-   * more memory being consumed than necessary.
-   *
-   * Must be &gt;= 0. Defaults to 500
-   */
-  readonly maxTasksPerProcess: number = 500
-
-  /**
-   * When `this.end()` is called, or Node broadcasts the `beforeExit`
-   * event, this is the milliseconds spent waiting for currently running
-   * tasks to finish before sending kill signals to child processes.
-   *
-   * Setting this value to 0 means child processes will immediately receive
-   * a kill signal to shut down. Any pending requests may be interrupted.
-   * Must be &gt;= 0. Defaults to 500ms.
-   */
-  readonly endGracefulWaitTimeMillis: number = 500
 }
 
 function verifyOptions(
@@ -178,8 +53,8 @@ function verifyOptions(
 
   const errors: string[] = []
   function notBlank(fieldName: keyof AllOpts) {
-    const v = result[fieldName] as string
-    if (v.trim().length === 0) {
+    const v = toS(result[fieldName])
+    if (blank(v)) {
       errors.push(fieldName + " must not be blank")
     }
   }

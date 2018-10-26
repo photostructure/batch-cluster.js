@@ -15,7 +15,8 @@ import {
   times
 } from "./_chai.spec"
 import { delay, until } from "./Async"
-import { BatchCluster, BatchClusterOptions } from "./BatchCluster"
+import { BatchCluster } from "./BatchCluster"
+import { BatchClusterOptions } from "./BatchClusterOptions"
 import { Task } from "./Task"
 
 describe("BatchCluster", function() {

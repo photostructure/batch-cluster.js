@@ -47,7 +47,7 @@ export class Task<T> {
    */
   resolve(stdin: string, stderr: string): void {
     try {
-      
+
       const result = this.parser(stdin, stderr)
       logger().trace("Task.onData(): resolved", {
         command: this.command,
@@ -55,11 +55,7 @@ export class Task<T> {
       })
       this.d.resolve(result)
     } catch (error) {
-      logger().warn("Task.onData(): rejected", {
-        command: this.command,
-        error
-      })
-      this.d.reject(error)
+      this.reject(error, "Task.onData(): rejected")
     }
   }
 
@@ -67,8 +63,8 @@ export class Task<T> {
    * This is for use by `BatchProcess` only, and will only be called when the
    * process has errored after N retries
    */
-  reject(error: Error): void {
-    logger().warn("Task.reject()", {
+  reject(error: Error, source ="Task.reject()" ): void {
+    logger().warn(source, {
       cmd: this.command,
       error
     })

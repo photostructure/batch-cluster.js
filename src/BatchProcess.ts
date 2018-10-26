@@ -1,27 +1,17 @@
 import * as _cp from "child_process"
-import { Writable } from "stream"
 
 import { until } from "./Async"
-import {
-  BatchClusterOptions,
-  BatchProcessOptions,
-  logger
-} from "./BatchCluster"
+import { logger } from "./BatchCluster"
+import { BatchClusterOptions } from "./BatchClusterOptions"
+import { BatchProcessObserver } from "./BatchProcessObserver"
+import { BatchProcessOptions } from "./BatchProcessOptions"
 import { Deferred } from "./Deferred"
+import { cleanError, tryEach } from "./Error"
 import { map } from "./Object"
 import { kill, pidExists } from "./Pids"
+import { end } from "./Stream"
+import { ensureSuffix } from "./String"
 import { Task } from "./Task"
-
-/**
- * This interface decouples BatchProcess from BatchCluster.
- */
-export interface BatchProcessObserver {
-  onIdle(): void
-  onTaskData(data: Buffer | string, task: Task<any> | undefined): void
-  onTaskError(error: Error, task: Task<any>): void
-  onStartError(error: Error): void
-  onInternalError(error: Error): void
-}
 
 export interface InternalBatchProcessOptions
   extends BatchProcessOptions,
@@ -395,33 +385,5 @@ export class BatchProcess {
       }
       this.observer.onIdle()
     }
-  }
-}
-
-/**
- * When we wrap errors, an Error always prefixes the toString() and stack with
- * "Error: ", so we can remove that prefix.
- */
-function cleanError(s: any): string {
-  return String(s)
-    .trim()
-    .replace(/^error: /gi, "")
-}
-
-function ensureSuffix(s: string, suffix: string): string {
-  return s.endsWith(suffix) ? s : s + suffix
-}
-
-function end(endable: Writable, contents?: string): Promise<void> {
-  return new Promise<void>(resolve => {
-    contents == null ? endable.end(resolve) : endable.end(contents, resolve)
-  })
-}
-
-function tryEach(arr: (() => void)[]) {
-  for (const f of arr) {
-    try {
-      f()
-    } catch (_) {}
   }
 }
