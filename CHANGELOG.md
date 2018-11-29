@@ -2,7 +2,7 @@
 
 ## Versioning
 
-Yeah, it's just [Semver](http://semver.org/).
+See [Semver](http://semver.org/).
 
 ### The `MAJOR` or `API` version is incremented for
 
@@ -16,6 +16,11 @@ Yeah, it's just [Semver](http://semver.org/).
 
 - 🐞 Backwards-compatible bug fixes
 - 📦 Minor packaging changes
+
+## v5.0.1
+
+- 📦 Update deps
+- 📦 re-run prettier
 
 ## v5.0.0
 

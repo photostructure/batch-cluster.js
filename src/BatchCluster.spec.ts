@@ -309,13 +309,15 @@ describe("BatchCluster", function() {
 
     let bc: BatchCluster
 
-    beforeEach(() =>
-      (bc = listen(
-        new BatchCluster({
-          ...opts,
-          processFactory
-        })
-      )))
+    beforeEach(
+      () =>
+        (bc = listen(
+          new BatchCluster({
+            ...opts,
+            processFactory
+          })
+        ))
+    )
 
     afterEach(async () => {
       expect(await shutdown(bc)).to.be.true

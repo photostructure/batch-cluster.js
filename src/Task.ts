@@ -35,8 +35,8 @@ export class Task<T> {
     return this.d.pending
       ? "pending"
       : this.d.fulfilled
-        ? "resolved"
-        : "rejected"
+      ? "resolved"
+      : "rejected"
   }
 
   toString() {
