@@ -2,9 +2,12 @@
 
 **Support external batch-mode tools within Node.js.**
 
-[![npm version](https://badge.fury.io/js/batch-cluster.svg)](https://badge.fury.io/js/batch-cluster)
+[![npm version](https://img.shields.io/npm/v/batch-cluster.svg)](https://www.npmjs.com/package/batch-cluster)
 [![Build status](https://travis-ci.org/mceachen/batch-cluster.js.svg?branch=master)](https://travis-ci.org/mceachen/batch-cluster.js)
 [![Build status](https://ci.appveyor.com/api/projects/status/4564x6lvc8s6a55l/branch/master?svg=true)](https://ci.appveyor.com/project/mceachen/batch-cluster-js/branch/master)
+[![GitHub issues](https://img.shields.io/github/issues/mceachen/batch-cluster.js.svg)](https://github.com/mceachen/batch-cluster.js/issues)
+[![Language grade: JavaScript](https://img.shields.io/lgtm/grade/javascript/g/mceachen/batch-cluster.js.svg)](https://lgtm.com/projects/g/mceachen/batch-cluster.js/context:javascript)
+[![Known Vulnerabilities](https://snyk.io/test/github/mceachen/batch-cluster.js/badge.svg?targetFile=package.json)](https://snyk.io/test/github/mceachen/batch-cluster.js?targetFile=package.json)
 
 Many command line tools, like
 [ExifTool](https://sno.phy.queensu.ca/~phil/exiftool/) and
