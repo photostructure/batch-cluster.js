@@ -50,7 +50,7 @@ process.on("unhandledRejection", (reason: any) => {
   console.error("unhandledRejection:", reason.stack || reason)
 })
 
-export function times<T>(n: number, f: ((idx: number) => T)): T[] {
+export function times<T>(n: number, f: (idx: number) => T): T[] {
   return Array(n)
     .fill(undefined)
     .map((_, i) => f(i))
