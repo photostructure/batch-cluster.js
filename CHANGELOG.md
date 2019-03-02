@@ -17,6 +17,12 @@ See [Semver](http://semver.org/).
 - 🐞 Backwards-compatible bug fixes
 - 📦 Minor packaging changes
 
+## v5.1.0
+
+- ✨ `ChildProcessFactory` supports thunks that return either a `ChildProcess` or
+  `Promise<ChildProcess>`
+- 📦 Update deps
+
 ## v5.0.1
 
 - 📦 Update deps
