@@ -36,7 +36,7 @@ export interface ChildProcessFactory {
    * responsibility of this thunk. Error handlers will be registered as
    * appropriate.
    */
-  readonly processFactory: () => ChildProcess
+  readonly processFactory: () => ChildProcess | Promise<ChildProcess>
 }
 
 /**
@@ -254,7 +254,7 @@ export class BatchCluster extends BatchClusterEmitter {
       this._procs.length < this.opts.maxProcs
     ) {
       const proc = new BatchProcess(
-        this.opts.processFactory(),
+        await this.opts.processFactory(),
         this.opts,
         this.observer
       )
