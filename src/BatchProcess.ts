@@ -49,11 +49,17 @@ export class BatchProcess {
     this.proc.on("close", () => this.onExit("close"))
     this.proc.on("exit", () => this.onExit("exit"))
     this.proc.on("disconnect", () => this.onExit("disconnect"))
-    this.proc.stdin.on("error", err => this.onError("stdin.error", err))
-    this.proc.stdout.on("error", err => this.onError("stdout.error", err))
-    this.proc.stdout.on("data", d => this.onStdout(d))
-    this.proc.stderr.on("error", err => this.onError("stderr.error", err))
-    this.proc.stderr.on("data", err => this.onStderr(err))
+    map(this.proc.stdin, stdin => {
+      stdin.on("error", err => this.onError("stdin.error", err))
+    })
+    map(this.proc.stdout, stdout => {
+      stdout.on("error", err => this.onError("stdout.error", err))
+      stdout.on("data", d => this.onStdout(d))
+    })
+    map(this.proc.stderr, stderr => {
+      stderr.on("error", err => this.onError("stderr.error", err))
+      stderr.on("data", err => this.onStderr(err))
+    })
     this.startupTask = new Task(opts.versionCommand, ea => ea)
     this.startupTask.promise
       .then(() => logger().trace(this.name + " is ready"))
@@ -154,7 +160,8 @@ export class BatchProcess {
       )
     }
     logger().trace(this.name + ".execTask(): starting", { cmd })
-    this.proc.stdin.write(cmd)
+    // If this is null, we've got bigger problems:
+    this.proc.stdin!.write(cmd)
     return true
   }
 
@@ -174,7 +181,7 @@ export class BatchProcess {
 
     if (firstEnd) {
       const cmd = map(this.opts.exitCommand, ea => ensureSuffix(ea, "\n"))
-      if (this.proc.stdin.writable) {
+      if (this.proc.stdin && this.proc.stdin.writable) {
         await end(this.proc.stdin, cmd)
       }
     }
@@ -194,9 +201,9 @@ export class BatchProcess {
     this.clearCurrentTask()
 
     tryEach([
-      () => this.proc.stdin.end(),
-      () => this.proc.stdout.destroy(),
-      () => this.proc.stderr.destroy(),
+      () => map(this.proc.stdin, ea => ea.end()),
+      () => map(this.proc.stdout, ea => ea.destroy()),
+      () => map(this.proc.stderr, ea => ea.destroy()),
       () => this.proc.disconnect()
     ])
 

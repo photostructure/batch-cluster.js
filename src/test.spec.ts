@@ -21,7 +21,7 @@ describe("test.js", () => {
       this.child.on("error", (err: any) => {
         throw err
       })
-      this.child.stdout.on("data", (buff: any) => {
+      this.child.stdout!.on("data", (buff: any) => {
         this.output += buff.toString()
       })
     }
@@ -30,7 +30,7 @@ describe("test.js", () => {
       return
     }
     async end(): Promise<void> {
-      this.child.stdin.end(null)
+      this.child.stdin!.end(null)
       await until(() => this.running().then(ea => !ea), 1000)
       if (await this.running()) {
         console.error("Ack, I had to kill child pid " + this.child.pid)
@@ -65,13 +65,13 @@ describe("test.js", () => {
   it("results in expected output", async () => {
     const h = new Harness()
     const a = h.assertStdout("HELLO\nPASS\nworld\nPASS\nFAIL\nv1.2.3\nPASS")
-    h.child.stdin.end("upcase Hello\ndowncase World\ninvalid input\nversion\n")
+    h.child.stdin!.end("upcase Hello\ndowncase World\ninvalid input\nversion\n")
     return a
   })
 
   it("exits properly if ignoreExit is not set", async () => {
     const h = new Harness()
-    h.child.stdin.write("upcase fuzzy\nexit\n")
+    h.child.stdin!.write("upcase fuzzy\nexit\n")
     await h.untilOutput(9)
     expect(h.output).to.eql("FUZZY\nPASS\n")
     await until(() => h.notRunning(), 500)
@@ -82,7 +82,7 @@ describe("test.js", () => {
   it("kill(!force) with ignoreExit set doesn't cause the process to end", async () => {
     setIgnoreExit(true)
     const h = new Harness()
-    h.child.stdin.write("upcase fuzzy\n")
+    h.child.stdin!.write("upcase fuzzy\n")
     await h.untilOutput()
     kill(h.child.pid, false)
     await until(() => h.notRunning(), 500)
@@ -93,7 +93,7 @@ describe("test.js", () => {
   it("kill(!force) with ignoreExit unset causes the process to end", async () => {
     setIgnoreExit(false)
     const h = new Harness()
-    h.child.stdin.write("upcase fuzzy\n")
+    h.child.stdin!.write("upcase fuzzy\n")
     await h.untilOutput()
     kill(h.child.pid, true)
     await until(() => h.notRunning(), 500)
@@ -104,7 +104,7 @@ describe("test.js", () => {
   it("kill(force) even with ignoreExit set causes the process to end", async () => {
     setIgnoreExit(true)
     const h = new Harness()
-    h.child.stdin.write("upcase fuzzy\n")
+    h.child.stdin!.write("upcase fuzzy\n")
     await h.untilOutput()
     kill(h.child.pid, true)
     await until(() => h.notRunning(), 500)
@@ -115,7 +115,7 @@ describe("test.js", () => {
   it("doesn't exit if ignoreExit is set", async () => {
     setIgnoreExit(true)
     const h = new Harness()
-    h.child.stdin.write("upcase Boink\nexit\n")
+    h.child.stdin!.write("upcase Boink\nexit\n")
     await h.untilOutput("BOINK\nPASS\nignore".length)
     expect(h.output).to.eql("BOINK\nPASS\nignoreExit is set\n")
     expect(await h.running()).to.be.true
@@ -137,7 +137,7 @@ describe("test.js", () => {
     const a = h
       .assertStdout("slept 200\nPASS\nslept 201\nPASS\nslept 202\nPASS")
       .then(() => expect(Date.now() - start).to.be.gte(603))
-    h.child.stdin.end("sleep 200\nsleep 201\nsleep 202\nexit\n")
+    h.child.stdin!.end("sleep 200\nsleep 201\nsleep 202\nexit\n")
     return a
   })
 
@@ -156,7 +156,7 @@ describe("test.js", () => {
         "FAIL"
       ].join("\n")
     )
-    h.child.stdin.end("flaky .5\nflaky 0\nflaky 1\nexit\n")
+    h.child.stdin!.end("flaky .5\nflaky 0\nflaky 1\nexit\n")
     return a
   })
 })
