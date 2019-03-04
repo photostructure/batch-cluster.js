@@ -1,3 +1,4 @@
+import { platform } from "os"
 import { env } from "process"
 import { inspect } from "util"
 
@@ -28,8 +29,27 @@ describe("BatchCluster", function() {
   this.timeout(10000)
   const ErrorPrefix = "ERROR: "
 
-  // Unflake Appveyor:
-  if (env.APPVEYOR === "true") this.retries(3)
+  const defaultOpts = {
+    ...new BatchClusterOptions(),
+    maxProcs: 4, // < force concurrency
+    versionCommand: "version",
+    pass: "PASS",
+    fail: "FAIL",
+    exitCommand: "exit",
+    onIdleIntervalMillis: 250, // frequently to speed up tests
+    maxTasksPerProcess: 5, // force process churn
+    taskTimeoutMillis: 200, // so the timeout test doesn't timeout
+    maxReasonableProcessFailuresPerMinute: 2000, // this is so high because failrate is so high
+    streamFlushMillis: 15
+  }
+
+  // tslint:disable-next-line: strict-boolean-expressions
+  if (env.APPVEYOR || platform().includes("win")) {
+    this.retries(3)
+    // windows is slow:
+    defaultOpts.spawnTimeoutMillis = 2000
+    defaultOpts.streamFlushMillis = 100
+  }
 
   function runTasks(
     bc: BatchCluster,
@@ -104,20 +124,6 @@ describe("BatchCluster", function() {
     return bc
   }
 
-  const defaultOpts = Object.freeze({
-    ...new BatchClusterOptions(),
-    maxProcs: 4, // < force concurrency
-    versionCommand: "version",
-    pass: "PASS",
-    fail: "FAIL",
-    exitCommand: "exit",
-    onIdleIntervalMillis: 250, // frequently to speed up tests
-    maxTasksPerProcess: 5, // force process churn
-    spawnTimeoutMillis: 2000, // windows is slow
-    taskTimeoutMillis: 200, // so the timeout test doesn't timeout
-    maxReasonableProcessFailuresPerMinute: 2000, // this is so high because failrate is so high
-    streamFlushMillis: 20 // windows is slow
-  })
   ;["lf", "crlf"].forEach(newline =>
     [1, 4].forEach(maxProcs =>
       [false, true].forEach(ignoreExit =>
@@ -408,7 +414,8 @@ describe("BatchCluster", function() {
           maxProcs: -1,
           maxProcAgeMillis: -1,
           onIdleIntervalMillis: -1,
-          endGracefulWaitTimeMillis: -1
+          endGracefulWaitTimeMillis: -1,
+          streamFlushMillis: -1
         })
         throw new Error("expected an error due to invalid opts")
       } catch (err) {
@@ -424,7 +431,8 @@ describe("BatchCluster", function() {
           "maxProcs must be greater than or equal to 1",
           "maxProcAgeMillis must be greater than or equal to 50",
           "onIdleIntervalMillis must be greater than or equal to 0",
-          "endGracefulWaitTimeMillis must be greater than or equal to 0"
+          "endGracefulWaitTimeMillis must be greater than or equal to 0",
+          "streamFlushMillis must be greater than or equal to 0"
         ])
       }
     })
