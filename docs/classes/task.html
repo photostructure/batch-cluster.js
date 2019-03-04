@@ -354,7 +354,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/mceachen/batch-cluster.js/blob/master/src/Task.ts#L83">Task.ts:83</a></li>
+									<li>Defined in <a href="https://github.com/mceachen/batch-cluster.js/blob/master/src/Task.ts#L84">Task.ts:84</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -380,7 +380,7 @@
 					<a name="resolve" class="tsd-anchor"></a>
 					<h3>resolve</h3>
 					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
-						<li class="tsd-signature tsd-kind-icon">resolve<span class="tsd-signature-symbol">(</span>result<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span>, stderr<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
+						<li class="tsd-signature tsd-kind-icon">resolve<span class="tsd-signature-symbol">(</span>stdout<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span>, stderr<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span>, passed<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">void</span><span class="tsd-signature-symbol">&gt;</span></li>
 					</ul>
 					<ul class="tsd-descriptions">
 						<li class="tsd-description">
@@ -398,13 +398,16 @@
 							<h4 class="tsd-parameters-title">Parameters</h4>
 							<ul class="tsd-parameters">
 								<li>
-									<h5>result: <span class="tsd-signature-type">string</span></h5>
+									<h5>stdout: <span class="tsd-signature-type">string</span></h5>
 								</li>
 								<li>
 									<h5>stderr: <span class="tsd-signature-type">string</span></h5>
 								</li>
+								<li>
+									<h5>passed: <span class="tsd-signature-type">boolean</span></h5>
+								</li>
 							</ul>
-							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">void</span><span class="tsd-signature-symbol">&gt;</span></h4>
 						</li>
 					</ul>
 				</section>
@@ -437,27 +440,6 @@
 			</nav>
 			<nav class="tsd-navigation secondary menu-sticky">
 				<ul class="before-current">
-					<li class=" tsd-kind-class">
-						<a href="batchcluster.html" class="tsd-kind-icon">Batch<wbr>Cluster</a>
-					</li>
-					<li class=" tsd-kind-class">
-						<a href="batchclusteremitter.html" class="tsd-kind-icon">Batch<wbr>Cluster<wbr>Emitter</a>
-					</li>
-					<li class=" tsd-kind-class">
-						<a href="batchclusteroptions.html" class="tsd-kind-icon">Batch<wbr>Cluster<wbr>Options</a>
-					</li>
-					<li class=" tsd-kind-class">
-						<a href="batchprocess.html" class="tsd-kind-icon">Batch<wbr>Process</a>
-					</li>
-					<li class=" tsd-kind-class tsd-has-type-parameter">
-						<a href="deferred.html" class="tsd-kind-icon">Deferred</a>
-					</li>
-					<li class=" tsd-kind-class">
-						<a href="mean.html" class="tsd-kind-icon">Mean</a>
-					</li>
-					<li class=" tsd-kind-class">
-						<a href="rate.html" class="tsd-kind-icon">Rate</a>
-					</li>
 				</ul>
 				<ul class="current">
 					<li class="current tsd-kind-class tsd-has-type-parameter">
@@ -506,90 +488,6 @@
 					</li>
 				</ul>
 				<ul class="after-current">
-					<li class=" tsd-kind-interface">
-						<a href="../interfaces/batchprocessobserver.html" class="tsd-kind-icon">Batch<wbr>Process<wbr>Observer</a>
-					</li>
-					<li class=" tsd-kind-interface">
-						<a href="../interfaces/batchprocessoptions.html" class="tsd-kind-icon">Batch<wbr>Process<wbr>Options</a>
-					</li>
-					<li class=" tsd-kind-interface">
-						<a href="../interfaces/childprocessfactory.html" class="tsd-kind-icon">Child<wbr>Process<wbr>Factory</a>
-					</li>
-					<li class=" tsd-kind-interface">
-						<a href="../interfaces/internalbatchprocessoptions.html" class="tsd-kind-icon">Internal<wbr>Batch<wbr>Process<wbr>Options</a>
-					</li>
-					<li class=" tsd-kind-interface tsd-has-type-parameter">
-						<a href="../interfaces/parser.html" class="tsd-kind-icon">Parser</a>
-					</li>
-					<li class=" tsd-kind-type-alias">
-						<a href="../globals.html#allopts" class="tsd-kind-icon">All<wbr>Opts</a>
-					</li>
-					<li class=" tsd-kind-type-alias">
-						<a href="../globals.html#log" class="tsd-kind-icon">Log</a>
-					</li>
-					<li class=" tsd-kind-variable">
-						<a href="../globals.html#consolelogger" class="tsd-kind-icon">Console<wbr>Logger</a>
-					</li>
-					<li class=" tsd-kind-variable">
-						<a href="../globals.html#loglevels" class="tsd-kind-icon">Log<wbr>Levels</a>
-					</li>
-					<li class=" tsd-kind-variable">
-						<a href="../globals.html#nologger" class="tsd-kind-icon">No<wbr>Logger</a>
-					</li>
-					<li class=" tsd-kind-function">
-						<a href="../globals.html#blank" class="tsd-kind-icon">blank</a>
-					</li>
-					<li class=" tsd-kind-function">
-						<a href="../globals.html#cleanerror" class="tsd-kind-icon">clean<wbr>Error</a>
-					</li>
-					<li class=" tsd-kind-function">
-						<a href="../globals.html#delay" class="tsd-kind-icon">delay</a>
-					</li>
-					<li class=" tsd-kind-function">
-						<a href="../globals.html#end" class="tsd-kind-icon">end</a>
-					</li>
-					<li class=" tsd-kind-function">
-						<a href="../globals.html#ensuresuffix" class="tsd-kind-icon">ensure<wbr>Suffix</a>
-					</li>
-					<li class=" tsd-kind-function tsd-has-type-parameter">
-						<a href="../globals.html#filterinplace" class="tsd-kind-icon">filter<wbr>InPlace</a>
-					</li>
-					<li class=" tsd-kind-function">
-						<a href="../globals.html#kill" class="tsd-kind-icon">kill</a>
-					</li>
-					<li class=" tsd-kind-function">
-						<a href="../globals.html#logger" class="tsd-kind-icon">logger</a>
-					</li>
-					<li class=" tsd-kind-function tsd-has-type-parameter">
-						<a href="../globals.html#map" class="tsd-kind-icon">map</a>
-					</li>
-					<li class=" tsd-kind-function">
-						<a href="../globals.html#pidexists" class="tsd-kind-icon">pid<wbr>Exists</a>
-					</li>
-					<li class=" tsd-kind-function">
-						<a href="../globals.html#pids" class="tsd-kind-icon">pids</a>
-					</li>
-					<li class=" tsd-kind-function tsd-has-type-parameter">
-						<a href="../globals.html#ratelimit" class="tsd-kind-icon">ratelimit</a>
-					</li>
-					<li class=" tsd-kind-function tsd-has-type-parameter">
-						<a href="../globals.html#serial" class="tsd-kind-icon">serial</a>
-					</li>
-					<li class=" tsd-kind-function">
-						<a href="../globals.html#setlogger" class="tsd-kind-icon">set<wbr>Logger</a>
-					</li>
-					<li class=" tsd-kind-function">
-						<a href="../globals.html#tos" class="tsd-kind-icon">toS</a>
-					</li>
-					<li class=" tsd-kind-function">
-						<a href="../globals.html#tryeach" class="tsd-kind-icon">try<wbr>Each</a>
-					</li>
-					<li class=" tsd-kind-function">
-						<a href="../globals.html#until" class="tsd-kind-icon">until</a>
-					</li>
-					<li class=" tsd-kind-function">
-						<a href="../globals.html#verifyoptions" class="tsd-kind-icon">verify<wbr>Options</a>
-					</li>
 				</ul>
 			</nav>
 		</div>
