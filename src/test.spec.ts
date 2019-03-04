@@ -47,12 +47,12 @@ describe("test.js", () => {
     async assertStdout(expectedOutput: string) {
       // The OS may take a bit before the PID shows up in the process table:
       const alive = await until(() => pidExists(this.child.pid), 2000)
-      expect(alive).to.be.true
+      expect(alive).to.eql(true)
       const d = new Deferred()
       this.child.on("exit", async () => {
         try {
           expect(this.output.trim()).to.eql(expectedOutput)
-          expect(await this.running()).to.be.false
+          expect(await this.running()).to.eql(false)
           d.resolve()
         } catch (err) {
           d.reject(err)
@@ -75,7 +75,7 @@ describe("test.js", () => {
     await h.untilOutput(9)
     expect(h.output).to.eql("FUZZY\nPASS\n")
     await until(() => h.notRunning(), 500)
-    expect(await h.running()).to.be.false
+    expect(await h.running()).to.eql(false)
     return
   })
 
@@ -86,7 +86,7 @@ describe("test.js", () => {
     await h.untilOutput()
     kill(h.child.pid, false)
     await until(() => h.notRunning(), 500)
-    expect(await h.running()).to.be.true
+    expect(await h.running()).to.eql(true)
     return h.end()
   })
 
@@ -97,7 +97,7 @@ describe("test.js", () => {
     await h.untilOutput()
     kill(h.child.pid, true)
     await until(() => h.notRunning(), 500)
-    expect(await h.running()).to.be.false
+    expect(await h.running()).to.eql(false)
     return
   })
 
@@ -108,7 +108,7 @@ describe("test.js", () => {
     await h.untilOutput()
     kill(h.child.pid, true)
     await until(() => h.notRunning(), 500)
-    expect(await h.running()).to.be.false
+    expect(await h.running()).to.eql(false)
     return
   })
 
@@ -118,15 +118,15 @@ describe("test.js", () => {
     h.child.stdin!.write("upcase Boink\nexit\n")
     await h.untilOutput("BOINK\nPASS\nignore".length)
     expect(h.output).to.eql("BOINK\nPASS\nignoreExit is set\n")
-    expect(await h.running()).to.be.true
+    expect(await h.running()).to.eql(true)
     await h.end()
-    expect(await h.running()).to.be.false
+    expect(await h.running()).to.eql(false)
     return
   })
 
   it("returns a valid pid", async () => {
     const h = new Harness()
-    expect(await pidExists(h.child.pid)).to.be.true
+    expect(await pidExists(h.child.pid)).to.eql(true)
     await h.end()
     return
   })

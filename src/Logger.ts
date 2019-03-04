@@ -1,5 +1,8 @@
 import { debuglog } from "util"
 
+import { map } from "./Object"
+import { notBlank } from "./String"
+
 export type Log = (message: string, ...optionalParams: any[]) => void
 
 /**
@@ -85,8 +88,11 @@ export namespace Logger {
     const timestamped: any = {}
     LogLevels.forEach(ea => {
       const prefix = (ea + " ").substring(0, 5) + " | "
-      timestamped[ea] = (message?: any, ...optionalParams: any[]) =>
-        message != null && delegate[ea](prefix + message, ...optionalParams)
+      timestamped[ea] = (message?: any, ...optionalParams: any[]) => {
+        if (notBlank(message)) {
+          delegate[ea](prefix + message, ...optionalParams)
+        }
+      }
     })
     return timestamped
   }
@@ -94,26 +100,24 @@ export namespace Logger {
   export function withTimestamps(delegate: Logger): Logger {
     const timestamped: any = {}
     LogLevels.forEach(
-      ea =>
-        (timestamped[ea] = (message?: any, ...optionalParams: any[]) =>
-          message != null &&
-          delegate[ea](
-            new Date().toISOString() + " | " + message,
-            ...optionalParams
+      level =>
+        (timestamped[level] = (message?: any, ...optionalParams: any[]) =>
+          map(message, ea =>
+            delegate[level](
+              new Date().toISOString() + " | " + ea,
+              ...optionalParams
+            )
           ))
     )
     return timestamped
   }
 
-  export function filterLevels(
-    logger: Logger,
-    minLogLevel: keyof Logger
-  ): Logger {
+  export function filterLevels(l: Logger, minLogLevel: keyof Logger): Logger {
     const minLogLevelIndex = LogLevels.indexOf(minLogLevel)
     const filtered: any = {}
     LogLevels.forEach(
       (ea, idx) =>
-        (filtered[ea] = idx < minLogLevelIndex ? noop : logger[ea].bind(logger))
+        (filtered[ea] = idx < minLogLevelIndex ? noop : l[ea].bind(l))
     )
     return filtered
   }

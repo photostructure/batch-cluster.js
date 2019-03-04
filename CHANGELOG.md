@@ -17,6 +17,38 @@ See [Semver](http://semver.org/).
 - 🐞 Backwards-compatible bug fixes
 - 📦 Minor packaging changes
 
+## v5.2.0
+
+- 🐞 [BatchProcessOptions](https://batch-cluster.js.org/classes/batchclusteroptions.html)`.pass`
+  and `.fail` had poorly specified and implemented failure semantics. Prior
+  implementations would capture a "failed" string, but not tell the task that
+  the service returned a failure status.
+
+  Task [Parser](https://batch-cluster.js.org/interfaces/parser.html)s already
+  accept stdout and stderr, and are the "final word" in resolving or rejecting
+  [Task](https://batch-cluster.js.org/classes/task.html)s.
+
+  `v5.2.0` provides a boolean to Parser's callable indicating if the wrapped
+  service returned pass or fail, and the Parser may return a Promise now, as
+  well.
+
+  There's a new `SimpleParser` implementation you can use that fails if `stderr` is non-blank or a stream matched the `.fail` pattern.
+
+- 🐞 initial `BatchProcess` validation uses the new `SimpleParser` to verify the
+  initial `versionCommand`.
+
+- ✨ child process pids are delivered to event listeners on spawn and close. See
+  [BatchClusterEmitter](https://batch-cluster.js.org/classes/batchclusteremitter.html).
+
+- 🐞 fix "Error: end() called when not idle" by debouncing stdout and stderr
+  readers. Note that this adds latency to every task. See
+  [BatchProcessOptions](https://batch-cluster.js.org/classes/batchclusteroptions.html)'s
+  `streamFlushMillis` option, which defaults to 10 milliseconds.
+
+- 🐞 RegExp for pass and fail tokens handle newline edge cases now.
+
+- 📦 re-added tslint and delinted code.
+
 ## v5.1.0
 
 - ✨ `ChildProcessFactory` supports thunks that return either a `ChildProcess` or
@@ -30,7 +62,7 @@ See [Semver](http://semver.org/).
 
 ## v5.0.0
 
-- 💔  The `rejectTaskOnStderr` API, which was added in v4.1.0 and applied to all
+- 💔 The `rejectTaskOnStderr` API, which was added in v4.1.0 and applied to all
   tasks for a given `BatchCluster` instance, proved to be a poor decision, and
   has been removed. The `Parser` API, which is task-specific, now receives
   **both** stdin and stderr streams. Parsers then have the necessary context to

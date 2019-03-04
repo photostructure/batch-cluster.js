@@ -1,8 +1,7 @@
 #!/usr/bin/env node
 import * as _p from "process"
-import { createInterface } from "readline"
 
-import { delay } from "./Async"
+import { delay, serial } from "./Async"
 
 /**
  * This is a script written to behave similarly to ExifTool or
@@ -10,10 +9,6 @@ import { delay } from "./Async"
  *
  * The complexity comes from introducing predictable flakiness.
  */
-
-const rl = createInterface({
-  input: process.stdin
-})
 
 const newline = _p.env.newline === "crlf" ? "\r\n" : "\n"
 
@@ -33,11 +28,21 @@ if (ignoreExit) {
 }
 
 const failrate = _p.env.failrate == null ? 0 : parseFloat(_p.env.failrate!)
-const rng = _p.env.rngseed ? require("seedrandom")(_p.env.rngseed) : Math.random
+const rng =
+  _p.env.rngseed != null
+    ? require("seedrandom")(_p.env.rngseed)
+    : // tslint:disable-next-line: no-unbound-method
+      Math.random
 
 async function onLine(line: string): Promise<void> {
+  // write(`# ${_p.pid} onLine(${line.trim()})`)
   const r = rng()
   if (r < failrate) {
+    if (_p.env.unluckyfail === "1") {
+      // Make sure streams get debounced:
+      write("FAIL")
+      await delay(1)
+    }
     console.error(
       "EUNLUCKY: r: " +
         r.toFixed(2) +
@@ -46,6 +51,7 @@ async function onLine(line: string): Promise<void> {
         ", seed: " +
         _p.env.rngseed
     )
+
     return
   }
   line = line.trim()
@@ -105,16 +111,15 @@ async function onLine(line: string): Promise<void> {
         break
 
       case "stderr":
-        console.error("Error: " + tokens.join(" "))
-        // Make sure the error is received before the PASS:
-        await delay(50)
+        // force stdout to be emitted before stderr, and exercise stream
+        // debouncing:
         write("PASS")
+        await delay(1)
+        console.error("Error: " + tokens.join(" "))
         break
 
       default:
-        console.error("invalid/missing command for input", line)
-        // Make sure the error is received before the FAIL:
-        await delay(50)
+        console.error("invalid or missing command for input", line)
         write("FAIL")
     }
   } catch (err) {
@@ -124,8 +129,8 @@ async function onLine(line: string): Promise<void> {
   return
 }
 
-let prior = Promise.resolve()
+const onLineSerial = serial<void>()
 
-// Quick and dirty request serializer, but leaks Promises (as all prior promises
-// are held):
-rl.on("line", line => (prior = prior.then(() => onLine(line))))
+process.stdin
+  .pipe(require("split2")())
+  .on("data", (ea: string) => onLineSerial(() => onLine(ea)))

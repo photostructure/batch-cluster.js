@@ -1,5 +1,11 @@
+import { isFunction } from "./Object"
+
 export function blank(s: string | undefined): boolean {
-  return s == null || String(s).trim().length == 0
+  return s == null || String(s).trim().length === 0
+}
+
+export function notBlank(s: string | undefined): s is string {
+  return !blank(s)
 }
 
 export function ensureSuffix(s: string, suffix: string): string {
@@ -7,5 +13,5 @@ export function ensureSuffix(s: string, suffix: string): string {
 }
 
 export function toS(s: any): string {
-  return s == null ? "" : String(s)
+  return s == null ? "" : isFunction(s.toString) ? s.toString() : String(s)
 }

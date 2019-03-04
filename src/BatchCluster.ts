@@ -3,7 +3,7 @@ import * as _p from "process"
 import { clearInterval, setInterval } from "timers"
 
 import { filterInPlace } from "./Array"
-import { serial } from "./Async"
+import { atMostOne } from "./Async"
 import { BatchClusterEmitter } from "./BatchClusterEmitter"
 import {
   AllOpts,
@@ -15,6 +15,7 @@ import { BatchProcessObserver } from "./BatchProcessObserver"
 import { BatchProcessOptions } from "./BatchProcessOptions"
 import { logger } from "./Logger"
 import { Mean } from "./Mean"
+import { map } from "./Object"
 import { pidExists } from "./Pids"
 import { Rate } from "./Rate"
 import { Task } from "./Task"
@@ -23,7 +24,7 @@ export { BatchClusterOptions } from "./BatchClusterOptions"
 export { BatchProcessOptions } from "./BatchProcessOptions"
 export { Deferred } from "./Deferred"
 export * from "./Logger"
-export { Parser } from "./Parser"
+export { Parser, SimpleParser } from "./Parser"
 export { kill, pidExists, pids } from "./Pids"
 export { Task } from "./Task"
 
@@ -55,7 +56,7 @@ export class BatchCluster extends BatchClusterEmitter {
   private readonly observer: BatchProcessObserver
   private readonly _procs: BatchProcess[] = []
   private readonly tasks: Task<any>[] = []
-  private readonly onIdleInterval?: NodeJS.Timer
+  private onIdleInterval?: NodeJS.Timer
   private readonly startErrorRate = new Rate()
   private _spawnedProcs = 0
   private _ended = false
@@ -105,7 +106,8 @@ export class BatchCluster extends BatchClusterEmitter {
 
     if (!alreadyEnded) {
       this.emitter.emit("beforeEnd")
-      if (this.onIdleInterval) clearInterval(this.onIdleInterval)
+      map(this.onIdleInterval, clearInterval)
+      this.onIdleInterval = undefined
       _p.removeListener("beforeExit", this.beforeExitListener)
       _p.removeListener("exit", this.exitListener)
     }
@@ -176,6 +178,7 @@ export class BatchCluster extends BatchClusterEmitter {
   }
 
   private onInternalError(error: Error): void {
+    this.emitter.emit("internalError", error)
     logger().error("BatchCluster: INTERNAL ERROR: " + error)
     this._internalErrorCount++
   }
@@ -188,6 +191,7 @@ export class BatchCluster extends BatchClusterEmitter {
       this.startErrorRate.eventsPerMinute >
       this.opts.maxReasonableProcessFailuresPerMinute
     ) {
+      // tslint:disable-next-line: no-floating-promises
       this.end()
       throw new Error(
         error +
@@ -211,7 +215,7 @@ export class BatchCluster extends BatchClusterEmitter {
     return arr
   }
 
-  private readonly onIdle = serial(async () => {
+  private readonly onIdle = atMostOne(async () => {
     if (this._ended) return
     const minStart = Date.now() - this.opts.maxProcAgeMillis
     filterInPlace(this._procs, proc => {
@@ -219,31 +223,27 @@ export class BatchCluster extends BatchClusterEmitter {
       const worn = proc.taskCount >= this.opts.maxTasksPerProcess
       const broken = proc.exited
       if (proc.idle && (old || worn || broken)) {
+        // tslint:disable-next-line: no-floating-promises
         proc.end(true, old ? "old" : worn ? "worn" : "broken")
         return false
       } else {
         return true
       }
     })
-    const readyProcs = this._procs.filter(proc => proc.ready)
     const execNextTask = () => {
-      const idleProc = readyProcs.shift()
-      if (idleProc == null) return
+      const proc = this._procs.find(ea => ea.ready)
+      if (proc == null) return false
 
       const task = this.tasks.shift()
-      if (task == null) return
+      if (task == null) return false
 
-      if (!idleProc.execTask(task)) {
-        logger().warn(
-          "BatchCluster.onIdle(): execTask for " +
-            task.command +
-            " to pid " +
-            idleProc.pid +
-            " returned false, re-enqueing."
-        )
+      const submitted = proc.execTask(task)
+
+      if (!submitted) {
+        // tslint:disable-next-line: no-floating-promises
         this.enqueueTask(task)
       }
-      return true
+      return false
     }
 
     while (!this._ended && execNextTask()) {}
@@ -253,14 +253,20 @@ export class BatchCluster extends BatchClusterEmitter {
       this.tasks.length > 0 &&
       this._procs.length < this.opts.maxProcs
     ) {
-      const proc = new BatchProcess(
-        await this.opts.processFactory(),
-        this.opts,
-        this.observer
-      )
-      proc.exitedPromise.then(() => this._tasksPerProc.push(proc.taskCount))
-      this._procs.push(proc)
-      this._spawnedProcs++
+      try {
+        const child = await this.opts.processFactory()
+        const proc = new BatchProcess(child, this.opts, this.observer)
+        this.emitter.emit("childStart", child)
+        // tslint:disable-next-line: no-floating-promises
+        proc.exitedPromise.then(() => {
+          this._tasksPerProc.push(proc.taskCount)
+          this.emitter.emit("childExit", child)
+        })
+        this._procs.push(proc)
+        this._spawnedProcs++
+      } catch (err) {
+        this.emitter.emit("startError", err)
+      }
     }
     return
   })

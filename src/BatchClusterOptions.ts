@@ -92,21 +92,32 @@ export class BatchClusterOptions {
    * Must be &gt;= 0. Defaults to 500ms.
    */
   readonly endGracefulWaitTimeMillis: number = 500
+
+  /**
+   * When a task sees a "pass" or "fail" from either stdout or stderr, it needs
+   * to wait for the other stream to finish flushing to ensure the task's Parser
+   * sees the entire relevant stream contents. A larger number may be required
+   * for slower computers.
+   *
+   * Note that this puts a hard lower limit on task latency. You don't want to
+   * set this to a large number.
+   */
+  readonly streamFlushMillis: number = 10
 }
 
 export type AllOpts = BatchClusterOptions &
   InternalBatchProcessOptions &
   ChildProcessFactory
 
+function toRe(s: string | RegExp) {
+  return s instanceof RegExp
+    ? s
+    : new RegExp("^(?:(.*)(?:\\r?\\n))?" + s + "(?:\\r?\\n)?$", "s")
+}
+
 export function verifyOptions(
   opts: Partial<BatchClusterOptions> & BatchProcessOptions & ChildProcessFactory
 ): AllOpts {
-  function toRe(s: string | RegExp) {
-    return s instanceof RegExp
-      ? s
-      : new RegExp("^((?:[\\s\\S]*[\\n\\r]+)?)" + s + "[\\n\\r]*$")
-  }
-
   const result = {
     ...new BatchClusterOptions(),
     ...opts,

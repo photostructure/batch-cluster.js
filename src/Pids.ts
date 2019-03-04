@@ -4,11 +4,12 @@ import * as _p from "process"
 
 const isWin = _os.platform().startsWith("win")
 
-/**
- * Sanitizes `n`
- */
-function sanitize(n: number) {
-  return String(parseInt(n + ""))
+function safePid(pid: number) {
+  if (typeof pid !== "number") {
+    throw new Error("invalid pid: " + JSON.stringify(pid))
+  } else {
+    return Math.floor(pid).toString()
+  }
 }
 
 /*
@@ -42,7 +43,7 @@ $ ps -p 32183
  * process table. The PID may be paused or a zombie, though.
  */
 export function pidExists(pid: number): Promise<boolean> {
-  const needle = sanitize(pid)
+  const needle = safePid(pid)
   const cmd = isWin ? "tasklist" : "ps"
   const args = isWin
     ? // NoHeader, FOrmat CSV, FIlter on pid:
@@ -77,7 +78,7 @@ export function pids(): Promise<number[]> {
       isWin ? "tasklist" : "ps",
       isWin ? ["/NH", "/FO", "CSV"] : ["-e"],
       (error: Error | null, stdout: string, stderr: string) => {
-        if (error) {
+        if (error != null) {
           reject(error)
         } else if (("" + stderr).trim().length > 0) {
           reject(new Error(stderr))
@@ -104,12 +105,12 @@ export function pids(): Promise<number[]> {
  * permissions to send the signal, the pid will be forced to shut down.
  */
 export function kill(pid: number, force: boolean = false): void {
-  if (pid == _p.pid || pid == _p.ppid) {
+  if (pid === _p.pid || pid === _p.ppid) {
     throw new Error("cannot self-terminate")
   }
 
   if (isWin) {
-    const args = ["/PID", sanitize(pid), "/T"]
+    const args = ["/PID", safePid(pid), "/T"]
     if (force) {
       args.push("/F")
     }

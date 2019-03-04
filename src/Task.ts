@@ -63,9 +63,9 @@ export class Task<T> {
    * This is for use by `BatchProcess` only, and will only be called when the
    * process is complete for this task's command
    */
-  resolve(result: string, stderr: string): void {
+  async resolve(stdout: string, stderr: string, passed: boolean) {
     try {
-      const parseResult = this.parser(result, stderr)
+      const parseResult = await this.parser(stdout, stderr, passed)
       logger().trace("Task.onData(): resolved", {
         command: this.command,
         parseResult
@@ -74,6 +74,7 @@ export class Task<T> {
     } catch (error) {
       this.reject(error, "Task.onData(): rejected")
     }
+    return
   }
 
   /**

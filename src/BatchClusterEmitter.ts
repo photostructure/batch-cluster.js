@@ -1,3 +1,4 @@
+import { ChildProcess } from "child_process"
 import { EventEmitter } from "events"
 
 import { Task } from "./Task"
@@ -6,9 +7,24 @@ export class BatchClusterEmitter {
   readonly emitter = new EventEmitter()
 
   /**
+   * Emitted when a child process has started
+   */
+  on(event: "childStart", listener: (childProcess: ChildProcess) => void): void
+
+  /**
+   * Emitted when a child process has exitted
+   */
+  on(event: "childExit", listener: (childProcess: ChildProcess) => void): void
+
+  /**
    * Emitted when a child process has an error when spawning
    */
   on(event: "startError", listener: (err: Error) => void): void
+
+  /**
+   * Emitted when an internal consistency check fails
+   */
+  on(event: "internalError", listener: (err: Error) => void): void
 
   /**
    * Emitted when tasks receive data, which may be partial chunks from the task

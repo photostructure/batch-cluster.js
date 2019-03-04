@@ -8,14 +8,14 @@ describe("Object", () => {
         map(null, () => {
           throw new Error("unexpected")
         })
-      ).to.be.undefined
+      ).to.eql(undefined)
     })
     it("skips if target is undefined", () => {
       expect(
         map(undefined, () => {
           throw new Error("unexpected")
         })
-      ).to.be.undefined
+      ).to.eql(undefined)
     })
     it("passes defined target to f", () => {
       expect(map(123, ea => String(ea))).to.eql("123")

@@ -1,15 +1,15 @@
 import * as _cp from "child_process"
 
-import { until } from "./Async"
+import { debounce, until } from "./Async"
 import { logger } from "./BatchCluster"
 import { BatchProcessObserver } from "./BatchProcessObserver"
 import { Deferred } from "./Deferred"
 import { cleanError, tryEach } from "./Error"
 import { InternalBatchProcessOptions } from "./InternalBatchProcessOptions"
 import { map } from "./Object"
+import { SimpleParser } from "./Parser"
 import { kill, pidExists } from "./Pids"
-import { end } from "./Stream"
-import { ensureSuffix } from "./String"
+import { ensureSuffix, toS } from "./String"
 import { Task } from "./Task"
 
 /**
@@ -28,12 +28,13 @@ export class BatchProcess {
   /**
    * Supports non-polling notification of process shutdown
    */
-  private _exited = new Deferred<void>()
+  private readonly _exited = new Deferred<void>()
   /**
    * Should be undefined if this instance is not currently processing a task.
    */
   private currentTask: Task<any> | undefined
   private currentTaskTimeout: NodeJS.Timer | undefined
+  private readonly streamDebouncer: (f: () => any) => void
   private readonly startupTask: Task<any>
 
   constructor(
@@ -49,31 +50,39 @@ export class BatchProcess {
     this.proc.on("close", () => this.onExit("close"))
     this.proc.on("exit", () => this.onExit("exit"))
     this.proc.on("disconnect", () => this.onExit("disconnect"))
-    map(this.proc.stdin, stdin => {
-      stdin.on("error", err => this.onError("stdin.error", err))
-    })
-    map(this.proc.stdout, stdout => {
-      stdout.on("error", err => this.onError("stdout.error", err))
-      stdout.on("data", d => this.onStdout(d))
-    })
+
+    const stdin = this.proc.stdin
+    if (stdin == null) throw new Error("Given proc had no stdin")
+    stdin.on("error", err => this.onError("stdin.error", err))
+
+    const stdout = this.proc.stdout
+    if (stdout == null) throw new Error("Given proc had no stdout")
+    stdout.on("error", err => this.onError("stdout.error", err))
+    stdout.on("data", d => this.onStdout(d))
+
     map(this.proc.stderr, stderr => {
       stderr.on("error", err => this.onError("stderr.error", err))
       stderr.on("data", err => this.onStderr(err))
     })
-    this.startupTask = new Task(opts.versionCommand, ea => ea)
+
+    this.streamDebouncer = debounce(opts.streamFlushMillis)
+
+    this.startupTask = new Task(opts.versionCommand, SimpleParser)
     this.startupTask.promise
-      .then(() => logger().trace(this.name + " is ready"))
       // Prevent unhandled startup task rejections from killing node:
       .catch(err => {
         logger().warn(this.name + " startup task was rejected: " + err)
       })
 
     if (!this.execTask(this.startupTask)) {
+      // This could also be considered a "start error", but if it's just an
+      // internal bug and the process starts, don't veto because there's a bug:
       this.observer.onInternalError(
         new Error(this.name + " startup task was not submitted")
       )
     }
   }
+
   get pid(): number {
     return this.proc.pid
   }
@@ -118,7 +127,7 @@ export class BatchProcess {
    * process has exited.
    */
   async ended(): Promise<boolean> {
-    return this._ended || this.notRunning()
+    return this._ended || (await this.notRunning())
   }
 
   async notEnded(): Promise<boolean> {
@@ -159,8 +168,19 @@ export class BatchProcess {
         timeoutMs
       )
     }
-    logger().trace(this.name + ".execTask(): starting", { cmd })
-    // If this is null, we've got bigger problems:
+    logger().debug(this.name + ".execTask(): starting", { cmd })
+    // tslint:disable-next-line: no-floating-promises
+    task.promise
+      .catch(() => {})
+      .then(() => {
+        if (this.currentTask === task) {
+          logger().debug(
+            this.name + ".task resolved, but currentTask wasn't cleared",
+            { task }
+          )
+          this.clearCurrentTask()
+        }
+      })
     this.proc.stdin!.write(cmd)
     return true
   }
@@ -181,16 +201,17 @@ export class BatchProcess {
 
     if (firstEnd) {
       const cmd = map(this.opts.exitCommand, ea => ensureSuffix(ea, "\n"))
-      if (this.proc.stdin && this.proc.stdin.writable) {
-        await end(this.proc.stdin, cmd)
+      if (this.proc.stdin != null && this.proc.stdin.writable) {
+        this.proc.stdin.end(cmd)
       }
     }
-    if (this.currentTask != null) {
+    if (this.currentTask != null && this.startupTask !== this.currentTask) {
       // This isn't an internal error, as this state would be expected if
       // the user calls .end() when there are pending tasks.
       logger().warn(this.name + ".end(): called while not idle", {
         source,
         gracefully,
+        firstEnd,
         cmd: this.currentTask.command
       })
       // We're ending, so there's no point in asking if this error is fatal. It is.
@@ -208,9 +229,9 @@ export class BatchProcess {
     ])
 
     if (
-      (await this.running()) &&
       gracefully &&
-      this.opts.endGracefulWaitTimeMillis > 0
+      this.opts.endGracefulWaitTimeMillis > 0 &&
+      (await this.running())
     ) {
       // Wait for the end command to take effect:
       await this.awaitNotRunning(this.opts.endGracefulWaitTimeMillis / 2)
@@ -233,11 +254,12 @@ export class BatchProcess {
 
   private onTimeout(task: Task<any>, timeoutMs: number): void {
     if (task.pending) {
+      // tslint:disable-next-line: no-floating-promises
       this.onError("timeout", new Error("waited " + timeoutMs + "ms"), task)
     }
   }
 
-  private async onError(source: string, _error: Error, task?: Task<any>) {
+  private onError(source: string, _error: Error, task?: Task<any>) {
     if (task == null) {
       task = this.currentTask
     }
@@ -248,14 +270,16 @@ export class BatchProcess {
       error
     })
 
-    if (_error.stack) {
+    if (_error.stack != null) {
       // Error stacks, if set, will not be redefined from a rethrow:
       error.stack = cleanError(_error.stack)
     }
 
     // clear the task before ending so the onExit from end() doesn't retry the task:
     this.clearCurrentTask()
-    this.end(false, "onError(" + source + ")") // no need for grace (there isn't a pending job)
+    // tslint:disable-next-line: no-floating-promises
+    this.end(false, "onError(" + source + ")")
+
     if (task === this.startupTask) {
       logger().warn(this.name + ".onError(): startup task failed: " + error)
       this.observer.onStartError(error)
@@ -278,48 +302,77 @@ export class BatchProcess {
   }
 
   private onExit(source: string) {
-    this.end(false, "onExit(" + source + ")") // no need to be graceful, just do the bookkeeping.
     this._exited.resolve()
+    // no need to be graceful, it's just for bookkeeping:
+    return this.end(false, "onExit(" + source + ")")
   }
 
   private onStderr(data: string | Buffer) {
-    if (this.currentTask != null) {
-      this.currentTask.onStderr(data)
-      this.onData(this.currentTask)
+    logger().debug("onStderr(" + this.pid + "):" + data)
+    if (data == null) return
+    const task = this.currentTask
+    if (task != null && task.pending) {
+      task.onStderr(data)
+      this.onData(task)
     } else {
       this.observer.onInternalError(
-        new Error("onStderr() with no current task: " + data)
+        new Error(
+          "onStderr(" + data + ") no pending currentTask (task: " + task + ")"
+        )
       )
     }
   }
 
   private onStdout(data: string | Buffer) {
-    if (this.currentTask != null) {
-      this.observer.onTaskData(data, this.currentTask)
-      this.currentTask.onStdout(data)
-      this.onData(this.currentTask)
+    logger().debug("onStdout(" + this.pid + "):" + data)
+    if (data == null) return
+    const task = this.currentTask
+    if (task != null && task.pending) {
+      this.observer.onTaskData(data, task)
+      task.onStdout(data)
+      this.onData(task)
     } else {
       this.observer.onInternalError(
-        new Error("onStdout() with no current task: " + data)
+        new Error(
+          "onStdout(" + data + ") no pending currentTask (task: " + task + ")"
+        )
       )
     }
   }
 
   private onData(task: Task<any>) {
+    // We might not have the final flushed contents of the streams (if we got stderr and stdout simultaneously.)
+    const ctx = {
+      stdout: task.stdout,
+      stderr: task.stderr
+    }
     const pass = this.opts.passRE.exec(task.stdout)
     if (pass != null) {
-      this.resolveCurrentTask(task, pass[1].trim(), task.stderr)
-      return
+      logger().debug("onData(" + this.pid + ") PASS", { pass, ...ctx })
+      return this.resolveCurrentTask(
+        task,
+        toS(pass[1]).trim(),
+        task.stderr,
+        true
+      )
     }
     const failout = this.opts.failRE.exec(task.stdout)
     if (failout != null) {
-      this.resolveCurrentTask(task, failout[1].trim(), task.stderr)
-      return
+      logger().debug("onData(" + this.pid + ") FAILOUT", { failout, ...ctx })
+      return this.resolveCurrentTask(
+        task,
+        toS(failout[1]).trim(),
+        task.stderr,
+        false
+      )
     }
     const failerr = this.opts.failRE.exec(task.stderr)
     if (failerr != null) {
-      this.resolveCurrentTask(task, task.stdout, failerr[1].trim())
+      logger().debug("onData(" + this.pid + ") FAILERR", { failerr, ...ctx })
+      return this.resolveCurrentTask(task, task.stdout, failerr[1], false)
     }
+    logger().debug("onData(" + this.pid + ") not finished", ctx)
+    return
   }
 
   private clearCurrentTask() {
@@ -328,21 +381,25 @@ export class BatchProcess {
     this.currentTask = undefined
   }
 
-  private resolveCurrentTask(task: Task<any>, result: string, stderr: string) {
-    this.clearCurrentTask()
-    if (task.pending) {
-      task.resolve(result, stderr)
-    } else {
-      this.observer.onInternalError(
-        new Error(
-          this.name +
-            ".resolveCurrentTask(): " +
-            task.command +
-            " is already " +
-            task.state
-        )
-      )
-    }
-    this.observer.onIdle()
+  private resolveCurrentTask(
+    task: Task<any>,
+    stdout: string,
+    stderr: string,
+    passed: boolean
+  ) {
+    this.streamDebouncer(async () => {
+      logger().debug("resolveCurrentTask()", {
+        task: String(task),
+        stdout,
+        stderr,
+        passed
+      })
+      this.clearCurrentTask()
+      // the task may have already timed out.
+      if (task.pending) {
+        await task.resolve(stdout, stderr, passed)
+      }
+      this.observer.onIdle()
+    })
   }
 }
