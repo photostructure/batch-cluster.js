@@ -97,7 +97,8 @@ export class BatchClusterOptions {
    * When a task sees a "pass" or "fail" from either stdout or stderr, it needs
    * to wait for the other stream to finish flushing to ensure the task's Parser
    * sees the entire relevant stream contents. A larger number may be required
-   * for slower computers.
+   * for slower computers to prevent internal errors due to lack of stream
+   * coercion.
    *
    * Note that this puts a hard lower limit on task latency. You don't want to
    * set this to a large number.

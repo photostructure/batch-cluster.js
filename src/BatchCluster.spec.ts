@@ -40,7 +40,7 @@ describe("BatchCluster", function() {
     maxTasksPerProcess: 5, // force process churn
     taskTimeoutMillis: 200, // so the timeout test doesn't timeout
     maxReasonableProcessFailuresPerMinute: 2000, // this is so high because failrate is so high
-    streamFlushMillis: 15
+    streamFlushMillis: 25 // ci is slow
   }
 
   // tslint:disable-next-line: strict-boolean-expressions
