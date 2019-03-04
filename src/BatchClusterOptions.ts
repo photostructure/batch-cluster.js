@@ -112,7 +112,7 @@ export type AllOpts = BatchClusterOptions &
 function toRe(s: string | RegExp) {
   return s instanceof RegExp
     ? s
-    : new RegExp("^(?:(.*)(?:\\r?\\n))?" + s + "(?:\\r?\\n)?$", "s")
+    : new RegExp("^(?:(.*)(?:\\r?\\n))?" + s + "(?:\\r?\\n)?$")
 }
 
 export function verifyOptions(
