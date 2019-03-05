@@ -1,5 +1,3 @@
-import { logger } from "./Logger"
-
 /**
  * @see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise
  */
@@ -16,9 +14,7 @@ enum State {
  */
 export class Deferred<T> {
   readonly promise: Promise<T>
-  // prettier-ignore
   private _resolve!: (value?: T) => void
-  // prettier-ignore
   private _reject!: (reason?: any) => void
   private state: State = State.pending
 
@@ -52,7 +48,6 @@ export class Deferred<T> {
 
   resolve(value?: T): boolean {
     if (!this.pending) {
-      logger().warn("Deferred: resolve when not pending", value)
       return false
     } else {
       this.state = State.fulfilled
@@ -63,7 +58,6 @@ export class Deferred<T> {
 
   reject(reason?: any): boolean {
     if (!this.pending) {
-      logger().warn("Deferred: reject when not pending", reason)
       return false
     } else {
       this.state = State.rejected

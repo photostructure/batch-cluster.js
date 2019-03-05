@@ -59,7 +59,10 @@ async function onLine(line: string): Promise<void> {
   const firstToken = tokens.shift()
 
   // support multi-line outputs:
-  const postToken = tokens.join(" ").split("<br>").join(newline)
+  const postToken = tokens
+    .join(" ")
+    .split("<br>")
+    .join(newline)
 
   try {
     switch (firstToken) {

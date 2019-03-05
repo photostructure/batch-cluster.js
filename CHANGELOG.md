@@ -17,6 +17,10 @@ See [Semver](http://semver.org/).
 - 🐞 Backwards-compatible bug fixes
 - 📦 Minor packaging changes
 
+## v5.3.1
+
+- 📦 Removed `Deferred`'s warn log messages.
+
 ## v5.3.0
 
 - 🐞 `.pass` and `.fail` regex now support multiple line outputs per task.
