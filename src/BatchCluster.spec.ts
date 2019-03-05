@@ -321,7 +321,9 @@ describe("BatchCluster", function() {
     )
   )
 
-  describe("maxProcAgeMillis", () => {
+  describe("maxProcAgeMillis", function() {
+    this.timeout(10000)
+
     const opts = {
       ...defaultOpts,
       maxProcs: 4,
