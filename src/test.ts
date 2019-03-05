@@ -35,7 +35,7 @@ const rng =
       Math.random
 
 async function onLine(line: string): Promise<void> {
-  // write(`# ${_p.pid} onLine(${line.trim()})`)
+  // write(`# ${_p.pid} onLine(${line.trim()}) (newline = ${_p.env.newline})`)
   const r = rng()
   if (r < failrate) {
     if (_p.env.unluckyfail === "1") {
@@ -57,6 +57,9 @@ async function onLine(line: string): Promise<void> {
   line = line.trim()
   const tokens = line.split(/\s+/)
   const firstToken = tokens.shift()
+
+  // support multi-line outputs:
+  const postToken = tokens.join(" ").split("<br>").join(newline)
 
   try {
     switch (firstToken) {
@@ -81,12 +84,12 @@ async function onLine(line: string): Promise<void> {
         break
 
       case "upcase":
-        write(tokens.join(" ").toUpperCase())
+        write(postToken.toUpperCase())
         write("PASS")
         break
 
       case "downcase":
-        write(tokens.join(" ").toLowerCase())
+        write(postToken.toLowerCase())
         write("PASS")
         break
 
@@ -115,7 +118,7 @@ async function onLine(line: string): Promise<void> {
         // debouncing:
         write("PASS")
         await delay(1)
-        console.error("Error: " + tokens.join(" "))
+        console.error("Error: " + postToken)
         break
 
       default:

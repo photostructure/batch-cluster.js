@@ -1,7 +1,7 @@
-import { BatchProcessOptions } from "./BatchProcessOptions"
 import { ChildProcessFactory } from "./BatchCluster"
+import { BatchProcessOptions } from "./BatchProcessOptions"
 import { InternalBatchProcessOptions } from "./InternalBatchProcessOptions"
-import { toS, blank } from "./String"
+import { blank, toS } from "./String"
 
 /**
  * These parameter values have somewhat sensible defaults, but can be
@@ -113,7 +113,7 @@ export type AllOpts = BatchClusterOptions &
 function toRe(s: string | RegExp) {
   return s instanceof RegExp
     ? s
-    : new RegExp("^(?:(.*)(?:\\r?\\n))?" + s + "(?:\\r?\\n)?$")
+    : new RegExp("^(?:([\\s\\S]*?)(?:\\r?\\n))?" + s + "(?:\\r?\\n)?$")
 }
 
 export function verifyOptions(

@@ -17,6 +17,10 @@ See [Semver](http://semver.org/).
 - 🐞 Backwards-compatible bug fixes
 - 📦 Minor packaging changes
 
+## v5.2.1
+
+- 🐞 `.pass` and `.fail` regex now support multiple line outputs per task.
+
 ## v5.2.0
 
 - 🐞 [BatchProcessOptions](https://batch-cluster.js.org/classes/batchclusteroptions.html)`.pass`

@@ -273,6 +273,28 @@ describe("BatchCluster", function() {
               )
             })
 
+            it("accepts single and multi-line responses", async () => {
+              setFailrate(0)
+              const expected: string[] = []
+              const results = await Promise.all(
+                times(15, idx => {
+                  // Make a distribution of single, double, and triple line outputs:
+                  const worlds = times(idx % 3, ea => "world " + ea)
+                  expected.push(
+                    [idx + " HELLO", ...worlds]
+                      .join("\n")
+                      .toUpperCase()
+                  )
+                  const cmd = ["upcase " + idx + " hello", ...worlds].join(
+                    "<br>"
+                  )
+                  return bc.enqueueTask(new Task(cmd, parser))
+                })
+              )
+              expect(results).to.eql(expected)
+              return
+            })
+
             it("rejects a command that results in FAIL", async function() {
               const task = new Task("invalid command", parser)
               let error: Error | undefined
