@@ -247,7 +247,7 @@
 					<div class="tsd-signature tsd-kind-icon">stream<wbr>Flush<wbr>Millis<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span><span class="tsd-signature-symbol"> =&nbsp;10</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/mceachen/batch-cluster.js/blob/master/src/BatchClusterOptions.ts#L105">BatchClusterOptions.ts:105</a></li>
+							<li>Defined in <a href="https://github.com/mceachen/batch-cluster.js/blob/master/src/BatchClusterOptions.ts#L106">BatchClusterOptions.ts:106</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-comment tsd-typography">
@@ -255,7 +255,8 @@
 							<p>When a task sees a &quot;pass&quot; or &quot;fail&quot; from either stdout or stderr, it needs
 								to wait for the other stream to finish flushing to ensure the task&#39;s Parser
 								sees the entire relevant stream contents. A larger number may be required
-							for slower computers.</p>
+								for slower computers to prevent internal errors due to lack of stream
+							coercion.</p>
 						</div>
 						<p>Note that this puts a hard lower limit on task latency. You don&#39;t want to
 						set this to a large number.</p>
