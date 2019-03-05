@@ -1,5 +1,3 @@
-import { platform } from "os"
-import { env } from "process"
 import { inspect } from "util"
 
 import {
@@ -26,7 +24,8 @@ import { toS } from "./String"
 import { Task } from "./Task"
 
 describe("BatchCluster", function() {
-  this.timeout(10000)
+  this.timeout(4000)
+  this.retries(3)
   const ErrorPrefix = "ERROR: "
 
   const defaultOpts = {
@@ -38,17 +37,10 @@ describe("BatchCluster", function() {
     exitCommand: "exit",
     onIdleIntervalMillis: 250, // frequently to speed up tests
     maxTasksPerProcess: 5, // force process churn
+    spawnTimeoutMillis: 2000,
     taskTimeoutMillis: 200, // so the timeout test doesn't timeout
     maxReasonableProcessFailuresPerMinute: 2000, // this is so high because failrate is so high
-    streamFlushMillis: 50 // ci is slow
-  }
-
-  // tslint:disable-next-line: strict-boolean-expressions
-  if (env.APPVEYOR || platform().includes("win")) {
-    this.retries(3)
-    // windows is slow:
-    defaultOpts.spawnTimeoutMillis = 2000
-    defaultOpts.streamFlushMillis = 100
+    streamFlushMillis: 100 // ci is slow
   }
 
   function runTasks(
@@ -281,9 +273,7 @@ describe("BatchCluster", function() {
                   // Make a distribution of single, double, and triple line outputs:
                   const worlds = times(idx % 3, ea => "world " + ea)
                   expected.push(
-                    [idx + " HELLO", ...worlds]
-                      .join("\n")
-                      .toUpperCase()
+                    [idx + " HELLO", ...worlds].join("\n").toUpperCase()
                   )
                   const cmd = ["upcase " + idx + " hello", ...worlds].join(
                     "<br>"
