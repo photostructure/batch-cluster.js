@@ -1,6 +1,6 @@
 {
   "name": "batch-cluster",
-  "version": "5.2.1",
+  "version": "5.2.0",
   "description": "Manage a cluster of child processes",
   "main": "dist/BatchCluster.js",
   "homepage": "https://batch-cluster.js.org/",
