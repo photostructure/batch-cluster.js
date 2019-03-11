@@ -19,7 +19,7 @@ import { delay } from "./Async"
 import { BatchCluster } from "./BatchCluster"
 import { BatchClusterOptions } from "./BatchClusterOptions"
 import { logger } from "./Logger"
-import { map } from "./Object"
+import { map, orElse } from "./Object"
 import { toS } from "./String"
 import { Task } from "./Task"
 
@@ -320,6 +320,45 @@ describe("BatchCluster", function() {
       )
     )
   )
+
+  describe("maxProcs", function() {
+    this.timeout(10000)
+    let bc: BatchCluster
+    afterEach(() => bc.end())
+    it("runs tasks in parallel", async () => {
+      setFailrate(0)
+      const maxProcs = 10
+      const iters = 30
+      const opts = {
+        ...defaultOpts,
+        taskTimeoutMillis: 1000,
+        maxProcs,
+        processFactory
+      }
+      bc = listen(new BatchCluster(opts))
+      const tasks = await Promise.all(
+        times(iters, async i => {
+          const start = Date.now()
+          const task = new Task("sleep 250", parser)
+          const result = JSON.parse(await bc.enqueueTask(task))
+          const end = Date.now()
+          return { i, start, end, ...result }
+        })
+      )
+      const pid2count = new Map<number, number>()
+      tasks.forEach(ea => {
+        const pid = ea.pid
+        const count = orElse(pid2count.get(pid), 0)
+        pid2count.set(pid, count + 1)
+      })
+      console.log(pid2count)
+      expect(pid2count.size).to.eql(maxProcs)
+      for(const [, count] of pid2count.entries()) {
+        expect(count).to.be.within(2, (iters/maxProcs) + 2)
+      }
+      expect(pid2count.size).to.eql(maxProcs)
+    })
+  })
 
   describe("maxProcAgeMillis", function() {
     this.timeout(10000)

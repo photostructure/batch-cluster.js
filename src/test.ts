@@ -99,7 +99,7 @@ async function onLine(line: string): Promise<void> {
       case "sleep":
         const millis = parseInt(tokens[0])
         await delay(millis)
-        write("slept " + millis)
+        write(JSON.stringify({ slept: millis, pid: _p.pid }))
         write("PASS")
         break
 
