@@ -321,14 +321,14 @@ describe("BatchCluster", function() {
     )
   )
 
-  describe("maxProcs", function() {
+  describe.only("maxProcs", function() {
     this.timeout(10000)
     let bc: BatchCluster
     afterEach(() => bc.end())
-    it("runs tasks in parallel", async () => {
+    it(" in parallel", async () => {
       setFailrate(0)
       const maxProcs = 10
-      const iters = 30
+      const iters = 40
       const opts = {
         ...defaultOpts,
         taskTimeoutMillis: 1000,
@@ -351,10 +351,12 @@ describe("BatchCluster", function() {
         const count = orElse(pid2count.get(pid), 0)
         pid2count.set(pid, count + 1)
       })
-      console.log(pid2count)
+      const gt = 2
+      const lt = Math.floor((iters / maxProcs) * 2)
+      console.log({ lt, gt, pid2count })
       expect(pid2count.size).to.eql(maxProcs)
-      for(const [, count] of pid2count.entries()) {
-        expect(count).to.be.within(2, (iters/maxProcs) + 2)
+      for (const [, count] of pid2count.entries()) {
+        expect(count).to.be.within(gt, lt)
       }
       expect(pid2count.size).to.eql(maxProcs)
     })
