@@ -2,7 +2,7 @@ import { ChildProcess } from "child_process"
 import * as _p from "process"
 import { clearInterval, setInterval } from "timers"
 
-import { filterInPlace } from "./Array"
+import { filterInPlace, rrFindResult } from "./Array"
 import { atMostOne } from "./Async"
 import { BatchClusterEmitter } from "./BatchClusterEmitter"
 import {
@@ -55,11 +55,13 @@ export class BatchCluster extends BatchClusterEmitter {
   private readonly opts: AllOpts
   private readonly observer: BatchProcessObserver
   private readonly _procs: BatchProcess[] = []
+  private _lastUsedProcsIdx = 0
+  private _lastSpawnedProcTime = 0
   private readonly tasks: Task<any>[] = []
   private onIdleInterval?: NodeJS.Timer
   private readonly startErrorRate = new Rate()
   private _spawnedProcs = 0
-  private _ended = false
+  private endprocs?: Promise<any>
   private _internalErrorCount = 0
 
   constructor(
@@ -92,7 +94,7 @@ export class BatchCluster extends BatchClusterEmitter {
   private readonly exitListener = () => this.end(false)
 
   get ended(): boolean {
-    return this._ended
+    return this.endprocs != null
   }
 
   /**
@@ -101,31 +103,23 @@ export class BatchCluster extends BatchClusterEmitter {
    * should we force-kill child PIDs.
    */
   async end(gracefully: boolean = true): Promise<void> {
-    const alreadyEnded = this._ended
-    this._ended = true
-
-    if (!alreadyEnded) {
+    if (this.endprocs == null) {
       this.emitter.emit("beforeEnd")
       map(this.onIdleInterval, clearInterval)
       this.onIdleInterval = undefined
       _p.removeListener("beforeExit", this.beforeExitListener)
       _p.removeListener("exit", this.exitListener)
-    }
-
-    if (!gracefully || !alreadyEnded) {
-      await Promise.all(
+      this.endprocs = Promise.all(
         this._procs.map(p =>
           p
             .end(gracefully, "BatchCluster.end()")
             .catch(err => this.emitter.emit("endError", err))
         )
-      )
+      ).then(() => this.emitter.emit("end"))
       this._procs.length = 0
     }
 
-    return this.endPromise().then(() => {
-      if (!alreadyEnded) this.emitter.emit("end")
-    })
+    return this.endprocs
   }
 
   /**
@@ -135,7 +129,7 @@ export class BatchCluster extends BatchClusterEmitter {
    * attemped on an idle BatchProcess
    */
   enqueueTask<T>(task: Task<T>): Promise<T> {
-    if (this._ended) {
+    if (this.ended) {
       task.reject(new Error("BatchCluster has ended"))
       throw new Error("Cannot enqueue task " + task.command)
     }
@@ -158,8 +152,19 @@ export class BatchCluster extends BatchClusterEmitter {
     return this._tasksPerProc.mean
   }
 
+  /**
+   * @return the total number of child processes created by this instance
+   */
   get spawnedProcs(): number {
     return this._spawnedProcs
+  }
+
+  /**
+   * @return the current number of child processes currently servicing tasks
+   */
+  get busyProcs(): number {
+    return this._procs.filter(ea => ea.taskCount > 0 && !ea.exited && !ea.idle)
+      .length
   }
 
   /**
@@ -167,14 +172,6 @@ export class BatchCluster extends BatchClusterEmitter {
    */
   get internalErrorCount(): number {
     return this._internalErrorCount
-  }
-
-  private endPromise(): Promise<void> {
-    return Promise.all(this._procs.map(p => p.exitedPromise))
-      .then(() => {})
-      .catch(err => {
-        this.emitter.emit("endError", err)
-      })
   }
 
   private onInternalError(error: Error): void {
@@ -215,59 +212,89 @@ export class BatchCluster extends BatchClusterEmitter {
     return arr
   }
 
-  private readonly onIdle = atMostOne(async () => {
-    if (this._ended) return
-    const minStart = Date.now() - this.opts.maxProcAgeMillis
-    filterInPlace(this._procs, proc => {
-      const old = proc.start < minStart && this.opts.maxProcAgeMillis > 0
-      const worn = proc.taskCount >= this.opts.maxTasksPerProcess
-      const broken = proc.exited
-      if (proc.idle && (old || worn || broken)) {
-        // tslint:disable-next-line: no-floating-promises
-        proc.end(true, old ? "old" : worn ? "worn" : "broken")
-        return false
-      } else {
-        return true
-      }
-    })
-    const execNextTask = () => {
-      const proc = this._procs.find(ea => ea.ready)
-      if (proc == null) return false
+  private onIdle() {
+    if (this.ended) return
+    this.vacuumProcs()
 
-      const task = this.tasks.shift()
-      if (task == null) return false
+    while (this.execNextTask()) {}
 
-      const submitted = proc.execTask(task)
+    // tslint:disable-next-line: no-floating-promises
+    this.maybeLaunchNewChild()
 
-      if (!submitted) {
-        // tslint:disable-next-line: no-floating-promises
-        this.enqueueTask(task)
-      }
-      return false
-    }
-
-    while (!this._ended && execNextTask()) {}
-
-    if (
-      !this._ended &&
-      this.tasks.length > 0 &&
-      this._procs.length < this.opts.maxProcs
-    ) {
-      try {
-        const child = await this.opts.processFactory()
-        const proc = new BatchProcess(child, this.opts, this.observer)
-        this.emitter.emit("childStart", child)
-        // tslint:disable-next-line: no-floating-promises
-        proc.exitedPromise.then(() => {
-          this._tasksPerProc.push(proc.taskCount)
-          this.emitter.emit("childExit", child)
-        })
-        this._procs.push(proc)
-        this._spawnedProcs++
-      } catch (err) {
-        this.emitter.emit("startError", err)
-      }
-    }
     return
+  }
+
+  private vacuumProcs() {
+    filterInPlace(this._procs, proc => {
+      // Only idle procs are eligible for deletion:
+      if (!proc.idle) return true
+
+      const old =
+        this.opts.maxProcAgeMillis > 0 &&
+        proc.start + this.opts.maxProcAgeMillis < Date.now()
+      const wornOut =
+        this.opts.maxTasksPerProcess > 0 &&
+        proc.taskCount >= this.opts.maxTasksPerProcess
+      const broken = proc.exited
+      const reap = old || wornOut || broken // # me
+      if (reap) {
+        // tslint:disable-next-line: no-floating-promises
+        proc.end(true, old ? "old" : wornOut ? "worn" : "broken")
+      }
+      return !reap
+    })
+  }
+
+  private execNextTask() {
+    if (this.ended) return false
+    const readyProc = rrFindResult(
+      this._procs,
+      this._lastUsedProcsIdx + 1,
+      ea => ea.ready
+    )
+    if (readyProc == null) return false
+
+    const task = this.tasks.shift()
+    if (task == null) return false
+
+    this._lastUsedProcsIdx = readyProc.index
+
+    const submitted = readyProc.result.execTask(task)
+    if (!submitted) {
+      // tslint:disable-next-line: no-floating-promises
+      this.enqueueTask(task)
+    }
+    return submitted
+  }
+
+  private readonly maybeLaunchNewChild = atMostOne(async () => {
+    // Minimize start time system load. Only launch one new proc at a time
+    if (
+      this.ended ||
+      this.tasks.length === 0 ||
+      this._procs.length >= this.opts.maxProcs ||
+      this._lastSpawnedProcTime >
+        Date.now() - this.opts.minDelayBetweenSpawnMillis
+    ) {
+      return
+    }
+
+    try {
+      this._lastSpawnedProcTime = Date.now()
+      const child = await this.opts.processFactory()
+      const proc = new BatchProcess(child, this.opts, this.observer)
+      this._procs.push(proc)
+      this.emitter.emit("childStart", child)
+      // tslint:disable-next-line: no-floating-promises
+      proc.exitedPromise.then(() => {
+        this._tasksPerProc.push(proc.taskCount)
+        this.emitter.emit("childExit", child)
+      })
+      this._spawnedProcs++
+      return proc
+    } catch (err) {
+      this.emitter.emit("startError", err)
+      return
+    }
   })
 }

@@ -17,6 +17,22 @@ See [Semver](http://semver.org/).
 - 🐞 Backwards-compatible bug fixes
 - 📦 Minor packaging changes
 
+## v5.4.0
+
+- ✨ "wear-leveling" for processes. Previously, only the first-spawned child
+  process would service most task requests, but that caused issues with (very)
+  long-running tasks where the other child processes would be spooled off ram,
+  and could time out when requested later.
+- 🐞 `maxProcs` is respected again. In prior builds, if tasks were enqueued all
+  at once, prior dispatch code would only spin 1 concurrent task at a time.
+- 🐞 Multiple calls to `BatchProcess.end` would result in different promise
+  resolution targets: the second call to `.end()` would resolve before the
+  first. This was fixed.
+- ✨
+  [BatchProcessOptions](https://batch-cluster.js.org/classes/batchclusteroptions.html)'s
+  `minDelayBetweenSpawnMillis` was added, to help relieve undue system load on
+  startup. It defaults to 1.5 seconds and can be disabled by setting it to 0.
+
 ## v5.3.1
 
 - 📦 Removed `Deferred`'s warn log messages.

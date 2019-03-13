@@ -60,6 +60,14 @@ export class BatchClusterOptions {
   readonly spawnTimeoutMillis: number = 15000
 
   /**
+   * If maxProcs &gt; 1, spawning new child processes to process tasks can slow
+   * down initial processing, and create unnecessary processes.
+   *
+   * Must be &gt;= 0ms. Defaults to 1.5 seconds.
+   */
+  readonly minDelayBetweenSpawnMillis: number = 1500
+
+  /**
    * If commands take longer than this, presume the underlying process is dead
    * and we should fail the task.
    *
@@ -148,10 +156,13 @@ export function verifyOptions(
   gte("maxTasksPerProcess", 1)
 
   gte("maxProcs", 1)
-  gte(
-    "maxProcAgeMillis",
-    Math.max(result.spawnTimeoutMillis, result.taskTimeoutMillis)
-  )
+  if (opts.maxProcAgeMillis !== 0) {
+    gte(
+      "maxProcAgeMillis",
+      Math.max(result.spawnTimeoutMillis, result.taskTimeoutMillis)
+    )
+  }
+  gte("minDelayBetweenSpawnMillis", 0)
   gte("onIdleIntervalMillis", 0)
   gte("endGracefulWaitTimeMillis", 0)
   gte("maxReasonableProcessFailuresPerMinute", 0)

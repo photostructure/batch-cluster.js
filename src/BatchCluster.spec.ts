@@ -23,12 +23,14 @@ import { map, orElse } from "./Object"
 import { toS } from "./String"
 import { Task } from "./Task"
 
+const tk = require("timekeeper")
+
 describe("BatchCluster", function() {
   this.timeout(4000)
-  this.retries(3)
+  this.retries(2)
   const ErrorPrefix = "ERROR: "
 
-  const defaultOpts = {
+  const DefaultOpts = {
     ...new BatchClusterOptions(),
     maxProcs: 4, // < force concurrency
     versionCommand: "version",
@@ -40,6 +42,7 @@ describe("BatchCluster", function() {
     spawnTimeoutMillis: 2000,
     taskTimeoutMillis: 200, // so the timeout test doesn't timeout
     maxReasonableProcessFailuresPerMinute: 2000, // this is so high because failrate is so high
+    minDelayBetweenSpawnMillis: 0,
     streamFlushMillis: 100 // ci is slow
   }
 
@@ -127,7 +130,7 @@ describe("BatchCluster", function() {
           function() {
             let bc: BatchCluster
             const opts = {
-              ...defaultOpts,
+              ...DefaultOpts,
               maxProcs
             }
 
@@ -321,52 +324,93 @@ describe("BatchCluster", function() {
     )
   )
 
-  describe.only("maxProcs", function() {
-    this.timeout(10000)
+  describe("maxProcs", function() {
+    const iters = 50
+    const maxProcs = 10
+    const sleepTimeMs = 250
     let bc: BatchCluster
     afterEach(() => bc.end())
-    it(" in parallel", async () => {
-      setFailrate(0)
-      const maxProcs = 10
-      const iters = 40
-      const opts = {
-        ...defaultOpts,
-        taskTimeoutMillis: 1000,
-        maxProcs,
-        processFactory
+    ;[
+      {
+        minDelayBetweenSpawnMillis: 0,
+        expectTaskMin: 3,
+        expectedTaskMax: 6,
+        expectedProcsMin: maxProcs,
+        expectedProcsMax: maxProcs + 2
+      },
+      {
+        minDelayBetweenSpawnMillis: 500,
+        expectTaskMin: 1,
+        expectedTaskMax: 13,
+        expectedProcsMin: 6,
+        expectedProcsMax: 10
       }
-      bc = listen(new BatchCluster(opts))
-      const tasks = await Promise.all(
-        times(iters, async i => {
-          const start = Date.now()
-          const task = new Task("sleep 250", parser)
-          const result = JSON.parse(await bc.enqueueTask(task))
-          const end = Date.now()
-          return { i, start, end, ...result }
-        })
-      )
-      const pid2count = new Map<number, number>()
-      tasks.forEach(ea => {
-        const pid = ea.pid
-        const count = orElse(pid2count.get(pid), 0)
-        pid2count.set(pid, count + 1)
-      })
-      const gt = 2
-      const lt = Math.floor((iters / maxProcs) * 2)
-      console.log({ lt, gt, pid2count })
-      expect(pid2count.size).to.eql(maxProcs)
-      for (const [, count] of pid2count.entries()) {
-        expect(count).to.be.within(gt, lt)
+    ].forEach(
+      ({
+        minDelayBetweenSpawnMillis,
+        expectTaskMin,
+        expectedTaskMax,
+        expectedProcsMin,
+        expectedProcsMax
+      }) => {
+        it(
+          inspect(
+            { minDelayBetweenSpawnMillis },
+            { colors: false, breakLength: 100 }
+          ),
+          async function() {
+            this.timeout(10000)
+            setFailrate(0)
+            const opts = {
+              ...DefaultOpts,
+              taskTimeoutMillis: sleepTimeMs * 4, // < don't test timeouts here
+              maxProcs,
+              maxTasksPerProcess: expectedTaskMax + 5, // < don't recycle procs for this test
+              minDelayBetweenSpawnMillis,
+              processFactory
+            }
+            bc = listen(new BatchCluster(opts))
+            const tasks = await Promise.all(
+              times(iters, async i => {
+                const start = Date.now()
+                const task = new Task("sleep " + sleepTimeMs, parser)
+                const result = JSON.parse(await bc.enqueueTask(task))
+                const end = Date.now()
+                return { i, start, end, ...result }
+              })
+            )
+            const pid2count = new Map<number, number>()
+            tasks.forEach(ea => {
+              const pid = ea.pid
+              const count = orElse(pid2count.get(pid), 0)
+              pid2count.set(pid, count + 1)
+            })
+            console.log({
+              expectTaskMin,
+              expectedTaskMax,
+              maxProcs,
+              uniqPids: pid2count.size,
+              pid2count,
+              bc_pids: await bc.pids()
+            })
+            for (const [, count] of pid2count.entries()) {
+              expect(count).to.be.within(expectTaskMin, expectedTaskMax)
+            }
+            expect(pid2count.size).to.be.within(
+              expectedProcsMin,
+              expectedProcsMax
+            )
+          }
+        )
       }
-      expect(pid2count.size).to.eql(maxProcs)
-    })
+    )
   })
 
   describe("maxProcAgeMillis", function() {
     this.timeout(10000)
 
     const opts = {
-      ...defaultOpts,
+      ...DefaultOpts,
       maxProcs: 4,
       maxTasksPerProcess: 100,
       spawnTimeoutMillis: 1000, // maxProcAge must be >= this
@@ -403,6 +447,52 @@ describe("BatchCluster", function() {
     })
   })
 
+  describe("maxProcAgeMillis", () => {
+    let bc: BatchCluster
+
+    afterEach(() => {
+      tk.reset()
+      map(bc, ea => ea.end())
+    })
+    ;[
+      {
+        maxProcAgeMillis: 0,
+        ctx: "procs should not be recycled due to old age",
+        exp: (pidsBefore: number[], pidsAfter: number[]) =>
+          expect(pidsBefore).to.eql(pidsAfter)
+      },
+      {
+        maxProcAgeMillis: 5000,
+        ctx: "procs should be recycled due to old age",
+        exp: (pidsBefore: number[], pidsAfter: number[]) =>
+          expect(pidsBefore).to.not.have.members(pidsAfter)
+      }
+    ].forEach(({ maxProcAgeMillis, ctx, exp }) =>
+      it("(" + maxProcAgeMillis + "): " + ctx, async () => {
+        const now = Date.now()
+        tk.freeze(now)
+        setFailrate(0)
+
+        bc = listen(
+          new BatchCluster({
+            ...DefaultOpts,
+            maxProcs: 1,
+            maxProcAgeMillis,
+            processFactory
+          })
+        )
+        assertExpectedResults(await Promise.all(runTasks(bc, 2)))
+        const pidsBefore = await bc.pids()
+        tk.freeze(now + 7000)
+        assertExpectedResults(await Promise.all(runTasks(bc, 2)))
+        const pidsAfter = await bc.pids()
+        console.dir({ maxProcAgeMillis, pidsBefore, pidsAfter })
+        exp(pidsBefore, pidsAfter)
+        return
+      })
+    )
+  })
+
   describe("opts parsing", () => {
     function errToArr(err: any) {
       return err
@@ -412,12 +502,12 @@ describe("BatchCluster", function() {
     }
 
     it("requires maxProcAgeMillis to be > spawnTimeoutMillis", () => {
-      const spawnTimeoutMillis = defaultOpts.taskTimeoutMillis + 1
+      const spawnTimeoutMillis = DefaultOpts.taskTimeoutMillis + 1
       try {
         // tslint:disable-next-line: no-unused-expression
         new BatchCluster({
           processFactory,
-          ...defaultOpts,
+          ...DefaultOpts,
           spawnTimeoutMillis,
           maxProcAgeMillis: spawnTimeoutMillis - 1
         })
@@ -433,12 +523,12 @@ describe("BatchCluster", function() {
     })
 
     it("requires maxProcAgeMillis to be > taskTimeoutMillis", () => {
-      const taskTimeoutMillis = defaultOpts.spawnTimeoutMillis + 1
+      const taskTimeoutMillis = DefaultOpts.spawnTimeoutMillis + 1
       try {
         // tslint:disable-next-line: no-unused-expression
         new BatchCluster({
           processFactory,
-          ...defaultOpts,
+          ...DefaultOpts,
           taskTimeoutMillis,
           maxProcAgeMillis: taskTimeoutMillis - 1
         })
