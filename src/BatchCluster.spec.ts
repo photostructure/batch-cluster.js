@@ -334,7 +334,7 @@ describe("BatchCluster", function() {
       {
         minDelayBetweenSpawnMillis: 0,
         expectTaskMin: 3,
-        expectedTaskMax: 6,
+        expectedTaskMax: 7,
         expectedProcsMin: maxProcs,
         expectedProcsMax: maxProcs + 2
       },
