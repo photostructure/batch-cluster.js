@@ -129,6 +129,8 @@
 								<li class="tsd-kind-function"><a href="globals.html#pidexists" class="tsd-kind-icon">pid<wbr>Exists</a></li>
 								<li class="tsd-kind-function"><a href="globals.html#pids" class="tsd-kind-icon">pids</a></li>
 								<li class="tsd-kind-function tsd-has-type-parameter"><a href="globals.html#ratelimit" class="tsd-kind-icon">ratelimit</a></li>
+								<li class="tsd-kind-function tsd-has-type-parameter"><a href="globals.html#rrfind" class="tsd-kind-icon">rr<wbr>Find</a></li>
+								<li class="tsd-kind-function tsd-has-type-parameter"><a href="globals.html#rrfindresult" class="tsd-kind-icon">rr<wbr>Find<wbr>Result</a></li>
 								<li class="tsd-kind-function tsd-has-type-parameter"><a href="globals.html#serial" class="tsd-kind-icon">serial</a></li>
 								<li class="tsd-kind-function"><a href="globals.html#setlogger" class="tsd-kind-icon">set<wbr>Logger</a></li>
 								<li class="tsd-kind-function"><a href="globals.html#sortnumeric" class="tsd-kind-icon">sort<wbr>Numeric</a></li>
@@ -149,7 +151,7 @@
 					<div class="tsd-signature tsd-kind-icon">All<wbr>Opts<span class="tsd-signature-symbol">:</span> <a href="classes/batchclusteroptions.html" class="tsd-signature-type">BatchClusterOptions</a><span class="tsd-signature-symbol"> &amp; </span><a href="interfaces/internalbatchprocessoptions.html" class="tsd-signature-type">InternalBatchProcessOptions</a><span class="tsd-signature-symbol"> &amp; </span><a href="interfaces/childprocessfactory.html" class="tsd-signature-type">ChildProcessFactory</a></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/mceachen/batch-cluster.js/blob/master/src/BatchClusterOptions.ts#L109">BatchClusterOptions.ts:109</a></li>
+							<li>Defined in <a href="https://github.com/mceachen/batch-cluster.js/blob/master/src/BatchClusterOptions.ts#L117">BatchClusterOptions.ts:117</a></li>
 						</ul>
 					</aside>
 				</section>
@@ -512,7 +514,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/mceachen/batch-cluster.js/blob/master/src/Array.ts#L5">Array.ts:5</a></li>
+									<li>Defined in <a href="https://github.com/mceachen/batch-cluster.js/blob/master/src/Array.ts#L7">Array.ts:7</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -568,7 +570,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/mceachen/batch-cluster.js/blob/master/src/Array.ts#L17">Array.ts:17</a></li>
+									<li>Defined in <a href="https://github.com/mceachen/batch-cluster.js/blob/master/src/Array.ts#L19">Array.ts:19</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-type-parameters-title">Type parameters</h4>
@@ -895,6 +897,135 @@
 					</ul>
 				</section>
 				<section class="tsd-panel tsd-member tsd-kind-function tsd-has-type-parameter">
+					<a name="rrfind" class="tsd-anchor"></a>
+					<h3>rr<wbr>Find</h3>
+					<ul class="tsd-signatures tsd-kind-function tsd-has-type-parameter">
+						<li class="tsd-signature tsd-kind-icon">rr<wbr>Find&lt;T&gt;<span class="tsd-signature-symbol">(</span>arr<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">T</span><span class="tsd-signature-symbol">[]</span>, startIndex<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span>, predicate<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">function</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">undefined</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">T</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/mceachen/batch-cluster.js/blob/master/src/Array.ts#L31">Array.ts:31</a></li>
+								</ul>
+							</aside>
+							<div class="tsd-comment tsd-typography">
+								<div class="lead">
+									<p>Treat an array as a round-robin list, starting from <code>startIndex</code>.</p>
+								</div>
+							</div>
+							<h4 class="tsd-type-parameters-title">Type parameters</h4>
+							<ul class="tsd-type-parameters">
+								<li>
+									<h4>T</h4>
+								</li>
+							</ul>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>arr: <span class="tsd-signature-type">T</span><span class="tsd-signature-symbol">[]</span></h5>
+								</li>
+								<li>
+									<h5>startIndex: <span class="tsd-signature-type">number</span></h5>
+								</li>
+								<li>
+									<h5>predicate: <span class="tsd-signature-type">function</span></h5>
+									<ul class="tsd-parameters">
+										<li class="tsd-parameter-siganture">
+											<ul class="tsd-signatures tsd-kind-type-literal tsd-is-not-exported">
+												<li class="tsd-signature tsd-kind-icon"><span class="tsd-signature-symbol">(</span>t<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">T</span>, arrIdx<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span>, iter<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">boolean</span></li>
+											</ul>
+											<ul class="tsd-descriptions">
+												<li class="tsd-description">
+													<h4 class="tsd-parameters-title">Parameters</h4>
+													<ul class="tsd-parameters">
+														<li>
+															<h5>t: <span class="tsd-signature-type">T</span></h5>
+														</li>
+														<li>
+															<h5>arrIdx: <span class="tsd-signature-type">number</span></h5>
+														</li>
+														<li>
+															<h5>iter: <span class="tsd-signature-type">number</span></h5>
+														</li>
+													</ul>
+													<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">boolean</span></h4>
+												</li>
+											</ul>
+										</li>
+									</ul>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">undefined</span>
+								<span class="tsd-signature-symbol"> | </span>
+								<span class="tsd-signature-type">T</span>
+							</h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-function tsd-has-type-parameter">
+					<a name="rrfindresult" class="tsd-anchor"></a>
+					<h3>rr<wbr>Find<wbr>Result</h3>
+					<ul class="tsd-signatures tsd-kind-function tsd-has-type-parameter">
+						<li class="tsd-signature tsd-kind-icon">rr<wbr>Find<wbr>Result&lt;T&gt;<span class="tsd-signature-symbol">(</span>arr<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">T</span><span class="tsd-signature-symbol">[]</span>, startIndex<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span>, predicate<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">function</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">undefined</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">object</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/mceachen/batch-cluster.js/blob/master/src/Array.ts#L39">Array.ts:39</a></li>
+								</ul>
+							</aside>
+							<h4 class="tsd-type-parameters-title">Type parameters</h4>
+							<ul class="tsd-type-parameters">
+								<li>
+									<h4>T</h4>
+								</li>
+							</ul>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>arr: <span class="tsd-signature-type">T</span><span class="tsd-signature-symbol">[]</span></h5>
+								</li>
+								<li>
+									<h5>startIndex: <span class="tsd-signature-type">number</span></h5>
+								</li>
+								<li>
+									<h5>predicate: <span class="tsd-signature-type">function</span></h5>
+									<ul class="tsd-parameters">
+										<li class="tsd-parameter-siganture">
+											<ul class="tsd-signatures tsd-kind-type-literal tsd-is-not-exported">
+												<li class="tsd-signature tsd-kind-icon"><span class="tsd-signature-symbol">(</span>t<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">T</span>, arrIdx<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span>, iter<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">boolean</span></li>
+											</ul>
+											<ul class="tsd-descriptions">
+												<li class="tsd-description">
+													<h4 class="tsd-parameters-title">Parameters</h4>
+													<ul class="tsd-parameters">
+														<li>
+															<h5>t: <span class="tsd-signature-type">T</span></h5>
+														</li>
+														<li>
+															<h5>arrIdx: <span class="tsd-signature-type">number</span></h5>
+														</li>
+														<li>
+															<h5>iter: <span class="tsd-signature-type">number</span></h5>
+														</li>
+													</ul>
+													<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">boolean</span></h4>
+												</li>
+											</ul>
+										</li>
+									</ul>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">undefined</span>
+								<span class="tsd-signature-symbol"> | </span>
+								<span class="tsd-signature-type">object</span>
+							</h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-function tsd-has-type-parameter">
 					<a name="serial" class="tsd-anchor"></a>
 					<h3>serial</h3>
 					<ul class="tsd-signatures tsd-kind-function tsd-has-type-parameter">
@@ -986,7 +1117,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/mceachen/batch-cluster.js/blob/master/src/Array.ts#L22">Array.ts:22</a></li>
+									<li>Defined in <a href="https://github.com/mceachen/batch-cluster.js/blob/master/src/Array.ts#L24">Array.ts:24</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-parameters-title">Parameters</h4>
@@ -1108,7 +1239,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/mceachen/batch-cluster.js/blob/master/src/BatchClusterOptions.ts#L119">BatchClusterOptions.ts:119</a></li>
+									<li>Defined in <a href="https://github.com/mceachen/batch-cluster.js/blob/master/src/BatchClusterOptions.ts#L127">BatchClusterOptions.ts:127</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-parameters-title">Parameters</h4>
@@ -1246,6 +1377,12 @@
 					</li>
 					<li class=" tsd-kind-function tsd-has-type-parameter">
 						<a href="globals.html#ratelimit" class="tsd-kind-icon">ratelimit</a>
+					</li>
+					<li class=" tsd-kind-function tsd-has-type-parameter">
+						<a href="globals.html#rrfind" class="tsd-kind-icon">rr<wbr>Find</a>
+					</li>
+					<li class=" tsd-kind-function tsd-has-type-parameter">
+						<a href="globals.html#rrfindresult" class="tsd-kind-icon">rr<wbr>Find<wbr>Result</a>
 					</li>
 					<li class=" tsd-kind-function tsd-has-type-parameter">
 						<a href="globals.html#serial" class="tsd-kind-icon">serial</a>

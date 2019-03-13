@@ -93,6 +93,7 @@
 								<li class="tsd-kind-property tsd-parent-kind-interface tsd-is-inherited"><a href="internalbatchprocessoptions.html#maxprocs" class="tsd-kind-icon">max<wbr>Procs</a></li>
 								<li class="tsd-kind-property tsd-parent-kind-interface tsd-is-inherited"><a href="internalbatchprocessoptions.html#maxreasonableprocessfailuresperminute" class="tsd-kind-icon">max<wbr>Reasonable<wbr>Process<wbr>Failures<wbr>Per<wbr>Minute</a></li>
 								<li class="tsd-kind-property tsd-parent-kind-interface tsd-is-inherited"><a href="internalbatchprocessoptions.html#maxtasksperprocess" class="tsd-kind-icon">max<wbr>Tasks<wbr>Per<wbr>Process</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-interface tsd-is-inherited"><a href="internalbatchprocessoptions.html#mindelaybetweenspawnmillis" class="tsd-kind-icon">min<wbr>Delay<wbr>Between<wbr>Spawn<wbr>Millis</a></li>
 								<li class="tsd-kind-property tsd-parent-kind-interface tsd-is-inherited"><a href="internalbatchprocessoptions.html#onidleintervalmillis" class="tsd-kind-icon">on<wbr>Idle<wbr>Interval<wbr>Millis</a></li>
 								<li class="tsd-kind-property tsd-parent-kind-interface tsd-is-inherited"><a href="internalbatchprocessoptions.html#pass" class="tsd-kind-icon">pass</a></li>
 								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="internalbatchprocessoptions.html#passre" class="tsd-kind-icon">passRE</a></li>
@@ -114,7 +115,7 @@
 					<aside class="tsd-sources">
 						<p>Inherited from <a href="../classes/batchclusteroptions.html">BatchClusterOptions</a>.<a href="../classes/batchclusteroptions.html#endgracefulwaittimemillis">endGracefulWaitTimeMillis</a></p>
 						<ul>
-							<li>Defined in <a href="https://github.com/mceachen/batch-cluster.js/blob/master/src/BatchClusterOptions.ts#L94">BatchClusterOptions.ts:94</a></li>
+							<li>Defined in <a href="https://github.com/mceachen/batch-cluster.js/blob/master/src/BatchClusterOptions.ts#L102">BatchClusterOptions.ts:102</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-comment tsd-typography">
@@ -240,7 +241,7 @@
 					<aside class="tsd-sources">
 						<p>Inherited from <a href="../classes/batchclusteroptions.html">BatchClusterOptions</a>.<a href="../classes/batchclusteroptions.html#maxtasksperprocess">maxTasksPerProcess</a></p>
 						<ul>
-							<li>Defined in <a href="https://github.com/mceachen/batch-cluster.js/blob/master/src/BatchClusterOptions.ts#L83">BatchClusterOptions.ts:83</a></li>
+							<li>Defined in <a href="https://github.com/mceachen/batch-cluster.js/blob/master/src/BatchClusterOptions.ts#L91">BatchClusterOptions.ts:91</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-comment tsd-typography">
@@ -254,6 +255,24 @@
 							more memory being consumed than necessary.</p>
 						</div>
 						<p>Must be &gt;= 0. Defaults to 500</p>
+					</div>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface tsd-is-inherited">
+					<a name="mindelaybetweenspawnmillis" class="tsd-anchor"></a>
+					<h3>min<wbr>Delay<wbr>Between<wbr>Spawn<wbr>Millis</h3>
+					<div class="tsd-signature tsd-kind-icon">min<wbr>Delay<wbr>Between<wbr>Spawn<wbr>Millis<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span><span class="tsd-signature-symbol"> =&nbsp;1500</span></div>
+					<aside class="tsd-sources">
+						<p>Inherited from <a href="../classes/batchclusteroptions.html">BatchClusterOptions</a>.<a href="../classes/batchclusteroptions.html#mindelaybetweenspawnmillis">minDelayBetweenSpawnMillis</a></p>
+						<ul>
+							<li>Defined in <a href="https://github.com/mceachen/batch-cluster.js/blob/master/src/BatchClusterOptions.ts#L68">BatchClusterOptions.ts:68</a></li>
+						</ul>
+					</aside>
+					<div class="tsd-comment tsd-typography">
+						<div class="lead">
+							<p>If maxProcs &gt; 1, spawning new child processes to process tasks can slow
+							down initial processing, and create unnecessary processes.</p>
+						</div>
+						<p>Must be &gt;= 0ms. Defaults to 1.5 seconds.</p>
 					</div>
 				</section>
 				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface tsd-is-inherited">
@@ -329,7 +348,7 @@
 					<aside class="tsd-sources">
 						<p>Inherited from <a href="../classes/batchclusteroptions.html">BatchClusterOptions</a>.<a href="../classes/batchclusteroptions.html#streamflushmillis">streamFlushMillis</a></p>
 						<ul>
-							<li>Defined in <a href="https://github.com/mceachen/batch-cluster.js/blob/master/src/BatchClusterOptions.ts#L106">BatchClusterOptions.ts:106</a></li>
+							<li>Defined in <a href="https://github.com/mceachen/batch-cluster.js/blob/master/src/BatchClusterOptions.ts#L114">BatchClusterOptions.ts:114</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-comment tsd-typography">
@@ -351,7 +370,7 @@
 					<aside class="tsd-sources">
 						<p>Inherited from <a href="../classes/batchclusteroptions.html">BatchClusterOptions</a>.<a href="../classes/batchclusteroptions.html#tasktimeoutmillis">taskTimeoutMillis</a></p>
 						<ul>
-							<li>Defined in <a href="https://github.com/mceachen/batch-cluster.js/blob/master/src/BatchClusterOptions.ts#L70">BatchClusterOptions.ts:70</a></li>
+							<li>Defined in <a href="https://github.com/mceachen/batch-cluster.js/blob/master/src/BatchClusterOptions.ts#L78">BatchClusterOptions.ts:78</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-comment tsd-typography">
@@ -421,6 +440,9 @@
 							</li>
 							<li class=" tsd-kind-property tsd-parent-kind-interface tsd-is-inherited">
 								<a href="internalbatchprocessoptions.html#maxtasksperprocess" class="tsd-kind-icon">max<wbr>Tasks<wbr>Per<wbr>Process</a>
+							</li>
+							<li class=" tsd-kind-property tsd-parent-kind-interface tsd-is-inherited">
+								<a href="internalbatchprocessoptions.html#mindelaybetweenspawnmillis" class="tsd-kind-icon">min<wbr>Delay<wbr>Between<wbr>Spawn<wbr>Millis</a>
 							</li>
 							<li class=" tsd-kind-property tsd-parent-kind-interface tsd-is-inherited">
 								<a href="internalbatchprocessoptions.html#onidleintervalmillis" class="tsd-kind-icon">on<wbr>Idle<wbr>Interval<wbr>Millis</a>
