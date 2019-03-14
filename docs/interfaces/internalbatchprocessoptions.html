@@ -85,6 +85,7 @@
 						<section class="tsd-index-section ">
 							<h3>Properties</h3>
 							<ul class="tsd-index-list">
+								<li class="tsd-kind-property tsd-parent-kind-interface tsd-is-inherited"><a href="internalbatchprocessoptions.html#cleanupchildprocs" class="tsd-kind-icon">cleanup<wbr>Child<wbr>Procs</a></li>
 								<li class="tsd-kind-property tsd-parent-kind-interface tsd-is-inherited"><a href="internalbatchprocessoptions.html#endgracefulwaittimemillis" class="tsd-kind-icon">end<wbr>Graceful<wbr>Wait<wbr>Time<wbr>Millis</a></li>
 								<li class="tsd-kind-property tsd-parent-kind-interface tsd-is-inherited"><a href="internalbatchprocessoptions.html#exitcommand" class="tsd-kind-icon">exit<wbr>Command</a></li>
 								<li class="tsd-kind-property tsd-parent-kind-interface tsd-is-inherited"><a href="internalbatchprocessoptions.html#fail" class="tsd-kind-icon">fail</a></li>
@@ -108,6 +109,24 @@
 			</section>
 			<section class="tsd-panel-group tsd-member-group ">
 				<h2>Properties</h2>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface tsd-is-inherited">
+					<a name="cleanupchildprocs" class="tsd-anchor"></a>
+					<h3>cleanup<wbr>Child<wbr>Procs</h3>
+					<div class="tsd-signature tsd-kind-icon">cleanup<wbr>Child<wbr>Procs<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol"> =&nbsp;true</span></div>
+					<aside class="tsd-sources">
+						<p>Inherited from <a href="../classes/batchclusteroptions.html">BatchClusterOptions</a>.<a href="../classes/batchclusteroptions.html#cleanupchildprocs">cleanupChildProcs</a></p>
+						<ul>
+							<li>Defined in <a href="https://github.com/mceachen/batch-cluster.js/blob/master/src/BatchClusterOptions.ts#L122">BatchClusterOptions.ts:122</a></li>
+						</ul>
+					</aside>
+					<div class="tsd-comment tsd-typography">
+						<div class="lead">
+							<p>Should batch-cluster try to clean up after spawned processes that don&#39;t
+							shut down?</p>
+						</div>
+						<p>Only disable this if you have another means of PID cleanup.</p>
+					</div>
+				</section>
 				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface tsd-is-inherited">
 					<a name="endgracefulwaittimemillis" class="tsd-anchor"></a>
 					<h3>end<wbr>Graceful<wbr>Wait<wbr>Time<wbr>Millis</h3>
@@ -417,6 +436,9 @@
 					<li class="current tsd-kind-interface">
 						<a href="internalbatchprocessoptions.html" class="tsd-kind-icon">Internal<wbr>Batch<wbr>Process<wbr>Options</a>
 						<ul>
+							<li class=" tsd-kind-property tsd-parent-kind-interface tsd-is-inherited">
+								<a href="internalbatchprocessoptions.html#cleanupchildprocs" class="tsd-kind-icon">cleanup<wbr>Child<wbr>Procs</a>
+							</li>
 							<li class=" tsd-kind-property tsd-parent-kind-interface tsd-is-inherited">
 								<a href="internalbatchprocessoptions.html#endgracefulwaittimemillis" class="tsd-kind-icon">end<wbr>Graceful<wbr>Wait<wbr>Time<wbr>Millis</a>
 							</li>
