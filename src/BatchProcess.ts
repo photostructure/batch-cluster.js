@@ -185,6 +185,7 @@ export class BatchProcess {
     return true
   }
 
+  // NOT ASYNC! needs to change state immediately.
   end(gracefully: boolean = true, source: string): Promise<void> {
     const firstEnd = !this._ended
     this._ended = true
