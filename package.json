@@ -50,7 +50,7 @@
     "source-map-support": "^0.5.11",
     "split2": "^3.1.0",
     "timekeeper": "^2.2.0",
-    "tslint": "^5.13.1",
+    "tslint": "^5.14.0",
     "typedoc": "^0.14.2",
     "typescript": "^3.3.3333",
     "wtfnode": "^0.8.0"
