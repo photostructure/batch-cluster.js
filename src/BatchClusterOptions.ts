@@ -112,6 +112,14 @@ export class BatchClusterOptions {
    * set this to a large number.
    */
   readonly streamFlushMillis: number = 10
+
+  /**
+   * Should batch-cluster try to clean up after spawned processes that don't
+   * shut down?
+   *
+   * Only disable this if you have another means of PID cleanup.
+   */
+  readonly cleanupChildProcs: boolean = true
 }
 
 export type AllOpts = BatchClusterOptions &

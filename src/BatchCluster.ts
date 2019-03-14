@@ -139,6 +139,13 @@ export class BatchCluster extends BatchClusterEmitter {
   }
 
   /**
+   * @return true if all previously-enqueued tasks have settled
+   */
+  get isIdle(): boolean {
+    return this.tasks.length === 0 && this._procs.every(ea => ea.idle)
+  }
+
+  /**
    * @return the number of pending tasks
    */
   get pendingTasks(): number {

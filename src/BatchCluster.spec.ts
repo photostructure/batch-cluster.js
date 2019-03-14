@@ -26,7 +26,7 @@ import { Task } from "./Task"
 const tk = require("timekeeper")
 
 describe("BatchCluster", function() {
-  this.timeout(4000)
+  this.timeout(10000)
   this.retries(2)
   const ErrorPrefix = "ERROR: "
 
@@ -153,6 +153,7 @@ describe("BatchCluster", function() {
             it("calling .end() when new no-ops", async () => {
               await bc.end()
               expect(bc.ended).to.eql(true)
+              expect(bc.isIdle).to.eql(true)
               expect((await bc.pids()).length).to.eql(0)
               expect(bc.spawnedProcs).to.eql(0)
               expect(events.events).to.eql(expectedEndEvents)
@@ -370,11 +371,14 @@ describe("BatchCluster", function() {
               processFactory
             }
             bc = listen(new BatchCluster(opts))
+            expect(bc.isIdle).to.eql(true)
             const tasks = await Promise.all(
               times(iters, async i => {
                 const start = Date.now()
                 const task = new Task("sleep " + sleepTimeMs, parser)
-                const result = JSON.parse(await bc.enqueueTask(task))
+                const resultP = bc.enqueueTask(task)
+                expect(bc.isIdle).to.eql(false)
+                const result = JSON.parse(await resultP)
                 const end = Date.now()
                 return { i, start, end, ...result }
               })
@@ -385,6 +389,7 @@ describe("BatchCluster", function() {
               const count = orElse(pid2count.get(pid), 0)
               pid2count.set(pid, count + 1)
             })
+            expect(bc.isIdle).to.eql(true)
             console.log({
               expectTaskMin,
               expectedTaskMax,

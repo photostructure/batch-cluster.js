@@ -229,6 +229,7 @@ export class BatchProcess {
     ])
 
     if (
+      this.opts.cleanupChildProcs &&
       gracefully &&
       this.opts.endGracefulWaitTimeMillis > 0 &&
       (await this.running())
@@ -241,7 +242,7 @@ export class BatchProcess {
       await this.awaitNotRunning(this.opts.endGracefulWaitTimeMillis / 2)
     }
 
-    if (await this.running()) {
+    if (this.opts.cleanupChildProcs && await this.running()) {
       logger().warn(this.name + ".end(): force-killing still-running child.")
       await kill(this.proc.pid, true)
     }

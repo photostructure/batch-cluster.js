@@ -17,6 +17,14 @@ See [Semver](http://semver.org/).
 - 🐞 Backwards-compatible bug fixes
 - 📦 Minor packaging changes
 
+## v5.5.0
+
+- ✨ Added `BatchCluster.isIdle`. Updated deps. Deflaked CI by embiggening
+- ✨ Added `BatchClusterOptions.cleanupChildProcs`, in case you want to handle
+  process cleanup yourself.
+- 📦 Updated deps. Deflaked CI by embiggening timeouts.
+- Happy 🟟 day.
+
 ## v5.4.0
 
 - ✨ "wear-leveling" for processes. Previously, only the first-spawned child
