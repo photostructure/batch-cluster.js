@@ -10,7 +10,8 @@
 [![Known Vulnerabilities](https://snyk.io/test/github/mceachen/batch-cluster.js/badge.svg?targetFile=package.json)](https://snyk.io/test/github/mceachen/batch-cluster.js?targetFile=package.json)
 
 Many command line tools, like
-[ExifTool](https://sno.phy.queensu.ca/~phil/exiftool/) and
+[ExifTool](https://sno.phy.queensu.ca/~phil/exiftool/),
+[PowerShell](https://github.com/powershell/powershell), and
 [GraphicsMagick](http://www.graphicsmagick.org/), support running in a "batch
 mode" that accept a series of discrete commands provided through stdin and
 results through stdout. As these tools can be fairly large, spinning them up can

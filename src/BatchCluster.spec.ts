@@ -28,7 +28,7 @@ const Timeout = 15000
 
 describe("BatchCluster", function() {
   this.timeout(Timeout) // 10s meant mac CI sometimes failed
-  this.retries(2)
+  this.retries(3)
   const ErrorPrefix = "ERROR: "
 
   const DefaultOpts = {
