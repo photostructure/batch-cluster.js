@@ -226,10 +226,11 @@ export class BatchProcess {
     // NOTE: We *don't* want to clearCurrentTask here, because we want the
     // timeout to run if necessary.
 
-    // If the task is just the startup task, assume we don't need to wait for
-    // it to finish, even if we're gracefully shutting down.
+    // NOTE: We wait on all tasks (even startup tasks) so we can assert that
+    // BatchCluster is idle (and this proc is idle) when the end promise is
+    // resolved.
 
-    if (lastTask != null && lastTask !== this.startupTask) {
+    if (lastTask != null) {
       if (gracefully) {
         logger().debug(this.name + ".end(): waiting for " + lastTask.command)
         try {
