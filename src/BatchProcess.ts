@@ -356,7 +356,9 @@ export class BatchProcess {
     if (task != null && task.pending) {
       task.onStderr(data)
       this.onData(task)
-    } else {
+    } else if (this._endPromise == null) {
+      // If we're ending and there isn't a task, don't worry about it.
+      // Otherwise:
       this.observer.onInternalError(
         new Error(
           "onStderr(" + data + ") no pending currentTask (task: " + task + ")"
@@ -373,7 +375,9 @@ export class BatchProcess {
       this.observer.onTaskData(data, task)
       task.onStdout(data)
       this.onData(task)
-    } else {
+    } else if (this._endPromise == null) {
+      // If we're ending and there isn't a task, don't worry about it.
+      // Otherwise:
       this.observer.onInternalError(
         new Error(
           "onStdout(" + data + ") no pending currentTask (task: " + task + ")"
