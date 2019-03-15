@@ -18,6 +18,7 @@ import { Task } from "./Task"
 export class BatchProcess {
   readonly name: string
   readonly start = Date.now()
+  // Only set to true when `proc.pid` is no longer in the process table.
   private dead = false
   private _taskCount = -1 // don't count the startupTask
   /**
@@ -27,7 +28,7 @@ export class BatchProcess {
   private _endPromise: Promise<void> | undefined
 
   /**
-   * Supports non-polling notification of process shutdown
+   * Supports non-polling notification of `proc.pid` leaving the process table.
    */
   private readonly _exited = new Deferred<void>()
   /**
@@ -214,24 +215,25 @@ export class BatchProcess {
     return this._endPromise
   }
 
-  // Must only be invoked by this.end(), and only expected to be invoked once
-  // per instance.
+  // NOTE: Must only be invoked by this.end(), and only expected to be invoked
+  // once per instance.
   private async _end(
     gracefully: boolean = true,
     source: string
   ): Promise<void> {
     const lastTask = this.currentTask
-    this.currentTask = undefined
-
-    // NOTE: We *don't* want to clearCurrentTask here, because we want the
-    // timeout to run if necessary.
 
     // NOTE: We wait on all tasks (even startup tasks) so we can assert that
     // BatchCluster is idle (and this proc is idle) when the end promise is
     // resolved.
 
+    // NOTE: holy crap there are a lot of notes here.
+
     if (lastTask != null) {
       if (gracefully) {
+        // NOTE: If we set the currentTask to null here, it can't ever resolve,
+        // because the stdout handler will grump that there's no pending task,
+        // and we'd also lose the timeout.
         logger().debug(this.name + ".end(): waiting for " + lastTask.command)
         try {
           await lastTask.promise
@@ -239,6 +241,8 @@ export class BatchProcess {
           this.observer.onTaskError(err, lastTask)
         }
       } else {
+        // NOTE: not graceful, so clearing the current task is fine.
+        this.clearCurrentTask()
         // This isn't an internal error, as this state would be expected if
         // the user calls .end(false) when there are pending tasks.
         logger().warn(this.name + ".end(): called while not idle", {
