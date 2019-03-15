@@ -21,10 +21,11 @@ export class BatchProcess {
   private dead = false
   private _taskCount = -1 // don't count the startupTask
   /**
-   * true if `this.end()` has been called, or this process is no longer in the
+   * not null if `this.end()` has been called, or this process is no longer in the
    * process table.
    */
-  private _ended: boolean = false
+  private _endPromise: Promise<void> | undefined
+
   /**
    * Supports non-polling notification of process shutdown
    */
@@ -96,7 +97,11 @@ export class BatchProcess {
     return this._exited.promise
   }
   get ready(): boolean {
-    return this.currentTask == null && !this._ended && !this.startupTask.pending
+    return (
+      this.currentTask == null &&
+      !this.startupTask.pending &&
+      this._endPromise == null
+    )
   }
   get idle(): boolean {
     return this.currentTask == null
@@ -112,7 +117,7 @@ export class BatchProcess {
         if (!alive) {
           // once a PID leaves the process table, it's gone for good:
           this.dead = true
-          this._ended = true
+          this._endPromise = Promise.resolve()
         }
         return alive
       })
@@ -127,7 +132,7 @@ export class BatchProcess {
    * process has exited.
    */
   async ended(): Promise<boolean> {
-    return this._ended || (await this.notRunning())
+    return this._endPromise != null || (await this.notRunning())
   }
 
   async notEnded(): Promise<boolean> {
@@ -140,12 +145,20 @@ export class BatchProcess {
     // We're not going to run this.running() here, because BatchCluster will
     // already have pruned the processes that have exitted unexpectedly just
     // milliseconds ago.
-    if (this._ended || this.currentTask != null) {
+    if (this.currentTask != null) {
       this.observer.onInternalError(
         new Error(
           `${this.name}.execTask(${task.command}): already working on ${
             this.currentTask
           }`
+        )
+      )
+      return false
+    }
+    if (this._endPromise != null) {
+      this.observer.onInternalError(
+        new Error(
+          `${this.name}.execTask(${task.command}): this process is ending/ended`
         )
       )
       return false
@@ -185,45 +198,67 @@ export class BatchProcess {
     return true
   }
 
+  /**
+   * End this child process.
+   *
+   * @param gracefully Wait for any current task to be resolved or rejected before shutting down the child process.
+   * @param source who called end() (used for logging)
+   * @return Promise that will be resolved when the process has completed. Subsequent calls to end() will ignore the parameters and return the first endPromise.
+   */
   // NOT ASYNC! needs to change state immediately.
   end(gracefully: boolean = true, source: string): Promise<void> {
-    const firstEnd = !this._ended
-    this._ended = true
-    return this._end(gracefully, source, firstEnd)
+    logger().debug(this.name + ".end()", { gracefully, source })
+    if (this._endPromise == null) {
+      this._endPromise = this._end(gracefully, source)
+    }
+    return this._endPromise
   }
 
+  // Must only be invoked by this.end(), and only expected to be invoked once
+  // per instance.
   private async _end(
     gracefully: boolean = true,
-    source: string,
-    firstEnd: boolean
+    source: string
   ): Promise<void> {
-    logger().debug(this.name + ".end()", { gracefully, source })
-    this._ended = true
+    const lastTask = this.currentTask
+    this.currentTask = undefined
 
-    if (firstEnd) {
-      const cmd = map(this.opts.exitCommand, ea => ensureSuffix(ea, "\n"))
-      if (this.proc.stdin != null && this.proc.stdin.writable) {
-        this.proc.stdin.end(cmd)
+    // NOTE: We *don't* want to clearCurrentTask here, because we want the
+    // timeout to run if necessary.
+
+    // If the task is just the startup task, assume we don't need to wait for
+    // it to finish, even if we're gracefully shutting down.
+
+    if (lastTask != null && lastTask !== this.startupTask) {
+      if (gracefully) {
+        logger().debug(this.name + ".end(): waiting for " + lastTask.command)
+        try {
+          await lastTask.promise
+        } catch (err) {
+          this.observer.onTaskError(err, lastTask)
+        }
+      } else {
+        // This isn't an internal error, as this state would be expected if
+        // the user calls .end(false) when there are pending tasks.
+        logger().warn(this.name + ".end(): called while not idle", {
+          source,
+          gracefully,
+          cmd: lastTask.command
+        })
+        // We're ending, so there's no point in asking if this error is fatal. It is.
+        const err = new Error("end() called when not idle")
+        this.observer.onTaskError(err, lastTask)
+        lastTask.reject(err)
       }
     }
-    if (this.currentTask != null && this.startupTask !== this.currentTask) {
-      // This isn't an internal error, as this state would be expected if
-      // the user calls .end() when there are pending tasks.
-      logger().warn(this.name + ".end(): called while not idle", {
-        source,
-        gracefully,
-        firstEnd,
-        cmd: this.currentTask.command
-      })
-      // We're ending, so there's no point in asking if this error is fatal. It is.
-      const err = new Error("end() called when not idle")
-      this.observer.onTaskError(err, this.currentTask)
-      this.currentTask.reject(err)
-    }
-    this.clearCurrentTask()
 
+    const cmd = map(this.opts.exitCommand, ea => ensureSuffix(ea, "\n"))
+    if (this.proc.stdin != null && this.proc.stdin.writable) {
+      this.proc.stdin.end(cmd)
+    }
+
+    // proc cleanup:
     tryEach([
-      () => map(this.proc.stdin, ea => ea.end()),
       () => map(this.proc.stdout, ea => ea.destroy()),
       () => map(this.proc.stderr, ea => ea.destroy()),
       () => this.proc.disconnect()
@@ -243,7 +278,7 @@ export class BatchProcess {
       await this.awaitNotRunning(this.opts.endGracefulWaitTimeMillis / 2)
     }
 
-    if (this.opts.cleanupChildProcs && await this.running()) {
+    if (this.opts.cleanupChildProcs && (await this.running())) {
       logger().warn(this.name + ".end(): force-killing still-running child.")
       await kill(this.proc.pid, true)
     }
