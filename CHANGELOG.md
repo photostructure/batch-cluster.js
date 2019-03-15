@@ -17,13 +17,20 @@ See [Semver](http://semver.org/).
 - 🐞 Backwards-compatible bug fixes
 - 📦 Minor packaging changes
 
+## v5.6.0
+
+- 🐞/✨ `BatchProcess.end()` didn't correctly implement `gracefully` (which
+  resulted in spurious `end(): called while not idle` errors), and allowed for
+  multiple calls to destroy and disconnect from the child process, which may or
+  may not have been ill-advised.
+
 ## v5.5.0
 
 - ✨ Added `BatchCluster.isIdle`. Updated deps. Deflaked CI by embiggening
 - ✨ Added `BatchClusterOptions.cleanupChildProcs`, in case you want to handle
   process cleanup yourself.
 - 📦 Updated deps. Deflaked CI by embiggening timeouts.
-- Happy 🟟 day.
+- Happy 🥧 day.
 
 ## v5.4.0
 

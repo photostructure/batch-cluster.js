@@ -110,7 +110,7 @@ export class BatchClusterOptions {
    *
    * Note that this puts a hard lower limit on task latency. You don't want to
    * set this to a large number.
-   * 
+   *
    * Defaults to 10ms.
    */
   readonly streamFlushMillis: number = 10
@@ -120,7 +120,7 @@ export class BatchClusterOptions {
    * shut down?
    *
    * Only disable this if you have another means of PID cleanup.
-   * 
+   *
    * Defaults to `true`.
    */
   readonly cleanupChildProcs: boolean = true
