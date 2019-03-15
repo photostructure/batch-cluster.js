@@ -25,7 +25,7 @@ import { Task } from "./Task"
 const tk = require("timekeeper")
 
 describe("BatchCluster", function() {
-  this.timeout(10000)
+  this.timeout(12000) // 10s meant mac CI sometimes failed
   this.retries(2)
   const ErrorPrefix = "ERROR: "
 
