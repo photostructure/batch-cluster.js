@@ -2,13 +2,11 @@ import { ChildProcess, spawn } from "child_process"
 import { join } from "path"
 import * as _p from "process"
 
-import { until } from "./Async"
-import { BatchCluster } from "./BatchCluster"
-import { Logger, setLogger, logger } from "./Logger"
+import { Logger, logger, setLogger } from "./Logger"
 import { orElse } from "./Object"
+import { Parser } from "./Parser"
 import { pids } from "./Pids"
 import { notBlank } from "./String"
-import { Parser } from "./Parser"
 
 export const mocha = require("mocha")
 
@@ -102,18 +100,6 @@ export function testPids(): number[] {
 export async function currentTestPids(): Promise<number[]> {
   const alivePids = new Set(await pids())
   return procs.map(ea => ea.pid).filter(ea => alivePids.has(ea))
-}
-
-export async function shutdown(
-  bc: BatchCluster,
-  timeoutMs = 10000
-): Promise<boolean> {
-  await bc.end(true)
-  return until(
-    async () =>
-      (await bc.pids()).length === 0 && (await currentTestPids()).length === 0,
-    timeoutMs
-  )
 }
 
 // Seeding the RNG deterministically _should_ give us repeatable

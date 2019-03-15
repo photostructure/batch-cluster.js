@@ -10,12 +10,11 @@ import {
   setFailrate,
   setIgnoreExit,
   setNewline,
-  shutdown,
   testPids,
   times
 } from "./_chai.spec"
 import { flatten, sortNumeric } from "./Array"
-import { delay } from "./Async"
+import { delay, until } from "./Async"
 import { BatchCluster } from "./BatchCluster"
 import { BatchClusterOptions } from "./BatchClusterOptions"
 import { logger } from "./Logger"
@@ -94,6 +93,20 @@ describe("BatchCluster", function() {
 
   const expectedEndEvents = [{ event: "beforeEnd" }, { event: "end" }]
 
+  async function shutdown(bc: BatchCluster, timeoutMs = 10000) {
+    await bc.end(true)
+    expect(bc.isIdle).to.eql(true)
+    const done = until(
+      async () =>
+        (await bc.pids()).length === 0 &&
+        (await currentTestPids()).length === 0,
+      timeoutMs
+    )
+    expect(bc.internalErrorCount).to.eql(0)
+    expect(done).to.eql(true)
+    return
+  }
+
   function listen(bc: BatchCluster) {
     // This is a typings verification, too:
     bc.on("childStart", cp => events.startedPids.push(cp.pid))
@@ -170,7 +183,7 @@ describe("BatchCluster", function() {
 
               const tasks = await Promise.all(runTasks(bc, iterations))
               assertExpectedResults(tasks)
-              expect(await shutdown(bc)).to.eql(true)
+              await shutdown(bc)
               expect(bc.spawnedProcs).to.be.within(maxProcs, iterations + 1)
               const pids = sortNumeric(testPids())
               expect(pids.length).to.be.gte(maxProcs)
@@ -230,7 +243,7 @@ describe("BatchCluster", function() {
                 expect((await currentTestPids()).length).to.be.lte(
                   bc.spawnedProcs
                 ) // because flaky
-                expect(await shutdown(bc)).to.eql(true)
+                await shutdown(bc)
                 return
               }
             )
@@ -435,8 +448,7 @@ describe("BatchCluster", function() {
     )
 
     afterEach(async () => {
-      expect(await shutdown(bc)).to.eql(true)
-      expect(bc.internalErrorCount).to.eql(0)
+      await shutdown(bc)
       return
     })
 
