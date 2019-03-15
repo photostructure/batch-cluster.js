@@ -96,7 +96,7 @@ describe("BatchCluster", function() {
   async function shutdown(bc: BatchCluster, timeoutMs = 10000) {
     await bc.end(true)
     expect(bc.isIdle).to.eql(true)
-    const done = until(
+    const done = await until(
       async () =>
         (await bc.pids()).length === 0 &&
         (await currentTestPids()).length === 0,
