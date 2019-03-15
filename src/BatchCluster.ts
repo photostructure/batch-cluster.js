@@ -102,7 +102,8 @@ export class BatchCluster extends BatchClusterEmitter {
    * @param gracefully should an attempt be made to finish in-flight tasks, or
    * should we force-kill child PIDs.
    */
-  async end(gracefully: boolean = true): Promise<void> {
+  // NOT ASYNC so state transition happens immediately
+  end(gracefully: boolean = true): Promise<void> {
     if (this.endprocs == null) {
       this.emitter.emit("beforeEnd")
       map(this.onIdleInterval, clearInterval)
