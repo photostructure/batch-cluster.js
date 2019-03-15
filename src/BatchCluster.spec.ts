@@ -158,7 +158,7 @@ describe("BatchCluster", function() {
             })
 
             afterEach(async () => {
-              expect(await shutdown(bc)).to.eql(true)
+              await shutdown(bc)
               expect(bc.internalErrorCount).to.eql(0)
               return
             })
