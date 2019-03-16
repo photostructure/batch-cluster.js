@@ -17,6 +17,11 @@ See [Semver](http://semver.org/).
 - 🐞 Backwards-compatible bug fixes
 - 📦 Minor packaging changes
 
+## v5.6.1
+
+- 📦 Expose `BatchCluster.options`. Note that the object is frozen at
+  construction.
+
 ## v5.6.0
 
 - 🐞/✨ `BatchProcess.end()` didn't correctly implement `gracefully` (which

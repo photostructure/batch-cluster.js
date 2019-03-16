@@ -52,7 +52,7 @@ export interface ChildProcessFactory {
  */
 export class BatchCluster extends BatchClusterEmitter {
   private readonly _tasksPerProc: Mean = new Mean()
-  private readonly opts: AllOpts
+  readonly options: AllOpts
   private readonly observer: BatchProcessObserver
   private readonly _procs: BatchProcess[] = []
   private _lastUsedProcsIdx = 0
@@ -70,11 +70,11 @@ export class BatchCluster extends BatchClusterEmitter {
       ChildProcessFactory
   ) {
     super()
-    this.opts = verifyOptions(opts)
-    if (this.opts.onIdleIntervalMillis > 0) {
+    this.options = Object.freeze(verifyOptions(opts))
+    if (this.options.onIdleIntervalMillis > 0) {
       this.onIdleInterval = setInterval(
         () => this.onIdle(),
-        this.opts.onIdleIntervalMillis
+        this.options.onIdleIntervalMillis
       )
       this.onIdleInterval.unref() // < don't prevent node from exiting
     }
@@ -194,7 +194,7 @@ export class BatchCluster extends BatchClusterEmitter {
     this.startErrorRate.onEvent()
     if (
       this.startErrorRate.eventsPerMinute >
-      this.opts.maxReasonableProcessFailuresPerMinute
+      this.options.maxReasonableProcessFailuresPerMinute
     ) {
       // tslint:disable-next-line: no-floating-promises
       this.end()
@@ -238,11 +238,11 @@ export class BatchCluster extends BatchClusterEmitter {
       if (!proc.idle) return true
 
       const old =
-        this.opts.maxProcAgeMillis > 0 &&
-        proc.start + this.opts.maxProcAgeMillis < Date.now()
+        this.options.maxProcAgeMillis > 0 &&
+        proc.start + this.options.maxProcAgeMillis < Date.now()
       const wornOut =
-        this.opts.maxTasksPerProcess > 0 &&
-        proc.taskCount >= this.opts.maxTasksPerProcess
+        this.options.maxTasksPerProcess > 0 &&
+        proc.taskCount >= this.options.maxTasksPerProcess
       const broken = proc.exited
       const reap = old || wornOut || broken // # me
       if (reap) {
@@ -280,17 +280,17 @@ export class BatchCluster extends BatchClusterEmitter {
     if (
       this.ended ||
       this.tasks.length === 0 ||
-      this._procs.length >= this.opts.maxProcs ||
+      this._procs.length >= this.options.maxProcs ||
       this._lastSpawnedProcTime >
-        Date.now() - this.opts.minDelayBetweenSpawnMillis
+        Date.now() - this.options.minDelayBetweenSpawnMillis
     ) {
       return
     }
 
     try {
       this._lastSpawnedProcTime = Date.now()
-      const child = await this.opts.processFactory()
-      const proc = new BatchProcess(child, this.opts, this.observer)
+      const child = await this.options.processFactory()
+      const proc = new BatchProcess(child, this.options, this.observer)
       this._procs.push(proc)
       this.emitter.emit("childStart", child)
       // tslint:disable-next-line: no-floating-promises
