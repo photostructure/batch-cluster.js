@@ -66,10 +66,10 @@ export class Task<T> {
   async resolve(stdout: string, stderr: string, passed: boolean) {
     try {
       const parseResult = await this.parser(stdout, stderr, passed)
-      logger().trace("Task.onData(): resolved", {
-        command: this.command,
-        parseResult
-      })
+      // logger().trace("Task.onData(): resolved", {
+      //   command: this.command,
+      //   parseResult
+      // })
       this.d.resolve(parseResult)
     } catch (error) {
       this.reject(error, "Task.onData(): rejected")

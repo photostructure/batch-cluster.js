@@ -17,6 +17,11 @@ See [Semver](http://semver.org/).
 - 🐞 Backwards-compatible bug fixes
 - 📦 Minor packaging changes
 
+## v5.6.2
+
+- 📦 Updated deps
+- 📦 Removed trace and debug log calls in `BatchProcess` (which incurred GC overhead even when disabled)
+
 ## v5.6.1
 
 - 📦 Expose `BatchCluster.options`. Note that the object is frozen at

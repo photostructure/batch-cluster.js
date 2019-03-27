@@ -172,26 +172,26 @@ export class BatchProcess {
         ? this.opts.spawnTimeoutMillis
         : this.opts.taskTimeoutMillis
     if (timeoutMs > 0) {
-      logger().trace(this.name + ".execTask(): scheduling timeout", {
-        command: task.command,
-        timeoutMs,
-        pid: this.pid
-      })
+      // logger().trace(this.name + ".execTask(): scheduling timeout", {
+      //   command: task.command,
+      //   timeoutMs,
+      //   pid: this.pid
+      // })
       this.currentTaskTimeout = setTimeout(
         () => this.onTimeout(task, timeoutMs),
         timeoutMs
       )
     }
-    logger().debug(this.name + ".execTask(): starting", { cmd })
+    // logger().debug(this.name + ".execTask(): starting", { cmd })
     // tslint:disable-next-line: no-floating-promises
     task.promise
       .catch(() => {})
       .then(() => {
         if (this.currentTask === task) {
-          logger().debug(
-            this.name + ".task resolved, but currentTask wasn't cleared",
-            { task }
-          )
+          // logger().debug(
+          //   this.name + ".task resolved, but currentTask wasn't cleared",
+          //   { task }
+          // )
           this.clearCurrentTask()
         }
       })
@@ -208,7 +208,7 @@ export class BatchProcess {
    */
   // NOT ASYNC! needs to change state immediately.
   end(gracefully: boolean = true, source: string): Promise<void> {
-    logger().debug(this.name + ".end()", { gracefully, source })
+    // logger().debug(this.name + ".end()", { gracefully, source })
     if (this._endPromise == null) {
       this._endPromise = this._end(gracefully, source)
     }
@@ -234,7 +234,7 @@ export class BatchProcess {
         // NOTE: If we set the currentTask to null here, it can't ever resolve,
         // because the stdout handler will grump that there's no pending task,
         // and we'd also lose the timeout.
-        logger().debug(this.name + ".end(): waiting for " + lastTask.command)
+        // logger().debug(this.name + ".end(): waiting for " + lastTask.command)
         try {
           await lastTask.promise
         } catch (err) {
@@ -350,7 +350,7 @@ export class BatchProcess {
   }
 
   private onStderr(data: string | Buffer) {
-    logger().debug("onStderr(" + this.pid + "):" + data)
+    // logger().debug("onStderr(" + this.pid + "):" + data)
     if (data == null) return
     const task = this.currentTask
     if (task != null && task.pending) {
@@ -368,7 +368,7 @@ export class BatchProcess {
   }
 
   private onStdout(data: string | Buffer) {
-    logger().debug("onStdout(" + this.pid + "):" + data)
+    // logger().debug("onStdout(" + this.pid + "):" + data)
     if (data == null) return
     const task = this.currentTask
     if (task != null && task.pending) {
@@ -388,13 +388,13 @@ export class BatchProcess {
 
   private onData(task: Task<any>) {
     // We might not have the final flushed contents of the streams (if we got stderr and stdout simultaneously.)
-    const ctx = {
-      stdout: task.stdout,
-      stderr: task.stderr
-    }
+    // const ctx = {
+    //   stdout: task.stdout,
+    //   stderr: task.stderr
+    // }
     const pass = this.opts.passRE.exec(task.stdout)
     if (pass != null) {
-      logger().debug("onData(" + this.pid + ") PASS", { pass, ...ctx })
+      // logger().debug("onData(" + this.pid + ") PASS", { pass, ...ctx })
       return this.resolveCurrentTask(
         task,
         toS(pass[1]).trim(),
@@ -404,7 +404,7 @@ export class BatchProcess {
     }
     const failout = this.opts.failRE.exec(task.stdout)
     if (failout != null) {
-      logger().debug("onData(" + this.pid + ") FAILOUT", { failout, ...ctx })
+      // logger().debug("onData(" + this.pid + ") FAILOUT", { failout, ...ctx })
       return this.resolveCurrentTask(
         task,
         toS(failout[1]).trim(),
@@ -414,10 +414,10 @@ export class BatchProcess {
     }
     const failerr = this.opts.failRE.exec(task.stderr)
     if (failerr != null) {
-      logger().debug("onData(" + this.pid + ") FAILERR", { failerr, ...ctx })
+      // logger().debug("onData(" + this.pid + ") FAILERR", { failerr, ...ctx })
       return this.resolveCurrentTask(task, task.stdout, failerr[1], false)
     }
-    logger().debug("onData(" + this.pid + ") not finished", ctx)
+    // logger().debug("onData(" + this.pid + ") not finished", ctx)
     return
   }
 
@@ -434,12 +434,7 @@ export class BatchProcess {
     passed: boolean
   ) {
     this.streamDebouncer(async () => {
-      logger().debug("resolveCurrentTask()", {
-        task: String(task),
-        stdout,
-        stderr,
-        passed
-      })
+      // logger().debug("resolveCurrentTask()", { task: String(task), stdout, stderr, passed })
       this.clearCurrentTask()
       // the task may have already timed out.
       if (task.pending) {
