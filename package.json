@@ -19,7 +19,7 @@
     "compile": "tsc",
     "tscw": "rimraf dist & tsc -w",
     "pretest": "yarn clean && yarn compile",
-    "test": "mocha --opts .mocha.opts",
+    "test": "mocha dist/**/*.spec.js",
     "docs:1": "typedoc --options .typedoc.js",
     "docs:2": "echo batch-cluster.js.org > docs/CNAME",
     "docs:3": "cp .serve.json docs/serve.json",
@@ -37,7 +37,7 @@
     "@types/chai-as-promised": "^7.1.0",
     "@types/chai-string": "^1.4.1",
     "@types/mocha": "^5.2.6",
-    "@types/node": "^11.11.3",
+    "@types/node": "^11.12.0",
     "chai": "^4.2.0",
     "chai-as-promised": "^7.1.1",
     "chai-string": "^1.5.0",
@@ -48,11 +48,11 @@
     "seedrandom": "^3.0.1",
     "serve": "^10.1.2",
     "source-map-support": "^0.5.11",
-    "split2": "^3.1.0",
+    "split2": "^3.1.1",
     "timekeeper": "^2.2.0",
     "tslint": "^5.14.0",
     "typedoc": "^0.14.2",
-    "typescript": "^3.3.3333",
+    "typescript": "^3.3.4000",
     "wtfnode": "^0.8.0"
   }
 }
