@@ -24,10 +24,7 @@ import { Task } from "./Task"
 
 const tk = require("timekeeper")
 
-const Timeout = 15000
-
 describe("BatchCluster", function() {
-  this.timeout(Timeout) // 10s meant mac CI sometimes failed
   this.retries(3)
   const ErrorPrefix = "ERROR: "
 
@@ -95,7 +92,7 @@ describe("BatchCluster", function() {
 
   const expectedEndEvents = [{ event: "beforeEnd" }, { event: "end" }]
 
-  async function shutdown(bc: BatchCluster, timeoutMs = Timeout) {
+  async function shutdown(bc: BatchCluster) {
     const endPromise = bc.end(true)
     expect(bc.ended).to.eql(true)
     await endPromise
@@ -104,7 +101,7 @@ describe("BatchCluster", function() {
         bc.isIdle &&
         (await bc.pids()).length === 0 &&
         (await currentTestPids()).length === 0,
-      timeoutMs
+      15000 // patience is a virtue
     )
     expect(bc.internalErrorCount).to.eql(0)
     expect(done).to.eql(true)
@@ -377,7 +374,6 @@ describe("BatchCluster", function() {
             { colors: false, breakLength: 100 }
           ),
           async function() {
-            this.timeout(10000)
             setFailrate(0)
             const opts = {
               ...DefaultOpts,
