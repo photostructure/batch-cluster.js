@@ -3,14 +3,14 @@
   "version": "5.6.2",
   "description": "Manage a cluster of child processes",
   "main": "dist/BatchCluster.js",
-  "homepage": "https://batch-cluster.js.org/",
+  "homepage": "https://photostructure.github.io/batch-cluster.js/",
   "bugs": {
-    "url": "https://github.com/mceachen/batch-cluster.js/issues"
+    "url": "https://github.com/photostructure/batch-cluster.js/issues"
   },
   "types": "dist/BatchCluster.d.ts",
   "repository": {
     "type": "git",
-    "url": "https://github.com/mceachen/batch-cluster.js.git"
+    "url": "https://github.com/photostructure/batch-cluster.js.git"
   },
   "scripts": {
     "clean": "rimraf dist",
@@ -37,7 +37,7 @@
     "@types/chai-as-promised": "^7.1.0",
     "@types/chai-string": "^1.4.1",
     "@types/mocha": "^5.2.6",
-    "@types/node": "^11.12.0",
+    "@types/node": "^11.13.0",
     "chai": "^4.2.0",
     "chai-as-promised": "^7.1.1",
     "chai-string": "^1.5.0",
@@ -46,13 +46,13 @@
     "prettier": "^1.16.4",
     "rimraf": "^2.6.3",
     "seedrandom": "^3.0.1",
-    "serve": "^10.1.2",
+    "serve": "^11.0.0",
     "source-map-support": "^0.5.11",
     "split2": "^3.1.1",
     "timekeeper": "^2.2.0",
-    "tslint": "^5.14.0",
+    "tslint": "^5.15.0",
     "typedoc": "^0.14.2",
-    "typescript": "^3.3.4000",
+    "typescript": "^3.4.1",
     "wtfnode": "^0.8.0"
   }
 }

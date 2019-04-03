@@ -17,6 +17,10 @@ See [Semver](http://semver.org/).
 - 🐞 Backwards-compatible bug fixes
 - 📦 Minor packaging changes
 
+## v5.6.3
+
+- 📦 Moved to the PhotoStructure org. Updated URLs in docs.
+
 ## v5.6.2
 
 - 📦 Updated deps
