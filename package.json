@@ -30,7 +30,7 @@
   "author": "Matthew McEachen <matthew-batchcluster@mceachen.org>",
   "license": "MIT",
   "engines": {
-    "node": ">= 6"
+    "node": ">= 8"
   },
   "devDependencies": {
     "@types/chai": "^4.1.7",
