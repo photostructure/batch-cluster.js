@@ -17,6 +17,12 @@ See [Semver](http://semver.org/).
 - 🐞 Backwards-compatible bug fixes
 - 📦 Minor packaging changes
 
+## v5.6.5
+
+- 📦 wrapped `stdin.write()` with try/catch that rejects the current task and
+  closes the current process.
+- 📦 wrapped `stdin.end()` with try/catch (as `.writable` isn't reliable)
+
 ## v5.6.4
 
 - 📦 Updated deps
@@ -28,7 +34,8 @@ See [Semver](http://semver.org/).
 ## v5.6.2
 
 - 📦 Updated deps
-- 📦 Removed trace and debug log calls in `BatchProcess` (which incurred GC overhead even when disabled)
+- 📦 Removed trace and debug log calls in `BatchProcess` (which incurred GC
+  overhead even when disabled)
 
 ## v5.6.1
 
@@ -89,7 +96,8 @@ See [Semver](http://semver.org/).
   service returned pass or fail, and the Parser may return a Promise now, as
   well.
 
-  There's a new `SimpleParser` implementation you can use that fails if `stderr` is non-blank or a stream matched the `.fail` pattern.
+  There's a new `SimpleParser` implementation you can use that fails if `stderr`
+  is non-blank or a stream matched the `.fail` pattern.
 
 - 🐞 initial `BatchProcess` validation uses the new `SimpleParser` to verify the
   initial `versionCommand`.

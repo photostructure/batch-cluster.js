@@ -195,8 +195,15 @@ export class BatchProcess {
           this.clearCurrentTask()
         }
       })
-    this.proc.stdin!.write(cmd)
-    return true
+    try {
+      this.proc.stdin!.write(cmd)
+      return true
+    } catch (err) {
+      // child process went away. We should too.
+      // tslint:disable-next-line: no-floating-promises
+      this.end(false, "proc.stdin.write(cmd)")
+      return false
+    }
   }
 
   /**
@@ -258,12 +265,10 @@ export class BatchProcess {
     }
 
     const cmd = map(this.opts.exitCommand, ea => ensureSuffix(ea, "\n"))
-    if (this.proc.stdin != null && this.proc.stdin.writable) {
-      this.proc.stdin.end(cmd)
-    }
 
     // proc cleanup:
     tryEach([
+      () => map(this.proc.stdin, ea => ea.end(cmd)),
       () => map(this.proc.stdout, ea => ea.destroy()),
       () => map(this.proc.stderr, ea => ea.destroy()),
       () => this.proc.disconnect()
