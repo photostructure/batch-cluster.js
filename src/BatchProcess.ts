@@ -149,9 +149,7 @@ export class BatchProcess {
     if (this.currentTask != null) {
       this.observer.onInternalError(
         new Error(
-          `${this.name}.execTask(${task.command}): already working on ${
-            this.currentTask
-          }`
+          `${this.name}.execTask(${task.command}): already working on ${this.currentTask}`
         )
       )
       return false
@@ -307,6 +305,13 @@ export class BatchProcess {
   }
 
   private onError(source: string, _error: Error, task?: Task<any>) {
+    if (
+      (toS(_error) + toS(_error.message)).includes(
+        "Cannot call write after a stream was destroyed"
+      )
+    ) {
+      return
+    }
     if (task == null) {
       task = this.currentTask
     }
@@ -339,9 +344,7 @@ export class BatchProcess {
       } else {
         this.observer.onInternalError(
           new Error(
-            `${
-              this.name
-            }.onError(${error}) cannot reject already-fulfilled task.`
+            `${this.name}.onError(${error}) cannot reject already-fulfilled task.`
           )
         )
       }
