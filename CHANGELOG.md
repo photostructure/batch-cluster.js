@@ -17,6 +17,10 @@ See [Semver](http://semver.org/).
 - 🐞 Backwards-compatible bug fixes
 - 📦 Minor packaging changes
 
+## v5.6.6
+
+- 📦 Updated deps
+
 ## v5.6.5
 
 - 📦 wrapped `stdin.write()` with try/catch that rejects the current task and
