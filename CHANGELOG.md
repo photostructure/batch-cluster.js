@@ -17,6 +17,10 @@ See [Semver](http://semver.org/).
 - 🐞 Backwards-compatible bug fixes
 - 📦 Minor packaging changes
 
+## v5.6.8
+
+- 📦 Updated deps (new TypeScript)
+
 ## v5.6.7
 
 - 📦 Updated deps
