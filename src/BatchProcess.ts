@@ -9,7 +9,7 @@ import { InternalBatchProcessOptions } from "./InternalBatchProcessOptions"
 import { map } from "./Object"
 import { SimpleParser } from "./Parser"
 import { kill, pidExists } from "./Pids"
-import { ensureSuffix, toS } from "./String"
+import { ensureSuffix, toS, blank } from "./String"
 import { Task } from "./Task"
 
 /**
@@ -74,6 +74,7 @@ export class BatchProcess {
       // Prevent unhandled startup task rejections from killing node:
       .catch(err => {
         logger().warn(this.name + " startup task was rejected: " + err)
+        this.observer.onStartError(err)
       })
 
     if (!this.execTask(this.startupTask)) {
@@ -183,13 +184,13 @@ export class BatchProcess {
     // logger().debug(this.name + ".execTask(): starting", { cmd })
     // tslint:disable-next-line: no-floating-promises
     task.promise
-      .catch(() => {})
+      .catch(err =>
+        this.taskCount === 1
+          ? this.observer.onStartError(err)
+          : this.observer.onTaskError(err, task)
+      )
       .then(() => {
         if (this.currentTask === task) {
-          // logger().debug(
-          //   this.name + ".task resolved, but currentTask wasn't cleared",
-          //   { task }
-          // )
           this.clearCurrentTask()
         }
       })
@@ -213,7 +214,6 @@ export class BatchProcess {
    */
   // NOT ASYNC! needs to change state immediately.
   end(gracefully: boolean = true, source: string): Promise<void> {
-    // logger().debug(this.name + ".end()", { gracefully, source })
     if (this._endPromise == null) {
       this._endPromise = this._end(gracefully, source)
     }
@@ -227,6 +227,7 @@ export class BatchProcess {
     source: string
   ): Promise<void> {
     const lastTask = this.currentTask
+    this.clearCurrentTask()
 
     // NOTE: We wait on all tasks (even startup tasks) so we can assert that
     // BatchCluster is idle (and this proc is idle) when the end promise is
@@ -242,12 +243,15 @@ export class BatchProcess {
         // logger().debug(this.name + ".end(): waiting for " + lastTask.command)
         try {
           await lastTask.promise
-        } catch (err) {
-          this.observer.onTaskError(err, lastTask)
-        }
+        } catch {}
       } else {
+        const msg = blank(lastTask.stderr)
+          ? source + " called end()"
+          : lastTask.stderr
+        lastTask.reject(new Error(msg))
+      }
+      if (this.taskCount > 1) {
         // NOTE: not graceful, so clearing the current task is fine.
-        this.clearCurrentTask()
         // This isn't an internal error, as this state would be expected if
         // the user calls .end(false) when there are pending tasks.
         logger().warn(this.name + ".end(): called while not idle", {
@@ -256,9 +260,6 @@ export class BatchProcess {
           cmd: lastTask.command
         })
         // We're ending, so there's no point in asking if this error is fatal. It is.
-        const err = new Error("end() called when not idle")
-        this.observer.onTaskError(err, lastTask)
-        lastTask.reject(err)
       }
     }
 
@@ -332,13 +333,12 @@ export class BatchProcess {
     // tslint:disable-next-line: no-floating-promises
     this.end(false, "onError(" + source + ")")
 
-    if (task === this.startupTask) {
+    if (task != null && this.taskCount === 1) {
       logger().warn(this.name + ".onError(): startup task failed: " + error)
       this.observer.onStartError(error)
     }
 
     if (task != null) {
-      this.observer.onTaskError(error, task)
       if (task.pending) {
         task.reject(error)
       } else {
@@ -358,8 +358,8 @@ export class BatchProcess {
   }
 
   private onStderr(data: string | Buffer) {
-    // logger().debug("onStderr(" + this.pid + "):" + data)
-    if (data == null) return
+    if (blank(data)) return
+    logger().info("onStderr(" + this.pid + "):" + data)
     const task = this.currentTask
     if (task != null && task.pending) {
       task.onStderr(data)
@@ -402,7 +402,6 @@ export class BatchProcess {
     // }
     const pass = this.opts.passRE.exec(task.stdout)
     if (pass != null) {
-      // logger().debug("onData(" + this.pid + ") PASS", { pass, ...ctx })
       return this.resolveCurrentTask(
         task,
         toS(pass[1]).trim(),
@@ -410,22 +409,18 @@ export class BatchProcess {
         true
       )
     }
+
     const failout = this.opts.failRE.exec(task.stdout)
     if (failout != null) {
-      // logger().debug("onData(" + this.pid + ") FAILOUT", { failout, ...ctx })
-      return this.resolveCurrentTask(
-        task,
-        toS(failout[1]).trim(),
-        task.stderr,
-        false
-      )
+      const msg = toS(failout[1]).trim()
+      return this.resolveCurrentTask(task, msg, task.stderr, false)
     }
+
     const failerr = this.opts.failRE.exec(task.stderr)
     if (failerr != null) {
-      // logger().debug("onData(" + this.pid + ") FAILERR", { failerr, ...ctx })
-      return this.resolveCurrentTask(task, task.stdout, failerr[1], false)
+      const msg = toS(failerr[1]).trim()
+      return this.resolveCurrentTask(task, task.stdout, msg, false)
     }
-    // logger().debug("onData(" + this.pid + ") not finished", ctx)
     return
   }
 
@@ -442,7 +437,6 @@ export class BatchProcess {
     passed: boolean
   ) {
     this.streamDebouncer(async () => {
-      // logger().debug("resolveCurrentTask()", { task: String(task), stdout, stderr, passed })
       this.clearCurrentTask()
       // the task may have already timed out.
       if (task.pending) {

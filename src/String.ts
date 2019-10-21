@@ -1,6 +1,6 @@
 import { isFunction } from "./Object"
 
-export function blank(s: string | undefined): boolean {
+export function blank(s: string | Buffer | undefined): boolean {
   return s == null || String(s).trim().length === 0
 }
 
