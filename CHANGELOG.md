@@ -17,6 +17,11 @@ See [Semver](http://semver.org/).
 - 🐞 Backwards-compatible bug fixes
 - 📦 Minor packaging changes
 
+## v5.7.0
+
+- 📦 Updated deps
+- 🐞 `onStartError` and `onTaskError` didn't get emitted in all cases.
+
 ## v5.6.8
 
 - 📦 Updated deps (new TypeScript)
