@@ -6,7 +6,7 @@ node_js:
   - "13"
 os:
   - linux
-  - osx
-osx_image: xcode8
+  # - osx
+# osx_image: xcode8
 script: 'yarn test'
 cache: yarn
