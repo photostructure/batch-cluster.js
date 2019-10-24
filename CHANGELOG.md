@@ -19,8 +19,9 @@ See [Semver](http://semver.org/).
 
 ## v5.7.0
 
-- 📦 Updated deps
-- 🐞 `onStartError` and `onTaskError` didn't get emitted in all cases.
+- 🐞 Fixed issue where `onStartError` and `onTaskError` didn't get emitted.
+- 📦 Updated deps, rebuilt docs.
+- 🐞 Deflaked CI tests with longer timeouts and less aggressive `shutdown()`
 
 ## v5.6.8
 
