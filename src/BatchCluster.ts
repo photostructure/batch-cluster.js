@@ -63,7 +63,7 @@ export class BatchCluster extends BatchClusterEmitter {
   private onIdleInterval?: NodeJS.Timer
   private readonly startErrorRate = new Rate()
   private _spawnedProcs = 0
-  private endPromise?: Deferred<any>
+  private endPromise?: Deferred<void>
   private _internalErrorCount = 0
 
   constructor(
@@ -112,14 +112,16 @@ export class BatchCluster extends BatchClusterEmitter {
       this.onIdleInterval = undefined
       _p.removeListener("beforeExit", this.beforeExitListener)
       _p.removeListener("exit", this.exitListener)
-      this.endPromise = new Deferred().observe(
+      this.endPromise = new Deferred<void>().observe(
         Promise.all(
           this._procs.map(p =>
             p
               .end(gracefully, "BatchCluster.end()")
               .catch(err => this.emitter.emit("endError", err))
           )
-        ).then(() => this.emitter.emit("end"))
+        )
+          .then(() => this.emitter.emit("end"))
+          .then(() => undefined)
       )
       this._procs.length = 0
     }

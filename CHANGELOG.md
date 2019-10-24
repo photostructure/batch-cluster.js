@@ -17,6 +17,10 @@ See [Semver](http://semver.org/).
 - 🐞 Backwards-compatible bug fixes
 - 📦 Minor packaging changes
 
+## v5.7.1
+
+- 📦 `BatchCluster.end()` should return a `Deferred<void>`
+
 ## v5.7.0
 
 - 🐞 Fixed issue where `onStartError` and `onTaskError` didn't get emitted.
