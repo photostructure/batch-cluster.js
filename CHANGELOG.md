@@ -26,6 +26,8 @@ See [Semver](http://semver.org/).
 - 🐞 Fixed issue where `onStartError` and `onTaskError` didn't get emitted.
 - 📦 Updated deps, rebuilt docs.
 - 🐞 Deflaked CI tests with longer timeouts and less aggressive `shutdown()`
+- 📦 Had to delete the macOS Travis tests. Travis has been terribly flaky, with
+  unreproduceable spec failures.
 
 ## v5.6.8
 
