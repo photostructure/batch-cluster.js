@@ -76,6 +76,7 @@ export function pids(): Promise<number[]> {
   return new Promise((resolve, reject) => {
     _cp.execFile(
       isWin ? "tasklist" : "ps",
+      // NoHeader, FOrmat CSV
       isWin ? ["/NH", "/FO", "CSV"] : ["-e"],
       (error: Error | null, stdout: string, stderr: string) => {
         if (error != null) {
