@@ -25,7 +25,6 @@ import { Task } from "./Task"
 const tk = require("timekeeper")
 
 describe("BatchCluster", function() {
-  this.retries(3)
   const ErrorPrefix = "ERROR: "
 
   const DefaultOpts = {
@@ -96,24 +95,34 @@ describe("BatchCluster", function() {
     const endPromise = bc.end(true)
     expect(bc.ended).to.eql(true)
     // 10 seconds is a damn long time for a process to exit.
-    expect(await until(() => !endPromise.pending, 20_000, 500)).to.eql(true)
-    const done = await until(
+    const isShutdown = await until(
       async count => {
         const idle = bc.isIdle
         const pidCount = (await bc.pids()).length
         const livingPids = await currentTestPids()
-        console.log("shutdown(): waiting for end", {
-          count,
-          idle,
-          pidCount,
-          livingPids
-        })
-        return idle && pidCount === 0 && livingPids.length === 0
+        const done = idle && pidCount === 0 && livingPids.length === 0
+        if (count > 0 && !done)
+          console.log("shutdown(): waiting for end", {
+            count,
+            idle,
+            pidCount,
+            livingPids
+          })
+        return done
       },
-      20_000,
+      3_000,
       500 // <  don't hammer tasklist too hard
     )
-    expect(done).to.eql(true)
+    const endPromiseResolved = await until(
+      () => !endPromise.pending,
+      3_000,
+      500
+    )
+    if (!endPromiseResolved || !isShutdown) {
+      console.warn("shutdown()", { isShutdown, endPromiseResolved })
+    }
+    expect(isShutdown).to.eql(true)
+    expect(endPromiseResolved).to.eql(true)
     expect(bc.internalErrorCount).to.eql(0)
     return
   }
@@ -161,7 +170,8 @@ describe("BatchCluster", function() {
             // failrate needs to be high enough to trigger but low enough to allow
             // retries to succeed.
 
-            beforeEach(() => {
+            beforeEach(function() {
+              this.retries(2)
               setNewline(newline as any)
               setIgnoreExit(ignoreExit)
               bc = listen(new BatchCluster({ ...opts, processFactory }))
