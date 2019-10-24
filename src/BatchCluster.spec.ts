@@ -101,7 +101,8 @@ describe("BatchCluster", function() {
         bc.isIdle &&
         (await bc.pids()).length === 0 &&
         (await currentTestPids()).length === 0,
-      15000 // patience is a virtue
+      20000, // patience is a virtue
+      500 // <  don't hammer tasklist too hard
     )
     expect(bc.internalErrorCount).to.eql(0)
     expect(done).to.eql(true)

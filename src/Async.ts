@@ -17,14 +17,15 @@ export function delay(millis: number, unref = false): Promise<void> {
  */
 export async function until(
   f: () => boolean | Promise<boolean>,
-  timeoutMs: number
+  timeoutMs: number,
+  delayMs = 50
 ): Promise<boolean> {
   const timeoutAt = Date.now() + timeoutMs
   while (Date.now() < timeoutAt) {
     if (await f()) {
       return true
     } else {
-      await delay(50)
+      await delay(delayMs)
     }
   }
   return false
