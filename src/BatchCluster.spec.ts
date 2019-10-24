@@ -95,17 +95,26 @@ describe("BatchCluster", function() {
   async function shutdown(bc: BatchCluster) {
     const endPromise = bc.end(true)
     expect(bc.ended).to.eql(true)
-    await endPromise
+    // 10 seconds is a damn long time for a process to exit.
+    expect(await until(() => !endPromise.pending, 20_000, 500)).to.eql(true)
     const done = await until(
-      async () =>
-        bc.isIdle &&
-        (await bc.pids()).length === 0 &&
-        (await currentTestPids()).length === 0,
-      20000, // patience is a virtue
+      async count => {
+        const idle = bc.isIdle
+        const pidCount = (await bc.pids()).length
+        const livingPids = await currentTestPids()
+        console.log("shutdown(): waiting for end", {
+          count,
+          idle,
+          pidCount,
+          livingPids
+        })
+        return idle && pidCount === 0 && livingPids.length === 0
+      },
+      20_000,
       500 // <  don't hammer tasklist too hard
     )
-    expect(bc.internalErrorCount).to.eql(0)
     expect(done).to.eql(true)
+    expect(bc.internalErrorCount).to.eql(0)
     return
   }
 
@@ -160,6 +169,7 @@ describe("BatchCluster", function() {
             })
 
             afterEach(async () => {
+              // tslint:disable-next-line: no-floating-promises
               await shutdown(bc)
               expect(bc.internalErrorCount).to.eql(0)
               return
@@ -201,7 +211,7 @@ describe("BatchCluster", function() {
                 " before recycling",
               async () => {
                 // make sure we hit an EUNLUCKY:
-                setFailrate(50) // 25%
+                setFailrate(50) // 50%
                 let expectedResultCount = 0
                 const results = await Promise.all(runTasks(bc, maxProcs))
                 expectedResultCount += maxProcs
@@ -315,7 +325,6 @@ describe("BatchCluster", function() {
               }
               expect(String(error)).to.match(/invalid command|UNLUCKY/, result)
               return
-              // return expect(bc.enqueueTask(task)).to.eventually.be.rejectedWith(
             })
 
             it("rejects a command that emits to stderr", async function() {
@@ -332,7 +341,6 @@ describe("BatchCluster", function() {
                 result
               )
               return
-              // return expect(bc.enqueueTask(task)).to.eventually.be.rejectedWith(
             })
           }
         )
@@ -426,8 +434,6 @@ describe("BatchCluster", function() {
   })
 
   describe("maxProcAgeMillis", function() {
-    this.timeout(10000)
-
     const opts = {
       ...DefaultOpts,
       maxProcs: 4,

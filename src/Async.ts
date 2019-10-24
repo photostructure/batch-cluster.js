@@ -1,7 +1,5 @@
 import { setTimeout } from "timers"
 
-import { filterInPlace } from "./Array"
-import { Deferred } from "./Deferred"
 import { map } from "./Object"
 
 export function delay(millis: number, unref = false): Promise<void> {
@@ -16,56 +14,21 @@ export function delay(millis: number, unref = false): Promise<void> {
  * passes.
  */
 export async function until(
-  f: () => boolean | Promise<boolean>,
+  f: (count: number) => boolean | Promise<boolean>,
   timeoutMs: number,
   delayMs = 50
 ): Promise<boolean> {
   const timeoutAt = Date.now() + timeoutMs
+  let count = 0
   while (Date.now() < timeoutAt) {
-    if (await f()) {
+    if (await f(count)) {
       return true
     } else {
+      count++
       await delay(delayMs)
     }
   }
   return false
-}
-
-/**
- * Return a function that will, at most, run the given function once at a time.
- * Calls that occur during prior calls will no-op.
- */
-export function atMostOne<T>(
-  f: () => Promise<T>
-): () => Promise<T | undefined> {
-  let running = false
-  return async () => {
-    if (running) return
-    running = true
-    try {
-      return await f()
-    } finally {
-      running = false
-    }
-  }
-}
-
-/**
- * Return a function that will only invoke the given thunk after all prior given
- * promises have resolved or rejected.
- */
-export function serial<T>(): (f: () => Promise<T>) => Promise<T> {
-  const priors: Deferred<T>[] = []
-  return (f: () => Promise<T>) => {
-    filterInPlace(priors, ea => ea.pending)
-    const d = new Deferred<T>()
-    // tslint:disable-next-line: no-floating-promises
-    Promise.all(priors.map(ea => ea.promise))
-      .then(() => f())
-      .then(ea => d.resolve(ea))
-    priors.push(d)
-    return d.promise
-  }
 }
 
 /**

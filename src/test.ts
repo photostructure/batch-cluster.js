@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 import * as _p from "process"
 
-import { delay, serial } from "./Async"
+import { delay } from "./Async"
+import { Mutex } from "./Mutex"
 
 /**
  * This is a script written to behave similarly to ExifTool or
@@ -135,8 +136,8 @@ async function onLine(line: string): Promise<void> {
   return
 }
 
-const onLineSerial = serial<void>()
+const m = new Mutex()
 
 process.stdin
   .pipe(require("split2")())
-  .on("data", (ea: string) => onLineSerial(() => onLine(ea)))
+  .on("data", (ea: string) => m.serial(() => onLine(ea)))

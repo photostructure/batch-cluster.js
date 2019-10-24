@@ -26,7 +26,6 @@ export class BatchProcess {
    * process table.
    */
   private _endPromise: Promise<void> | undefined
-
   /**
    * Supports non-polling notification of `proc.pid` leaving the process table.
    */
@@ -70,12 +69,6 @@ export class BatchProcess {
     this.streamDebouncer = debounce(opts.streamFlushMillis)
 
     this.startupTask = new Task(opts.versionCommand, SimpleParser)
-    this.startupTask.promise
-      // Prevent unhandled startup task rejections from killing node:
-      .catch(err => {
-        logger().warn(this.name + " startup task was rejected: " + err)
-        this.observer.onStartError(err)
-      })
 
     if (!this.execTask(this.startupTask)) {
       // This could also be considered a "start error", but if it's just an
@@ -251,10 +244,12 @@ export class BatchProcess {
         lastTask.reject(new Error(msg))
       }
       if (this.taskCount > 1) {
+        const msg = this.name + ".end(): called while not idle"
+        this.observer.onInternalError(new Error(msg))
         // NOTE: not graceful, so clearing the current task is fine.
         // This isn't an internal error, as this state would be expected if
         // the user calls .end(false) when there are pending tasks.
-        logger().warn(this.name + ".end(): called while not idle", {
+        logger().warn(msg, {
           source,
           gracefully,
           cmd: lastTask.command
