@@ -33,26 +33,26 @@
     "node": ">= 8"
   },
   "devDependencies": {
-    "@types/chai": "^4.2.4",
+    "@types/chai": "^4.2.5",
     "@types/chai-as-promised": "^7.1.2",
     "@types/chai-string": "^1.4.2",
     "@types/mocha": "^5.2.7",
-    "@types/node": "^12.11.6",
+    "@types/node": "^12.12.7",
     "chai": "^4.2.0",
     "chai-as-promised": "^7.1.1",
     "chai-string": "^1.5.0",
     "chai-withintoleranceof": "^1.0.1",
     "mocha": "^6.2.2",
-    "prettier": "^1.18.2",
+    "prettier": "^1.19.1",
     "rimraf": "^3.0.0",
     "seedrandom": "^3.0.5",
     "serve": "^11.2.0",
-    "source-map-support": "^0.5.13",
+    "source-map-support": "^0.5.16",
     "split2": "^3.1.1",
     "timekeeper": "^2.2.0",
-    "tslint": "^5.20.0",
-    "typedoc": "^0.15.0",
-    "typescript": "^3.6.4",
+    "tslint": "^5.20.1",
+    "typedoc": "^0.15.1",
+    "typescript": "^3.7.2",
     "wtfnode": "^0.8.0"
   }
 }

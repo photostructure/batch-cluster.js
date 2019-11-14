@@ -1,6 +1,6 @@
 import * as _cp from "child_process"
 
-import { debounce, until } from "./Async"
+import { debounce, until, delay } from "./Async"
 import { logger } from "./BatchCluster"
 import { BatchProcessObserver } from "./BatchProcessObserver"
 import { Deferred } from "./Deferred"
@@ -178,7 +178,7 @@ export class BatchProcess {
     // tslint:disable-next-line: no-floating-promises
     task.promise
       .catch(err =>
-        this.taskCount === 1
+        this.startupTask === task
           ? this.observer.onStartError(err)
           : this.observer.onTaskError(err, task)
       )
@@ -229,32 +229,16 @@ export class BatchProcess {
     // NOTE: holy crap there are a lot of notes here.
 
     if (lastTask != null) {
-      if (gracefully) {
-        // NOTE: If we set the currentTask to null here, it can't ever resolve,
-        // because the stdout handler will grump that there's no pending task,
-        // and we'd also lose the timeout.
-        // logger().debug(this.name + ".end(): waiting for " + lastTask.command)
-        try {
-          await lastTask.promise
-        } catch {}
-      } else {
-        const msg = blank(lastTask.stderr)
-          ? source + " called end()"
-          : lastTask.stderr
-        lastTask.reject(new Error(msg))
-      }
-      if (this.taskCount > 1) {
-        const msg = this.name + ".end(): called while not idle"
-        this.observer.onInternalError(new Error(msg))
-        // NOTE: not graceful, so clearing the current task is fine.
-        // This isn't an internal error, as this state would be expected if
-        // the user calls .end(false) when there are pending tasks.
-        logger().warn(msg, {
-          source,
-          gracefully,
-          cmd: lastTask.command
-        })
-        // We're ending, so there's no point in asking if this error is fatal. It is.
+      try {
+        // Let's wait for streams to flush, as that may actually allow the task
+        // to complete successfully. Let's not wait forever, though.
+        await Promise.race([lastTask.promise, delay(gracefully ? 2000 : 250)])
+      } catch {}
+      if (lastTask.pending) {
+        lastTask.reject(
+          new Error("end() called before task completed"),
+          `_end(${JSON.stringify({ gracefully, source })})`
+        )
       }
     }
 
