@@ -17,6 +17,14 @@ See [Semver](http://semver.org/).
 - 🐞 Backwards-compatible bug fixes
 - 📦 Minor packaging changes
 
+## v5.9.0
+
+- 🐞 Moved all async throws into observables (to prevent "This error originated
+  either by throwing inside of an async function without a catch block, or by
+  rejecting a promise which was not handled with .catch(). The promise rejected
+  with the reason...")
+- 📦 Updated deps
+
 ## v5.8.0
 
 - 🐞 Fixed issue where immediately closing a process before a pending task

@@ -82,11 +82,11 @@ export class BatchCluster extends BatchClusterEmitter {
     }
     this.observer = {
       onIdle: () => this.onIdle(),
-      onStartError: err => this.onStartError(err),
+      onStartError: err => this.emitStartError(err),
       onTaskData: (data: Buffer | string, task: Task<any> | undefined) =>
         this.emitter.emit("taskData", data, task),
       onTaskError: (err, task) => this.emitter.emit("taskError", err, task),
-      onInternalError: err => this.onInternalError(err)
+      onInternalError: err => this.emitInternalError(err)
     }
     _p.once("beforeExit", this.beforeExitListener)
     _p.once("exit", this.exitListener)
@@ -137,8 +137,9 @@ export class BatchCluster extends BatchClusterEmitter {
    */
   enqueueTask<T>(task: Task<T>): Promise<T> {
     if (this.ended) {
-      task.reject(new Error("BatchCluster has ended"))
-      throw new Error("Cannot enqueue task " + task.command)
+      task.reject(
+        new Error("BatchCluster has ended, cannot enqueue " + task.command)
+      )
     }
     this.tasks.push(task)
     setImmediate(() => this.onIdle())
@@ -190,13 +191,13 @@ export class BatchCluster extends BatchClusterEmitter {
     return this._internalErrorCount
   }
 
-  private onInternalError(error: Error): void {
+  private emitInternalError(error: Error): void {
     this.emitter.emit("internalError", error)
     logger().error("BatchCluster: INTERNAL ERROR: " + error)
     this._internalErrorCount++
   }
 
-  private onStartError(error: Error): void {
+  private emitStartError(error: Error): void {
     logger().warn("BatchCluster.onStartError(): " + error)
     this.emitter.emit("startError", error)
     this.startErrorRate.onEvent()
@@ -204,14 +205,16 @@ export class BatchCluster extends BatchClusterEmitter {
       this.startErrorRate.eventsPerMinute >
       this.options.maxReasonableProcessFailuresPerMinute
     ) {
-      // tslint:disable-next-line: no-floating-promises
-      this.end()
-      throw new Error(
-        error +
-          "(start errors/min: " +
-          this.startErrorRate.eventsPerMinute.toFixed(2) +
-          ")"
+      this.emitter.emit(
+        "endError",
+        new Error(
+          error +
+            "(start errors/min: " +
+            this.startErrorRate.eventsPerMinute.toFixed(2) +
+            ")"
+        )
       )
+      this.end()
     }
   }
 
@@ -272,7 +275,7 @@ export class BatchCluster extends BatchClusterEmitter {
 
     const task = this.tasks.shift()
     if (task == null) {
-      this.onInternalError(new Error("unexpected null task"))
+      this.emitInternalError(new Error("unexpected null task"))
       return false
     }
 
