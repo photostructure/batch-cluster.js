@@ -17,6 +17,11 @@ See [Semver](http://semver.org/).
 - 🐞 Backwards-compatible bug fixes
 - 📦 Minor packaging changes
 
+## v5.9.1
+
+- 🐞 Errors after a process has shut down are logged and not propagated
+- 📦 Updated deps
+
 ## v5.9.0
 
 - 🐞 Moved all async throws into observables (to prevent "This error originated

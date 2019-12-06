@@ -68,7 +68,7 @@ export class Task<T> {
       const parseResult = await this.parser(stdout, stderr, passed)
       this.d.resolve(parseResult)
     } catch (error) {
-      this.reject(error, "Task.onData(): rejected")
+      this.reject(error, "Task.resolve() was rejected")
     }
     return
   }

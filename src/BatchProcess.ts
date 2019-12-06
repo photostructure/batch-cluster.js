@@ -285,11 +285,14 @@ export class BatchProcess {
   }
 
   private onError(source: string, _error: Error, task?: Task<any>) {
-    if (
-      (toS(_error) + toS(_error.message)).includes(
-        "Cannot call write after a stream was destroyed"
-      )
-    ) {
+    if (this._endPromise != null) {
+      // We're ending already, so don't propogate the error.
+      // This is expected due to race conditions stdin EPIPE and process shutdown.
+      logger().debug(this.name + ".onError() post-end (expected and not propagated)", {
+        source,
+        _error,
+        task
+      })
       return
     }
     if (task == null) {
