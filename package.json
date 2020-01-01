@@ -29,9 +29,6 @@
   },
   "author": "Matthew McEachen <matthew-batchcluster@mceachen.org>",
   "license": "MIT",
-  "engines": {
-    "node": ">= 8"
-  },
   "devDependencies": {
     "@types/chai": "^4.2.6",
     "@types/chai-as-promised": "^7.1.2",
