@@ -95,7 +95,9 @@ export class BatchProcess {
     return (
       this.currentTask == null &&
       !this.startupTask.pending &&
-      this._endPromise == null
+      this._endPromise == null &&
+      this.proc != null &&
+      this.proc.stdin != null
     )
   }
   get idle(): boolean {
@@ -140,18 +142,10 @@ export class BatchProcess {
     // We're not going to run this.running() here, because BatchCluster will
     // already have pruned the processes that have exitted unexpectedly just
     // milliseconds ago.
-    if (this.currentTask != null) {
+    if (this._taskCount >= 0 && !this.ready) {
       this.observer.onInternalError(
         new Error(
-          `${this.name}.execTask(${task.command}): already working on ${this.currentTask}`
-        )
-      )
-      return false
-    }
-    if (this._endPromise != null) {
-      this.observer.onInternalError(
-        new Error(
-          `${this.name}.execTask(${task.command}): this process is ending/ended`
+          `${this.name}.execTask(${task.command}): not ready`
         )
       )
       return false
