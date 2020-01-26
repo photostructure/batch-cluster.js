@@ -16,4 +16,4 @@ src/
 docs/
 
 # no typescript configs
-ts*.json
+tsconfig.json

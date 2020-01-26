@@ -143,7 +143,6 @@ export class BatchCluster extends BatchClusterEmitter {
     }
     this.tasks.push(task)
     setImmediate(() => this.onIdle())
-    // tslint:disable-next-line: no-floating-promises
     task.promise.then(() => this.onIdle()).catch(() => {})
     return task.promise
   }
@@ -256,7 +255,7 @@ export class BatchCluster extends BatchClusterEmitter {
       const broken = proc.exited
       const reap = old || wornOut || broken // # me
       if (reap) {
-        // tslint:disable-next-line: no-floating-promises
+        // eslint-disable-next-line @typescript-eslint/no-floating-promises
         proc.end(true, old ? "old" : wornOut ? "worn" : "broken")
       }
       return !reap
@@ -283,7 +282,7 @@ export class BatchCluster extends BatchClusterEmitter {
 
     const submitted = readyProc.result.execTask(task)
     if (!submitted) {
-      // tslint:disable-next-line: no-floating-promises
+      // eslint-disable-next-line @typescript-eslint/no-floating-promises
       this.enqueueTask(task)
     }
     return submitted
@@ -308,12 +307,12 @@ export class BatchCluster extends BatchClusterEmitter {
         const proc = new BatchProcess(child, this.options, this.observer)
         if (this.ended) {
           // This should only happen in tests.
-          // tslint:disable-next-line: no-floating-promises
+          // eslint-disable-next-line @typescript-eslint/no-floating-promises
           proc.end(false, "ended")
         } else {
           this._procs.push(proc)
           this.emitter.emit("childStart", child)
-          // tslint:disable-next-line: no-floating-promises
+          // eslint-disable-next-line @typescript-eslint/no-floating-promises
           proc.exitedPromise.then(() => {
             this._tasksPerProc.push(proc.taskCount)
             this.emitter.emit("childExit", child)

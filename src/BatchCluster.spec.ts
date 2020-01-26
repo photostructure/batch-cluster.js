@@ -179,7 +179,6 @@ describe("BatchCluster", function() {
             })
 
             afterEach(async () => {
-              // tslint:disable-next-line: no-floating-promises
               await shutdown(bc)
               expect(bc.internalErrorCount).to.eql(0)
               return
@@ -539,7 +538,6 @@ describe("BatchCluster", function() {
     it("requires maxProcAgeMillis to be > spawnTimeoutMillis", () => {
       const spawnTimeoutMillis = DefaultOpts.taskTimeoutMillis + 1
       try {
-        // tslint:disable-next-line: no-unused-expression
         new BatchCluster({
           processFactory,
           ...DefaultOpts,
@@ -560,7 +558,6 @@ describe("BatchCluster", function() {
     it("requires maxProcAgeMillis to be > taskTimeoutMillis", () => {
       const taskTimeoutMillis = DefaultOpts.spawnTimeoutMillis + 1
       try {
-        // tslint:disable-next-line: no-unused-expression
         new BatchCluster({
           processFactory,
           ...DefaultOpts,
@@ -580,7 +577,6 @@ describe("BatchCluster", function() {
 
     it("reports on invalid opts", () => {
       try {
-        // tslint:disable-next-line: no-unused-expression
         new BatchCluster({
           processFactory,
           versionCommand: "",

@@ -30,10 +30,7 @@ if (ignoreExit) {
 
 const failrate = _p.env.failrate == null ? 0 : parseFloat(_p.env.failrate!)
 const rng =
-  _p.env.rngseed != null
-    ? require("seedrandom")(_p.env.rngseed)
-    : // tslint:disable-next-line: no-unbound-method
-      Math.random
+  _p.env.rngseed != null ? require("seedrandom")(_p.env.rngseed) : Math.random
 
 async function onLine(line: string): Promise<void> {
   // write(`# ${_p.pid} onLine(${line.trim()}) (newline = ${_p.env.newline})`)

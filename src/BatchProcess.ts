@@ -169,7 +169,7 @@ export class BatchProcess {
       )
     }
     // logger().debug(this.name + ".execTask(): starting", { cmd })
-    // tslint:disable-next-line: no-floating-promises
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises
     task.promise
       .catch(err =>
         this.startupTask === task
@@ -186,7 +186,7 @@ export class BatchProcess {
       return true
     } catch (err) {
       // child process went away. We should too.
-      // tslint:disable-next-line: no-floating-promises
+      // eslint-disable-next-line @typescript-eslint/no-floating-promises
       this.end(false, "proc.stdin.write(cmd)")
       return false
     }
@@ -273,7 +273,6 @@ export class BatchProcess {
 
   private onTimeout(task: Task<any>, timeoutMs: number): void {
     if (task.pending) {
-      // tslint:disable-next-line: no-floating-promises
       this.onError("timeout", new Error("waited " + timeoutMs + "ms"), task)
     }
   }
@@ -306,7 +305,7 @@ export class BatchProcess {
 
     // clear the task before ending so the onExit from end() doesn't retry the task:
     this.clearCurrentTask()
-    // tslint:disable-next-line: no-floating-promises
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises
     this.end(false, "onError(" + source + ")")
 
     if (task != null && this.taskCount === 1) {

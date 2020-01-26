@@ -67,7 +67,7 @@ export const parser: Parser<string> = (
 }
 
 process.on("unhandledRejection", (reason: any) => {
-  console.error("unhandledRejection:", reason.stack || reason)
+  console.error("unhandledRejection:", reason.stack ?? reason)
 })
 
 export function times<T>(n: number, f: (idx: number) => T): T[] {

@@ -20,6 +20,7 @@ See [Semver](http://semver.org/).
 ## v5.9.2
 
 - 🐞 `BatchProcess.ready` now verifies the child process still exists
+- 📦 Replace tslint with eslint
 - 📦 Updated deps
 
 ## v5.9.1
