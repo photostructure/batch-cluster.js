@@ -17,6 +17,12 @@ See [Semver](http://semver.org/).
 - 🐞 Backwards-compatible bug fixes
 - 📦 Minor packaging changes
 
+## v5.9.3
+
+- 🐞 `BatchProcess`'s streams could cause an infinite loop on `.end()` when
+  `stdout` was destroyed.
+- 📦 Updated deps
+
 ## v5.9.2
 
 - 🐞 `BatchProcess.ready` now verifies the child process still exists

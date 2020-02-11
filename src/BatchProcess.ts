@@ -1,6 +1,5 @@
 import * as _cp from "child_process"
-
-import { debounce, until, delay } from "./Async"
+import { debounce, delay, until } from "./Async"
 import { logger } from "./BatchCluster"
 import { BatchProcessObserver } from "./BatchProcessObserver"
 import { Deferred } from "./Deferred"
@@ -9,7 +8,8 @@ import { InternalBatchProcessOptions } from "./InternalBatchProcessOptions"
 import { map } from "./Object"
 import { SimpleParser } from "./Parser"
 import { kill, pidExists } from "./Pids"
-import { ensureSuffix, toS, blank } from "./String"
+import { mapNotDestroyed } from "./Stream"
+import { blank, ensureSuffix, toS } from "./String"
 import { Task } from "./Task"
 
 /**
@@ -139,14 +139,18 @@ export class BatchProcess {
   // This must not be async, or new instances aren't started as busy (until the
   // startup task is complete)
   execTask(task: Task<any>): boolean {
+    if (this.proc.stdin == null || this.proc.stdin.destroyed) {
+      // eslint-disable-next-line @typescript-eslint/no-floating-promises
+      this.end(false, "proc.stdin is null or destroyed")
+      return false
+    }
+
     // We're not going to run this.running() here, because BatchCluster will
     // already have pruned the processes that have exitted unexpectedly just
     // milliseconds ago.
     if (this._taskCount >= 0 && !this.ready) {
       this.observer.onInternalError(
-        new Error(
-          `${this.name}.execTask(${task.command}): not ready`
-        )
+        new Error(`${this.name}.execTask(${task.command}): not ready`)
       )
       return false
     }
@@ -182,7 +186,7 @@ export class BatchProcess {
         }
       })
     try {
-      this.proc.stdin!.write(cmd)
+      this.proc.stdin.write(cmd)
       return true
     } catch (err) {
       // child process went away. We should too.
@@ -240,9 +244,9 @@ export class BatchProcess {
 
     // proc cleanup:
     tryEach([
-      () => map(this.proc.stdin, ea => ea.end(cmd)),
-      () => map(this.proc.stdout, ea => ea.destroy()),
-      () => map(this.proc.stderr, ea => ea.destroy()),
+      () => mapNotDestroyed(this.proc.stdin, ea => ea.end(cmd)),
+      () => mapNotDestroyed(this.proc.stdout, ea => ea.destroy()),
+      () => mapNotDestroyed(this.proc.stderr, ea => ea.destroy()),
       () => this.proc.disconnect()
     ])
 
@@ -281,11 +285,14 @@ export class BatchProcess {
     if (this._endPromise != null) {
       // We're ending already, so don't propogate the error.
       // This is expected due to race conditions stdin EPIPE and process shutdown.
-      logger().debug(this.name + ".onError() post-end (expected and not propagated)", {
-        source,
-        _error,
-        task
-      })
+      logger().debug(
+        this.name + ".onError() post-end (expected and not propagated)",
+        {
+          source,
+          _error,
+          task
+        }
+      )
       return
     }
     if (task == null) {
