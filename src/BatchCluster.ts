@@ -1,7 +1,6 @@
 import { ChildProcess } from "child_process"
 import * as _p from "process"
 import { clearInterval, setInterval } from "timers"
-
 import { filterInPlace, rrFindResult } from "./Array"
 import { BatchClusterEmitter } from "./BatchClusterEmitter"
 import {
@@ -105,7 +104,7 @@ export class BatchCluster extends BatchClusterEmitter {
    * should we force-kill child PIDs.
    */
   // NOT ASYNC so state transition happens immediately
-  end(gracefully: boolean = true) {
+  end(gracefully = true) {
     if (this.endPromise == null) {
       this.emitter.emit("beforeEnd")
       map(this.onIdleInterval, clearInterval)
@@ -143,7 +142,11 @@ export class BatchCluster extends BatchClusterEmitter {
     }
     this.tasks.push(task)
     setImmediate(() => this.onIdle())
-    task.promise.then(() => this.onIdle()).catch(() => {})
+    task.promise
+      .then(() => this.onIdle())
+      .catch(() => {
+        //
+      })
     return task.promise
   }
 
@@ -234,7 +237,9 @@ export class BatchCluster extends BatchClusterEmitter {
   private onIdle() {
     return this.m.runIfIdle(async () => {
       this.vacuumProcs()
-      while (this.execNextTask()) {}
+      while (this.execNextTask()) {
+        //
+      }
       // setImmediate because we currently have the mutex
       if (this.tasks.length > 0) setImmediate(() => this.maybeLaunchNewChild())
     })

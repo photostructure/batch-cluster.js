@@ -204,7 +204,7 @@ export class BatchProcess {
    * @return Promise that will be resolved when the process has completed. Subsequent calls to end() will ignore the parameters and return the first endPromise.
    */
   // NOT ASYNC! needs to change state immediately.
-  end(gracefully: boolean = true, source: string): Promise<void> {
+  end(gracefully = true, source: string): Promise<void> {
     if (this._endPromise == null) {
       this._endPromise = this._end(gracefully, source)
     }
@@ -213,10 +213,7 @@ export class BatchProcess {
 
   // NOTE: Must only be invoked by this.end(), and only expected to be invoked
   // once per instance.
-  private async _end(
-    gracefully: boolean = true,
-    source: string
-  ): Promise<void> {
+  private async _end(gracefully = true, source: string): Promise<void> {
     const lastTask = this.currentTask
     this.clearCurrentTask()
 
@@ -231,7 +228,9 @@ export class BatchProcess {
         // Let's wait for streams to flush, as that may actually allow the task
         // to complete successfully. Let's not wait forever, though.
         await Promise.race([lastTask.promise, delay(gracefully ? 2000 : 250)])
-      } catch {}
+      } catch {
+        //
+      }
       if (lastTask.pending) {
         lastTask.reject(
           new Error("end() called before task completed"),

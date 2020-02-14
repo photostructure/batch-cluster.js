@@ -83,8 +83,8 @@ export function logger() {
   return _logger
 }
 
-export namespace Logger {
-  export function withLevels(delegate: Logger): Logger {
+export const Logger = {
+  withLevels: (delegate: Logger) => {
     const timestamped: any = {}
     LogLevels.forEach(ea => {
       const prefix = (ea + " ").substring(0, 5) + " | "
@@ -95,9 +95,9 @@ export namespace Logger {
       }
     })
     return timestamped
-  }
+  },
 
-  export function withTimestamps(delegate: Logger): Logger {
+  withTimestamps: (delegate: Logger) => {
     const timestamped: any = {}
     LogLevels.forEach(
       level =>
@@ -110,9 +110,9 @@ export namespace Logger {
           ))
     )
     return timestamped
-  }
+  },
 
-  export function filterLevels(l: Logger, minLogLevel: keyof Logger): Logger {
+  filterLevels: (l: Logger, minLogLevel: keyof Logger) => {
     const minLogLevelIndex = LogLevels.indexOf(minLogLevel)
     const filtered: any = {}
     LogLevels.forEach(

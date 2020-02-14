@@ -1,6 +1,5 @@
 #!/usr/bin/env node
 import * as _p from "process"
-
 import { delay } from "./Async"
 import { Mutex } from "./Mutex"
 
@@ -28,7 +27,7 @@ if (ignoreExit) {
   })
 }
 
-const failrate = _p.env.failrate == null ? 0 : parseFloat(_p.env.failrate!)
+const failrate = _p.env.failrate == null ? 0 : parseFloat(_p.env.failrate)
 const rng =
   _p.env.rngseed != null ? require("seedrandom")(_p.env.rngseed) : Math.random
 
@@ -64,7 +63,8 @@ async function onLine(line: string): Promise<void> {
 
   try {
     switch (firstToken) {
-      case "flaky":
+      case "flaky": {
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const flakeRate = parseFloat(tokens.shift()!)
         write(
           "flaky response (" +
@@ -83,48 +83,53 @@ async function onLine(line: string): Promise<void> {
           write("PASS")
         }
         break
+      }
 
-      case "upcase":
+      case "upcase": {
         write(postToken.toUpperCase())
         write("PASS")
         break
-
-      case "downcase":
+      }
+      case "downcase": {
         write(postToken.toLowerCase())
         write("PASS")
         break
-
-      case "sleep":
+      }
+      case "sleep": {
         const millis = parseInt(tokens[0])
         await delay(millis)
         write(JSON.stringify({ slept: millis, pid: _p.pid }))
         write("PASS")
         break
+      }
 
-      case "version":
+      case "version": {
         write("v1.2.3")
         write("PASS")
         break
+      }
 
-      case "exit":
+      case "exit": {
         if (ignoreExit) {
           write("ignoreExit is set")
         } else {
+          // eslint-disable-next-line no-process-exit
           process.exit(0)
         }
         break
-
-      case "stderr":
+      }
+      case "stderr": {
         // force stdout to be emitted before stderr, and exercise stream
         // debouncing:
         write("PASS")
         await delay(1)
         console.error("Error: " + postToken)
         break
-
-      default:
+      }
+      default: {
         console.error("invalid or missing command for input", line)
         write("FAIL")
+      }
     }
   } catch (err) {
     console.error("Error: " + err)

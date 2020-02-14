@@ -1,7 +1,6 @@
 import { ChildProcess, spawn } from "child_process"
 import { join } from "path"
 import * as _p from "process"
-
 import { Logger, logger, setLogger } from "./Logger"
 import { orElse } from "./Object"
 import { Parser } from "./Parser"
@@ -84,6 +83,7 @@ type WithinTolerance = (
   message?: string
 ) => Chai.Assertion
 
+// eslint-disable-next-line @typescript-eslint/no-namespace
 declare namespace Chai {
   interface Assertion {
     withinToleranceOf: WithinTolerance
@@ -111,21 +111,21 @@ export async function currentTestPids(): Promise<number[]> {
 
 const rngseedPrefix = new Date().toISOString().substr(0, 7) + "."
 let rngseedCounter = 0
-let rngseed_override: string | undefined
+let rngseedOverride: string | undefined
 
 export function setRngseed(seed?: string) {
-  rngseed_override = seed
+  rngseedOverride = seed
 }
 
 function rngseed() {
   // We need a new rngseed for every execution, or all runs will either pass or
   // fail:
-  return orElse(rngseed_override, () => rngseedPrefix + rngseedCounter++)
+  return orElse(rngseedOverride, () => rngseedPrefix + rngseedCounter++)
 }
 
 let failrate = "0.1" // 10%
 
-export function setFailrate(percent: number = 10) {
+export function setFailrate(percent = 10) {
   failrate = (percent / 100).toFixed(2)
 }
 
@@ -150,7 +150,7 @@ export function setNewline(eol: "lf" | "crlf" = "lf") {
 
 let ignoreExit: "1" | "0" = "0"
 
-export function setIgnoreExit(ignore: boolean = false) {
+export function setIgnoreExit(ignore = false) {
   ignoreExit = ignore ? "1" : "0"
 }
 

@@ -1,5 +1,5 @@
 export class Rate {
-  private _eventCount: number = 0
+  private _eventCount = 0
   private readonly start = Date.now()
   private readonly store: number[] = []
 

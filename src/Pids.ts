@@ -90,6 +90,7 @@ export function pids(): Promise<number[]> {
               .split(/[\n\r]+/)
               .map(ea => ea.match(isWin ? winRe : posixRe))
               .filter(m => m != null)
+              // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
               .map(m => parseInt(m![1]))
           )
       }
@@ -105,7 +106,7 @@ export function pids(): Promise<number[]> {
  * @param {boolean} [force=false] if true, and the current user has
  * permissions to send the signal, the pid will be forced to shut down.
  */
-export function kill(pid: number, force: boolean = false): void {
+export function kill(pid: number, force = false): void {
   if (pid === _p.pid || pid === _p.ppid) {
     throw new Error("cannot self-terminate")
   }

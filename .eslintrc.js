@@ -2,46 +2,32 @@ module.exports = {
   env: {
     node: true
   },
+  extends: [
+    "eslint:recommended",
+    "plugin:@typescript-eslint/eslint-recommended",
+    "plugin:@typescript-eslint/recommended",
+    "plugin:eslint-plugin-import/recommended",
+    "plugin:node/recommended"
+  ],
   parser: "@typescript-eslint/parser",
   parserOptions: {
     project: "tsconfig.json",
     sourceType: "module"
   },
-  plugins: ["@typescript-eslint", "eslint-plugin-import"],
+  plugins: ["@typescript-eslint", "eslint-plugin-import", "eslint-plugin-node"],
   rules: {
-    "@typescript-eslint/no-extraneous-class": "warn",
-    "@typescript-eslint/no-floating-promises": "warn",
-    "@typescript-eslint/no-for-in-array": "warn",
-    "@typescript-eslint/no-misused-new": "warn",
-    "@typescript-eslint/prefer-readonly": "warn",
-    "@typescript-eslint/strict-boolean-expressions": "warn",
-    "constructor-super": "warn",
-    eqeqeq: ["warn", "smart"],
-    "import/first": "warn",
+    "@typescript-eslint/explicit-function-return-type": "off",
+    "@typescript-eslint/member-delimiter-style": [ "warn", { multiline: { delimiter: "none" } } ],
+    "@typescript-eslint/no-explicit-any": "off",
+    "@typescript-eslint/no-var-requires": "off",
+    "eqeqeq": ["warn", "always", {"null": "ignore"}],
     "import/no-cycle": "warn",
-    "import/no-duplicates": "warn",
-    "import/no-unassigned-import": "warn",
-    "no-bitwise": "warn",
-    "no-cond-assign": "warn",
-    "no-debugger": "warn",
-    "no-duplicate-case": "warn",
-    "no-eval": "warn",
-    "no-fallthrough": "warn",
+    "import/no-unresolved": "off",
     "no-redeclare": "warn",
-    "no-shadow": [
-      "warn",
-      {
-        hoist: "all"
-      }
-    ],
-    "no-sparse-arrays": "warn",
-    "no-throw-literal": "warn",
     "no-undef-init": "warn",
-    "no-unsafe-finally": "warn",
     "no-unused-expressions": "warn",
-    "no-var": "warn",
-    "prefer-const": "warn"
-    // TODO re-enable when implemented?: https://github.com/typescript-eslint/typescript-eslint/blob/master/packages/eslint-plugin/ROADMAP.md
-    // "prefer-conditional-expression": true
+    "node/no-missing-import": "off",
+    "node/no-unsupported-features/es-syntax": "off",
+    "node/shebang": "off",
   }
 }

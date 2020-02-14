@@ -6,7 +6,9 @@ export function tryEach(arr: (() => void)[]) {
   for (const f of arr) {
     try {
       f()
-    } catch (_) {}
+    } catch (_) {
+      //
+    }
   }
 }
 

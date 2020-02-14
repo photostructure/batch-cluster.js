@@ -25,17 +25,6 @@ export function sortNumeric(arr: number[]): number[] {
   return arr.sort((a, b) => a - b)
 }
 
-/**
- * Treat an array as a round-robin list, starting from `startIndex`.
- */
-export function rrFind<T>(
-  arr: T[],
-  startIndex: number,
-  predicate: (t: T, arrIdx: number, iter: number) => boolean
-): undefined | T {
-  return map(rrFindResult(arr, startIndex, predicate), ea => ea.result)
-}
-
 export function rrFindResult<T>(
   arr: T[],
   startIndex: number,
@@ -47,4 +36,15 @@ export function rrFindResult<T>(
     if (predicate(t, arrIdx, iter)) return { result: t, index: arrIdx }
   }
   return
+}
+
+/**
+ * Treat an array as a round-robin list, starting from `startIndex`.
+ */
+export function rrFind<T>(
+  arr: T[],
+  startIndex: number,
+  predicate: (t: T, arrIdx: number, iter: number) => boolean
+): undefined | T {
+  return map(rrFindResult(arr, startIndex, predicate), ea => ea.result)
 }

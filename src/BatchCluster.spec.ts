@@ -55,19 +55,6 @@ describe("BatchCluster", function() {
     )
   }
 
-  function assertExpectedResults(results: string[]) {
-    const dataResults = flatten(
-      events.taskData.map(ea => ea.data.split(/[\n\r]+/))
-    )
-
-    results.forEach((result, index) => {
-      if (!result.startsWith(ErrorPrefix)) {
-        expect(result).to.eql("ABC " + index)
-        expect(dataResults).to.include(result)
-      }
-    })
-  }
-
   class Events {
     readonly taskData: { cmd?: string; data: string }[] = []
     readonly events: { event: string }[] = []
@@ -80,6 +67,19 @@ describe("BatchCluster", function() {
   }
 
   let events = new Events()
+
+  function assertExpectedResults(results: string[]) {
+    const dataResults = flatten(
+      events.taskData.map(ea => ea.data.split(/[\n\r]+/))
+    )
+
+    results.forEach((result, index) => {
+      if (!result.startsWith(ErrorPrefix)) {
+        expect(result).to.eql("ABC " + index)
+        expect(dataResults).to.include(result)
+      }
+    })
+  }
 
   beforeEach(() => {
     events = new Events()
@@ -152,9 +152,9 @@ describe("BatchCluster", function() {
     return bc
   }
 
-  ;["lf", "crlf"].forEach(newline =>
-    [1, 4].forEach(maxProcs =>
-      [false, true].forEach(ignoreExit =>
+  for (const newline of ["lf", "crlf"]) {
+    for (const maxProcs of [1, 4]) {
+      for (const ignoreExit of [false, true]) {
         describe(
           inspect(
             { newline, maxProcs, ignoreExit },
@@ -326,7 +326,7 @@ describe("BatchCluster", function() {
             it("rejects a command that results in FAIL", async function() {
               const task = new Task("invalid command", parser)
               let error: Error | undefined
-              let result: string = ""
+              let result = ""
               try {
                 result = await bc.enqueueTask(task)
               } catch (err) {
@@ -339,7 +339,7 @@ describe("BatchCluster", function() {
             it("rejects a command that emits to stderr", async function() {
               const task = new Task("stderr omg this should fail", parser)
               let error: Error | undefined
-              let result: string = ""
+              let result = ""
               try {
                 result = await bc.enqueueTask(task)
               } catch (err) {
@@ -353,9 +353,9 @@ describe("BatchCluster", function() {
             })
           }
         )
-      )
-    )
-  )
+      }
+    }
+  }
 
   describe("maxProcs", function() {
     const iters = 50
@@ -427,7 +427,7 @@ describe("BatchCluster", function() {
               maxProcs,
               uniqPids: pid2count.size,
               pid2count,
-              bc_pids: await bc.pids()
+              bcPids: await bc.pids()
             })
             for (const [, count] of pid2count.entries()) {
               expect(count).to.be.within(expectTaskMin, expectedTaskMax)

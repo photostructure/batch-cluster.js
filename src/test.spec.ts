@@ -1,5 +1,7 @@
 import { ChildProcess } from "child_process"
-
+import { until } from "./Async"
+import { Deferred } from "./Deferred"
+import { kill, pidExists } from "./Pids"
 import {
   expect,
   processFactory,
@@ -7,14 +9,13 @@ import {
   setIgnoreExit,
   setRngseed
 } from "./_chai.spec"
-import { until } from "./Async"
-import { Deferred } from "./Deferred"
-import { kill, pidExists } from "./Pids"
+
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 
 describe("test.js", () => {
   class Harness {
     readonly child: ChildProcess
-    public output: string = ""
+    public output = ""
     constructor() {
       setFailrate(0)
       this.child = processFactory()
@@ -25,7 +26,7 @@ describe("test.js", () => {
         this.output += buff.toString()
       })
     }
-    async untilOutput(minLength: number = 0): Promise<void> {
+    async untilOutput(minLength = 0): Promise<void> {
       await until(() => this.output.length > minLength, 1000)
       return
     }

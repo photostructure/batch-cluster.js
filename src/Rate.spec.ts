@@ -14,7 +14,7 @@ describe("Rate", () => {
 
   after(() => tk.reset())
 
-  function expectRate(rate: Rate, epm: number, tol: number = 0.5) {
+  function expectRate(rate: Rate, epm: number, tol = 0.5) {
     expect(rate.eventsPerMs).to.be.withinToleranceOf(epm, tol)
     expect(rate.eventsPerSecond).to.be.withinToleranceOf(epm * 1000, tol)
     expect(rate.eventsPerMinute).to.be.withinToleranceOf(epm * 60 * 1000, tol)
