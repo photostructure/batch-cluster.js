@@ -2,7 +2,6 @@
 
 **Support external batch-mode tools within Node.js.**
 
-[![Become a sponsor](https://img.shields.io/badge/Become%20a-sponsor-orange)](https://github.com/users/mceachen/sponsorship)
 [![npm version](https://img.shields.io/npm/v/batch-cluster.svg)](https://www.npmjs.com/package/batch-cluster)
 [![Build status](https://travis-ci.org/photostructure/batch-cluster.js.svg?branch=master)](https://travis-ci.org/photostructure/batch-cluster.js)
 [![Build status](https://ci.appveyor.com/api/projects/status/4564x6lvc8s6a55l/branch/master?svg=true)](https://ci.appveyor.com/project/mceachen/batch-cluster-js/branch/master)
