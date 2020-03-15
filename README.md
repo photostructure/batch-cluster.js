@@ -26,7 +26,7 @@ of memory leaks.
 
 As of version 4, retry logic for tasks is a separate concern from this module.
 
-This package powers [exiftool-vendored](https://exiftool-vendored.js.org/),
+This package powers [exiftool-vendored](https://photostructure.github.io/exiftool-vendored.js/),
 whose source you can examine as an example consumer.
 
 ## Installation
