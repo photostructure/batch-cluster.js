@@ -52,7 +52,7 @@
 					<a href="globals.html">Globals</a>
 				</li>
 			</ul>
-			<h1> batch-cluster</h1>
+			<h1>batch-cluster</h1>
 		</div>
 	</div>
 </header>
@@ -64,9 +64,9 @@
 				<section class="tsd-panel tsd-index-panel">
 					<div class="tsd-index-content">
 						<section class="tsd-index-section ">
-							<h3>Modules</h3>
+							<h3>Enumerations</h3>
 							<ul class="tsd-index-list">
-								<li class="tsd-kind-module"><a href="modules/logger.html" class="tsd-kind-icon">Logger</a></li>
+								<li class="tsd-kind-enum"><a href="enums/state.html" class="tsd-kind-icon">State</a></li>
 							</ul>
 						</section>
 						<section class="tsd-index-section ">
@@ -90,6 +90,7 @@
 								<li class="tsd-kind-interface"><a href="interfaces/batchprocessoptions.html" class="tsd-kind-icon">Batch<wbr>Process<wbr>Options</a></li>
 								<li class="tsd-kind-interface"><a href="interfaces/childprocessfactory.html" class="tsd-kind-icon">Child<wbr>Process<wbr>Factory</a></li>
 								<li class="tsd-kind-interface"><a href="interfaces/internalbatchprocessoptions.html" class="tsd-kind-icon">Internal<wbr>Batch<wbr>Process<wbr>Options</a></li>
+								<li class="tsd-kind-interface"><a href="interfaces/logger.html" class="tsd-kind-icon">Logger</a></li>
 								<li class="tsd-kind-interface tsd-has-type-parameter"><a href="interfaces/parser.html" class="tsd-kind-icon">Parser</a></li>
 							</ul>
 						</section>
@@ -106,6 +107,11 @@
 								<li class="tsd-kind-variable"><a href="globals.html#consolelogger" class="tsd-kind-icon">Console<wbr>Logger</a></li>
 								<li class="tsd-kind-variable"><a href="globals.html#loglevels" class="tsd-kind-icon">Log<wbr>Levels</a></li>
 								<li class="tsd-kind-variable"><a href="globals.html#nologger" class="tsd-kind-icon">No<wbr>Logger</a></li>
+								<li class="tsd-kind-variable"><a href="globals.html#_debuglog" class="tsd-kind-icon">_debuglog</a></li>
+								<li class="tsd-kind-variable"><a href="globals.html#_logger" class="tsd-kind-icon">_logger</a></li>
+								<li class="tsd-kind-variable"><a href="globals.html#iswin" class="tsd-kind-icon">is<wbr>Win</a></li>
+								<li class="tsd-kind-variable"><a href="globals.html#posixre" class="tsd-kind-icon">posix<wbr>Re</a></li>
+								<li class="tsd-kind-variable"><a href="globals.html#winre" class="tsd-kind-icon">win<wbr>Re</a></li>
 							</ul>
 						</section>
 						<section class="tsd-index-section ">
@@ -124,6 +130,8 @@
 								<li class="tsd-kind-function"><a href="globals.html#kill" class="tsd-kind-icon">kill</a></li>
 								<li class="tsd-kind-function"><a href="globals.html#logger" class="tsd-kind-icon">logger</a></li>
 								<li class="tsd-kind-function tsd-has-type-parameter"><a href="globals.html#map" class="tsd-kind-icon">map</a></li>
+								<li class="tsd-kind-function tsd-has-type-parameter"><a href="globals.html#mapnotdestroyed" class="tsd-kind-icon">map<wbr>Not<wbr>Destroyed</a></li>
+								<li class="tsd-kind-function"><a href="globals.html#noop" class="tsd-kind-icon">noop</a></li>
 								<li class="tsd-kind-function"><a href="globals.html#notblank" class="tsd-kind-icon">not<wbr>Blank</a></li>
 								<li class="tsd-kind-function tsd-has-type-parameter"><a href="globals.html#orelse" class="tsd-kind-icon">or<wbr>Else</a></li>
 								<li class="tsd-kind-function"><a href="globals.html#pidexists" class="tsd-kind-icon">pid<wbr>Exists</a></li>
@@ -131,12 +139,20 @@
 								<li class="tsd-kind-function tsd-has-type-parameter"><a href="globals.html#ratelimit" class="tsd-kind-icon">ratelimit</a></li>
 								<li class="tsd-kind-function tsd-has-type-parameter"><a href="globals.html#rrfind" class="tsd-kind-icon">rr<wbr>Find</a></li>
 								<li class="tsd-kind-function tsd-has-type-parameter"><a href="globals.html#rrfindresult" class="tsd-kind-icon">rr<wbr>Find<wbr>Result</a></li>
+								<li class="tsd-kind-function"><a href="globals.html#safepid" class="tsd-kind-icon">safe<wbr>Pid</a></li>
 								<li class="tsd-kind-function"><a href="globals.html#setlogger" class="tsd-kind-icon">set<wbr>Logger</a></li>
 								<li class="tsd-kind-function"><a href="globals.html#sortnumeric" class="tsd-kind-icon">sort<wbr>Numeric</a></li>
+								<li class="tsd-kind-function"><a href="globals.html#tore" class="tsd-kind-icon">to<wbr>Re</a></li>
 								<li class="tsd-kind-function"><a href="globals.html#tos" class="tsd-kind-icon">toS</a></li>
 								<li class="tsd-kind-function"><a href="globals.html#tryeach" class="tsd-kind-icon">try<wbr>Each</a></li>
 								<li class="tsd-kind-function"><a href="globals.html#until" class="tsd-kind-icon">until</a></li>
 								<li class="tsd-kind-function"><a href="globals.html#verifyoptions" class="tsd-kind-icon">verify<wbr>Options</a></li>
+							</ul>
+						</section>
+						<section class="tsd-index-section ">
+							<h3>Object literals</h3>
+							<ul class="tsd-index-list">
+								<li class="tsd-kind-object-literal"><a href="globals.html#logger" class="tsd-kind-icon">Logger</a></li>
 							</ul>
 						</section>
 					</div>
@@ -150,24 +166,24 @@
 					<div class="tsd-signature tsd-kind-icon">All<wbr>Opts<span class="tsd-signature-symbol">:</span> <a href="classes/batchclusteroptions.html" class="tsd-signature-type">BatchClusterOptions</a><span class="tsd-signature-symbol"> &amp; </span><a href="interfaces/internalbatchprocessoptions.html" class="tsd-signature-type">InternalBatchProcessOptions</a><span class="tsd-signature-symbol"> &amp; </span><a href="interfaces/childprocessfactory.html" class="tsd-signature-type">ChildProcessFactory</a></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/master/src/BatchClusterOptions.ts#L129">BatchClusterOptions.ts:129</a></li>
+							<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/master/src/BatchClusterOptions.ts#L129">src/BatchClusterOptions.ts:129</a></li>
 						</ul>
 					</aside>
 				</section>
 				<section class="tsd-panel tsd-member tsd-kind-type-alias">
 					<a name="log" class="tsd-anchor"></a>
 					<h3>Log</h3>
-					<div class="tsd-signature tsd-kind-icon">Log<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">function</span></div>
+					<div class="tsd-signature tsd-kind-icon">Log<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol">(</span>message<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span>, <span class="tsd-signature-symbol">...</span>optionalParams<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">any</span><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol"> =&gt; </span><span class="tsd-signature-type">void</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/master/src/Logger.ts#L6">Logger.ts:6</a></li>
+							<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/master/src/Logger.ts#L6">src/Logger.ts:6</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-type-declaration">
 						<h4>Type declaration</h4>
 						<ul class="tsd-parameters">
-							<li class="tsd-parameter-siganture">
-								<ul class="tsd-signatures tsd-kind-type-literal tsd-parent-kind-type-alias tsd-is-not-exported">
+							<li class="tsd-parameter-signature">
+								<ul class="tsd-signatures tsd-kind-type-literal tsd-parent-kind-type-alias">
 									<li class="tsd-signature tsd-kind-icon"><span class="tsd-signature-symbol">(</span>message<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span>, <span class="tsd-signature-symbol">...</span>optionalParams<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">any</span><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
 								</ul>
 								<ul class="tsd-descriptions">
@@ -194,10 +210,10 @@
 				<section class="tsd-panel tsd-member tsd-kind-variable">
 					<a name="consolelogger" class="tsd-anchor"></a>
 					<h3><span class="tsd-flag ts-flagConst">Const</span> Console<wbr>Logger</h3>
-					<div class="tsd-signature tsd-kind-icon">Console<wbr>Logger<span class="tsd-signature-symbol">:</span> <a href="modules/logger.html" class="tsd-signature-type">Logger</a><span class="tsd-signature-symbol"> =&nbsp;Object.freeze({/*** No-ops by default, as this is very low-level information.*/trace: noop,/*** Delegates to &#x60;util.debuglog(&quot;batch-cluster&quot;)&#x60;:* &lt;https://nodejs.org/api/util.html#util_util_debuglog_section&gt;*/debug: _debuglog,/*** Delegates to &#x60;util.debuglog(&quot;batch-cluster&quot;)&#x60;:* &lt;https://nodejs.org/api/util.html#util_util_debuglog_section&gt;*/info: _debuglog,/*** Delegates to &#x60;console.warn&#x60;*/warn: console.warn,/*** Delegates to &#x60;console.error&#x60;*/error: console.error})</span></div>
+					<div class="tsd-signature tsd-kind-icon">Console<wbr>Logger<span class="tsd-signature-symbol">:</span> <a href="interfaces/logger.html" class="tsd-signature-type">Logger</a><span class="tsd-signature-symbol"> = Object.freeze({/*** No-ops by default, as this is very low-level information.*/trace: noop,/*** Delegates to &#x60;util.debuglog(&quot;batch-cluster&quot;)&#x60;:* &lt;https://nodejs.org/api/util.html#util_util_debuglog_section&gt;*/debug: _debuglog,/*** Delegates to &#x60;util.debuglog(&quot;batch-cluster&quot;)&#x60;:* &lt;https://nodejs.org/api/util.html#util_util_debuglog_section&gt;*/info: _debuglog,/*** Delegates to &#x60;console.warn&#x60;*/warn: console.warn,/*** Delegates to &#x60;console.error&#x60;*/error: console.error,})</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/master/src/Logger.ts#L36">Logger.ts:36</a></li>
+							<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/master/src/Logger.ts#L36">src/Logger.ts:36</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-comment tsd-typography">
@@ -210,20 +226,20 @@
 				<section class="tsd-panel tsd-member tsd-kind-variable">
 					<a name="loglevels" class="tsd-anchor"></a>
 					<h3><span class="tsd-flag ts-flagConst">Const</span> Log<wbr>Levels</h3>
-					<div class="tsd-signature tsd-kind-icon">Log<wbr>Levels<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol">(</span><span class="tsd-signature-type">"trace"</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">"debug"</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">"info"</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">"warn"</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">"error"</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol"> =&nbsp;[&quot;trace&quot;,&quot;debug&quot;,&quot;info&quot;,&quot;warn&quot;,&quot;error&quot;]</span></div>
+					<div class="tsd-signature tsd-kind-icon">Log<wbr>Levels<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol">(</span><span class="tsd-signature-type">"trace"</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">"debug"</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">"info"</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">"warn"</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">"error"</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol"> = [&quot;trace&quot;,&quot;debug&quot;,&quot;info&quot;,&quot;warn&quot;,&quot;error&quot;,]</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/master/src/Logger.ts#L19">Logger.ts:19</a></li>
+							<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/master/src/Logger.ts#L19">src/Logger.ts:19</a></li>
 						</ul>
 					</aside>
 				</section>
 				<section class="tsd-panel tsd-member tsd-kind-variable">
 					<a name="nologger" class="tsd-anchor"></a>
 					<h3><span class="tsd-flag ts-flagConst">Const</span> No<wbr>Logger</h3>
-					<div class="tsd-signature tsd-kind-icon">No<wbr>Logger<span class="tsd-signature-symbol">:</span> <a href="modules/logger.html" class="tsd-signature-type">Logger</a><span class="tsd-signature-symbol"> =&nbsp;Object.freeze({trace: noop,debug: noop,info: noop,warn: noop,error: noop})</span></div>
+					<div class="tsd-signature tsd-kind-icon">No<wbr>Logger<span class="tsd-signature-symbol">:</span> <a href="interfaces/logger.html" class="tsd-signature-type">Logger</a><span class="tsd-signature-symbol"> = Object.freeze({trace: noop,debug: noop,info: noop,warn: noop,error: noop,})</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/master/src/Logger.ts#L65">Logger.ts:65</a></li>
+							<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/master/src/Logger.ts#L65">src/Logger.ts:65</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-comment tsd-typography">
@@ -231,6 +247,80 @@
 							<p><code>Logger</code> that disables all logging.</p>
 						</div>
 					</div>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-variable">
+					<a name="_debuglog" class="tsd-anchor"></a>
+					<h3><span class="tsd-flag ts-flagConst">Const</span> _debuglog</h3>
+					<div class="tsd-signature tsd-kind-icon">_debuglog<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol">(</span>msg<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span>, <span class="tsd-signature-symbol">...</span>param<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">any</span><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol"> =&gt; </span><span class="tsd-signature-type">void</span><span class="tsd-signature-symbol"> = debuglog(&quot;batch-cluster&quot;)</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/master/src/Logger.ts#L27">src/Logger.ts:27</a></li>
+						</ul>
+					</aside>
+					<div class="tsd-type-declaration">
+						<h4>Type declaration</h4>
+						<ul class="tsd-parameters">
+							<li class="tsd-parameter-signature">
+								<ul class="tsd-signatures tsd-kind-type-literal tsd-parent-kind-variable">
+									<li class="tsd-signature tsd-kind-icon"><span class="tsd-signature-symbol">(</span>msg<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span>, <span class="tsd-signature-symbol">...</span>param<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">any</span><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
+								</ul>
+								<ul class="tsd-descriptions">
+									<li class="tsd-description">
+										<h4 class="tsd-parameters-title">Parameters</h4>
+										<ul class="tsd-parameters">
+											<li>
+												<h5>msg: <span class="tsd-signature-type">string</span></h5>
+											</li>
+											<li>
+												<h5><span class="tsd-flag ts-flagRest">Rest</span> <span class="tsd-signature-symbol">...</span>param: <span class="tsd-signature-type">any</span><span class="tsd-signature-symbol">[]</span></h5>
+											</li>
+										</ul>
+										<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
+									</li>
+								</ul>
+							</li>
+						</ul>
+					</div>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-variable">
+					<a name="_logger" class="tsd-anchor"></a>
+					<h3><span class="tsd-flag ts-flagLet">Let</span> _logger</h3>
+					<div class="tsd-signature tsd-kind-icon">_logger<span class="tsd-signature-symbol">:</span> <a href="interfaces/logger.html" class="tsd-signature-type">Logger</a><span class="tsd-signature-symbol"> = NoLogger</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/master/src/Logger.ts#L73">src/Logger.ts:73</a></li>
+						</ul>
+					</aside>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-variable">
+					<a name="iswin" class="tsd-anchor"></a>
+					<h3><span class="tsd-flag ts-flagConst">Const</span> is<wbr>Win</h3>
+					<div class="tsd-signature tsd-kind-icon">is<wbr>Win<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol"> = _os.platform().startsWith(&quot;win&quot;)</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/master/src/Pids.ts#L5">src/Pids.ts:5</a></li>
+						</ul>
+					</aside>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-variable">
+					<a name="posixre" class="tsd-anchor"></a>
+					<h3><span class="tsd-flag ts-flagConst">Const</span> posix<wbr>Re</h3>
+					<div class="tsd-signature tsd-kind-icon">posix<wbr>Re<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">RegExp</span><span class="tsd-signature-symbol"> = /^\s*(\d+)/</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/master/src/Pids.ts#L69">src/Pids.ts:69</a></li>
+						</ul>
+					</aside>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-variable">
+					<a name="winre" class="tsd-anchor"></a>
+					<h3><span class="tsd-flag ts-flagConst">Const</span> win<wbr>Re</h3>
+					<div class="tsd-signature tsd-kind-icon">win<wbr>Re<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">RegExp</span><span class="tsd-signature-symbol"> = /^&quot;.+?&quot;,&quot;(\d+)&quot;/</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/master/src/Pids.ts#L68">src/Pids.ts:68</a></li>
+						</ul>
+					</aside>
 				</section>
 			</section>
 			<section class="tsd-panel-group tsd-member-group ">
@@ -245,7 +335,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/master/src/Parser.ts#L26">Parser.ts:26</a></li>
+									<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/master/src/Parser.ts#L26">src/Parser.ts:26</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-parameters-title">Parameters</h4>
@@ -274,7 +364,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/master/src/String.ts#L3">String.ts:3</a></li>
+									<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/master/src/String.ts#L3">src/String.ts:3</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-parameters-title">Parameters</h4>
@@ -297,7 +387,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/master/src/Error.ts#L13">Error.ts:13</a></li>
+									<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/master/src/Error.ts#L15">src/Error.ts:15</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-parameters-title">Parameters</h4>
@@ -314,13 +404,13 @@
 					<a name="debounce" class="tsd-anchor"></a>
 					<h3>debounce</h3>
 					<ul class="tsd-signatures tsd-kind-function">
-						<li class="tsd-signature tsd-kind-icon">debounce<span class="tsd-signature-symbol">(</span>timeoutMs<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">function</span></li>
+						<li class="tsd-signature tsd-kind-icon">debounce<span class="tsd-signature-symbol">(</span>timeoutMs<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-symbol">(</span>f<span class="tsd-signature-symbol">: </span><span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol"> =&gt; </span><span class="tsd-signature-type">any</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol"> =&gt; </span><span class="tsd-signature-type">void</span></li>
 					</ul>
 					<ul class="tsd-descriptions">
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/master/src/Async.ts#L54">Async.ts:54</a></li>
+									<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/master/src/Async.ts#L54">src/Async.ts:54</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -331,22 +421,22 @@
 									<h5>timeoutMs: <span class="tsd-signature-type">number</span></h5>
 								</li>
 							</ul>
-							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">function</span></h4>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-symbol">(</span>f<span class="tsd-signature-symbol">: </span><span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol"> =&gt; </span><span class="tsd-signature-type">any</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol"> =&gt; </span><span class="tsd-signature-type">void</span></h4>
 							<p>a function that accepts a thunk. The thunk will be debounced.</p>
 							<ul class="tsd-parameters">
-								<li class="tsd-parameter-siganture">
-									<ul class="tsd-signatures tsd-kind-type-literal tsd-is-not-exported">
-										<li class="tsd-signature tsd-kind-icon"><span class="tsd-signature-symbol">(</span>f<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">function</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
+								<li class="tsd-parameter-signature">
+									<ul class="tsd-signatures tsd-kind-type-literal">
+										<li class="tsd-signature tsd-kind-icon"><span class="tsd-signature-symbol">(</span>f<span class="tsd-signature-symbol">: </span><span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol"> =&gt; </span><span class="tsd-signature-type">any</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
 									</ul>
 									<ul class="tsd-descriptions">
 										<li class="tsd-description">
 											<h4 class="tsd-parameters-title">Parameters</h4>
 											<ul class="tsd-parameters">
 												<li>
-													<h5>f: <span class="tsd-signature-type">function</span></h5>
+													<h5>f: <span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol"> =&gt; </span><span class="tsd-signature-type">any</span></h5>
 													<ul class="tsd-parameters">
-														<li class="tsd-parameter-siganture">
-															<ul class="tsd-signatures tsd-kind-type-literal tsd-is-not-exported">
+														<li class="tsd-parameter-signature">
+															<ul class="tsd-signatures tsd-kind-type-literal">
 																<li class="tsd-signature tsd-kind-icon"><span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">any</span></li>
 															</ul>
 															<ul class="tsd-descriptions">
@@ -376,7 +466,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/master/src/Async.ts#L5">Async.ts:5</a></li>
+									<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/master/src/Async.ts#L5">src/Async.ts:5</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-parameters-title">Parameters</h4>
@@ -385,7 +475,7 @@
 									<h5>millis: <span class="tsd-signature-type">number</span></h5>
 								</li>
 								<li>
-									<h5><span class="tsd-flag ts-flagDefault value">Default value</span> unref: <span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol"> =&nbsp;false</span></h5>
+									<h5><span class="tsd-flag ts-flagDefault value">Default value</span> unref: <span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol"> = false</span></h5>
 								</li>
 							</ul>
 							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">void</span><span class="tsd-signature-symbol">&gt;</span></h4>
@@ -402,7 +492,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/master/src/Stream.ts#L3">Stream.ts:3</a></li>
+									<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/master/src/Stream.ts#L3">src/Stream.ts:3</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-parameters-title">Parameters</h4>
@@ -428,7 +518,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/master/src/String.ts#L11">String.ts:11</a></li>
+									<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/master/src/String.ts#L11">src/String.ts:11</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-parameters-title">Parameters</h4>
@@ -448,13 +538,13 @@
 					<a name="filterinplace" class="tsd-anchor"></a>
 					<h3>filter<wbr>InPlace</h3>
 					<ul class="tsd-signatures tsd-kind-function tsd-has-type-parameter">
-						<li class="tsd-signature tsd-kind-icon">filter<wbr>InPlace&lt;T&gt;<span class="tsd-signature-symbol">(</span>arr<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">T</span><span class="tsd-signature-symbol">[]</span>, filter<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">function</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">T</span><span class="tsd-signature-symbol">[]</span></li>
+						<li class="tsd-signature tsd-kind-icon">filter<wbr>InPlace&lt;T&gt;<span class="tsd-signature-symbol">(</span>arr<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">T</span><span class="tsd-signature-symbol">[]</span>, filter<span class="tsd-signature-symbol">: </span><span class="tsd-signature-symbol">(</span>t<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">T</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol"> =&gt; </span><span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">T</span><span class="tsd-signature-symbol">[]</span></li>
 					</ul>
 					<ul class="tsd-descriptions">
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/master/src/Array.ts#L7">Array.ts:7</a></li>
+									<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/master/src/Array.ts#L7">src/Array.ts:7</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -475,10 +565,10 @@
 									<h5>arr: <span class="tsd-signature-type">T</span><span class="tsd-signature-symbol">[]</span></h5>
 								</li>
 								<li>
-									<h5>filter: <span class="tsd-signature-type">function</span></h5>
+									<h5>filter: <span class="tsd-signature-symbol">(</span>t<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">T</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol"> =&gt; </span><span class="tsd-signature-type">boolean</span></h5>
 									<ul class="tsd-parameters">
-										<li class="tsd-parameter-siganture">
-											<ul class="tsd-signatures tsd-kind-type-literal tsd-is-not-exported">
+										<li class="tsd-parameter-signature">
+											<ul class="tsd-signatures tsd-kind-type-literal">
 												<li class="tsd-signature tsd-kind-icon"><span class="tsd-signature-symbol">(</span>t<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">T</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">boolean</span></li>
 											</ul>
 											<ul class="tsd-descriptions">
@@ -510,7 +600,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/master/src/Array.ts#L19">Array.ts:19</a></li>
+									<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/master/src/Array.ts#L19">src/Array.ts:19</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-type-parameters-title">Type parameters</h4>
@@ -525,7 +615,7 @@
 									<h5>arr: <span class="tsd-signature-symbol">(</span><span class="tsd-signature-type">T</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">T</span><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">[]</span></h5>
 								</li>
 								<li>
-									<h5><span class="tsd-flag ts-flagDefault value">Default value</span> result: <span class="tsd-signature-type">T</span><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol"> =&nbsp;[]</span></h5>
+									<h5><span class="tsd-flag ts-flagDefault value">Default value</span> result: <span class="tsd-signature-type">T</span><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol"> = []</span></h5>
 								</li>
 							</ul>
 							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">T</span><span class="tsd-signature-symbol">[]</span></h4>
@@ -542,7 +632,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/master/src/Object.ts#L12">Object.ts:12</a></li>
+									<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/master/src/Object.ts#L12">src/Object.ts:12</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-parameters-title">Parameters</h4>
@@ -565,7 +655,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/master/src/Pids.ts#L108">Pids.ts:108</a></li>
+									<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/master/src/Pids.ts#L109">src/Pids.ts:109</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -586,7 +676,7 @@
 									</div>
 								</li>
 								<li>
-									<h5><span class="tsd-flag ts-flagDefault value">Default value</span> force: <span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol"> =&nbsp;false</span></h5>
+									<h5><span class="tsd-flag ts-flagDefault value">Default value</span> force: <span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol"> = false</span></h5>
 								</li>
 							</ul>
 							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
@@ -597,16 +687,16 @@
 					<a name="logger" class="tsd-anchor"></a>
 					<h3>logger</h3>
 					<ul class="tsd-signatures tsd-kind-function">
-						<li class="tsd-signature tsd-kind-icon">logger<span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><a href="modules/logger.html" class="tsd-signature-type">Logger</a></li>
+						<li class="tsd-signature tsd-kind-icon">logger<span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><a href="interfaces/logger.html" class="tsd-signature-type">Logger</a></li>
 					</ul>
 					<ul class="tsd-descriptions">
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/master/src/Logger.ts#L82">Logger.ts:82</a></li>
+									<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/master/src/Logger.ts#L82">src/Logger.ts:82</a></li>
 								</ul>
 							</aside>
-							<h4 class="tsd-returns-title">Returns <a href="modules/logger.html" class="tsd-signature-type">Logger</a></h4>
+							<h4 class="tsd-returns-title">Returns <a href="interfaces/logger.html" class="tsd-signature-type">Logger</a></h4>
 						</li>
 					</ul>
 				</section>
@@ -614,13 +704,13 @@
 					<a name="map" class="tsd-anchor"></a>
 					<h3>map</h3>
 					<ul class="tsd-signatures tsd-kind-function tsd-has-type-parameter">
-						<li class="tsd-signature tsd-kind-icon">map&lt;T, R&gt;<span class="tsd-signature-symbol">(</span>obj<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">T</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">undefined</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">null</span>, f<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">function</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">R</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">undefined</span></li>
+						<li class="tsd-signature tsd-kind-icon">map&lt;T, R&gt;<span class="tsd-signature-symbol">(</span>obj<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">T</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">undefined</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">null</span>, f<span class="tsd-signature-symbol">: </span><span class="tsd-signature-symbol">(</span>t<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">T</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol"> =&gt; </span><span class="tsd-signature-type">R</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">R</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">undefined</span></li>
 					</ul>
 					<ul class="tsd-descriptions">
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/master/src/Object.ts#L5">Object.ts:5</a></li>
+									<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/master/src/Object.ts#L5">src/Object.ts:5</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -644,10 +734,10 @@
 									<h5>obj: <span class="tsd-signature-type">T</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">undefined</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">null</span></h5>
 								</li>
 								<li>
-									<h5>f: <span class="tsd-signature-type">function</span></h5>
+									<h5>f: <span class="tsd-signature-symbol">(</span>t<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">T</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol"> =&gt; </span><span class="tsd-signature-type">R</span></h5>
 									<ul class="tsd-parameters">
-										<li class="tsd-parameter-siganture">
-											<ul class="tsd-signatures tsd-kind-type-literal tsd-is-not-exported">
+										<li class="tsd-parameter-signature">
+											<ul class="tsd-signatures tsd-kind-type-literal">
 												<li class="tsd-signature tsd-kind-icon"><span class="tsd-signature-symbol">(</span>t<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">T</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">R</span></li>
 											</ul>
 											<ul class="tsd-descriptions">
@@ -665,10 +755,77 @@
 									</ul>
 								</li>
 							</ul>
-							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">R</span>
-								<span class="tsd-signature-symbol"> | </span>
-								<span class="tsd-signature-type">undefined</span>
-							</h4>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">R</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">undefined</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-function tsd-has-type-parameter">
+					<a name="mapnotdestroyed" class="tsd-anchor"></a>
+					<h3>map<wbr>Not<wbr>Destroyed</h3>
+					<ul class="tsd-signatures tsd-kind-function tsd-has-type-parameter">
+						<li class="tsd-signature tsd-kind-icon">map<wbr>Not<wbr>Destroyed&lt;T, R&gt;<span class="tsd-signature-symbol">(</span>obj<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">T</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">undefined</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">null</span>, f<span class="tsd-signature-symbol">: </span><span class="tsd-signature-symbol">(</span>t<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">T</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol"> =&gt; </span><span class="tsd-signature-type">R</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">R</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">undefined</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/master/src/Stream.ts#L7">src/Stream.ts:7</a></li>
+								</ul>
+							</aside>
+							<h4 class="tsd-type-parameters-title">Type parameters</h4>
+							<ul class="tsd-type-parameters">
+								<li>
+									<h4>T<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Readable</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">Writable</span></h4>
+								</li>
+								<li>
+									<h4>R</h4>
+								</li>
+							</ul>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>obj: <span class="tsd-signature-type">T</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">undefined</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">null</span></h5>
+								</li>
+								<li>
+									<h5>f: <span class="tsd-signature-symbol">(</span>t<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">T</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol"> =&gt; </span><span class="tsd-signature-type">R</span></h5>
+									<ul class="tsd-parameters">
+										<li class="tsd-parameter-signature">
+											<ul class="tsd-signatures tsd-kind-type-literal">
+												<li class="tsd-signature tsd-kind-icon"><span class="tsd-signature-symbol">(</span>t<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">T</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">R</span></li>
+											</ul>
+											<ul class="tsd-descriptions">
+												<li class="tsd-description">
+													<h4 class="tsd-parameters-title">Parameters</h4>
+													<ul class="tsd-parameters">
+														<li>
+															<h5>t: <span class="tsd-signature-type">T</span></h5>
+														</li>
+													</ul>
+													<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">R</span></h4>
+												</li>
+											</ul>
+										</li>
+									</ul>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">R</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">undefined</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-function">
+					<a name="noop" class="tsd-anchor"></a>
+					<h3><span class="tsd-flag ts-flagConst">Const</span> noop</h3>
+					<ul class="tsd-signatures tsd-kind-function">
+						<li class="tsd-signature tsd-kind-icon">noop<span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">undefined</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/master/src/Logger.ts#L29">src/Logger.ts:29</a></li>
+								</ul>
+							</aside>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">undefined</span></h4>
 						</li>
 					</ul>
 				</section>
@@ -682,7 +839,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/master/src/String.ts#L7">String.ts:7</a></li>
+									<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/master/src/String.ts#L7">src/String.ts:7</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-parameters-title">Parameters</h4>
@@ -699,13 +856,13 @@
 					<a name="orelse" class="tsd-anchor"></a>
 					<h3>or<wbr>Else</h3>
 					<ul class="tsd-signatures tsd-kind-function tsd-has-type-parameter">
-						<li class="tsd-signature tsd-kind-icon">or<wbr>Else&lt;T&gt;<span class="tsd-signature-symbol">(</span>obj<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">T</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">undefined</span>, defaultValue<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">T</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">function</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">T</span></li>
+						<li class="tsd-signature tsd-kind-icon">or<wbr>Else&lt;T&gt;<span class="tsd-signature-symbol">(</span>obj<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">T</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">undefined</span>, defaultValue<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">T</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol"> =&gt; </span><span class="tsd-signature-type">T</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">T</span></li>
 					</ul>
 					<ul class="tsd-descriptions">
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/master/src/Object.ts#L16">Object.ts:16</a></li>
+									<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/master/src/Object.ts#L16">src/Object.ts:16</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-type-parameters-title">Type parameters</h4>
@@ -720,7 +877,7 @@
 									<h5>obj: <span class="tsd-signature-type">T</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">undefined</span></h5>
 								</li>
 								<li>
-									<h5>defaultValue: <span class="tsd-signature-type">T</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">function</span></h5>
+									<h5>defaultValue: <span class="tsd-signature-type">T</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol"> =&gt; </span><span class="tsd-signature-type">T</span><span class="tsd-signature-symbol">)</span></h5>
 								</li>
 							</ul>
 							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">T</span></h4>
@@ -737,7 +894,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/master/src/Pids.ts#L45">Pids.ts:45</a></li>
+									<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/master/src/Pids.ts#L45">src/Pids.ts:45</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -771,7 +928,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/master/src/Pids.ts#L75">Pids.ts:75</a></li>
+									<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/master/src/Pids.ts#L75">src/Pids.ts:75</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -789,13 +946,13 @@
 					<a name="ratelimit" class="tsd-anchor"></a>
 					<h3>ratelimit</h3>
 					<ul class="tsd-signatures tsd-kind-function tsd-has-type-parameter">
-						<li class="tsd-signature tsd-kind-icon">ratelimit&lt;T&gt;<span class="tsd-signature-symbol">(</span>f<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">function</span>, minDelayMs<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">(Anonymous function)</span></li>
+						<li class="tsd-signature tsd-kind-icon">ratelimit&lt;T&gt;<span class="tsd-signature-symbol">(</span>f<span class="tsd-signature-symbol">: </span><span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol"> =&gt; </span><span class="tsd-signature-type">T</span>, minDelayMs<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">(Anonymous function)</span></li>
 					</ul>
 					<ul class="tsd-descriptions">
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/master/src/Async.ts#L39">Async.ts:39</a></li>
+									<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/master/src/Async.ts#L39">src/Async.ts:39</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -814,10 +971,10 @@
 							<h4 class="tsd-parameters-title">Parameters</h4>
 							<ul class="tsd-parameters">
 								<li>
-									<h5>f: <span class="tsd-signature-type">function</span></h5>
+									<h5>f: <span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol"> =&gt; </span><span class="tsd-signature-type">T</span></h5>
 									<ul class="tsd-parameters">
-										<li class="tsd-parameter-siganture">
-											<ul class="tsd-signatures tsd-kind-type-literal tsd-is-not-exported">
+										<li class="tsd-parameter-signature">
+											<ul class="tsd-signatures tsd-kind-type-literal">
 												<li class="tsd-signature tsd-kind-icon"><span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">T</span></li>
 											</ul>
 											<ul class="tsd-descriptions">
@@ -840,13 +997,13 @@
 					<a name="rrfind" class="tsd-anchor"></a>
 					<h3>rr<wbr>Find</h3>
 					<ul class="tsd-signatures tsd-kind-function tsd-has-type-parameter">
-						<li class="tsd-signature tsd-kind-icon">rr<wbr>Find&lt;T&gt;<span class="tsd-signature-symbol">(</span>arr<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">T</span><span class="tsd-signature-symbol">[]</span>, startIndex<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span>, predicate<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">function</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">undefined</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">T</span></li>
+						<li class="tsd-signature tsd-kind-icon">rr<wbr>Find&lt;T&gt;<span class="tsd-signature-symbol">(</span>arr<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">T</span><span class="tsd-signature-symbol">[]</span>, startIndex<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span>, predicate<span class="tsd-signature-symbol">: </span><span class="tsd-signature-symbol">(</span>t<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">T</span>, arrIdx<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span>, iter<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol"> =&gt; </span><span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">undefined</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">T</span></li>
 					</ul>
 					<ul class="tsd-descriptions">
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/master/src/Array.ts#L31">Array.ts:31</a></li>
+									<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/master/src/Array.ts#L46">src/Array.ts:46</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -869,10 +1026,10 @@
 									<h5>startIndex: <span class="tsd-signature-type">number</span></h5>
 								</li>
 								<li>
-									<h5>predicate: <span class="tsd-signature-type">function</span></h5>
+									<h5>predicate: <span class="tsd-signature-symbol">(</span>t<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">T</span>, arrIdx<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span>, iter<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol"> =&gt; </span><span class="tsd-signature-type">boolean</span></h5>
 									<ul class="tsd-parameters">
-										<li class="tsd-parameter-siganture">
-											<ul class="tsd-signatures tsd-kind-type-literal tsd-is-not-exported">
+										<li class="tsd-parameter-signature">
+											<ul class="tsd-signatures tsd-kind-type-literal">
 												<li class="tsd-signature tsd-kind-icon"><span class="tsd-signature-symbol">(</span>t<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">T</span>, arrIdx<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span>, iter<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">boolean</span></li>
 											</ul>
 											<ul class="tsd-descriptions">
@@ -896,10 +1053,7 @@
 									</ul>
 								</li>
 							</ul>
-							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">undefined</span>
-								<span class="tsd-signature-symbol"> | </span>
-								<span class="tsd-signature-type">T</span>
-							</h4>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">undefined</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">T</span></h4>
 						</li>
 					</ul>
 				</section>
@@ -907,13 +1061,13 @@
 					<a name="rrfindresult" class="tsd-anchor"></a>
 					<h3>rr<wbr>Find<wbr>Result</h3>
 					<ul class="tsd-signatures tsd-kind-function tsd-has-type-parameter">
-						<li class="tsd-signature tsd-kind-icon">rr<wbr>Find<wbr>Result&lt;T&gt;<span class="tsd-signature-symbol">(</span>arr<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">T</span><span class="tsd-signature-symbol">[]</span>, startIndex<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span>, predicate<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">function</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">undefined</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">object</span></li>
+						<li class="tsd-signature tsd-kind-icon">rr<wbr>Find<wbr>Result&lt;T&gt;<span class="tsd-signature-symbol">(</span>arr<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">T</span><span class="tsd-signature-symbol">[]</span>, startIndex<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span>, predicate<span class="tsd-signature-symbol">: </span><span class="tsd-signature-symbol">(</span>t<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">T</span>, arrIdx<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span>, iter<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol"> =&gt; </span><span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">undefined</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-symbol">{ </span>index<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">; </span>result<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">T</span><span class="tsd-signature-symbol"> }</span></li>
 					</ul>
 					<ul class="tsd-descriptions">
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/master/src/Array.ts#L39">Array.ts:39</a></li>
+									<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/master/src/Array.ts#L30">src/Array.ts:30</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-type-parameters-title">Type parameters</h4>
@@ -931,10 +1085,10 @@
 									<h5>startIndex: <span class="tsd-signature-type">number</span></h5>
 								</li>
 								<li>
-									<h5>predicate: <span class="tsd-signature-type">function</span></h5>
+									<h5>predicate: <span class="tsd-signature-symbol">(</span>t<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">T</span>, arrIdx<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span>, iter<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol"> =&gt; </span><span class="tsd-signature-type">boolean</span></h5>
 									<ul class="tsd-parameters">
-										<li class="tsd-parameter-siganture">
-											<ul class="tsd-signatures tsd-kind-type-literal tsd-is-not-exported">
+										<li class="tsd-parameter-signature">
+											<ul class="tsd-signatures tsd-kind-type-literal">
 												<li class="tsd-signature tsd-kind-icon"><span class="tsd-signature-symbol">(</span>t<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">T</span>, arrIdx<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span>, iter<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">boolean</span></li>
 											</ul>
 											<ul class="tsd-descriptions">
@@ -958,10 +1112,30 @@
 									</ul>
 								</li>
 							</ul>
-							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">undefined</span>
-								<span class="tsd-signature-symbol"> | </span>
-								<span class="tsd-signature-type">object</span>
-							</h4>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">undefined</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-symbol">{ </span>index<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">; </span>result<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">T</span><span class="tsd-signature-symbol"> }</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-function">
+					<a name="safepid" class="tsd-anchor"></a>
+					<h3>safe<wbr>Pid</h3>
+					<ul class="tsd-signatures tsd-kind-function">
+						<li class="tsd-signature tsd-kind-icon">safe<wbr>Pid<span class="tsd-signature-symbol">(</span>pid<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/master/src/Pids.ts#L7">src/Pids.ts:7</a></li>
+								</ul>
+							</aside>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>pid: <span class="tsd-signature-type">number</span></h5>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">string</span></h4>
 						</li>
 					</ul>
 				</section>
@@ -969,19 +1143,19 @@
 					<a name="setlogger" class="tsd-anchor"></a>
 					<h3>set<wbr>Logger</h3>
 					<ul class="tsd-signatures tsd-kind-function">
-						<li class="tsd-signature tsd-kind-icon">set<wbr>Logger<span class="tsd-signature-symbol">(</span>l<span class="tsd-signature-symbol">: </span><a href="modules/logger.html" class="tsd-signature-type">Logger</a><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
+						<li class="tsd-signature tsd-kind-icon">set<wbr>Logger<span class="tsd-signature-symbol">(</span>l<span class="tsd-signature-symbol">: </span><a href="interfaces/logger.html" class="tsd-signature-type">Logger</a><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
 					</ul>
 					<ul class="tsd-descriptions">
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/master/src/Logger.ts#L75">Logger.ts:75</a></li>
+									<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/master/src/Logger.ts#L75">src/Logger.ts:75</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-parameters-title">Parameters</h4>
 							<ul class="tsd-parameters">
 								<li>
-									<h5>l: <a href="modules/logger.html" class="tsd-signature-type">Logger</a></h5>
+									<h5>l: <a href="interfaces/logger.html" class="tsd-signature-type">Logger</a></h5>
 								</li>
 							</ul>
 							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
@@ -998,7 +1172,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/master/src/Array.ts#L24">Array.ts:24</a></li>
+									<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/master/src/Array.ts#L26">src/Array.ts:26</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-parameters-title">Parameters</h4>
@@ -1012,6 +1186,29 @@
 					</ul>
 				</section>
 				<section class="tsd-panel tsd-member tsd-kind-function">
+					<a name="tore" class="tsd-anchor"></a>
+					<h3>to<wbr>Re</h3>
+					<ul class="tsd-signatures tsd-kind-function">
+						<li class="tsd-signature tsd-kind-icon">to<wbr>Re<span class="tsd-signature-symbol">(</span>s<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">RegExp</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">RegExp</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/master/src/BatchClusterOptions.ts#L133">src/BatchClusterOptions.ts:133</a></li>
+								</ul>
+							</aside>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>s: <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">RegExp</span></h5>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">RegExp</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-function">
 					<a name="tos" class="tsd-anchor"></a>
 					<h3>toS</h3>
 					<ul class="tsd-signatures tsd-kind-function">
@@ -1021,7 +1218,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/master/src/String.ts#L15">String.ts:15</a></li>
+									<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/master/src/String.ts#L15">src/String.ts:15</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-parameters-title">Parameters</h4>
@@ -1038,13 +1235,13 @@
 					<a name="tryeach" class="tsd-anchor"></a>
 					<h3>try<wbr>Each</h3>
 					<ul class="tsd-signatures tsd-kind-function">
-						<li class="tsd-signature tsd-kind-icon">try<wbr>Each<span class="tsd-signature-symbol">(</span>arr<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">function</span><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
+						<li class="tsd-signature tsd-kind-icon">try<wbr>Each<span class="tsd-signature-symbol">(</span>arr<span class="tsd-signature-symbol">: </span><span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol"> =&gt; </span><span class="tsd-signature-type">void</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
 					</ul>
 					<ul class="tsd-descriptions">
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/master/src/Error.ts#L5">Error.ts:5</a></li>
+									<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/master/src/Error.ts#L5">src/Error.ts:5</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -1056,7 +1253,7 @@
 							<h4 class="tsd-parameters-title">Parameters</h4>
 							<ul class="tsd-parameters">
 								<li>
-									<h5>arr: <span class="tsd-signature-type">function</span><span class="tsd-signature-symbol">[]</span></h5>
+									<h5>arr: <span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol"> =&gt; </span><span class="tsd-signature-type">void</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">[]</span></h5>
 								</li>
 							</ul>
 							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
@@ -1067,13 +1264,13 @@
 					<a name="until" class="tsd-anchor"></a>
 					<h3>until</h3>
 					<ul class="tsd-signatures tsd-kind-function">
-						<li class="tsd-signature tsd-kind-icon">until<span class="tsd-signature-symbol">(</span>f<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">function</span>, timeoutMs<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span>, delayMs<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol">&gt;</span></li>
+						<li class="tsd-signature tsd-kind-icon">until<span class="tsd-signature-symbol">(</span>f<span class="tsd-signature-symbol">: </span><span class="tsd-signature-symbol">(</span>count<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol"> =&gt; </span><span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol">&gt;</span>, timeoutMs<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span>, delayMs<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol">&gt;</span></li>
 					</ul>
 					<ul class="tsd-descriptions">
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/master/src/Async.ts#L16">Async.ts:16</a></li>
+									<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/master/src/Async.ts#L16">src/Async.ts:16</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -1085,10 +1282,10 @@
 							<h4 class="tsd-parameters-title">Parameters</h4>
 							<ul class="tsd-parameters">
 								<li>
-									<h5>f: <span class="tsd-signature-type">function</span></h5>
+									<h5>f: <span class="tsd-signature-symbol">(</span>count<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol"> =&gt; </span><span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol">&gt;</span></h5>
 									<ul class="tsd-parameters">
-										<li class="tsd-parameter-siganture">
-											<ul class="tsd-signatures tsd-kind-type-literal tsd-is-not-exported">
+										<li class="tsd-parameter-signature">
+											<ul class="tsd-signatures tsd-kind-type-literal">
 												<li class="tsd-signature tsd-kind-icon"><span class="tsd-signature-symbol">(</span>count<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol">&gt;</span></li>
 											</ul>
 											<ul class="tsd-descriptions">
@@ -1099,10 +1296,7 @@
 															<h5>count: <span class="tsd-signature-type">number</span></h5>
 														</li>
 													</ul>
-													<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">boolean</span>
-														<span class="tsd-signature-symbol"> | </span>
-														<span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol">&gt;</span>
-													</h4>
+													<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol">&gt;</span></h4>
 												</li>
 											</ul>
 										</li>
@@ -1112,7 +1306,7 @@
 									<h5>timeoutMs: <span class="tsd-signature-type">number</span></h5>
 								</li>
 								<li>
-									<h5><span class="tsd-flag ts-flagDefault value">Default value</span> delayMs: <span class="tsd-signature-type">number</span><span class="tsd-signature-symbol"> =&nbsp;50</span></h5>
+									<h5><span class="tsd-flag ts-flagDefault value">Default value</span> delayMs: <span class="tsd-signature-type">number</span><span class="tsd-signature-symbol"> = 50</span></h5>
 								</li>
 							</ul>
 							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol">&gt;</span></h4>
@@ -1129,7 +1323,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/master/src/BatchClusterOptions.ts#L139">BatchClusterOptions.ts:139</a></li>
+									<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/master/src/BatchClusterOptions.ts#L139">src/BatchClusterOptions.ts:139</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-parameters-title">Parameters</h4>
@@ -1143,6 +1337,91 @@
 					</ul>
 				</section>
 			</section>
+			<section class="tsd-panel-group tsd-member-group ">
+				<h2>Object literals</h2>
+				<section class="tsd-panel tsd-member tsd-kind-object-literal">
+					<a name="logger" class="tsd-anchor"></a>
+					<h3><span class="tsd-flag ts-flagConst">Const</span> Logger</h3>
+					<div class="tsd-signature tsd-kind-icon">Logger<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">object</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/master/src/Logger.ts#L86">src/Logger.ts:86</a></li>
+						</ul>
+					</aside>
+					<section class="tsd-panel tsd-member tsd-kind-function tsd-parent-kind-object-literal">
+						<a name="logger.filterlevels" class="tsd-anchor"></a>
+						<h3>filter<wbr>Levels</h3>
+						<ul class="tsd-signatures tsd-kind-function tsd-parent-kind-object-literal">
+							<li class="tsd-signature tsd-kind-icon">filter<wbr>Levels<span class="tsd-signature-symbol">(</span>l<span class="tsd-signature-symbol">: </span><a href="interfaces/logger.html" class="tsd-signature-type">Logger</a>, minLogLevel<span class="tsd-signature-symbol">: </span><span class="tsd-signature-symbol">keyof </span><a href="interfaces/logger.html" class="tsd-signature-type">Logger</a><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">any</span></li>
+						</ul>
+						<ul class="tsd-descriptions">
+							<li class="tsd-description">
+								<aside class="tsd-sources">
+									<ul>
+										<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/master/src/Logger.ts#L115">src/Logger.ts:115</a></li>
+									</ul>
+								</aside>
+								<h4 class="tsd-parameters-title">Parameters</h4>
+								<ul class="tsd-parameters">
+									<li>
+										<h5>l: <a href="interfaces/logger.html" class="tsd-signature-type">Logger</a></h5>
+									</li>
+									<li>
+										<h5>minLogLevel: <span class="tsd-signature-symbol">keyof </span><a href="interfaces/logger.html" class="tsd-signature-type">Logger</a></h5>
+									</li>
+								</ul>
+								<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">any</span></h4>
+							</li>
+						</ul>
+					</section>
+					<section class="tsd-panel tsd-member tsd-kind-function tsd-parent-kind-object-literal">
+						<a name="logger.withlevels" class="tsd-anchor"></a>
+						<h3>with<wbr>Levels</h3>
+						<ul class="tsd-signatures tsd-kind-function tsd-parent-kind-object-literal">
+							<li class="tsd-signature tsd-kind-icon">with<wbr>Levels<span class="tsd-signature-symbol">(</span>delegate<span class="tsd-signature-symbol">: </span><a href="interfaces/logger.html" class="tsd-signature-type">Logger</a><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">any</span></li>
+						</ul>
+						<ul class="tsd-descriptions">
+							<li class="tsd-description">
+								<aside class="tsd-sources">
+									<ul>
+										<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/master/src/Logger.ts#L87">src/Logger.ts:87</a></li>
+									</ul>
+								</aside>
+								<h4 class="tsd-parameters-title">Parameters</h4>
+								<ul class="tsd-parameters">
+									<li>
+										<h5>delegate: <a href="interfaces/logger.html" class="tsd-signature-type">Logger</a></h5>
+									</li>
+								</ul>
+								<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">any</span></h4>
+							</li>
+						</ul>
+					</section>
+					<section class="tsd-panel tsd-member tsd-kind-function tsd-parent-kind-object-literal">
+						<a name="logger.withtimestamps" class="tsd-anchor"></a>
+						<h3>with<wbr>Timestamps</h3>
+						<ul class="tsd-signatures tsd-kind-function tsd-parent-kind-object-literal">
+							<li class="tsd-signature tsd-kind-icon">with<wbr>Timestamps<span class="tsd-signature-symbol">(</span>delegate<span class="tsd-signature-symbol">: </span><a href="interfaces/logger.html" class="tsd-signature-type">Logger</a><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">any</span></li>
+						</ul>
+						<ul class="tsd-descriptions">
+							<li class="tsd-description">
+								<aside class="tsd-sources">
+									<ul>
+										<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/master/src/Logger.ts#L100">src/Logger.ts:100</a></li>
+									</ul>
+								</aside>
+								<h4 class="tsd-parameters-title">Parameters</h4>
+								<ul class="tsd-parameters">
+									<li>
+										<h5>delegate: <a href="interfaces/logger.html" class="tsd-signature-type">Logger</a></h5>
+									</li>
+								</ul>
+								<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">any</span></h4>
+							</li>
+						</ul>
+					</section>
+				</section>
+			</section>
 		</div>
 		<div class="col-4 col-menu menu-sticky-wrap menu-highlight">
 			<nav class="tsd-navigation primary">
@@ -1150,13 +1429,13 @@
 					<li class="globals current ">
 						<a href="globals.html"><em>Globals</em></a>
 					</li>
-					<li class=" tsd-kind-module">
-						<a href="modules/logger.html">Logger</a>
-					</li>
 				</ul>
 			</nav>
 			<nav class="tsd-navigation secondary menu-sticky">
 				<ul class="before-current">
+					<li class=" tsd-kind-enum">
+						<a href="enums/state.html" class="tsd-kind-icon">State</a>
+					</li>
 					<li class=" tsd-kind-class">
 						<a href="classes/batchcluster.html" class="tsd-kind-icon">Batch<wbr>Cluster</a>
 					</li>
@@ -1196,6 +1475,9 @@
 					<li class=" tsd-kind-interface">
 						<a href="interfaces/internalbatchprocessoptions.html" class="tsd-kind-icon">Internal<wbr>Batch<wbr>Process<wbr>Options</a>
 					</li>
+					<li class=" tsd-kind-interface">
+						<a href="interfaces/logger.html" class="tsd-kind-icon">Logger</a>
+					</li>
 					<li class=" tsd-kind-interface tsd-has-type-parameter">
 						<a href="interfaces/parser.html" class="tsd-kind-icon">Parser</a>
 					</li>
@@ -1213,6 +1495,21 @@
 					</li>
 					<li class=" tsd-kind-variable">
 						<a href="globals.html#nologger" class="tsd-kind-icon">No<wbr>Logger</a>
+					</li>
+					<li class=" tsd-kind-variable">
+						<a href="globals.html#_debuglog" class="tsd-kind-icon">_debuglog</a>
+					</li>
+					<li class=" tsd-kind-variable">
+						<a href="globals.html#_logger" class="tsd-kind-icon">_logger</a>
+					</li>
+					<li class=" tsd-kind-variable">
+						<a href="globals.html#iswin" class="tsd-kind-icon">is<wbr>Win</a>
+					</li>
+					<li class=" tsd-kind-variable">
+						<a href="globals.html#posixre" class="tsd-kind-icon">posix<wbr>Re</a>
+					</li>
+					<li class=" tsd-kind-variable">
+						<a href="globals.html#winre" class="tsd-kind-icon">win<wbr>Re</a>
 					</li>
 					<li class=" tsd-kind-function">
 						<a href="globals.html#simpleparser" class="tsd-kind-icon">Simple<wbr>Parser</a>
@@ -1253,6 +1550,12 @@
 					<li class=" tsd-kind-function tsd-has-type-parameter">
 						<a href="globals.html#map" class="tsd-kind-icon">map</a>
 					</li>
+					<li class=" tsd-kind-function tsd-has-type-parameter">
+						<a href="globals.html#mapnotdestroyed" class="tsd-kind-icon">map<wbr>Not<wbr>Destroyed</a>
+					</li>
+					<li class=" tsd-kind-function">
+						<a href="globals.html#noop" class="tsd-kind-icon">noop</a>
+					</li>
 					<li class=" tsd-kind-function">
 						<a href="globals.html#notblank" class="tsd-kind-icon">not<wbr>Blank</a>
 					</li>
@@ -1275,10 +1578,16 @@
 						<a href="globals.html#rrfindresult" class="tsd-kind-icon">rr<wbr>Find<wbr>Result</a>
 					</li>
 					<li class=" tsd-kind-function">
+						<a href="globals.html#safepid" class="tsd-kind-icon">safe<wbr>Pid</a>
+					</li>
+					<li class=" tsd-kind-function">
 						<a href="globals.html#setlogger" class="tsd-kind-icon">set<wbr>Logger</a>
 					</li>
 					<li class=" tsd-kind-function">
 						<a href="globals.html#sortnumeric" class="tsd-kind-icon">sort<wbr>Numeric</a>
+					</li>
+					<li class=" tsd-kind-function">
+						<a href="globals.html#tore" class="tsd-kind-icon">to<wbr>Re</a>
 					</li>
 					<li class=" tsd-kind-function">
 						<a href="globals.html#tos" class="tsd-kind-icon">toS</a>
@@ -1292,6 +1601,9 @@
 					<li class=" tsd-kind-function">
 						<a href="globals.html#verifyoptions" class="tsd-kind-icon">verify<wbr>Options</a>
 					</li>
+					<li class=" tsd-kind-object-literal">
+						<a href="globals.html#logger" class="tsd-kind-icon">Logger</a>
+					</li>
 				</ul>
 			</nav>
 		</div>
@@ -1302,57 +1614,17 @@
 		<h2>Legend</h2>
 		<div class="tsd-legend-group">
 			<ul class="tsd-legend">
-				<li class="tsd-kind-module"><span class="tsd-kind-icon">Module</span></li>
-				<li class="tsd-kind-object-literal"><span class="tsd-kind-icon">Object literal</span></li>
-				<li class="tsd-kind-variable"><span class="tsd-kind-icon">Variable</span></li>
-				<li class="tsd-kind-function"><span class="tsd-kind-icon">Function</span></li>
-				<li class="tsd-kind-function tsd-has-type-parameter"><span class="tsd-kind-icon">Function with type parameter</span></li>
-				<li class="tsd-kind-index-signature"><span class="tsd-kind-icon">Index signature</span></li>
-				<li class="tsd-kind-type-alias"><span class="tsd-kind-icon">Type alias</span></li>
-				<li class="tsd-kind-type-alias tsd-has-type-parameter"><span class="tsd-kind-icon">Type alias with type parameter</span></li>
-			</ul>
-			<ul class="tsd-legend">
-				<li class="tsd-kind-enum"><span class="tsd-kind-icon">Enumeration</span></li>
-				<li class="tsd-kind-enum-member"><span class="tsd-kind-icon">Enumeration member</span></li>
-				<li class="tsd-kind-property tsd-parent-kind-enum"><span class="tsd-kind-icon">Property</span></li>
-				<li class="tsd-kind-method tsd-parent-kind-enum"><span class="tsd-kind-icon">Method</span></li>
-			</ul>
-			<ul class="tsd-legend">
-				<li class="tsd-kind-interface"><span class="tsd-kind-icon">Interface</span></li>
-				<li class="tsd-kind-interface tsd-has-type-parameter"><span class="tsd-kind-icon">Interface with type parameter</span></li>
-				<li class="tsd-kind-constructor tsd-parent-kind-interface"><span class="tsd-kind-icon">Constructor</span></li>
-				<li class="tsd-kind-property tsd-parent-kind-interface"><span class="tsd-kind-icon">Property</span></li>
-				<li class="tsd-kind-method tsd-parent-kind-interface"><span class="tsd-kind-icon">Method</span></li>
-				<li class="tsd-kind-index-signature tsd-parent-kind-interface"><span class="tsd-kind-icon">Index signature</span></li>
-			</ul>
-			<ul class="tsd-legend">
-				<li class="tsd-kind-class"><span class="tsd-kind-icon">Class</span></li>
-				<li class="tsd-kind-class tsd-has-type-parameter"><span class="tsd-kind-icon">Class with type parameter</span></li>
 				<li class="tsd-kind-constructor tsd-parent-kind-class"><span class="tsd-kind-icon">Constructor</span></li>
 				<li class="tsd-kind-property tsd-parent-kind-class"><span class="tsd-kind-icon">Property</span></li>
 				<li class="tsd-kind-method tsd-parent-kind-class"><span class="tsd-kind-icon">Method</span></li>
-				<li class="tsd-kind-accessor tsd-parent-kind-class"><span class="tsd-kind-icon">Accessor</span></li>
-				<li class="tsd-kind-index-signature tsd-parent-kind-class"><span class="tsd-kind-icon">Index signature</span></li>
 			</ul>
 			<ul class="tsd-legend">
-				<li class="tsd-kind-constructor tsd-parent-kind-class tsd-is-inherited"><span class="tsd-kind-icon">Inherited constructor</span></li>
+				<li class="tsd-kind-property tsd-parent-kind-interface"><span class="tsd-kind-icon">Property</span></li>
+				<li class="tsd-kind-method tsd-parent-kind-interface"><span class="tsd-kind-icon">Method</span></li>
+			</ul>
+			<ul class="tsd-legend">
 				<li class="tsd-kind-property tsd-parent-kind-class tsd-is-inherited"><span class="tsd-kind-icon">Inherited property</span></li>
 				<li class="tsd-kind-method tsd-parent-kind-class tsd-is-inherited"><span class="tsd-kind-icon">Inherited method</span></li>
-				<li class="tsd-kind-accessor tsd-parent-kind-class tsd-is-inherited"><span class="tsd-kind-icon">Inherited accessor</span></li>
-			</ul>
-			<ul class="tsd-legend">
-				<li class="tsd-kind-property tsd-parent-kind-class tsd-is-protected"><span class="tsd-kind-icon">Protected property</span></li>
-				<li class="tsd-kind-method tsd-parent-kind-class tsd-is-protected"><span class="tsd-kind-icon">Protected method</span></li>
-				<li class="tsd-kind-accessor tsd-parent-kind-class tsd-is-protected"><span class="tsd-kind-icon">Protected accessor</span></li>
-			</ul>
-			<ul class="tsd-legend">
-				<li class="tsd-kind-property tsd-parent-kind-class tsd-is-private"><span class="tsd-kind-icon">Private property</span></li>
-				<li class="tsd-kind-method tsd-parent-kind-class tsd-is-private"><span class="tsd-kind-icon">Private method</span></li>
-				<li class="tsd-kind-accessor tsd-parent-kind-class tsd-is-private"><span class="tsd-kind-icon">Private accessor</span></li>
-			</ul>
-			<ul class="tsd-legend">
-				<li class="tsd-kind-property tsd-parent-kind-class tsd-is-static"><span class="tsd-kind-icon">Static property</span></li>
-				<li class="tsd-kind-call-signature tsd-parent-kind-class tsd-is-static"><span class="tsd-kind-icon">Static method</span></li>
 			</ul>
 		</div>
 	</div>

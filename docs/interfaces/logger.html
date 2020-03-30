@@ -3,7 +3,7 @@
 <head>
 	<meta charset="utf-8">
 	<meta http-equiv="X-UA-Compatible" content="IE=edge">
-	<title>ChildProcessFactory | batch-cluster</title>
+	<title>Logger | batch-cluster</title>
 	<meta name="description" content="">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<link rel="stylesheet" href="../assets/css/main.css">
@@ -52,10 +52,10 @@
 					<a href="../globals.html">Globals</a>
 				</li>
 				<li>
-					<a href="childprocessfactory.html">ChildProcessFactory</a>
+					<a href="logger.html">Logger</a>
 				</li>
 			</ul>
-			<h1>Interface ChildProcessFactory</h1>
+			<h1>Interface Logger</h1>
 		</div>
 	</div>
 </header>
@@ -65,7 +65,7 @@
 			<section class="tsd-panel tsd-comment">
 				<div class="tsd-comment tsd-typography">
 					<div class="lead">
-						<p>These are required parameters for a given BatchCluster.</p>
+						<p>Simple interface for logging.</p>
 					</div>
 				</div>
 			</section>
@@ -73,7 +73,7 @@
 				<h3>Hierarchy</h3>
 				<ul class="tsd-hierarchy">
 					<li>
-						<span class="target">ChildProcessFactory</span>
+						<span class="target">Logger</span>
 					</li>
 				</ul>
 			</section>
@@ -84,7 +84,11 @@
 						<section class="tsd-index-section ">
 							<h3>Properties</h3>
 							<ul class="tsd-index-list">
-								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="childprocessfactory.html#processfactory" class="tsd-kind-icon">process<wbr>Factory</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="logger.html#debug" class="tsd-kind-icon">debug</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="logger.html#error" class="tsd-kind-icon">error</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="logger.html#info" class="tsd-kind-icon">info</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="logger.html#trace" class="tsd-kind-icon">trace</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="logger.html#warn" class="tsd-kind-icon">warn</a></li>
 							</ul>
 						</section>
 					</div>
@@ -93,36 +97,54 @@
 			<section class="tsd-panel-group tsd-member-group ">
 				<h2>Properties</h2>
 				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
-					<a name="processfactory" class="tsd-anchor"></a>
-					<h3>process<wbr>Factory</h3>
-					<div class="tsd-signature tsd-kind-icon">process<wbr>Factory<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol"> =&gt; </span><span class="tsd-signature-type">ChildProcess</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">ChildProcess</span><span class="tsd-signature-symbol">&gt;</span></div>
+					<a name="debug" class="tsd-anchor"></a>
+					<h3>debug</h3>
+					<div class="tsd-signature tsd-kind-icon">debug<span class="tsd-signature-symbol">:</span> <a href="../globals.html#log" class="tsd-signature-type">Log</a></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/master/src/BatchCluster.ts#L40">src/BatchCluster.ts:40</a></li>
+							<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/master/src/Logger.ts#L13">src/Logger.ts:13</a></li>
 						</ul>
 					</aside>
-					<div class="tsd-comment tsd-typography">
-						<div class="lead">
-							<p>Expected to be a simple call to execFile. Platform-specific code is the
-								responsibility of this thunk. Error handlers will be registered as
-							appropriate.</p>
-						</div>
-					</div>
-					<div class="tsd-type-declaration">
-						<h4>Type declaration</h4>
-						<ul class="tsd-parameters">
-							<li class="tsd-parameter-signature">
-								<ul class="tsd-signatures tsd-kind-type-literal tsd-parent-kind-property">
-									<li class="tsd-signature tsd-kind-icon"><span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">ChildProcess</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">ChildProcess</span><span class="tsd-signature-symbol">&gt;</span></li>
-								</ul>
-								<ul class="tsd-descriptions">
-									<li class="tsd-description">
-										<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">ChildProcess</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">ChildProcess</span><span class="tsd-signature-symbol">&gt;</span></h4>
-									</li>
-								</ul>
-							</li>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
+					<a name="error" class="tsd-anchor"></a>
+					<h3>error</h3>
+					<div class="tsd-signature tsd-kind-icon">error<span class="tsd-signature-symbol">:</span> <a href="../globals.html#log" class="tsd-signature-type">Log</a></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/master/src/Logger.ts#L16">src/Logger.ts:16</a></li>
 						</ul>
-					</div>
+					</aside>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
+					<a name="info" class="tsd-anchor"></a>
+					<h3>info</h3>
+					<div class="tsd-signature tsd-kind-icon">info<span class="tsd-signature-symbol">:</span> <a href="../globals.html#log" class="tsd-signature-type">Log</a></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/master/src/Logger.ts#L14">src/Logger.ts:14</a></li>
+						</ul>
+					</aside>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
+					<a name="trace" class="tsd-anchor"></a>
+					<h3>trace</h3>
+					<div class="tsd-signature tsd-kind-icon">trace<span class="tsd-signature-symbol">:</span> <a href="../globals.html#log" class="tsd-signature-type">Log</a></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/master/src/Logger.ts#L12">src/Logger.ts:12</a></li>
+						</ul>
+					</aside>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
+					<a name="warn" class="tsd-anchor"></a>
+					<h3>warn</h3>
+					<div class="tsd-signature tsd-kind-icon">warn<span class="tsd-signature-symbol">:</span> <a href="../globals.html#log" class="tsd-signature-type">Log</a></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/master/src/Logger.ts#L15">src/Logger.ts:15</a></li>
+						</ul>
+					</aside>
 				</section>
 			</section>
 		</div>
@@ -139,10 +161,22 @@
 				</ul>
 				<ul class="current">
 					<li class="current tsd-kind-interface">
-						<a href="childprocessfactory.html" class="tsd-kind-icon">Child<wbr>Process<wbr>Factory</a>
+						<a href="logger.html" class="tsd-kind-icon">Logger</a>
 						<ul>
 							<li class=" tsd-kind-property tsd-parent-kind-interface">
-								<a href="childprocessfactory.html#processfactory" class="tsd-kind-icon">process<wbr>Factory</a>
+								<a href="logger.html#debug" class="tsd-kind-icon">debug</a>
+							</li>
+							<li class=" tsd-kind-property tsd-parent-kind-interface">
+								<a href="logger.html#error" class="tsd-kind-icon">error</a>
+							</li>
+							<li class=" tsd-kind-property tsd-parent-kind-interface">
+								<a href="logger.html#info" class="tsd-kind-icon">info</a>
+							</li>
+							<li class=" tsd-kind-property tsd-parent-kind-interface">
+								<a href="logger.html#trace" class="tsd-kind-icon">trace</a>
+							</li>
+							<li class=" tsd-kind-property tsd-parent-kind-interface">
+								<a href="logger.html#warn" class="tsd-kind-icon">warn</a>
 							</li>
 						</ul>
 					</li>

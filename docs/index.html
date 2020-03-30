@@ -52,7 +52,7 @@
 					<a href="globals.html">Globals</a>
 				</li>
 			</ul>
-			<h1> batch-cluster</h1>
+			<h1>batch-cluster</h1>
 		</div>
 	</div>
 </header>
@@ -64,8 +64,7 @@
 					<h1>batch-cluster</h1>
 				</a>
 				<p><strong>Support external batch-mode tools within Node.js.</strong></p>
-				<p><a href="https://github.com/users/mceachen/sponsorship"><img src="https://img.shields.io/badge/Become%20a-sponsor-orange" alt="Become a sponsor"></a>
-					<a href="https://www.npmjs.com/package/batch-cluster"><img src="https://img.shields.io/npm/v/batch-cluster.svg" alt="npm version"></a>
+				<p><a href="https://www.npmjs.com/package/batch-cluster"><img src="https://img.shields.io/npm/v/batch-cluster.svg" alt="npm version"></a>
 					<a href="https://travis-ci.org/photostructure/batch-cluster.js"><img src="https://travis-ci.org/photostructure/batch-cluster.js.svg?branch=master" alt="Build status"></a>
 					<a href="https://ci.appveyor.com/project/mceachen/batch-cluster-js/branch/master"><img src="https://ci.appveyor.com/api/projects/status/4564x6lvc8s6a55l/branch/master?svg=true" alt="Build status"></a>
 					<a href="https://github.com/photostructure/batch-cluster.js/issues"><img src="https://img.shields.io/github/issues/photostructure/batch-cluster.js.svg" alt="GitHub issues"></a>
@@ -85,7 +84,7 @@
 					processing N tasks or running for N seconds, in an effort to minimize the impact
 				of memory leaks.</p>
 				<p>As of version 4, retry logic for tasks is a separate concern from this module.</p>
-				<p>This package powers <a href="https://exiftool-vendored.js.org/">exiftool-vendored</a>,
+				<p>This package powers <a href="https://photostructure.github.io/exiftool-vendored.js/">exiftool-vendored</a>,
 				whose source you can examine as an example consumer.</p>
 				<a href="#installation" id="installation" style="color: inherit; text-decoration: none;">
 					<h2>Installation</h2>
@@ -144,13 +143,13 @@ $ npm install --save batch-cluster</code></pre>
 					<li class="globals  ">
 						<a href="globals.html"><em>Globals</em></a>
 					</li>
-					<li class=" tsd-kind-module">
-						<a href="modules/logger.html">Logger</a>
-					</li>
 				</ul>
 			</nav>
 			<nav class="tsd-navigation secondary menu-sticky">
 				<ul class="before-current">
+					<li class=" tsd-kind-enum">
+						<a href="enums/state.html" class="tsd-kind-icon">State</a>
+					</li>
 					<li class=" tsd-kind-class">
 						<a href="classes/batchcluster.html" class="tsd-kind-icon">Batch<wbr>Cluster</a>
 					</li>
@@ -190,6 +189,9 @@ $ npm install --save batch-cluster</code></pre>
 					<li class=" tsd-kind-interface">
 						<a href="interfaces/internalbatchprocessoptions.html" class="tsd-kind-icon">Internal<wbr>Batch<wbr>Process<wbr>Options</a>
 					</li>
+					<li class=" tsd-kind-interface">
+						<a href="interfaces/logger.html" class="tsd-kind-icon">Logger</a>
+					</li>
 					<li class=" tsd-kind-interface tsd-has-type-parameter">
 						<a href="interfaces/parser.html" class="tsd-kind-icon">Parser</a>
 					</li>
@@ -207,6 +209,21 @@ $ npm install --save batch-cluster</code></pre>
 					</li>
 					<li class=" tsd-kind-variable">
 						<a href="globals.html#nologger" class="tsd-kind-icon">No<wbr>Logger</a>
+					</li>
+					<li class=" tsd-kind-variable">
+						<a href="globals.html#_debuglog" class="tsd-kind-icon">_debuglog</a>
+					</li>
+					<li class=" tsd-kind-variable">
+						<a href="globals.html#_logger" class="tsd-kind-icon">_logger</a>
+					</li>
+					<li class=" tsd-kind-variable">
+						<a href="globals.html#iswin" class="tsd-kind-icon">is<wbr>Win</a>
+					</li>
+					<li class=" tsd-kind-variable">
+						<a href="globals.html#posixre" class="tsd-kind-icon">posix<wbr>Re</a>
+					</li>
+					<li class=" tsd-kind-variable">
+						<a href="globals.html#winre" class="tsd-kind-icon">win<wbr>Re</a>
 					</li>
 					<li class=" tsd-kind-function">
 						<a href="globals.html#simpleparser" class="tsd-kind-icon">Simple<wbr>Parser</a>
@@ -247,6 +264,12 @@ $ npm install --save batch-cluster</code></pre>
 					<li class=" tsd-kind-function tsd-has-type-parameter">
 						<a href="globals.html#map" class="tsd-kind-icon">map</a>
 					</li>
+					<li class=" tsd-kind-function tsd-has-type-parameter">
+						<a href="globals.html#mapnotdestroyed" class="tsd-kind-icon">map<wbr>Not<wbr>Destroyed</a>
+					</li>
+					<li class=" tsd-kind-function">
+						<a href="globals.html#noop" class="tsd-kind-icon">noop</a>
+					</li>
 					<li class=" tsd-kind-function">
 						<a href="globals.html#notblank" class="tsd-kind-icon">not<wbr>Blank</a>
 					</li>
@@ -269,10 +292,16 @@ $ npm install --save batch-cluster</code></pre>
 						<a href="globals.html#rrfindresult" class="tsd-kind-icon">rr<wbr>Find<wbr>Result</a>
 					</li>
 					<li class=" tsd-kind-function">
+						<a href="globals.html#safepid" class="tsd-kind-icon">safe<wbr>Pid</a>
+					</li>
+					<li class=" tsd-kind-function">
 						<a href="globals.html#setlogger" class="tsd-kind-icon">set<wbr>Logger</a>
 					</li>
 					<li class=" tsd-kind-function">
 						<a href="globals.html#sortnumeric" class="tsd-kind-icon">sort<wbr>Numeric</a>
+					</li>
+					<li class=" tsd-kind-function">
+						<a href="globals.html#tore" class="tsd-kind-icon">to<wbr>Re</a>
 					</li>
 					<li class=" tsd-kind-function">
 						<a href="globals.html#tos" class="tsd-kind-icon">toS</a>
@@ -286,6 +315,9 @@ $ npm install --save batch-cluster</code></pre>
 					<li class=" tsd-kind-function">
 						<a href="globals.html#verifyoptions" class="tsd-kind-icon">verify<wbr>Options</a>
 					</li>
+					<li class=" tsd-kind-object-literal">
+						<a href="globals.html#logger" class="tsd-kind-icon">Logger</a>
+					</li>
 				</ul>
 			</nav>
 		</div>
@@ -296,57 +328,17 @@ $ npm install --save batch-cluster</code></pre>
 		<h2>Legend</h2>
 		<div class="tsd-legend-group">
 			<ul class="tsd-legend">
-				<li class="tsd-kind-module"><span class="tsd-kind-icon">Module</span></li>
-				<li class="tsd-kind-object-literal"><span class="tsd-kind-icon">Object literal</span></li>
-				<li class="tsd-kind-variable"><span class="tsd-kind-icon">Variable</span></li>
-				<li class="tsd-kind-function"><span class="tsd-kind-icon">Function</span></li>
-				<li class="tsd-kind-function tsd-has-type-parameter"><span class="tsd-kind-icon">Function with type parameter</span></li>
-				<li class="tsd-kind-index-signature"><span class="tsd-kind-icon">Index signature</span></li>
-				<li class="tsd-kind-type-alias"><span class="tsd-kind-icon">Type alias</span></li>
-				<li class="tsd-kind-type-alias tsd-has-type-parameter"><span class="tsd-kind-icon">Type alias with type parameter</span></li>
-			</ul>
-			<ul class="tsd-legend">
-				<li class="tsd-kind-enum"><span class="tsd-kind-icon">Enumeration</span></li>
-				<li class="tsd-kind-enum-member"><span class="tsd-kind-icon">Enumeration member</span></li>
-				<li class="tsd-kind-property tsd-parent-kind-enum"><span class="tsd-kind-icon">Property</span></li>
-				<li class="tsd-kind-method tsd-parent-kind-enum"><span class="tsd-kind-icon">Method</span></li>
-			</ul>
-			<ul class="tsd-legend">
-				<li class="tsd-kind-interface"><span class="tsd-kind-icon">Interface</span></li>
-				<li class="tsd-kind-interface tsd-has-type-parameter"><span class="tsd-kind-icon">Interface with type parameter</span></li>
-				<li class="tsd-kind-constructor tsd-parent-kind-interface"><span class="tsd-kind-icon">Constructor</span></li>
-				<li class="tsd-kind-property tsd-parent-kind-interface"><span class="tsd-kind-icon">Property</span></li>
-				<li class="tsd-kind-method tsd-parent-kind-interface"><span class="tsd-kind-icon">Method</span></li>
-				<li class="tsd-kind-index-signature tsd-parent-kind-interface"><span class="tsd-kind-icon">Index signature</span></li>
-			</ul>
-			<ul class="tsd-legend">
-				<li class="tsd-kind-class"><span class="tsd-kind-icon">Class</span></li>
-				<li class="tsd-kind-class tsd-has-type-parameter"><span class="tsd-kind-icon">Class with type parameter</span></li>
 				<li class="tsd-kind-constructor tsd-parent-kind-class"><span class="tsd-kind-icon">Constructor</span></li>
 				<li class="tsd-kind-property tsd-parent-kind-class"><span class="tsd-kind-icon">Property</span></li>
 				<li class="tsd-kind-method tsd-parent-kind-class"><span class="tsd-kind-icon">Method</span></li>
-				<li class="tsd-kind-accessor tsd-parent-kind-class"><span class="tsd-kind-icon">Accessor</span></li>
-				<li class="tsd-kind-index-signature tsd-parent-kind-class"><span class="tsd-kind-icon">Index signature</span></li>
 			</ul>
 			<ul class="tsd-legend">
-				<li class="tsd-kind-constructor tsd-parent-kind-class tsd-is-inherited"><span class="tsd-kind-icon">Inherited constructor</span></li>
+				<li class="tsd-kind-property tsd-parent-kind-interface"><span class="tsd-kind-icon">Property</span></li>
+				<li class="tsd-kind-method tsd-parent-kind-interface"><span class="tsd-kind-icon">Method</span></li>
+			</ul>
+			<ul class="tsd-legend">
 				<li class="tsd-kind-property tsd-parent-kind-class tsd-is-inherited"><span class="tsd-kind-icon">Inherited property</span></li>
 				<li class="tsd-kind-method tsd-parent-kind-class tsd-is-inherited"><span class="tsd-kind-icon">Inherited method</span></li>
-				<li class="tsd-kind-accessor tsd-parent-kind-class tsd-is-inherited"><span class="tsd-kind-icon">Inherited accessor</span></li>
-			</ul>
-			<ul class="tsd-legend">
-				<li class="tsd-kind-property tsd-parent-kind-class tsd-is-protected"><span class="tsd-kind-icon">Protected property</span></li>
-				<li class="tsd-kind-method tsd-parent-kind-class tsd-is-protected"><span class="tsd-kind-icon">Protected method</span></li>
-				<li class="tsd-kind-accessor tsd-parent-kind-class tsd-is-protected"><span class="tsd-kind-icon">Protected accessor</span></li>
-			</ul>
-			<ul class="tsd-legend">
-				<li class="tsd-kind-property tsd-parent-kind-class tsd-is-private"><span class="tsd-kind-icon">Private property</span></li>
-				<li class="tsd-kind-method tsd-parent-kind-class tsd-is-private"><span class="tsd-kind-icon">Private method</span></li>
-				<li class="tsd-kind-accessor tsd-parent-kind-class tsd-is-private"><span class="tsd-kind-icon">Private accessor</span></li>
-			</ul>
-			<ul class="tsd-legend">
-				<li class="tsd-kind-property tsd-parent-kind-class tsd-is-static"><span class="tsd-kind-icon">Static property</span></li>
-				<li class="tsd-kind-call-signature tsd-parent-kind-class tsd-is-static"><span class="tsd-kind-icon">Static method</span></li>
 			</ul>
 		</div>
 	</div>
