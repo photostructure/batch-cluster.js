@@ -51,7 +51,7 @@ export function pidExists(pid: number): Promise<boolean> {
     : // linux has "quick" mode (-q) but mac doesn't. We add the ",1" to avoid ps
       // returning exit code 1, which generates an extraneous Error.
       ["-p", needle + ",1"]
-  return new Promise(resolve => {
+  return new Promise((resolve) => {
     _cp.execFile(cmd, args, (error: Error | null, stdout: string) => {
       const result =
         error == null &&
@@ -88,10 +88,10 @@ export function pids(): Promise<number[]> {
             ("" + stdout)
               .trim()
               .split(/[\n\r]+/)
-              .map(ea => ea.match(isWin ? winRe : posixRe))
-              .filter(m => m != null)
+              .map((ea) => ea.match(isWin ? winRe : posixRe))
+              .filter((m) => m != null)
               // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-              .map(m => parseInt(m![1]))
+              .map((m) => parseInt(m![1]))
           )
       }
     )

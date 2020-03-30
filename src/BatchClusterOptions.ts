@@ -143,7 +143,7 @@ export function verifyOptions(
     ...new BatchClusterOptions(),
     ...opts,
     passRE: toRe(opts.pass),
-    failRE: toRe(opts.fail)
+    failRE: toRe(opts.fail),
   }
 
   const errors: string[] = []

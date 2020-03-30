@@ -52,7 +52,7 @@ describe("Rate", () => {
   for (const events of [10, 100, 1000]) {
     it("calculates average rate for " + events + " events", () => {
       const period = r.ttlMs
-      times(events, i => {
+      times(events, (i) => {
         tk.freeze(now + (period * i) / events)
         r.onEvent()
       })

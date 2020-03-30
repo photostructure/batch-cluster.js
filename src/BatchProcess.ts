@@ -47,23 +47,23 @@ export class BatchProcess {
     // don't let node count the child processes as a reason to stay alive
     this.proc.unref()
 
-    this.proc.on("error", err => this.onError("proc.error", err))
+    this.proc.on("error", (err) => this.onError("proc.error", err))
     this.proc.on("close", () => this.onExit("close"))
     this.proc.on("exit", () => this.onExit("exit"))
     this.proc.on("disconnect", () => this.onExit("disconnect"))
 
     const stdin = this.proc.stdin
     if (stdin == null) throw new Error("Given proc had no stdin")
-    stdin.on("error", err => this.onError("stdin.error", err))
+    stdin.on("error", (err) => this.onError("stdin.error", err))
 
     const stdout = this.proc.stdout
     if (stdout == null) throw new Error("Given proc had no stdout")
-    stdout.on("error", err => this.onError("stdout.error", err))
-    stdout.on("data", d => this.onStdout(d))
+    stdout.on("error", (err) => this.onError("stdout.error", err))
+    stdout.on("data", (d) => this.onStdout(d))
 
-    map(this.proc.stderr, stderr => {
-      stderr.on("error", err => this.onError("stderr.error", err))
-      stderr.on("data", err => this.onStderr(err))
+    map(this.proc.stderr, (stderr) => {
+      stderr.on("error", (err) => this.onError("stderr.error", err))
+      stderr.on("data", (err) => this.onStderr(err))
     })
 
     this.streamDebouncer = debounce(opts.streamFlushMillis)
@@ -110,7 +110,7 @@ export class BatchProcess {
   async running(): Promise<boolean> {
     if (this.dead) return false
     else
-      return pidExists(this.pid).then(alive => {
+      return pidExists(this.pid).then((alive) => {
         if (!alive) {
           // once a PID leaves the process table, it's gone for good:
           this.dead = true
@@ -121,7 +121,7 @@ export class BatchProcess {
   }
 
   notRunning(): Promise<boolean> {
-    return this.running().then(ea => !ea)
+    return this.running().then((ea) => !ea)
   }
 
   /**
@@ -133,7 +133,7 @@ export class BatchProcess {
   }
 
   async notEnded(): Promise<boolean> {
-    return this.ended().then(ea => !ea)
+    return this.ended().then((ea) => !ea)
   }
 
   // This must not be async, or new instances aren't started as busy (until the
@@ -175,7 +175,7 @@ export class BatchProcess {
     // logger().debug(this.name + ".execTask(): starting", { cmd })
     // eslint-disable-next-line @typescript-eslint/no-floating-promises
     task.promise
-      .catch(err =>
+      .catch((err) =>
         this.startupTask === task
           ? this.observer.onStartError(err)
           : this.observer.onTaskError(err, task)
@@ -239,14 +239,14 @@ export class BatchProcess {
       }
     }
 
-    const cmd = map(this.opts.exitCommand, ea => ensureSuffix(ea, "\n"))
+    const cmd = map(this.opts.exitCommand, (ea) => ensureSuffix(ea, "\n"))
 
     // proc cleanup:
     tryEach([
-      () => mapNotDestroyed(this.proc.stdin, ea => ea.end(cmd)),
-      () => mapNotDestroyed(this.proc.stdout, ea => ea.destroy()),
-      () => mapNotDestroyed(this.proc.stderr, ea => ea.destroy()),
-      () => this.proc.disconnect()
+      () => mapNotDestroyed(this.proc.stdin, (ea) => ea.end(cmd)),
+      () => mapNotDestroyed(this.proc.stdout, (ea) => ea.destroy()),
+      () => mapNotDestroyed(this.proc.stderr, (ea) => ea.destroy()),
+      () => this.proc.disconnect(),
     ])
 
     if (
@@ -289,7 +289,7 @@ export class BatchProcess {
         {
           source,
           _error,
-          task
+          task,
         }
       )
       return
@@ -300,8 +300,8 @@ export class BatchProcess {
     const error = new Error(source + ": " + cleanError(_error.message))
     logger().warn(this.name + ".onError()", {
       source,
-      task: map(task, t => t.command),
-      error
+      task: map(task, (t) => t.command),
+      error,
     })
 
     if (_error.stack != null) {
@@ -406,7 +406,7 @@ export class BatchProcess {
   }
 
   private clearCurrentTask() {
-    map(this.currentTaskTimeout, ea => clearTimeout(ea))
+    map(this.currentTaskTimeout, (ea) => clearTimeout(ea))
     this.currentTaskTimeout = undefined
     this.currentTask = undefined
   }

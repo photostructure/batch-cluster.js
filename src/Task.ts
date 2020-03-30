@@ -80,7 +80,7 @@ export class Task<T> {
   reject(error: Error, source = "Task.reject()"): void {
     logger().warn(source, {
       cmd: this.command,
-      error
+      error,
     })
     this.d.reject(error)
   }

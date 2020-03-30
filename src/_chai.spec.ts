@@ -27,7 +27,7 @@ setLogger(
           debug: console.log,
           info: console.log,
           warn: console.warn,
-          error: console.error
+          error: console.error,
         },
         orElse(_p.env.LOG as any, "error")
       )
@@ -51,13 +51,13 @@ export const parser: Parser<string> = (
     logger().debug("test parser: rejecting task", {
       stdout,
       stderr,
-      passed
+      passed,
     })
     throw new Error(stderr)
   } else {
     const str = stdout
       .split(/(\r?\n)+/)
-      .filter(ea => notBlank(ea) && !ea.startsWith("# "))
+      .filter((ea) => notBlank(ea) && !ea.startsWith("# "))
       .join("\n")
       .trim()
     logger().debug("test parser: resolving task", str)
@@ -94,12 +94,12 @@ declare namespace Chai {
 export const procs: ChildProcess[] = []
 
 export function testPids(): number[] {
-  return procs.map(proc => proc.pid)
+  return procs.map((proc) => proc.pid)
 }
 
 export async function currentTestPids(): Promise<number[]> {
   const alivePids = new Set(await pids())
-  return procs.map(ea => ea.pid).filter(ea => alivePids.has(ea))
+  return procs.map((ea) => ea.pid).filter((ea) => alivePids.has(ea))
 }
 
 // Seeding the RNG deterministically _should_ give us repeatable
@@ -169,8 +169,8 @@ export const processFactory = () => {
       failrate,
       newline,
       ignoreExit,
-      unluckyfail
-    }
+      unluckyfail,
+    },
   })
   procs.push(proc)
   return proc

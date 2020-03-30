@@ -6,7 +6,7 @@ import { BatchClusterEmitter } from "./BatchClusterEmitter"
 import {
   AllOpts,
   BatchClusterOptions,
-  verifyOptions
+  verifyOptions,
 } from "./BatchClusterOptions"
 import { BatchProcess } from "./BatchProcess"
 import { BatchProcessObserver } from "./BatchProcessObserver"
@@ -81,11 +81,11 @@ export class BatchCluster extends BatchClusterEmitter {
     }
     this.observer = {
       onIdle: () => this.onIdle(),
-      onStartError: err => this.emitStartError(err),
+      onStartError: (err) => this.emitStartError(err),
       onTaskData: (data: Buffer | string, task: Task<any> | undefined) =>
         this.emitter.emit("taskData", data, task),
       onTaskError: (err, task) => this.emitter.emit("taskError", err, task),
-      onInternalError: err => this.emitInternalError(err)
+      onInternalError: (err) => this.emitInternalError(err),
     }
     _p.once("beforeExit", this.beforeExitListener)
     _p.once("exit", this.exitListener)
@@ -113,10 +113,10 @@ export class BatchCluster extends BatchClusterEmitter {
       _p.removeListener("exit", this.exitListener)
       this.endPromise = new Deferred<void>().observe(
         Promise.all(
-          this._procs.map(p =>
+          this._procs.map((p) =>
             p
               .end(gracefully, "BatchCluster.end()")
-              .catch(err => this.emitter.emit("endError", err))
+              .catch((err) => this.emitter.emit("endError", err))
           )
         )
           .then(() => this.emitter.emit("end"))
@@ -154,7 +154,7 @@ export class BatchCluster extends BatchClusterEmitter {
    * @return true if all previously-enqueued tasks have settled
    */
   get isIdle(): boolean {
-    return this.tasks.length === 0 && this._procs.every(ea => ea.idle)
+    return this.tasks.length === 0 && this._procs.every((ea) => ea.idle)
   }
 
   /**
@@ -182,8 +182,9 @@ export class BatchCluster extends BatchClusterEmitter {
    * @return the current number of child processes currently servicing tasks
    */
   get busyProcs(): number {
-    return this._procs.filter(ea => ea.taskCount > 0 && !ea.exited && !ea.idle)
-      .length
+    return this._procs.filter(
+      (ea) => ea.taskCount > 0 && !ea.exited && !ea.idle
+    ).length
   }
 
   /**
@@ -227,7 +228,7 @@ export class BatchCluster extends BatchClusterEmitter {
    */
   async pids(): Promise<number[]> {
     const arr: number[] = []
-    for (const pid of this._procs.map(p => p.pid)) {
+    for (const pid of this._procs.map((p) => p.pid)) {
       if (await pidExists(pid)) arr.push(pid)
     }
     return arr
@@ -247,7 +248,7 @@ export class BatchCluster extends BatchClusterEmitter {
 
   // NOT ASYNC: updates internal state.
   private vacuumProcs() {
-    filterInPlace(this._procs, proc => {
+    filterInPlace(this._procs, (proc) => {
       // Only idle procs are eligible for deletion:
       if (!proc.idle) return true
 
@@ -273,7 +274,7 @@ export class BatchCluster extends BatchClusterEmitter {
     const readyProc = rrFindResult(
       this._procs,
       this._lastUsedProcsIdx + 1,
-      ea => ea.ready
+      (ea) => ea.ready
     )
     if (readyProc == null) return false
 

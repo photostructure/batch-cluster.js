@@ -9,7 +9,7 @@ export class Mutex {
   private readonly _arr: Deferred<any>[] = []
 
   private get arr() {
-    filterInPlace(this._arr, ea => ea.pending)
+    filterInPlace(this._arr, (ea) => ea.pending)
     return this._arr
   }
 
@@ -61,6 +61,6 @@ export class Mutex {
   awaitAll(): Promise<undefined> {
     return this.arr.length === 0
       ? Promise.resolve(undefined)
-      : Promise.all(this.arr.map(ea => ea.promise)).then(() => undefined)
+      : Promise.all(this.arr.map((ea) => ea.promise)).then(() => undefined)
   }
 }

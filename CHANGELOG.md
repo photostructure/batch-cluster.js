@@ -17,6 +17,11 @@ See [Semver](http://semver.org/).
 - 🐞 Backwards-compatible bug fixes
 - 📦 Minor packaging changes
 
+## v5.9.5
+
+- 📦 Updated deps
+- 📦 Ran prettier (2.0.0 causes many no-op diffs due to changed defaults)
+
 ## v5.9.4
 
 - 📦 Updated deps

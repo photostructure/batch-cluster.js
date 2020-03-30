@@ -4,7 +4,7 @@
 enum State {
   pending,
   fulfilled,
-  rejected
+  rejected,
 }
 
 /**
@@ -67,16 +67,16 @@ export class Deferred<T> {
   }
 
   observe(p: Promise<T>): this {
-    p.then(resolution => {
+    p.then((resolution) => {
       this.resolve(resolution)
-    }).catch(err => {
+    }).catch((err) => {
       this.reject(err)
     })
     return this
   }
 
   observeQuietly(p: Promise<T>): Deferred<T | undefined> {
-    p.then(ea => this.resolve(ea)).catch(() => this.resolve(undefined as any))
+    p.then((ea) => this.resolve(ea)).catch(() => this.resolve(undefined as any))
     return this as any
   }
 }

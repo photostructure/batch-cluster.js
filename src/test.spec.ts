@@ -7,7 +7,7 @@ import {
   processFactory,
   setFailrate,
   setIgnoreExit,
-  setRngseed
+  setRngseed,
 } from "./_chai.spec"
 
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
@@ -32,7 +32,7 @@ describe("test.js", () => {
     }
     async end(): Promise<void> {
       this.child.stdin!.end(null)
-      await until(() => this.running().then(ea => !ea), 1000)
+      await until(() => this.running().then((ea) => !ea), 1000)
       if (await this.running()) {
         console.error("Ack, I had to kill child pid " + this.child.pid)
         kill(this.child.pid)
@@ -43,7 +43,7 @@ describe("test.js", () => {
       return pidExists(this.child.pid)
     }
     async notRunning(): Promise<boolean> {
-      return this.running().then(ea => !ea)
+      return this.running().then((ea) => !ea)
     }
     async assertStdout(f: (output: string) => void) {
       // The OS may take a bit before the PID shows up in the process table:
@@ -65,7 +65,7 @@ describe("test.js", () => {
 
   it("results in expected output", async () => {
     const h = new Harness()
-    const a = h.assertStdout(ea =>
+    const a = h.assertStdout((ea) =>
       expect(ea).to.eql("HELLO\nPASS\nworld\nPASS\nFAIL\nv1.2.3\nPASS")
     )
     h.child.stdin!.end("upcase Hello\ndowncase World\ninvalid input\nversion\n")
@@ -139,10 +139,10 @@ describe("test.js", () => {
     const start = Date.now()
     const times = [200, 201, 202]
     const a = h
-      .assertStdout(output => {
+      .assertStdout((output) => {
         const actualTimes: number[] = []
         const pids = new Set()
-        output.split(/[\r\n]/).forEach(line => {
+        output.split(/[\r\n]/).forEach((line) => {
           if (line.startsWith("{") && line.endsWith("}")) {
             const json = JSON.parse(line)
             actualTimes.push(json.slept)
@@ -155,7 +155,7 @@ describe("test.js", () => {
         expect(actualTimes).to.eql(times)
       })
       .then(() => expect(Date.now() - start).to.be.gte(603))
-    h.child.stdin!.end(times.map(ea => "sleep " + ea).join("\n") + "\nexit\n")
+    h.child.stdin!.end(times.map((ea) => "sleep " + ea).join("\n") + "\nexit\n")
     return a
   })
 
@@ -164,7 +164,7 @@ describe("test.js", () => {
     setRngseed("hello")
     const h = new Harness()
     // These random numbers are consistent because we have a consistent rngseed:
-    const a = h.assertStdout(ea =>
+    const a = h.assertStdout((ea) =>
       expect(ea).to.eql(
         [
           "flaky response (PASS, r: 0.55, flakeRate: 0.50)",
@@ -172,7 +172,7 @@ describe("test.js", () => {
           "flaky response (PASS, r: 0.44, flakeRate: 0.00)",
           "PASS",
           "flaky response (FAIL, r: 0.55, flakeRate: 1.00)",
-          "FAIL"
+          "FAIL",
         ].join("\n")
       )
     )

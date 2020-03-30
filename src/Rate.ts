@@ -46,7 +46,7 @@ export class Rate {
     const minTime = Date.now() - this.ttlMs
     // If nothing's expired, findIndex should return index 0, so this should
     // normally be quite cheap:
-    const firstGoodIndex = this.store.findIndex(ea => ea > minTime)
+    const firstGoodIndex = this.store.findIndex((ea) => ea > minTime)
     if (firstGoodIndex === -1) {
       this.clear()
     } else if (firstGoodIndex > 0) {

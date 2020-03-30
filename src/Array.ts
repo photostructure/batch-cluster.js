@@ -17,7 +17,9 @@ export function filterInPlace<T>(arr: T[], filter: (t: T) => boolean): T[] {
 }
 
 export function flatten<T>(arr: (T | T[])[], result: T[] = []): T[] {
-  arr.forEach(ea => (Array.isArray(ea) ? result.push(...ea) : result.push(ea)))
+  arr.forEach((ea) =>
+    Array.isArray(ea) ? result.push(...ea) : result.push(ea)
+  )
   return result
 }
 
@@ -46,5 +48,5 @@ export function rrFind<T>(
   startIndex: number,
   predicate: (t: T, arrIdx: number, iter: number) => boolean
 ): undefined | T {
-  return map(rrFindResult(arr, startIndex, predicate), ea => ea.result)
+  return map(rrFindResult(arr, startIndex, predicate), (ea) => ea.result)
 }

@@ -18,7 +18,7 @@ describe("Object", () => {
       ).to.eql(undefined)
     })
     it("passes defined target to f", () => {
-      expect(map(123, ea => String(ea))).to.eql("123")
+      expect(map(123, (ea) => String(ea))).to.eql("123")
     })
   })
 })

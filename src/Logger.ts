@@ -21,7 +21,7 @@ export const LogLevels: (keyof Logger)[] = [
   "debug",
   "info",
   "warn",
-  "error"
+  "error",
 ]
 
 const _debuglog = debuglog("batch-cluster")
@@ -56,7 +56,7 @@ export const ConsoleLogger: Logger = Object.freeze({
   /**
    * Delegates to `console.error`
    */
-  error: console.error
+  error: console.error,
 })
 
 /**
@@ -67,13 +67,13 @@ export const NoLogger: Logger = Object.freeze({
   debug: noop,
   info: noop,
   warn: noop,
-  error: noop
+  error: noop,
 })
 
 let _logger: Logger = NoLogger
 
 export function setLogger(l: Logger) {
-  if (LogLevels.some(ea => typeof l[ea] !== "function")) {
+  if (LogLevels.some((ea) => typeof l[ea] !== "function")) {
     throw new Error("invalid logger, must implement " + LogLevels)
   }
   _logger = l
@@ -86,7 +86,7 @@ export function logger() {
 export const Logger = {
   withLevels: (delegate: Logger) => {
     const timestamped: any = {}
-    LogLevels.forEach(ea => {
+    LogLevels.forEach((ea) => {
       const prefix = (ea + " ").substring(0, 5) + " | "
       timestamped[ea] = (message?: any, ...optionalParams: any[]) => {
         if (notBlank(message)) {
@@ -100,9 +100,9 @@ export const Logger = {
   withTimestamps: (delegate: Logger) => {
     const timestamped: any = {}
     LogLevels.forEach(
-      level =>
+      (level) =>
         (timestamped[level] = (message?: any, ...optionalParams: any[]) =>
-          map(message, ea =>
+          map(message, (ea) =>
             delegate[level](
               new Date().toISOString() + " | " + ea,
               ...optionalParams
@@ -120,5 +120,5 @@ export const Logger = {
         (filtered[ea] = idx < minLogLevelIndex ? noop : l[ea].bind(l))
     )
     return filtered
-  }
+  },
 }
