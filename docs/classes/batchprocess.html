@@ -4,7 +4,7 @@
 	<meta charset="utf-8">
 	<meta http-equiv="X-UA-Compatible" content="IE=edge">
 	<title>BatchProcess | batch-cluster</title>
-	<meta name="description" content="">
+	<meta name="description" content="Documentation for batch-cluster">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<link rel="stylesheet" href="../assets/css/main.css">
 </head>
@@ -13,7 +13,7 @@
 	<div class="tsd-page-toolbar">
 		<div class="container">
 			<div class="table-wrap">
-				<div class="table-cell" id="tsd-search" data-index="../assets/js/search.js" data-base="..">
+				<div class="table-cell" id="tsd-search" data-index="../assets/js/search.json" data-base="..">
 					<div class="field">
 						<label for="tsd-search-field" class="tsd-widget search no-caption">Search</label>
 						<input id="tsd-search-field" type="text" />
@@ -103,6 +103,7 @@
 								<li class="tsd-kind-get-signature tsd-parent-kind-class"><a href="batchprocess.html#exited" class="tsd-kind-icon">exited</a></li>
 								<li class="tsd-kind-get-signature tsd-parent-kind-class"><a href="batchprocess.html#exitedpromise" class="tsd-kind-icon">exited<wbr>Promise</a></li>
 								<li class="tsd-kind-get-signature tsd-parent-kind-class"><a href="batchprocess.html#idle" class="tsd-kind-icon">idle</a></li>
+								<li class="tsd-kind-get-signature tsd-parent-kind-class"><a href="batchprocess.html#idlems" class="tsd-kind-icon">idle<wbr>Ms</a></li>
 								<li class="tsd-kind-get-signature tsd-parent-kind-class"><a href="batchprocess.html#pid" class="tsd-kind-icon">pid</a></li>
 								<li class="tsd-kind-get-signature tsd-parent-kind-class"><a href="batchprocess.html#ready" class="tsd-kind-icon">ready</a></li>
 								<li class="tsd-kind-get-signature tsd-parent-kind-class"><a href="batchprocess.html#taskcount" class="tsd-kind-icon">task<wbr>Count</a></li>
@@ -134,7 +135,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/master/src/BatchProcess.ts#L39">src/BatchProcess.ts:39</a></li>
+									<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/master/src/BatchProcess.ts#L41">src/BatchProcess.ts:41</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-parameters-title">Parameters</h4>
@@ -172,7 +173,7 @@
 					<div class="tsd-signature tsd-kind-icon">observer<span class="tsd-signature-symbol">:</span> <a href="../interfaces/batchprocessobserver.html" class="tsd-signature-type">BatchProcessObserver</a></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/master/src/BatchProcess.ts#L44">src/BatchProcess.ts:44</a></li>
+							<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/master/src/BatchProcess.ts#L46">src/BatchProcess.ts:46</a></li>
 						</ul>
 					</aside>
 				</section>
@@ -182,7 +183,7 @@
 					<div class="tsd-signature tsd-kind-icon">opts<span class="tsd-signature-symbol">:</span> <a href="../interfaces/internalbatchprocessoptions.html" class="tsd-signature-type">InternalBatchProcessOptions</a></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/master/src/BatchProcess.ts#L43">src/BatchProcess.ts:43</a></li>
+							<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/master/src/BatchProcess.ts#L45">src/BatchProcess.ts:45</a></li>
 						</ul>
 					</aside>
 				</section>
@@ -192,7 +193,7 @@
 					<div class="tsd-signature tsd-kind-icon">proc<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">ChildProcess</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/master/src/BatchProcess.ts#L42">src/BatchProcess.ts:42</a></li>
+							<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/master/src/BatchProcess.ts#L44">src/BatchProcess.ts:44</a></li>
 						</ul>
 					</aside>
 				</section>
@@ -219,7 +220,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/master/src/BatchProcess.ts#L88">src/BatchProcess.ts:88</a></li>
+									<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/master/src/BatchProcess.ts#L90">src/BatchProcess.ts:90</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">boolean</span></h4>
@@ -236,7 +237,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/master/src/BatchProcess.ts#L91">src/BatchProcess.ts:91</a></li>
+									<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/master/src/BatchProcess.ts#L93">src/BatchProcess.ts:93</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">void</span><span class="tsd-signature-symbol">&gt;</span></h4>
@@ -253,10 +254,27 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/master/src/BatchProcess.ts#L103">src/BatchProcess.ts:103</a></li>
+									<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/master/src/BatchProcess.ts#L105">src/BatchProcess.ts:105</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">boolean</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-get-signature tsd-parent-kind-class">
+					<a name="idlems" class="tsd-anchor"></a>
+					<h3>idle<wbr>Ms</h3>
+					<ul class="tsd-signatures tsd-kind-get-signature tsd-parent-kind-class">
+						<li class="tsd-signature tsd-kind-icon"><span class="tsd-signature-symbol">get</span> idleMs<span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/master/src/BatchProcess.ts#L109">src/BatchProcess.ts:109</a></li>
+								</ul>
+							</aside>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">number</span></h4>
 						</li>
 					</ul>
 				</section>
@@ -270,7 +288,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/master/src/BatchProcess.ts#L82">src/BatchProcess.ts:82</a></li>
+									<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/master/src/BatchProcess.ts#L84">src/BatchProcess.ts:84</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">number</span></h4>
@@ -287,7 +305,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/master/src/BatchProcess.ts#L94">src/BatchProcess.ts:94</a></li>
+									<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/master/src/BatchProcess.ts#L96">src/BatchProcess.ts:96</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">boolean</span></h4>
@@ -304,7 +322,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/master/src/BatchProcess.ts#L85">src/BatchProcess.ts:85</a></li>
+									<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/master/src/BatchProcess.ts#L87">src/BatchProcess.ts:87</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">number</span></h4>
@@ -324,7 +342,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/master/src/BatchProcess.ts#L207">src/BatchProcess.ts:207</a></li>
+									<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/master/src/BatchProcess.ts#L213">src/BatchProcess.ts:213</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -362,7 +380,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/master/src/BatchProcess.ts#L131">src/BatchProcess.ts:131</a></li>
+									<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/master/src/BatchProcess.ts#L137">src/BatchProcess.ts:137</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -383,7 +401,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/master/src/BatchProcess.ts#L141">src/BatchProcess.ts:141</a></li>
+									<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/master/src/BatchProcess.ts#L147">src/BatchProcess.ts:147</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-parameters-title">Parameters</h4>
@@ -406,7 +424,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/master/src/BatchProcess.ts#L135">src/BatchProcess.ts:135</a></li>
+									<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/master/src/BatchProcess.ts#L141">src/BatchProcess.ts:141</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol">&gt;</span></h4>
@@ -423,7 +441,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/master/src/BatchProcess.ts#L123">src/BatchProcess.ts:123</a></li>
+									<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/master/src/BatchProcess.ts#L129">src/BatchProcess.ts:129</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol">&gt;</span></h4>
@@ -440,7 +458,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/master/src/BatchProcess.ts#L110">src/BatchProcess.ts:110</a></li>
+									<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/master/src/BatchProcess.ts#L116">src/BatchProcess.ts:116</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -493,6 +511,9 @@
 							</li>
 							<li class=" tsd-kind-get-signature tsd-parent-kind-class">
 								<a href="batchprocess.html#idle" class="tsd-kind-icon">idle</a>
+							</li>
+							<li class=" tsd-kind-get-signature tsd-parent-kind-class">
+								<a href="batchprocess.html#idlems" class="tsd-kind-icon">idle<wbr>Ms</a>
 							</li>
 							<li class=" tsd-kind-get-signature tsd-parent-kind-class">
 								<a href="batchprocess.html#pid" class="tsd-kind-icon">pid</a>

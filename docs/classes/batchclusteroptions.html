@@ -4,7 +4,7 @@
 	<meta charset="utf-8">
 	<meta http-equiv="X-UA-Compatible" content="IE=edge">
 	<title>BatchClusterOptions | batch-cluster</title>
-	<meta name="description" content="">
+	<meta name="description" content="Documentation for batch-cluster">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<link rel="stylesheet" href="../assets/css/main.css">
 </head>
@@ -13,7 +13,7 @@
 	<div class="tsd-page-toolbar">
 		<div class="container">
 			<div class="table-wrap">
-				<div class="table-cell" id="tsd-search" data-index="../assets/js/search.js" data-base="..">
+				<div class="table-cell" id="tsd-search" data-index="../assets/js/search.json" data-base="..">
 					<div class="field">
 						<label for="tsd-search-field" class="tsd-widget search no-caption">Search</label>
 						<input id="tsd-search-field" type="text" />
@@ -92,6 +92,7 @@
 							<ul class="tsd-index-list">
 								<li class="tsd-kind-property tsd-parent-kind-class"><a href="batchclusteroptions.html#cleanupchildprocs" class="tsd-kind-icon">cleanup<wbr>Child<wbr>Procs</a></li>
 								<li class="tsd-kind-property tsd-parent-kind-class"><a href="batchclusteroptions.html#endgracefulwaittimemillis" class="tsd-kind-icon">end<wbr>Graceful<wbr>Wait<wbr>Time<wbr>Millis</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-class"><a href="batchclusteroptions.html#maxidlemsperprocess" class="tsd-kind-icon">max<wbr>Idle<wbr>MsPer<wbr>Process</a></li>
 								<li class="tsd-kind-property tsd-parent-kind-class"><a href="batchclusteroptions.html#maxprocagemillis" class="tsd-kind-icon">max<wbr>Proc<wbr>Age<wbr>Millis</a></li>
 								<li class="tsd-kind-property tsd-parent-kind-class"><a href="batchclusteroptions.html#maxprocs" class="tsd-kind-icon">max<wbr>Procs</a></li>
 								<li class="tsd-kind-property tsd-parent-kind-class"><a href="batchclusteroptions.html#maxreasonableprocessfailuresperminute" class="tsd-kind-icon">max<wbr>Reasonable<wbr>Process<wbr>Failures<wbr>Per<wbr>Minute</a></li>
@@ -144,6 +145,24 @@
 						<p>Setting this value to 0 means child processes will immediately receive
 							a kill signal to shut down. Any pending requests may be interrupted.
 						Must be &gt;= 0. Defaults to 500ms.</p>
+					</div>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class">
+					<a name="maxidlemsperprocess" class="tsd-anchor"></a>
+					<h3>max<wbr>Idle<wbr>MsPer<wbr>Process</h3>
+					<div class="tsd-signature tsd-kind-icon">max<wbr>Idle<wbr>MsPer<wbr>Process<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span><span class="tsd-signature-symbol"> = 0</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/master/src/BatchClusterOptions.ts#L135">src/BatchClusterOptions.ts:135</a></li>
+						</ul>
+					</aside>
+					<div class="tsd-comment tsd-typography">
+						<div class="lead">
+							<p>If a child process is idle for more than this value (in milliseconds), shut
+							it down to reduce system resource consumption.</p>
+						</div>
+						<p>A value of ~10 seconds to a couple minutes would be reasonable. Set this to
+						0 to disable this feature.</p>
 					</div>
 				</section>
 				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class">
@@ -340,6 +359,9 @@
 							</li>
 							<li class=" tsd-kind-property tsd-parent-kind-class">
 								<a href="batchclusteroptions.html#endgracefulwaittimemillis" class="tsd-kind-icon">end<wbr>Graceful<wbr>Wait<wbr>Time<wbr>Millis</a>
+							</li>
+							<li class=" tsd-kind-property tsd-parent-kind-class">
+								<a href="batchclusteroptions.html#maxidlemsperprocess" class="tsd-kind-icon">max<wbr>Idle<wbr>MsPer<wbr>Process</a>
 							</li>
 							<li class=" tsd-kind-property tsd-parent-kind-class">
 								<a href="batchclusteroptions.html#maxprocagemillis" class="tsd-kind-icon">max<wbr>Proc<wbr>Age<wbr>Millis</a>

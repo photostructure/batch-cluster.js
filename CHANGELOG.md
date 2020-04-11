@@ -17,6 +17,14 @@ See [Semver](http://semver.org/).
 - 🐞 Backwards-compatible bug fixes
 - 📦 Minor packaging changes
 
+## v5.10.0
+
+- ✨ New `maxIdleMsPerProcess` option: automatically shut down idle child
+  processes to reduce system resource consumption. Defaults to `0`, which
+  disables this feature (and prevents me from having to increment the major
+  version!)
+- 📦 Updated deps
+
 ## v5.9.5
 
 - 📦 Updated deps

@@ -18,6 +18,8 @@ import { Task } from "./Task"
 export class BatchProcess {
   readonly name: string
   readonly start = Date.now()
+  private lastJobFinshedAt = Date.now()
+
   // Only set to true when `proc.pid` is no longer in the process table.
   private dead = false
   private _taskCount = -1 // don't count the startupTask
@@ -102,6 +104,10 @@ export class BatchProcess {
   }
   get idle(): boolean {
     return this.currentTask == null
+  }
+
+  get idleMs(): number {
+    return this.idle ? Date.now() - this.lastJobFinshedAt : 0
   }
 
   /**
@@ -409,6 +415,7 @@ export class BatchProcess {
     map(this.currentTaskTimeout, (ea) => clearTimeout(ea))
     this.currentTaskTimeout = undefined
     this.currentTask = undefined
+    this.lastJobFinshedAt = Date.now()
   }
 
   private resolveCurrentTask(

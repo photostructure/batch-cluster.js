@@ -1,5 +1,12 @@
 import { inspect } from "util"
-
+import { flatten, sortNumeric } from "./Array"
+import { delay, until } from "./Async"
+import { BatchCluster } from "./BatchCluster"
+import { BatchClusterOptions } from "./BatchClusterOptions"
+import { logger } from "./Logger"
+import { map, orElse } from "./Object"
+import { toS } from "./String"
+import { Task } from "./Task"
 import {
   currentTestPids,
   expect,
@@ -13,18 +20,12 @@ import {
   testPids,
   times,
 } from "./_chai.spec"
-import { flatten, sortNumeric } from "./Array"
-import { delay, until } from "./Async"
-import { BatchCluster } from "./BatchCluster"
-import { BatchClusterOptions } from "./BatchClusterOptions"
-import { logger } from "./Logger"
-import { map, orElse } from "./Object"
-import { toS } from "./String"
-import { Task } from "./Task"
 
 const tk = require("timekeeper")
 
 describe("BatchCluster", function () {
+  this.retries(2) // child process forking in CI is flaky
+
   const ErrorPrefix = "ERROR: "
 
   const DefaultOpts = {
@@ -476,9 +477,52 @@ describe("BatchCluster", function () {
       )
       // 0 because we might get unlucky.
       expect((await bc.pids()).length).to.be.within(0, opts.maxProcs)
-      await delay(opts.maxProcAgeMillis)
+      await delay(opts.maxProcAgeMillis + 100)
+      bc["vacuumProcs"]()
+      expect(bc.countEndedChildProcs("idle")).to.eql(0)
+      expect(bc.countEndedChildProcs("old")).to.be.gte(2)
       // Calling .pids calls .procs(), which culls old procs
       expect((await bc.pids()).length).to.be.within(0, opts.maxProcs)
+      return
+    })
+  })
+
+  describe("maxIdleMsPerProcess", function () {
+    const opts = {
+      ...DefaultOpts,
+      maxProcs: 4,
+      maxIdleMsPerProcess: 1000,
+      maxProcAgeMillis: 30_000,
+    }
+
+    let bc: BatchCluster
+
+    beforeEach(
+      () =>
+        (bc = listen(
+          new BatchCluster({
+            ...opts,
+            processFactory,
+          })
+        ))
+    )
+
+    afterEach(async () => {
+      await shutdown(bc)
+      return
+    })
+
+    it("culls idle child procs", async () => {
+      assertExpectedResults(await Promise.all(runTasks(bc, opts.maxProcs + 10)))
+      // 0 because we might get unlucky.
+      expect((await bc.pids()).length).to.be.within(0, opts.maxProcs)
+      await delay(opts.maxIdleMsPerProcess + 100)
+      bc["vacuumProcs"]()
+      expect(bc.countEndedChildProcs("idle")).to.be.gte(2)
+      expect(bc.countEndedChildProcs("old")).to.eql(0)
+      expect(bc.countEndedChildProcs("worn")).to.eql(0)
+      // Calling .pids calls .procs(), which culls old procs
+      expect((await bc.pids()).length).to.eql(0)
       return
     })
   })

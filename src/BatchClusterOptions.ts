@@ -124,6 +124,15 @@ export class BatchClusterOptions {
    * Defaults to `true`.
    */
   readonly cleanupChildProcs: boolean = true
+
+  /**
+   * If a child process is idle for more than this value (in milliseconds), shut
+   * it down to reduce system resource consumption.
+   *
+   * A value of ~10 seconds to a couple minutes would be reasonable. Set this to
+   * 0 to disable this feature.
+   */
+  readonly maxIdleMsPerProcess: number = 0
 }
 
 export type AllOpts = BatchClusterOptions &

@@ -64,6 +64,10 @@ export class BatchCluster extends BatchClusterEmitter {
   private _spawnedProcs = 0
   private endPromise?: Deferred<void>
   private _internalErrorCount = 0
+  private readonly childEndCounts = new Map<
+    "old" | "worn" | "idle" | "broken",
+    number
+  >()
 
   constructor(
     opts: Partial<BatchClusterOptions> &
@@ -234,6 +238,13 @@ export class BatchCluster extends BatchClusterEmitter {
     return arr
   }
 
+  /**
+   * Get ended process counts (used for tests)
+   */
+  countEndedChildProcs(why: "old" | "worn" | "idle" | "broken"): number {
+    return this.childEndCounts.get(why) ?? 0
+  }
+
   // NOT ASYNC: updates internal state.
   private onIdle() {
     return this.m.runIfIdle(async () => {
@@ -258,11 +269,16 @@ export class BatchCluster extends BatchClusterEmitter {
       const wornOut =
         this.options.maxTasksPerProcess > 0 &&
         proc.taskCount >= this.options.maxTasksPerProcess
+      const idle =
+        this.options.maxIdleMsPerProcess > 0 &&
+        proc.idleMs > this.options.maxIdleMsPerProcess
       const broken = proc.exited
-      const reap = old || wornOut || broken // # me
+      const reap = old || wornOut || idle || broken // # me
       if (reap) {
+        const why = old ? "old" : wornOut ? "worn" : idle ? "idle" : "broken"
+        this.childEndCounts.set(why, 1 + this.countEndedChildProcs(why))
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
-        proc.end(true, old ? "old" : wornOut ? "worn" : "broken")
+        proc.end(true, why)
       }
       return !reap
     })
