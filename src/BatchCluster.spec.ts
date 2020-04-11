@@ -538,14 +538,20 @@ describe("BatchCluster", function () {
       {
         maxProcAgeMillis: 0,
         ctx: "procs should not be recycled due to old age",
-        exp: (pidsBefore: number[], pidsAfter: number[]) =>
-          expect(pidsBefore).to.eql(pidsAfter),
+        exp: (pidsBefore: number[], pidsAfter: number[]) => {
+          expect(pidsBefore).to.eql(pidsAfter)
+          expect(bc.countEndedChildProcs("idle")).to.eql(0)
+          expect(bc.countEndedChildProcs("old")).to.eql(0)
+        },
       },
       {
         maxProcAgeMillis: 5000,
         ctx: "procs should be recycled due to old age",
-        exp: (pidsBefore: number[], pidsAfter: number[]) =>
-          expect(pidsBefore).to.not.have.members(pidsAfter),
+        exp: (pidsBefore: number[], pidsAfter: number[]) => {
+          expect(pidsBefore).to.not.have.members(pidsAfter)
+          expect(bc.countEndedChildProcs("idle")).to.eql(0)
+          expect(bc.countEndedChildProcs("old")).to.be.gte(1)
+        },
       },
     ].forEach(({ maxProcAgeMillis, ctx, exp }) =>
       it("(" + maxProcAgeMillis + "): " + ctx, async () => {
