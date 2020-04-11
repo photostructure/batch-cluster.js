@@ -519,8 +519,8 @@ describe("BatchCluster", function () {
       await delay(opts.maxIdleMsPerProcess + 100)
       bc["vacuumProcs"]()
       expect(bc.countEndedChildProcs("idle")).to.be.gte(2)
-      expect(bc.countEndedChildProcs("old")).to.eql(0)
-      expect(bc.countEndedChildProcs("worn")).to.eql(0)
+      expect(bc.countEndedChildProcs("old")).to.be.lte(1)
+      expect(bc.countEndedChildProcs("worn")).to.be.lte(1)
       // Calling .pids calls .procs(), which culls old procs
       expect((await bc.pids()).length).to.eql(0)
       return
