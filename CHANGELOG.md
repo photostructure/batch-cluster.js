@@ -22,6 +22,7 @@ See [Semver](http://semver.org/).
 - ✨ `BatchCluster` can now be created with a `Logger` thunk.
 - 📦 De-linted
 - 📦 Updated deps
+- 📦 Add Node v14 to build matrix
 
 ## v5.10.0
 
