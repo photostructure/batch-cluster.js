@@ -2,6 +2,7 @@ import { ChildProcessFactory } from "./BatchCluster"
 import { BatchProcessOptions } from "./BatchProcessOptions"
 import { InternalBatchProcessOptions } from "./InternalBatchProcessOptions"
 import { blank, toS } from "./String"
+import { logger, Logger } from "./Logger"
 
 /**
  * These parameter values have somewhat sensible defaults, but can be
@@ -133,6 +134,12 @@ export class BatchClusterOptions {
    * 0 to disable this feature.
    */
   readonly maxIdleMsPerProcess: number = 0
+  
+  /**
+   * A BatchCluster instance and associated BatchProcess instances will share
+   * this `Logger`. Defaults to the `Logger` instance provided to `setLogger()`.
+   */
+  readonly logger: () => Logger = logger
 }
 
 export type AllOpts = BatchClusterOptions &

@@ -9,7 +9,7 @@ export function map<T, R>(
   return obj != null ? f(obj) : undefined
 }
 
-export function isFunction(obj: any): obj is Function {
+export function isFunction(obj: any): obj is () => any {
   return typeof obj === "function"
 }
 

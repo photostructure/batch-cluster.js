@@ -1,6 +1,5 @@
 import { ChildProcess } from "child_process"
 import { EventEmitter } from "events"
-
 import { Task } from "./Task"
 
 export class BatchClusterEmitter {
@@ -56,7 +55,7 @@ export class BatchClusterEmitter {
    */
   on(event: "end", listener: () => void): void
 
-  on(event: string, listener: (...args: any[]) => void) {
+  on(event: string, listener: (...args: any[]) => void): void {
     this.emitter.on(event, listener)
   }
 }

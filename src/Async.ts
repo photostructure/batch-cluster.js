@@ -36,7 +36,10 @@ export async function until(
  * milliseconds. The thunk will accept a boolean, that, when set, will force the
  * underlying thunk to be called (mostly useful for tests)
  */
-export function ratelimit<T>(f: () => T, minDelayMs: number) {
+export function ratelimit<T>(
+  f: () => T,
+  minDelayMs: number
+): () => T | undefined {
   let next = 0
   return (force?: boolean) => {
     if (Date.now() > next || force === true) {

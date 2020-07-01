@@ -12,7 +12,7 @@ enum State {
  * the context of the Promise construction. Also exposes the `pending`,
  * `fulfilled`, or `rejected` state of the promise.
  */
-export class Deferred<T> {
+export class Deferred<T> implements PromiseLike<T> {
   readonly promise: Promise<T>
   private _resolve!: (value?: T) => void
   private _reject!: (reason?: any) => void
@@ -46,6 +46,19 @@ export class Deferred<T> {
     return this.state === State.rejected
   }
 
+  then<TResult1 = T, TResult2 = never>(
+    onfulfilled?:
+      | ((value: T) => TResult1 | PromiseLike<TResult1>)
+      | undefined
+      | null,
+    onrejected?:
+      | ((reason: any) => TResult2 | PromiseLike<TResult2>)
+      | undefined
+      | null
+  ): PromiseLike<TResult1 | TResult2> {
+    return this.promise.then(onfulfilled, onrejected)
+  }
+
   resolve(value?: T): boolean {
     if (!this.pending) {
       return false
@@ -56,7 +69,7 @@ export class Deferred<T> {
     }
   }
 
-  reject(reason?: any): boolean {
+  reject(reason?: Error | string): boolean {
     if (!this.pending) {
       return false
     } else {

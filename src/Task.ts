@@ -1,5 +1,4 @@
 import { Deferred } from "./Deferred"
-import { logger } from "./Logger"
 import { Parser } from "./Parser"
 
 /**
@@ -39,23 +38,23 @@ export class Task<T> {
       : "rejected"
   }
 
-  toString() {
+  toString(): string {
     return this.constructor.name + "(" + this.command + ")"
   }
 
-  onStdout(buf: string | Buffer) {
+  onStdout(buf: string | Buffer): void {
     this._stdout += buf.toString()
   }
 
-  onStderr(buf: string | Buffer) {
+  onStderr(buf: string | Buffer): void {
     this._stderr += buf.toString()
   }
 
-  get stdout() {
+  get stdout(): string {
     return this._stdout
   }
 
-  get stderr() {
+  get stderr(): string {
     return this._stderr
   }
 
@@ -63,25 +62,25 @@ export class Task<T> {
    * This is for use by `BatchProcess` only, and will only be called when the
    * process is complete for this task's command
    */
-  async resolve(stdout: string, stderr: string, passed: boolean) {
+  async resolve(
+    stdout: string,
+    stderr: string,
+    passed: boolean
+  ): Promise<void> {
     try {
       const parseResult = await this.parser(stdout, stderr, passed)
       this.d.resolve(parseResult)
     } catch (error) {
-      this.reject(error, "Task.resolve() was rejected")
+      this.reject(error)
     }
     return
   }
 
   /**
    * This is for use by `BatchProcess` only, and will only be called when the
-   * process has errored after N retries
+   * process has errorred after N retries
    */
-  reject(error: Error, source = "Task.reject()"): void {
-    logger().warn(source, {
-      cmd: this.command,
-      error,
-    })
+  reject(error: Error): void {
     this.d.reject(error)
   }
 }

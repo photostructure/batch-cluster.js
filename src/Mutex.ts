@@ -13,7 +13,7 @@ export class Mutex {
     return this._arr
   }
 
-  get pushCount() {
+  get pushCount(): number {
     return this._pushCount
   }
 
@@ -40,16 +40,16 @@ export class Mutex {
     return this.pending ? undefined : this.serial(f)
   }
 
-  get pendingCount() {
+  get pendingCount(): number {
     // Don't need vacuuming, so we can use this._arr:
     return this._arr.reduce((sum, ea) => sum + (ea.pending ? 1 : 0), 0)
   }
 
-  get pending() {
+  get pending(): boolean {
     return this.pendingCount > 0
   }
 
-  get settled() {
+  get settled(): boolean {
     // this.arr is a getter that does vacuuming
     return this.arr.length === 0
   }

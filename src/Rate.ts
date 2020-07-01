@@ -5,7 +5,7 @@ export class Rate {
 
   constructor(readonly ttlMs: number = 60000) {}
 
-  onEvent() {
+  onEvent(): void {
     this._eventCount++
     this.store.push(Date.now())
     this.vacuum()

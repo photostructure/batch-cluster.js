@@ -1,6 +1,5 @@
 import * as _cp from "child_process"
 import { debounce, delay, until } from "./Async"
-import { logger } from "./BatchCluster"
 import { BatchProcessObserver } from "./BatchProcessObserver"
 import { Deferred } from "./Deferred"
 import { cleanError, tryEach } from "./Error"
@@ -11,6 +10,7 @@ import { kill, pidExists } from "./Pids"
 import { mapNotDestroyed } from "./Stream"
 import { blank, ensureSuffix, toS } from "./String"
 import { Task } from "./Task"
+import { Logger } from "./Logger"
 
 /**
  * BatchProcess manages the care and feeding of a single child process.
@@ -18,6 +18,7 @@ import { Task } from "./Task"
 export class BatchProcess {
   readonly name: string
   readonly start = Date.now()
+  private readonly logger: () => Logger
   private lastJobFinshedAt = Date.now()
 
   // Only set to true when `proc.pid` is no longer in the process table.
@@ -46,6 +47,7 @@ export class BatchProcess {
     readonly observer: BatchProcessObserver
   ) {
     this.name = "BatchProcess(" + proc.pid + ")"
+    this.logger = opts.logger
     // don't let node count the child processes as a reason to stay alive
     this.proc.unref()
 
@@ -239,8 +241,12 @@ export class BatchProcess {
       }
       if (lastTask.pending) {
         lastTask.reject(
-          new Error("end() called before task completed"),
-          `_end(${JSON.stringify({ gracefully, source })})`
+          new Error(
+            `end() called before task completed (${JSON.stringify({
+              gracefully,
+              source,
+            })})`
+          )
         )
       }
     }
@@ -270,7 +276,9 @@ export class BatchProcess {
     }
 
     if (this.opts.cleanupChildProcs && (await this.running())) {
-      logger().warn(this.name + ".end(): force-killing still-running child.")
+      this.logger().warn(
+        this.name + ".end(): force-killing still-running child."
+      )
       await kill(this.proc.pid, true)
     }
     return this.exitedPromise
@@ -290,7 +298,7 @@ export class BatchProcess {
     if (this._endPromise != null) {
       // We're ending already, so don't propogate the error.
       // This is expected due to race conditions stdin EPIPE and process shutdown.
-      logger().debug(
+      this.logger().debug(
         this.name + ".onError() post-end (expected and not propagated)",
         {
           source,
@@ -304,7 +312,7 @@ export class BatchProcess {
       task = this.currentTask
     }
     const error = new Error(source + ": " + cleanError(_error.message))
-    logger().warn(this.name + ".onError()", {
+    this.logger().warn(this.name + ".onError()", {
       source,
       task: map(task, (t) => t.command),
       error,
@@ -321,7 +329,9 @@ export class BatchProcess {
     this.end(false, "onError(" + source + ")")
 
     if (task != null && this.taskCount === 1) {
-      logger().warn(this.name + ".onError(): startup task failed: " + error)
+      this.logger().warn(
+        this.name + ".onError(): startup task failed: " + error
+      )
       this.observer.onStartError(error)
     }
 
@@ -346,7 +356,7 @@ export class BatchProcess {
 
   private onStderr(data: string | Buffer) {
     if (blank(data)) return
-    logger().info("onStderr(" + this.pid + "):" + data)
+    this.logger().info("onStderr(" + this.pid + "):" + data)
     const task = this.currentTask
     if (task != null && task.pending) {
       task.onStderr(data)

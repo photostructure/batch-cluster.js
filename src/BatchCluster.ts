@@ -12,7 +12,7 @@ import { BatchProcess } from "./BatchProcess"
 import { BatchProcessObserver } from "./BatchProcessObserver"
 import { BatchProcessOptions } from "./BatchProcessOptions"
 import { Deferred } from "./Deferred"
-import { logger } from "./Logger"
+import { Logger } from "./Logger"
 import { Mean } from "./Mean"
 import { Mutex } from "./Mutex"
 import { map } from "./Object"
@@ -41,8 +41,8 @@ export interface ChildProcessFactory {
 }
 
 /**
- * BatchCluster instances manage 0 or more homogenious child processes, and
- * provide the main interface for enqueing `Task`s via `enqueueTask`.
+ * BatchCluster instances manage 0 or more homogeneous child processes, and
+ * provide the main interface for enqueuing `Task`s via `enqueueTask`.
  *
  * Given the large number of configuration options, the constructor
  * receives a single options hash. The most important of these are the
@@ -53,6 +53,7 @@ export interface ChildProcessFactory {
 export class BatchCluster extends BatchClusterEmitter {
   private readonly m = new Mutex()
   private readonly _tasksPerProc: Mean = new Mean()
+  private readonly logger: () => Logger
   readonly options: AllOpts
   private readonly observer: BatchProcessObserver
   private readonly _procs: BatchProcess[] = []
@@ -83,6 +84,7 @@ export class BatchCluster extends BatchClusterEmitter {
       )
       this.onIdleInterval.unref() // < don't prevent node from exiting
     }
+    this.logger = this.options.logger
     this.observer = {
       onIdle: () => this.onIdle(),
       onStartError: (err) => this.emitStartError(err),
@@ -108,7 +110,7 @@ export class BatchCluster extends BatchClusterEmitter {
    * should we force-kill child PIDs.
    */
   // NOT ASYNC so state transition happens immediately
-  end(gracefully = true) {
+  end(gracefully = true): Deferred<void> {
     if (this.endPromise == null) {
       this.emitter.emit("beforeEnd")
       map(this.onIdleInterval, clearInterval)
@@ -136,7 +138,7 @@ export class BatchCluster extends BatchClusterEmitter {
    * Submits `task` for processing by a `BatchProcess` instance
    *
    * @return a Promise that is resolved or rejected once the task has been
-   * attemped on an idle BatchProcess
+   * attempted on an idle BatchProcess
    */
   enqueueTask<T>(task: Task<T>): Promise<T> {
     if (this.ended) {
@@ -200,12 +202,12 @@ export class BatchCluster extends BatchClusterEmitter {
 
   private emitInternalError(error: Error): void {
     this.emitter.emit("internalError", error)
-    logger().error("BatchCluster: INTERNAL ERROR: " + error)
+    this.logger().error("BatchCluster: INTERNAL ERROR: " + error)
     this._internalErrorCount++
   }
 
   private emitStartError(error: Error): void {
-    logger().warn("BatchCluster.onStartError(): " + error)
+    this.logger().warn("BatchCluster.onStartError(): " + error)
     this.emitter.emit("startError", error)
     this.startErrorRate.onEvent()
     if (

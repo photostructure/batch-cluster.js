@@ -17,6 +17,12 @@ See [Semver](http://semver.org/).
 - 🐞 Backwards-compatible bug fixes
 - 📦 Minor packaging changes
 
+## v5.11.0
+
+- ✨ `BatchCluster` can now be created with a `Logger` thunk.
+- 📦 De-linted
+- 📦 Updated deps
+
 ## v5.10.0
 
 - ✨ New `maxIdleMsPerProcess` option: automatically shut down idle child

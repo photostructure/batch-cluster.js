@@ -1,5 +1,4 @@
 import { debuglog } from "util"
-
 import { map } from "./Object"
 import { notBlank } from "./String"
 
@@ -72,19 +71,19 @@ export const NoLogger: Logger = Object.freeze({
 
 let _logger: Logger = NoLogger
 
-export function setLogger(l: Logger) {
+export function setLogger(l: Logger): void {
   if (LogLevels.some((ea) => typeof l[ea] !== "function")) {
     throw new Error("invalid logger, must implement " + LogLevels)
   }
   _logger = l
 }
 
-export function logger() {
+export function logger(): Logger {
   return _logger
 }
 
 export const Logger = {
-  withLevels: (delegate: Logger) => {
+  withLevels: (delegate: Logger): Logger => {
     const timestamped: any = {}
     LogLevels.forEach((ea) => {
       const prefix = (ea + " ").substring(0, 5) + " | "

@@ -1,6 +1,6 @@
 # batch-cluster
 
-**Support external batch-mode tools within Node.js.**
+**Efficient, concurrent work via batch-mode command-line tools from within Node.js.**
 
 [![npm version](https://img.shields.io/npm/v/batch-cluster.svg)](https://www.npmjs.com/package/batch-cluster)
 [![Build status](https://travis-ci.org/photostructure/batch-cluster.js.svg?branch=master)](https://travis-ci.org/photostructure/batch-cluster.js)
@@ -17,12 +17,14 @@ mode" that accept a series of discrete commands provided through stdin and
 results through stdout. As these tools can be fairly large, spinning them up can
 be expensive (especially on Windows).
 
-This module expedites these commands, or "Tasks," by managing a cluster of these
-"batch" processes and queue of pending tasks, feeding processes pending tasks
-when they are idle. Tasks are monitored for errors and have timeouts, which
-cause the host process to be recycled. Batch processes are also recycled after
-processing N tasks or running for N seconds, in an effort to minimize the impact
-of memory leaks.
+This module allows you to run a series of commands, or `Task`s, processed by a
+cluster of these processes.
+
+This module manages both a queue of pending tasks, feeding processes pending
+tasks when they are idle, as well as monitoring the child processes for errors
+and crashes. Batch processes are also recycled after processing N tasks or
+running for N seconds, in an effort to minimize the impact of any potential
+memory leaks.
 
 As of version 4, retry logic for tasks is a separate concern from this module.
 

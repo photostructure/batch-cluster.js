@@ -7,7 +7,7 @@ export class Mean {
     this._n = n
   }
 
-  push(x: number) {
+  push(x: number): void {
     this._n++
     this.sum += x
     this._min = this._min == null || this._min > x ? x : this._min
