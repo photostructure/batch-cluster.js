@@ -17,6 +17,10 @@ See [Semver](http://semver.org/).
 - 🐞 Backwards-compatible bug fixes
 - 📦 Minor packaging changes
 
+## v5.11.1
+
+- 📦 Updated deps
+
 ## v5.11.0
 
 - ✨ `BatchCluster` can now be created with a `Logger` thunk.
