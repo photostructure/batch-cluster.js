@@ -17,15 +17,20 @@ See [Semver](http://semver.org/).
 - 🐞 Backwards-compatible bug fixes
 - 📦 Minor packaging changes
 
+## v5.11.2
+
+- 📦 Updated development dependencies
+- 📦 Minor delint/prettier reformat
+
 ## v5.11.1
 
-- 📦 Updated deps
+- 📦 Updated development dependencies
 
 ## v5.11.0
 
 - ✨ `BatchCluster` can now be created with a `Logger` thunk.
 - 📦 De-linted
-- 📦 Updated deps
+- 📦 Updated development dependencies
 - 📦 Add Node v14 to build matrix
 
 ## v5.10.0
@@ -34,33 +39,33 @@ See [Semver](http://semver.org/).
   processes to reduce system resource consumption. Defaults to `0`, which
   disables this feature (and prevents me from having to increment the major
   version!)
-- 📦 Updated deps
+- 📦 Updated development dependencies
 
 ## v5.9.5
 
-- 📦 Updated deps
+- 📦 Updated development dependencies
 - 📦 Ran prettier (2.0.0 causes many no-op diffs due to changed defaults)
 
 ## v5.9.4
 
-- 📦 Updated deps
+- 📦 Updated development dependencies
 
 ## v5.9.3
 
 - 🐞 `BatchProcess`'s streams could cause an infinite loop on `.end()` when
   `stdout` was destroyed.
-- 📦 Updated deps
+- 📦 Updated development dependencies
 
 ## v5.9.2
 
 - 🐞 `BatchProcess.ready` now verifies the child process still exists
 - 📦 Replace tslint with eslint
-- 📦 Updated deps
+- 📦 Updated development dependencies
 
 ## v5.9.1
 
 - 🐞 Errors after a process has shut down are logged and not propagated
-- 📦 Updated deps
+- 📦 Updated development dependencies
 
 ## v5.9.0
 
@@ -68,13 +73,13 @@ See [Semver](http://semver.org/).
   either by throwing inside of an async function without a catch block, or by
   rejecting a promise which was not handled with .catch(). The promise rejected
   with the reason...")
-- 📦 Updated deps
+- 📦 Updated development dependencies
 
 ## v5.8.0
 
 - 🐞 Fixed issue where immediately closing a process before a pending task
   completed resulted in `Error: onExit(exit) called end()`
-- 📦 Updated deps
+- 📦 Updated development dependencies
 
 ## v5.7.1
 
@@ -83,22 +88,22 @@ See [Semver](http://semver.org/).
 ## v5.7.0
 
 - 🐞 Fixed issue where `onStartError` and `onTaskError` didn't get emitted.
-- 📦 Updated deps, rebuilt docs.
+- 📦 Updated development dependencies, rebuilt docs.
 - 🐞 Deflaked CI tests with longer timeouts and less aggressive `shutdown()`
 - 📦 Had to delete the macOS Travis tests. Travis has been terribly flaky, with
   unreproduceable spec failures.
 
 ## v5.6.8
 
-- 📦 Updated deps (new TypeScript)
+- 📦 Updated development dependencies (new TypeScript)
 
 ## v5.6.7
 
-- 📦 Updated deps
+- 📦 Updated development dependencies
 
 ## v5.6.6
 
-- 📦 Updated deps
+- 📦 Updated development dependencies
 
 ## v5.6.5
 
@@ -108,7 +113,7 @@ See [Semver](http://semver.org/).
 
 ## v5.6.4
 
-- 📦 Updated deps
+- 📦 Updated development dependencies
 
 ## v5.6.3
 
@@ -116,7 +121,7 @@ See [Semver](http://semver.org/).
 
 ## v5.6.2
 
-- 📦 Updated deps
+- 📦 Updated development dependencies
 - 📦 Removed trace and debug log calls in `BatchProcess` (which incurred GC
   overhead even when disabled)
 
@@ -134,10 +139,10 @@ See [Semver](http://semver.org/).
 
 ## v5.5.0
 
-- ✨ Added `BatchCluster.isIdle`. Updated deps. Deflaked CI by embiggening
+- ✨ Added `BatchCluster.isIdle`. Updated development dependencies. Deflaked CI by embiggening
 - ✨ Added `BatchClusterOptions.cleanupChildProcs`, in case you want to handle
   process cleanup yourself.
-- 📦 Updated deps. Deflaked CI by embiggening timeouts.
+- 📦 Updated development dependencies. Deflaked CI by embiggening timeouts.
 - Happy 🥧 day.
 
 ## v5.4.0

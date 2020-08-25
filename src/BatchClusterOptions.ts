@@ -134,7 +134,7 @@ export class BatchClusterOptions {
    * 0 to disable this feature.
    */
   readonly maxIdleMsPerProcess: number = 0
-  
+
   /**
    * A BatchCluster instance and associated BatchProcess instances will share
    * this `Logger`. Defaults to the `Logger` instance provided to `setLogger()`.

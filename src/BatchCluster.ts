@@ -279,8 +279,7 @@ export class BatchCluster extends BatchClusterEmitter {
       if (reap) {
         const why = old ? "old" : wornOut ? "worn" : idle ? "idle" : "broken"
         this.childEndCounts.set(why, 1 + this.countEndedChildProcs(why))
-        // eslint-disable-next-line @typescript-eslint/no-floating-promises
-        proc.end(true, why)
+        void proc.end(true, why)
       }
       return !reap
     })
@@ -331,13 +330,11 @@ export class BatchCluster extends BatchClusterEmitter {
         const proc = new BatchProcess(child, this.options, this.observer)
         if (this.ended) {
           // This should only happen in tests.
-          // eslint-disable-next-line @typescript-eslint/no-floating-promises
-          proc.end(false, "ended")
+          void proc.end(false, "ended")
         } else {
           this._procs.push(proc)
           this.emitter.emit("childStart", child)
-          // eslint-disable-next-line @typescript-eslint/no-floating-promises
-          proc.exitedPromise.then(() => {
+          void proc.exitedPromise.then(() => {
             this._tasksPerProc.push(proc.taskCount)
             this.emitter.emit("childExit", child)
           })
