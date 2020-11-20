@@ -14,7 +14,7 @@ enum State {
  */
 export class Deferred<T> implements PromiseLike<T> {
   readonly promise: Promise<T>
-  private _resolve!: (value?: T) => void
+  private _resolve!: (value: T | PromiseLike<T>) => void
   private _reject!: (reason?: any) => void
   private state: State = State.pending
 
@@ -59,7 +59,7 @@ export class Deferred<T> implements PromiseLike<T> {
     return this.promise.then(onfulfilled, onrejected)
   }
 
-  resolve(value?: T): boolean {
+  resolve(value: T): boolean {
     if (!this.pending) {
       return false
     } else {

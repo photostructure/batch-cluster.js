@@ -54,7 +54,7 @@ describe("test.js", () => {
         try {
           f(this.output.trim())
           expect(await this.running()).to.eql(false)
-          d.resolve()
+          d.resolve("on exit")
         } catch (err) {
           d.reject(err)
         }

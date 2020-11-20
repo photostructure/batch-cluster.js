@@ -17,6 +17,13 @@ See [Semver](http://semver.org/).
 - 🐞 Backwards-compatible bug fixes
 - 📦 Minor packaging changes
 
+## v5.11.3
+
+- 📦 Updated development dependencies (primarily TypeScript 4.1)
+- 📦 `Deferred.resolve` now requires an argument (as per the new Promise spec).
+  As this is just a typing change (and `Deferred` is an internal
+  implementation), I'm not bumping the major version.
+
 ## v5.11.2
 
 - 📦 Updated development dependencies

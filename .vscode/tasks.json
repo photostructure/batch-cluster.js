@@ -10,6 +10,15 @@
         "$tsc"
       ],
       "group": "build"
+    },
+    {
+      "type": "npm",
+      "script": "tscw",
+      "problemMatcher": [
+        "$tsc"
+      ],
+      "label": "npm: tscw",
+      "detail": "rimraf dist & tsc -w"
     }
   ]
 }
