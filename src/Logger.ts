@@ -2,17 +2,17 @@ import { debuglog } from "util"
 import { map } from "./Object"
 import { notBlank } from "./String"
 
-export type Log = (message: string, ...optionalParams: any[]) => void
+type LogFunc = (message: string, ...optionalParams: any[]) => void
 
 /**
  * Simple interface for logging.
  */
 export interface Logger {
-  trace: Log
-  debug: Log
-  info: Log
-  warn: Log
-  error: Log
+  trace: LogFunc
+  debug: LogFunc
+  info: LogFunc
+  warn: LogFunc
+  error: LogFunc
 }
 
 export const LogLevels: (keyof Logger)[] = [
@@ -82,7 +82,7 @@ export function logger(): Logger {
   return _logger
 }
 
-export const Logger = {
+export const Log = {
   withLevels: (delegate: Logger): Logger => {
     const timestamped: any = {}
     LogLevels.forEach((ea) => {

@@ -98,7 +98,7 @@
 							<h3>Type aliases</h3>
 							<ul class="tsd-index-list">
 								<li class="tsd-kind-type-alias"><a href="globals.html#allopts" class="tsd-kind-icon">All<wbr>Opts</a></li>
-								<li class="tsd-kind-type-alias"><a href="globals.html#log" class="tsd-kind-icon">Log</a></li>
+								<li class="tsd-kind-type-alias"><a href="globals.html#logfunc" class="tsd-kind-icon">Log<wbr>Func</a></li>
 							</ul>
 						</section>
 						<section class="tsd-index-section ">
@@ -152,7 +152,7 @@
 						<section class="tsd-index-section ">
 							<h3>Object literals</h3>
 							<ul class="tsd-index-list">
-								<li class="tsd-kind-object-literal"><a href="globals.html#logger" class="tsd-kind-icon">Logger</a></li>
+								<li class="tsd-kind-object-literal"><a href="globals.html#log" class="tsd-kind-icon">Log</a></li>
 							</ul>
 						</section>
 					</div>
@@ -171,9 +171,9 @@
 					</aside>
 				</section>
 				<section class="tsd-panel tsd-member tsd-kind-type-alias">
-					<a name="log" class="tsd-anchor"></a>
-					<h3>Log</h3>
-					<div class="tsd-signature tsd-kind-icon">Log<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol">(</span>message<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span>, <span class="tsd-signature-symbol">...</span>optionalParams<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">any</span><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol"> =&gt; </span><span class="tsd-signature-type">void</span></div>
+					<a name="logfunc" class="tsd-anchor"></a>
+					<h3>Log<wbr>Func</h3>
+					<div class="tsd-signature tsd-kind-icon">Log<wbr>Func<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol">(</span>message<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span>, <span class="tsd-signature-symbol">...</span>optionalParams<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">any</span><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol"> =&gt; </span><span class="tsd-signature-type">void</span></div>
 					<aside class="tsd-sources">
 						<ul>
 							<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/master/src/Logger.ts#L5">src/Logger.ts:5</a></li>
@@ -1352,16 +1352,16 @@
 			<section class="tsd-panel-group tsd-member-group ">
 				<h2>Object literals</h2>
 				<section class="tsd-panel tsd-member tsd-kind-object-literal">
-					<a name="logger" class="tsd-anchor"></a>
-					<h3><span class="tsd-flag ts-flagConst">Const</span> Logger</h3>
-					<div class="tsd-signature tsd-kind-icon">Logger<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">object</span></div>
+					<a name="log" class="tsd-anchor"></a>
+					<h3><span class="tsd-flag ts-flagConst">Const</span> Log</h3>
+					<div class="tsd-signature tsd-kind-icon">Log<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">object</span></div>
 					<aside class="tsd-sources">
 						<ul>
 							<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/master/src/Logger.ts#L85">src/Logger.ts:85</a></li>
 						</ul>
 					</aside>
 					<section class="tsd-panel tsd-member tsd-kind-function tsd-parent-kind-object-literal">
-						<a name="logger.filterlevels" class="tsd-anchor"></a>
+						<a name="log.filterlevels" class="tsd-anchor"></a>
 						<h3>filter<wbr>Levels</h3>
 						<ul class="tsd-signatures tsd-kind-function tsd-parent-kind-object-literal">
 							<li class="tsd-signature tsd-kind-icon">filter<wbr>Levels<span class="tsd-signature-symbol">(</span>l<span class="tsd-signature-symbol">: </span><a href="interfaces/logger.html" class="tsd-signature-type">Logger</a>, minLogLevel<span class="tsd-signature-symbol">: </span><span class="tsd-signature-symbol">keyof </span><a href="interfaces/logger.html" class="tsd-signature-type">Logger</a><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">any</span></li>
@@ -1387,7 +1387,7 @@
 						</ul>
 					</section>
 					<section class="tsd-panel tsd-member tsd-kind-function tsd-parent-kind-object-literal">
-						<a name="logger.withlevels" class="tsd-anchor"></a>
+						<a name="log.withlevels" class="tsd-anchor"></a>
 						<h3>with<wbr>Levels</h3>
 						<ul class="tsd-signatures tsd-kind-function tsd-parent-kind-object-literal">
 							<li class="tsd-signature tsd-kind-icon">with<wbr>Levels<span class="tsd-signature-symbol">(</span>delegate<span class="tsd-signature-symbol">: </span><a href="interfaces/logger.html" class="tsd-signature-type">Logger</a><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><a href="interfaces/logger.html" class="tsd-signature-type">Logger</a></li>
@@ -1410,7 +1410,7 @@
 						</ul>
 					</section>
 					<section class="tsd-panel tsd-member tsd-kind-function tsd-parent-kind-object-literal">
-						<a name="logger.withtimestamps" class="tsd-anchor"></a>
+						<a name="log.withtimestamps" class="tsd-anchor"></a>
 						<h3>with<wbr>Timestamps</h3>
 						<ul class="tsd-signatures tsd-kind-function tsd-parent-kind-object-literal">
 							<li class="tsd-signature tsd-kind-icon">with<wbr>Timestamps<span class="tsd-signature-symbol">(</span>delegate<span class="tsd-signature-symbol">: </span><a href="interfaces/logger.html" class="tsd-signature-type">Logger</a><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">any</span></li>
@@ -1497,7 +1497,7 @@
 						<a href="globals.html#allopts" class="tsd-kind-icon">All<wbr>Opts</a>
 					</li>
 					<li class=" tsd-kind-type-alias">
-						<a href="globals.html#log" class="tsd-kind-icon">Log</a>
+						<a href="globals.html#logfunc" class="tsd-kind-icon">Log<wbr>Func</a>
 					</li>
 					<li class=" tsd-kind-variable">
 						<a href="globals.html#consolelogger" class="tsd-kind-icon">Console<wbr>Logger</a>
@@ -1614,7 +1614,7 @@
 						<a href="globals.html#verifyoptions" class="tsd-kind-icon">verify<wbr>Options</a>
 					</li>
 					<li class=" tsd-kind-object-literal">
-						<a href="globals.html#logger" class="tsd-kind-icon">Logger</a>
+						<a href="globals.html#log" class="tsd-kind-icon">Log</a>
 					</li>
 				</ul>
 			</nav>

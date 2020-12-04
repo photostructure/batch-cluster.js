@@ -17,6 +17,21 @@ See [Semver](http://semver.org/).
 - 🐞 Backwards-compatible bug fixes
 - 📦 Minor packaging changes
 
+## v6.0.0
+
+No new features in v6: just a breaking change so we can fix an old name
+collision that caused linting errors.
+
+- 💔 Prior versions name-collided on `Logger`: both as an `interface` and as a
+  pseudonamespace for logger factories. This made `eslint` grumpy, and if anyone
+  actually used this bare-bones logger, it could have caused confusion.
+
+  `Logger` now references _only the `interface`._
+  
+  The builder functions are now named `Log`.
+
+- 📦 Updated development dependencies
+
 ## v5.11.3
 
 - 📦 Updated development dependencies (primarily TypeScript 4.1)

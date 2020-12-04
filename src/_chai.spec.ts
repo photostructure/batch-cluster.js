@@ -1,7 +1,7 @@
 import { ChildProcess, spawn } from "child_process"
 import { join } from "path"
 import * as _p from "process"
-import { Logger, logger, setLogger } from "./Logger"
+import { Log, logger, setLogger } from "./Logger"
 import { orElse } from "./Object"
 import { Parser } from "./Parser"
 import { pids } from "./Pids"
@@ -18,9 +18,9 @@ export { expect } from "chai"
 
 // Tests should be quiet unless LOG is set
 setLogger(
-  Logger.withLevels(
-    Logger.withTimestamps(
-      Logger.filterLevels(
+  Log.withLevels(
+    Log.withTimestamps(
+      Log.filterLevels(
         {
           // tslint:disable: no-unbound-method
           trace: console.log,
