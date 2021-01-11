@@ -1,3 +1,4 @@
+import { platform } from "os"
 import { inspect } from "util"
 import { flatten, sortNumeric } from "./Array"
 import { delay, until } from "./Async"
@@ -153,7 +154,13 @@ describe("BatchCluster", function () {
     return bc
   }
 
-  for (const newline of ["lf", "crlf"]) {
+  // Don't need to test crlf except on windows:
+  const newlines = ["lf"]
+  if (platform().includes("win")) {
+    newlines.push("crlf")
+  }
+
+  for (const newline of newlines) {
     for (const maxProcs of [1, 4]) {
       for (const ignoreExit of [false, true]) {
         describe(
