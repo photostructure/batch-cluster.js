@@ -3,8 +3,7 @@
 **Efficient, concurrent work via batch-mode command-line tools from within Node.js.**
 
 [![npm version](https://img.shields.io/npm/v/batch-cluster.svg)](https://www.npmjs.com/package/batch-cluster)
-[![Build status](https://travis-ci.org/photostructure/batch-cluster.js.svg?branch=master)](https://travis-ci.org/photostructure/batch-cluster.js)
-[![Build status](https://ci.appveyor.com/api/projects/status/4564x6lvc8s6a55l/branch/master?svg=true)](https://ci.appveyor.com/project/mceachen/batch-cluster-js/branch/master)
+[![Build status](https://github.com/photostructure/batch-cluster.js/workflows/Node.js%20CI/badge.svg?branch=master)](https://github.com/photostructure/batch-cluster.js/actions?query=workflow%3A%22Node.js+CI%22)
 [![GitHub issues](https://img.shields.io/github/issues/photostructure/batch-cluster.js.svg)](https://github.com/photostructure/batch-cluster.js/issues)
 [![Language grade: JavaScript](https://img.shields.io/lgtm/grade/javascript/g/photostructure/batch-cluster.js.svg)](https://lgtm.com/projects/g/photostructure/batch-cluster.js/context:javascript)
 [![Known Vulnerabilities](https://snyk.io/test/github/photostructure/batch-cluster.js/badge.svg?targetFile=package.json)](https://snyk.io/test/github/photostructure/batch-cluster.js?targetFile=package.json)
