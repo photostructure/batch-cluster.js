@@ -16,7 +16,6 @@
     "node": ">=10.0.0"
   },
   "scripts": {
-    "preci": "rimraf node_modules",
     "ci": "yarn install --frozen-lockfile",
     "clean": "rimraf dist",
     "prettier": "prettier --write src/*.ts",
