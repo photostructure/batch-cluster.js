@@ -1,4 +1,3 @@
-import { platform } from "os"
 import { inspect } from "util"
 import { flatten, sortNumeric } from "./Array"
 import { delay, until } from "./Async"
@@ -6,6 +5,7 @@ import { BatchCluster } from "./BatchCluster"
 import { BatchClusterOptions } from "./BatchClusterOptions"
 import { logger } from "./Logger"
 import { map, orElse } from "./Object"
+import { isWin } from "./Pids"
 import { toS } from "./String"
 import { Task } from "./Task"
 import {
@@ -154,9 +154,10 @@ describe("BatchCluster", function () {
     return bc
   }
 
-  // Don't need to test crlf except on windows:
   const newlines = ["lf"]
-  if (platform().includes("win")) {
+
+  if (isWin) {
+    // Don't need to test crlf except on windows:
     newlines.push("crlf")
   }
 
