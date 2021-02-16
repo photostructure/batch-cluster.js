@@ -3,7 +3,7 @@
 **Efficient, concurrent work via batch-mode command-line tools from within Node.js.**
 
 [![npm version](https://img.shields.io/npm/v/batch-cluster.svg)](https://www.npmjs.com/package/batch-cluster)
-[![Build status](https://github.com/photostructure/batch-cluster.js/workflows/Node.js%20CI/badge.svg?branch=master)](https://github.com/photostructure/batch-cluster.js/actions?query=workflow%3A%22Node.js+CI%22)
+[![Build status](https://github.com/photostructure/batch-cluster.js/workflows/Node.js%20CI/badge.svg?branch=main)](https://github.com/photostructure/batch-cluster.js/actions?query=workflow%3A%22Node.js+CI%22)
 [![GitHub issues](https://img.shields.io/github/issues/photostructure/batch-cluster.js.svg)](https://github.com/photostructure/batch-cluster.js/issues)
 [![Language grade: JavaScript](https://img.shields.io/lgtm/grade/javascript/g/photostructure/batch-cluster.js.svg)](https://lgtm.com/projects/g/photostructure/batch-cluster.js/context:javascript)
 [![Known Vulnerabilities](https://snyk.io/test/github/photostructure/batch-cluster.js/badge.svg?targetFile=package.json)](https://snyk.io/test/github/photostructure/batch-cluster.js?targetFile=package.json)
@@ -42,7 +42,7 @@ $ npm install --save batch-cluster
 
 ## Changelog
 
-See [CHANGELOG.md](https://github.com/photostructure/batch-cluster.js/blob/master/CHANGELOG.md).
+See [CHANGELOG.md](https://github.com/photostructure/batch-cluster.js/blob/main/CHANGELOG.md).
 
 ## Usage
 
@@ -63,20 +63,20 @@ BatchCluster will ensure a given process is only given one task at a time.
     - [BatchClusterOptions](https://photostructure.github.io/batch-cluster.js/classes/batchclusteroptions.html),
       which has defaults that may or may not be relevant to your application.
 
-1.  The [default](https://photostructure.github.io/batch-cluster.js/modules/logger.html) logger
+1.  The [default](https://photostructure.github.io/batch-cluster.js/modules.html#logger) logger
     writes warning and error messages to `console.warn` and `console.error`. You
     can change this to your logger by using
-    [setLogger](/globals.html#setlogger).
+    [setLogger](https://photostructure.github.io/batch-cluster.js/modules.html#setlogger).
 
-1.  Implement the [Parser](https://photostructure.github.io/batch-cluster.js/interfaces/parser)
+1.  Implement the [Parser](https://photostructure.github.io/batch-cluster.js/interfaces/parser.html)
     class to parse results from your child process.
 
 1.  Construct a [Task](https://photostructure.github.io/batch-cluster.js/classes/task.html) with the desired command and
     the parser you built in the previous step, and submit it to your BatchCluster
     singleton's
-    [enqueueTask](https://photostructure.github.io/batch-cluster.js/classes/batchcluster#enqueuetask) method.
+    [enqueueTask](https://photostructure.github.io/batch-cluster.js/classes/batchcluster.html#enqueuetask) method.
 
 See
-[src/test.ts](https://github.com/photostructure/batch-cluster.js/blob/master/src/test.ts)
+[src/test.ts](https://github.com/photostructure/batch-cluster.js/blob/main/src/test.ts)
 for an example child process. Note that the script is _designed_ to be flaky on
 order to test BatchCluster's retry and error handling code.

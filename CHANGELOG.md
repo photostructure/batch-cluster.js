@@ -21,6 +21,7 @@ See [Semver](http://semver.org/).
 
 - 📦 Updated development dependencies
 - 📦 Renamed `main` branch
+- 📦 Hopefully fixed all typedoc URL changes
 
 ## v6.0.0
 

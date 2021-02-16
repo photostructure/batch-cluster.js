@@ -7,6 +7,7 @@
 	<meta name="description" content="Documentation for batch-cluster">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<link rel="stylesheet" href="assets/css/main.css">
+	<script async src="assets/js/search.js" id="search-script"></script>
 </head>
 <body>
 <header>
@@ -38,6 +39,8 @@
 							</div>
 							<input type="checkbox" id="tsd-filter-inherited" checked />
 							<label class="tsd-widget" for="tsd-filter-inherited">Inherited</label>
+							<input type="checkbox" id="tsd-filter-externals" checked />
+							<label class="tsd-widget" for="tsd-filter-externals">Externals</label>
 						</div>
 					</div>
 					<a href="#" class="tsd-widget menu no-caption" data-toggle="menu">Menu</a>
@@ -47,11 +50,6 @@
 	</div>
 	<div class="tsd-page-title">
 		<div class="container">
-			<ul class="tsd-breadcrumb">
-				<li>
-					<a href="globals.html">Globals</a>
-				</li>
-			</ul>
 			<h1>batch-cluster</h1>
 		</div>
 	</div>
@@ -65,8 +63,7 @@
 				</a>
 				<p><strong>Efficient, concurrent work via batch-mode command-line tools from within Node.js.</strong></p>
 				<p><a href="https://www.npmjs.com/package/batch-cluster"><img src="https://img.shields.io/npm/v/batch-cluster.svg" alt="npm version"></a>
-					<a href="https://travis-ci.org/photostructure/batch-cluster.js"><img src="https://travis-ci.org/photostructure/batch-cluster.js.svg?branch=master" alt="Build status"></a>
-					<a href="https://ci.appveyor.com/project/mceachen/batch-cluster-js/branch/master"><img src="https://ci.appveyor.com/api/projects/status/4564x6lvc8s6a55l/branch/master?svg=true" alt="Build status"></a>
+					<a href="https://github.com/photostructure/batch-cluster.js/actions?query=workflow%3A%22Node.js+CI%22"><img src="https://github.com/photostructure/batch-cluster.js/workflows/Node.js%20CI/badge.svg?branch=main" alt="Build status"></a>
 					<a href="https://github.com/photostructure/batch-cluster.js/issues"><img src="https://img.shields.io/github/issues/photostructure/batch-cluster.js.svg" alt="GitHub issues"></a>
 					<a href="https://lgtm.com/projects/g/photostructure/batch-cluster.js/context:javascript"><img src="https://img.shields.io/lgtm/grade/javascript/g/photostructure/batch-cluster.js.svg" alt="Language grade: JavaScript"></a>
 				<a href="https://snyk.io/test/github/photostructure/batch-cluster.js?targetFile=package.json"><img src="https://snyk.io/test/github/photostructure/batch-cluster.js/badge.svg?targetFile=package.json" alt="Known Vulnerabilities"></a></p>
@@ -91,13 +88,14 @@
 					<h2>Installation</h2>
 				</a>
 				<p>Depending on your yarn/npm preference:</p>
-				<pre><code class="language-bash">$ yarn add batch-cluster
-<span class="hljs-comment"># or</span>
-$ npm install --save batch-cluster</code></pre>
+				<pre><code class="language-bash"><span style="color: #000000">$ yarn add batch-cluster</span>
+<span style="color: #008000"># or</span>
+<span style="color: #000000">$ npm install --save batch-cluster</span>
+</code></pre>
 				<a href="#changelog" id="changelog" style="color: inherit; text-decoration: none;">
 					<h2>Changelog</h2>
 				</a>
-				<p>See <a href="https://github.com/photostructure/batch-cluster.js/blob/master/CHANGELOG.md">CHANGELOG.md</a>.</p>
+				<p>See <a href="https://github.com/photostructure/batch-cluster.js/blob/main/CHANGELOG.md">CHANGELOG.md</a>.</p>
 				<a href="#usage" id="usage" style="color: inherit; text-decoration: none;">
 					<h2>Usage</h2>
 				</a>
@@ -118,22 +116,22 @@ $ npm install --save batch-cluster</code></pre>
 							which has defaults that may or may not be relevant to your application.</li>
 						</ul>
 					</li>
-					<li><p>The <a href="https://photostructure.github.io/batch-cluster.js/modules/logger.html">default</a> logger
+					<li><p>The <a href="https://photostructure.github.io/batch-cluster.js/modules.html#logger">default</a> logger
 							writes warning and error messages to <code>console.warn</code> and <code>console.error</code>. You
 							can change this to your logger by using
-						<a href="/globals.html#setlogger">setLogger</a>.</p>
+						<a href="https://photostructure.github.io/batch-cluster.js/modules.html#setlogger">setLogger</a>.</p>
 					</li>
-					<li><p>Implement the <a href="https://photostructure.github.io/batch-cluster.js/interfaces/parser">Parser</a>
+					<li><p>Implement the <a href="https://photostructure.github.io/batch-cluster.js/interfaces/parser.html">Parser</a>
 						class to parse results from your child process.</p>
 					</li>
 					<li><p>Construct a <a href="https://photostructure.github.io/batch-cluster.js/classes/task.html">Task</a> with the desired command and
 							the parser you built in the previous step, and submit it to your BatchCluster
 							singleton&#39;s
-						<a href="https://photostructure.github.io/batch-cluster.js/classes/batchcluster#enqueuetask">enqueueTask</a> method.</p>
+						<a href="https://photostructure.github.io/batch-cluster.js/classes/batchcluster.html#enqueuetask">enqueueTask</a> method.</p>
 					</li>
 				</ol>
 				<p>See
-					<a href="https://github.com/photostructure/batch-cluster.js/blob/master/src/test.ts">src/test.ts</a>
+					<a href="https://github.com/photostructure/batch-cluster.js/blob/main/src/test.ts">src/test.ts</a>
 					for an example child process. Note that the script is <em>designed</em> to be flaky on
 				order to test BatchCluster&#39;s retry and error handling code.</p>
 			</div>
@@ -141,45 +139,24 @@ $ npm install --save batch-cluster</code></pre>
 		<div class="col-4 col-menu menu-sticky-wrap menu-highlight">
 			<nav class="tsd-navigation primary">
 				<ul>
-					<li class="globals  ">
-						<a href="globals.html"><em>Globals</em></a>
+					<li class=" ">
+						<a href="modules.html">Exports</a>
 					</li>
 				</ul>
 			</nav>
 			<nav class="tsd-navigation secondary menu-sticky">
 				<ul class="before-current">
-					<li class=" tsd-kind-enum">
-						<a href="enums/state.html" class="tsd-kind-icon">State</a>
-					</li>
 					<li class=" tsd-kind-class">
 						<a href="classes/batchcluster.html" class="tsd-kind-icon">Batch<wbr>Cluster</a>
 					</li>
 					<li class=" tsd-kind-class">
-						<a href="classes/batchclusteremitter.html" class="tsd-kind-icon">Batch<wbr>Cluster<wbr>Emitter</a>
-					</li>
-					<li class=" tsd-kind-class">
 						<a href="classes/batchclusteroptions.html" class="tsd-kind-icon">Batch<wbr>Cluster<wbr>Options</a>
-					</li>
-					<li class=" tsd-kind-class">
-						<a href="classes/batchprocess.html" class="tsd-kind-icon">Batch<wbr>Process</a>
 					</li>
 					<li class=" tsd-kind-class tsd-has-type-parameter">
 						<a href="classes/deferred.html" class="tsd-kind-icon">Deferred</a>
 					</li>
-					<li class=" tsd-kind-class">
-						<a href="classes/mean.html" class="tsd-kind-icon">Mean</a>
-					</li>
-					<li class=" tsd-kind-class">
-						<a href="classes/mutex.html" class="tsd-kind-icon">Mutex</a>
-					</li>
-					<li class=" tsd-kind-class">
-						<a href="classes/rate.html" class="tsd-kind-icon">Rate</a>
-					</li>
 					<li class=" tsd-kind-class tsd-has-type-parameter">
 						<a href="classes/task.html" class="tsd-kind-icon">Task</a>
-					</li>
-					<li class=" tsd-kind-interface">
-						<a href="interfaces/batchprocessobserver.html" class="tsd-kind-icon">Batch<wbr>Process<wbr>Observer</a>
 					</li>
 					<li class=" tsd-kind-interface">
 						<a href="interfaces/batchprocessoptions.html" class="tsd-kind-icon">Batch<wbr>Process<wbr>Options</a>
@@ -188,136 +165,40 @@ $ npm install --save batch-cluster</code></pre>
 						<a href="interfaces/childprocessfactory.html" class="tsd-kind-icon">Child<wbr>Process<wbr>Factory</a>
 					</li>
 					<li class=" tsd-kind-interface">
-						<a href="interfaces/internalbatchprocessoptions.html" class="tsd-kind-icon">Internal<wbr>Batch<wbr>Process<wbr>Options</a>
-					</li>
-					<li class=" tsd-kind-interface">
 						<a href="interfaces/logger.html" class="tsd-kind-icon">Logger</a>
 					</li>
 					<li class=" tsd-kind-interface tsd-has-type-parameter">
 						<a href="interfaces/parser.html" class="tsd-kind-icon">Parser</a>
 					</li>
-					<li class=" tsd-kind-type-alias">
-						<a href="globals.html#allopts" class="tsd-kind-icon">All<wbr>Opts</a>
-					</li>
-					<li class=" tsd-kind-type-alias">
-						<a href="globals.html#logfunc" class="tsd-kind-icon">Log<wbr>Func</a>
+					<li class=" tsd-kind-variable">
+						<a href="modules.html#consolelogger" class="tsd-kind-icon">Console<wbr>Logger</a>
 					</li>
 					<li class=" tsd-kind-variable">
-						<a href="globals.html#consolelogger" class="tsd-kind-icon">Console<wbr>Logger</a>
+						<a href="modules.html#log" class="tsd-kind-icon">Log</a>
 					</li>
 					<li class=" tsd-kind-variable">
-						<a href="globals.html#loglevels" class="tsd-kind-icon">Log<wbr>Levels</a>
+						<a href="modules.html#loglevels" class="tsd-kind-icon">Log<wbr>Levels</a>
 					</li>
 					<li class=" tsd-kind-variable">
-						<a href="globals.html#nologger" class="tsd-kind-icon">No<wbr>Logger</a>
-					</li>
-					<li class=" tsd-kind-variable">
-						<a href="globals.html#_debuglog" class="tsd-kind-icon">_debuglog</a>
-					</li>
-					<li class=" tsd-kind-variable">
-						<a href="globals.html#_logger" class="tsd-kind-icon">_logger</a>
-					</li>
-					<li class=" tsd-kind-variable">
-						<a href="globals.html#iswin" class="tsd-kind-icon">is<wbr>Win</a>
-					</li>
-					<li class=" tsd-kind-variable">
-						<a href="globals.html#posixre" class="tsd-kind-icon">posix<wbr>Re</a>
-					</li>
-					<li class=" tsd-kind-variable">
-						<a href="globals.html#winre" class="tsd-kind-icon">win<wbr>Re</a>
+						<a href="modules.html#nologger" class="tsd-kind-icon">No<wbr>Logger</a>
 					</li>
 					<li class=" tsd-kind-function">
-						<a href="globals.html#simpleparser" class="tsd-kind-icon">Simple<wbr>Parser</a>
+						<a href="modules.html#simpleparser" class="tsd-kind-icon">Simple<wbr>Parser</a>
 					</li>
 					<li class=" tsd-kind-function">
-						<a href="globals.html#blank" class="tsd-kind-icon">blank</a>
+						<a href="modules.html#kill" class="tsd-kind-icon">kill</a>
 					</li>
 					<li class=" tsd-kind-function">
-						<a href="globals.html#cleanerror" class="tsd-kind-icon">clean<wbr>Error</a>
+						<a href="modules.html#logger" class="tsd-kind-icon">logger</a>
 					</li>
 					<li class=" tsd-kind-function">
-						<a href="globals.html#debounce" class="tsd-kind-icon">debounce</a>
+						<a href="modules.html#pidexists" class="tsd-kind-icon">pid<wbr>Exists</a>
 					</li>
 					<li class=" tsd-kind-function">
-						<a href="globals.html#delay" class="tsd-kind-icon">delay</a>
+						<a href="modules.html#pids" class="tsd-kind-icon">pids</a>
 					</li>
 					<li class=" tsd-kind-function">
-						<a href="globals.html#end" class="tsd-kind-icon">end</a>
-					</li>
-					<li class=" tsd-kind-function">
-						<a href="globals.html#ensuresuffix" class="tsd-kind-icon">ensure<wbr>Suffix</a>
-					</li>
-					<li class=" tsd-kind-function tsd-has-type-parameter">
-						<a href="globals.html#filterinplace" class="tsd-kind-icon">filter<wbr>InPlace</a>
-					</li>
-					<li class=" tsd-kind-function tsd-has-type-parameter">
-						<a href="globals.html#flatten" class="tsd-kind-icon">flatten</a>
-					</li>
-					<li class=" tsd-kind-function">
-						<a href="globals.html#isfunction" class="tsd-kind-icon">is<wbr>Function</a>
-					</li>
-					<li class=" tsd-kind-function">
-						<a href="globals.html#kill" class="tsd-kind-icon">kill</a>
-					</li>
-					<li class=" tsd-kind-function">
-						<a href="globals.html#logger" class="tsd-kind-icon">logger</a>
-					</li>
-					<li class=" tsd-kind-function tsd-has-type-parameter">
-						<a href="globals.html#map" class="tsd-kind-icon">map</a>
-					</li>
-					<li class=" tsd-kind-function tsd-has-type-parameter">
-						<a href="globals.html#mapnotdestroyed" class="tsd-kind-icon">map<wbr>Not<wbr>Destroyed</a>
-					</li>
-					<li class=" tsd-kind-function">
-						<a href="globals.html#noop" class="tsd-kind-icon">noop</a>
-					</li>
-					<li class=" tsd-kind-function">
-						<a href="globals.html#notblank" class="tsd-kind-icon">not<wbr>Blank</a>
-					</li>
-					<li class=" tsd-kind-function tsd-has-type-parameter">
-						<a href="globals.html#orelse" class="tsd-kind-icon">or<wbr>Else</a>
-					</li>
-					<li class=" tsd-kind-function">
-						<a href="globals.html#pidexists" class="tsd-kind-icon">pid<wbr>Exists</a>
-					</li>
-					<li class=" tsd-kind-function">
-						<a href="globals.html#pids" class="tsd-kind-icon">pids</a>
-					</li>
-					<li class=" tsd-kind-function tsd-has-type-parameter">
-						<a href="globals.html#ratelimit" class="tsd-kind-icon">ratelimit</a>
-					</li>
-					<li class=" tsd-kind-function tsd-has-type-parameter">
-						<a href="globals.html#rrfind" class="tsd-kind-icon">rr<wbr>Find</a>
-					</li>
-					<li class=" tsd-kind-function tsd-has-type-parameter">
-						<a href="globals.html#rrfindresult" class="tsd-kind-icon">rr<wbr>Find<wbr>Result</a>
-					</li>
-					<li class=" tsd-kind-function">
-						<a href="globals.html#safepid" class="tsd-kind-icon">safe<wbr>Pid</a>
-					</li>
-					<li class=" tsd-kind-function">
-						<a href="globals.html#setlogger" class="tsd-kind-icon">set<wbr>Logger</a>
-					</li>
-					<li class=" tsd-kind-function">
-						<a href="globals.html#sortnumeric" class="tsd-kind-icon">sort<wbr>Numeric</a>
-					</li>
-					<li class=" tsd-kind-function">
-						<a href="globals.html#tore" class="tsd-kind-icon">to<wbr>Re</a>
-					</li>
-					<li class=" tsd-kind-function">
-						<a href="globals.html#tos" class="tsd-kind-icon">toS</a>
-					</li>
-					<li class=" tsd-kind-function">
-						<a href="globals.html#tryeach" class="tsd-kind-icon">try<wbr>Each</a>
-					</li>
-					<li class=" tsd-kind-function">
-						<a href="globals.html#until" class="tsd-kind-icon">until</a>
-					</li>
-					<li class=" tsd-kind-function">
-						<a href="globals.html#verifyoptions" class="tsd-kind-icon">verify<wbr>Options</a>
-					</li>
-					<li class=" tsd-kind-object-literal">
-						<a href="globals.html#log" class="tsd-kind-icon">Log</a>
+						<a href="modules.html#setlogger" class="tsd-kind-icon">set<wbr>Logger</a>
 					</li>
 				</ul>
 			</nav>
@@ -335,11 +216,6 @@ $ npm install --save batch-cluster</code></pre>
 			</ul>
 			<ul class="tsd-legend">
 				<li class="tsd-kind-property tsd-parent-kind-interface"><span class="tsd-kind-icon">Property</span></li>
-				<li class="tsd-kind-method tsd-parent-kind-interface"><span class="tsd-kind-icon">Method</span></li>
-			</ul>
-			<ul class="tsd-legend">
-				<li class="tsd-kind-property tsd-parent-kind-class tsd-is-inherited"><span class="tsd-kind-icon">Inherited property</span></li>
-				<li class="tsd-kind-method tsd-parent-kind-class tsd-is-inherited"><span class="tsd-kind-icon">Inherited method</span></li>
 			</ul>
 		</div>
 	</div>
