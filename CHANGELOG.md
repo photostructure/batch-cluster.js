@@ -17,6 +17,11 @@ See [Semver](http://semver.org/).
 - 🐞 Backwards-compatible bug fixes
 - 📦 Minor packaging changes
 
+## v6.0.1
+
+- 📦 Updated development dependencies
+- 📦 Renamed `main` branch
+
 ## v6.0.0
 
 No new features in v6: just a breaking change so we can fix an old name
@@ -27,7 +32,7 @@ collision that caused linting errors.
   actually used this bare-bones logger, it could have caused confusion.
 
   `Logger` now references _only the `interface`._
-  
+
   The builder functions are now named `Log`.
 
 - 📦 Updated development dependencies
