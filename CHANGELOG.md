@@ -17,6 +17,11 @@ See [Semver](http://semver.org/).
 - 🐞 Backwards-compatible bug fixes
 - 📦 Minor packaging changes
 
+## v6.0.2
+
+- 📦 Include sourcemaps
+- 📦 Updated development dependencies
+
 ## v6.0.1
 
 - 📦 Updated development dependencies
