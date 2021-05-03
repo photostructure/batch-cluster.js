@@ -148,8 +148,7 @@ export class BatchProcess {
   // startup task is complete)
   execTask(task: Task<any>): boolean {
     if (this.proc.stdin == null || this.proc.stdin.destroyed) {
-      // eslint-disable-next-line @typescript-eslint/no-floating-promises
-      this.end(false, "proc.stdin is null or destroyed")
+      void this.end(false, "proc.stdin is null or destroyed")
       return false
     }
 
@@ -181,8 +180,7 @@ export class BatchProcess {
       )
     }
     // logger().debug(this.name + ".execTask(): starting", { cmd })
-    // eslint-disable-next-line @typescript-eslint/no-floating-promises
-    task.promise
+    void task.promise
       .catch((err) =>
         this.startupTask === task
           ? this.observer.onStartError(err)
@@ -198,8 +196,7 @@ export class BatchProcess {
       return true
     } catch (err) {
       // child process went away. We should too.
-      // eslint-disable-next-line @typescript-eslint/no-floating-promises
-      this.end(false, "proc.stdin.write(cmd)")
+      void this.end(false, "proc.stdin.write(cmd)")
       return false
     }
   }
@@ -325,8 +322,7 @@ export class BatchProcess {
 
     // clear the task before ending so the onExit from end() doesn't retry the task:
     this.clearCurrentTask()
-    // eslint-disable-next-line @typescript-eslint/no-floating-promises
-    this.end(false, "onError(" + source + ")")
+    void this.end(false, "onError(" + source + ")")
 
     if (task != null && this.taskCount === 1) {
       this.logger().warn(

@@ -118,17 +118,14 @@ export class BatchCluster extends BatchClusterEmitter {
       _p.removeListener("beforeExit", this.beforeExitListener)
       _p.removeListener("exit", this.exitListener)
       this.endPromise = new Deferred<void>().observe(
-        Promise.all(
-          this._procs.map((p) =>
-            p
-              .end(gracefully, "BatchCluster.end()")
-              .catch((err) => this.emitter.emit("endError", err))
-          )
-        )
-          .then(() => this.emitter.emit("end"))
-          .then(() => undefined)
+        this.closeChildProcesses(gracefully)
+          .catch((err) => {
+            this.emitter.emit("endError", err)
+          })
+          .then(() => {
+            this.emitter.emit("end")
+          })
       )
-      this._procs.length = 0
     }
 
     return this.endPromise
@@ -247,6 +244,18 @@ export class BatchCluster extends BatchClusterEmitter {
     return this.childEndCounts.get(why) ?? 0
   }
 
+  /**
+   * Shut down any currently-running child processes. New child processes will
+   * be started automatically to handle new tasks.
+   */
+  async closeChildProcesses(gracefully = true) {
+    const procs = [...this._procs]
+    this._procs.length = 0
+    for (const proc of procs) {
+      await proc.end(gracefully, "BatchCluster.closeChildren()")
+    }
+  }
+
   // NOT ASYNC: updates internal state.
   private onIdle() {
     return this.m.runIfIdle(async () => {
@@ -305,8 +314,7 @@ export class BatchCluster extends BatchClusterEmitter {
 
     const submitted = readyProc.result.execTask(task)
     if (!submitted) {
-      // eslint-disable-next-line @typescript-eslint/no-floating-promises
-      this.enqueueTask(task)
+      void this.enqueueTask(task)
     }
     return submitted
   }

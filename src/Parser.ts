@@ -11,6 +11,7 @@ export interface Parser<T> {
    *
    * @param stdout the concatenated stream from `stdin`, stripped of the `PASS`
    * or `FAIL` tokens from `BatchProcessOptions`.
+   *
    * @param stderr if defined, includes all text emitted to stderr.
    *
    * @param passed `true` iff the `PASS` pattern was found in stdout.

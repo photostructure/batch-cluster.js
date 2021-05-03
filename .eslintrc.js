@@ -3,18 +3,16 @@ module.exports = {
     node: true
   },
   extends: [
-    "eslint:recommended",
     "plugin:@typescript-eslint/eslint-recommended",
     "plugin:@typescript-eslint/recommended",
     "plugin:eslint-plugin-import/recommended",
-    "plugin:node/recommended"
   ],
   parser: "@typescript-eslint/parser",
   parserOptions: {
     project: "tsconfig.json",
     sourceType: "module"
   },
-  plugins: ["@typescript-eslint", "eslint-plugin-import", "eslint-plugin-node"],
+  plugins: ["@typescript-eslint", "eslint-plugin-import"],
   rules: {
     "@typescript-eslint/explicit-function-return-type": "off",
     "@typescript-eslint/explicit-module-boundary-types": "off",

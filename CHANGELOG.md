@@ -17,6 +17,11 @@ See [Semver](http://semver.org/).
 - 🐞 Backwards-compatible bug fixes
 - 📦 Minor packaging changes
 
+## v6.1.0
+
+- ✨ Added `BatchCluster.closeChildProcesses()` (ends child processes but doesn't `.end()` the BatchCluster instance)
+- 📦 Updated development dependencies
+
 ## v6.0.2
 
 - 📦 Include sourcemaps

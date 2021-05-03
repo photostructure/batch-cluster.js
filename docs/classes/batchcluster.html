@@ -123,6 +123,7 @@
 						<section class="tsd-index-section ">
 							<h3>Methods</h3>
 							<ul class="tsd-index-list">
+								<li class="tsd-kind-method tsd-parent-kind-class"><a href="batchcluster.html#closechildprocesses" class="tsd-kind-icon">close<wbr>Child<wbr>Processes</a></li>
 								<li class="tsd-kind-method tsd-parent-kind-class"><a href="batchcluster.html#countendedchildprocs" class="tsd-kind-icon">count<wbr>Ended<wbr>Child<wbr>Procs</a></li>
 								<li class="tsd-kind-method tsd-parent-kind-class"><a href="batchcluster.html#end" class="tsd-kind-icon">end</a></li>
 								<li class="tsd-kind-method tsd-parent-kind-class tsd-has-type-parameter"><a href="batchcluster.html#enqueuetask" class="tsd-kind-icon">enqueue<wbr>Task</a></li>
@@ -196,7 +197,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/main/src/BatchCluster.ts#L190">BatchCluster.ts:190</a></li>
+									<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/main/src/BatchCluster.ts#L187">BatchCluster.ts:187</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">number</span></h4>
@@ -231,7 +232,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/main/src/BatchCluster.ts#L199">BatchCluster.ts:199</a></li>
+									<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/main/src/BatchCluster.ts#L196">BatchCluster.ts:196</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -253,7 +254,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/main/src/BatchCluster.ts#L162">BatchCluster.ts:162</a></li>
+									<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/main/src/BatchCluster.ts#L159">BatchCluster.ts:159</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">boolean</span></h4>
@@ -271,7 +272,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/main/src/BatchCluster.ts#L176">BatchCluster.ts:176</a></li>
+									<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/main/src/BatchCluster.ts#L173">BatchCluster.ts:173</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">number</span></h4>
@@ -289,7 +290,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/main/src/BatchCluster.ts#L169">BatchCluster.ts:169</a></li>
+									<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/main/src/BatchCluster.ts#L166">BatchCluster.ts:166</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">number</span></h4>
@@ -307,7 +308,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/main/src/BatchCluster.ts#L183">BatchCluster.ts:183</a></li>
+									<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/main/src/BatchCluster.ts#L180">BatchCluster.ts:180</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">number</span></h4>
@@ -319,6 +320,35 @@
 			<section class="tsd-panel-group tsd-member-group ">
 				<h2>Methods</h2>
 				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class">
+					<a name="closechildprocesses" class="tsd-anchor"></a>
+					<h3>close<wbr>Child<wbr>Processes</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
+						<li class="tsd-signature tsd-kind-icon">close<wbr>Child<wbr>Processes<span class="tsd-signature-symbol">(</span>gracefully<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">void</span><span class="tsd-signature-symbol">&gt;</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/main/src/BatchCluster.ts#L251">BatchCluster.ts:251</a></li>
+								</ul>
+							</aside>
+							<div class="tsd-comment tsd-typography">
+								<div class="lead">
+									<p>Shut down any currently-running child processes. New child processes will
+									be started automatically to handle new tasks.</p>
+								</div>
+							</div>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>gracefully: <span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol"> = true</span></h5>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">void</span><span class="tsd-signature-symbol">&gt;</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class">
 					<a name="countendedchildprocs" class="tsd-anchor"></a>
 					<h3>count<wbr>Ended<wbr>Child<wbr>Procs</h3>
 					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
@@ -328,7 +358,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/main/src/BatchCluster.ts#L246">BatchCluster.ts:246</a></li>
+									<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/main/src/BatchCluster.ts#L243">BatchCluster.ts:243</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -388,7 +418,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/main/src/BatchCluster.ts#L143">BatchCluster.ts:143</a></li>
+									<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/main/src/BatchCluster.ts#L140">BatchCluster.ts:140</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -806,7 +836,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/main/src/BatchCluster.ts#L235">BatchCluster.ts:235</a></li>
+									<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/main/src/BatchCluster.ts#L232">BatchCluster.ts:232</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -865,6 +895,9 @@
 							</li>
 							<li class=" tsd-kind-get-signature tsd-parent-kind-class">
 								<a href="batchcluster.html#spawnedprocs" class="tsd-kind-icon">spawned<wbr>Procs</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class">
+								<a href="batchcluster.html#closechildprocesses" class="tsd-kind-icon">close<wbr>Child<wbr>Processes</a>
 							</li>
 							<li class=" tsd-kind-method tsd-parent-kind-class">
 								<a href="batchcluster.html#countendedchildprocs" class="tsd-kind-icon">count<wbr>Ended<wbr>Child<wbr>Procs</a>
