@@ -85,13 +85,13 @@ export function pids(): Promise<number[]> {
           reject(new Error(stderr))
         } else
           resolve(
-            (("" + stdout)
-              .trim()
-              .split(/[\n\r]+/)
-              .map((ea) => ea.match(isWin ? winRe : posixRe))
-              .filter((m) => m != null) as RegExpMatchArray[]).map((m) =>
-              parseInt(m[1])
-            )
+            (
+              ("" + stdout)
+                .trim()
+                .split(/[\n\r]+/)
+                .map((ea) => ea.match(isWin ? winRe : posixRe))
+                .filter((m) => m != null) as RegExpMatchArray[]
+            ).map((m) => parseInt(m[1]))
           )
       }
     )
