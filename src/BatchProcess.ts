@@ -83,7 +83,7 @@ export class BatchProcess {
     }
   }
 
-  get pid(): number {
+  get pid(): number | undefined {
     return this.proc.pid
   }
   get taskCount(): number {
@@ -267,12 +267,17 @@ export class BatchProcess {
       // Wait for the end command to take effect:
       await this.awaitNotRunning(this.opts.endGracefulWaitTimeMillis / 2)
       // If it's still running, send the pid a signal:
-      if (await this.running()) await kill(this.proc.pid)
+      if ((await this.running()) && this.proc.pid != null)
+        await kill(this.proc.pid)
       // Wait for the signal handler to work:
       await this.awaitNotRunning(this.opts.endGracefulWaitTimeMillis / 2)
     }
 
-    if (this.opts.cleanupChildProcs && (await this.running())) {
+    if (
+      this.opts.cleanupChildProcs &&
+      this.proc.pid != null &&
+      (await this.running())
+    ) {
       this.logger().warn(
         this.name + ".end(): force-killing still-running child."
       )

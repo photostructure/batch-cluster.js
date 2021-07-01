@@ -94,12 +94,12 @@ declare namespace Chai {
 export const procs: ChildProcess[] = []
 
 export function testPids(): number[] {
-  return procs.map((proc) => proc.pid)
+  return procs.map((proc) => proc.pid).filter((ea) => ea != null) as number[]
 }
 
 export async function currentTestPids(): Promise<number[]> {
   const alivePids = new Set(await pids())
-  return procs.map((ea) => ea.pid).filter((ea) => alivePids.has(ea))
+  return testPids().filter((ea) => alivePids.has(ea))
 }
 
 // Seeding the RNG deterministically _should_ give us repeatable

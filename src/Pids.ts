@@ -42,7 +42,8 @@ $ ps -p 32183
  * @returns {Promise<boolean>} true if the given process id is in the local
  * process table. The PID may be paused or a zombie, though.
  */
-export function pidExists(pid: number): Promise<boolean> {
+export function pidExists(pid: number | null | undefined): Promise<boolean> {
+  if (pid == null) return Promise.resolve(false)
   const needle = safePid(pid)
   const cmd = isWin ? "tasklist" : "ps"
   const args = isWin
@@ -106,7 +107,9 @@ export function pids(): Promise<number[]> {
  * @param {boolean} [force=false] if true, and the current user has
  * permissions to send the signal, the pid will be forced to shut down.
  */
-export function kill(pid: number, force = false): void {
+export function kill(pid: number | null | undefined, force = false): void {
+  if (pid == null) return
+
   if (pid === _p.pid || pid === _p.ppid) {
     throw new Error("cannot self-terminate")
   }

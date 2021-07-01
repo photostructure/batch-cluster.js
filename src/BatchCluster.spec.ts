@@ -131,8 +131,10 @@ describe("BatchCluster", function () {
 
   function listen(bc: BatchCluster) {
     // This is a typings verification, too:
-    bc.on("childStart", (cp) => events.startedPids.push(cp.pid))
-    bc.on("childExit", (cp) => events.exittedPids.push(cp.pid))
+    bc.on("childStart", (cp) =>
+      map(cp.pid, (ea) => events.startedPids.push(ea))
+    )
+    bc.on("childExit", (cp) => map(cp.pid, (ea) => events.exittedPids.push(ea)))
     bc.on("startError", (err) => events.startErrors.push(err))
     bc.on("endError", (err) => events.endErrors.push(err))
     bc.on("internalError", (err) => {

@@ -232,7 +232,7 @@ export class BatchCluster extends BatchClusterEmitter {
   async pids(): Promise<number[]> {
     const arr: number[] = []
     for (const pid of this._procs.map((p) => p.pid)) {
-      if (await pidExists(pid)) arr.push(pid)
+      if (pid != null && (await pidExists(pid))) arr.push(pid)
     }
     return arr
   }
