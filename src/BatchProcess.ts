@@ -36,7 +36,7 @@ export class BatchProcess {
   /**
    * Should be undefined if this instance is not currently processing a task.
    */
-  private currentTask: Task<any> | undefined
+  private _currentTask: Task<any> | undefined
   private currentTaskTimeout: NodeJS.Timer | undefined
   private readonly streamDebouncer: (f: () => any) => void
   private readonly startupTask: Task<any>
@@ -83,6 +83,10 @@ export class BatchProcess {
     }
   }
 
+  get currentTask(): Task<any> | undefined {
+    return this._currentTask
+  }
+
   get pid(): number | undefined {
     return this.proc.pid
   }
@@ -97,7 +101,7 @@ export class BatchProcess {
   }
   get ready(): boolean {
     return (
-      this.currentTask == null &&
+      this._currentTask == null &&
       !this.startupTask.pending &&
       this._endPromise == null &&
       this.proc != null &&
@@ -105,7 +109,7 @@ export class BatchProcess {
     )
   }
   get idle(): boolean {
-    return this.currentTask == null
+    return this._currentTask == null
   }
 
   get idleMs(): number {
@@ -162,7 +166,7 @@ export class BatchProcess {
       return false
     }
     this._taskCount++
-    this.currentTask = task
+    this._currentTask = task
     const cmd = ensureSuffix(task.command, "\n")
     const timeoutMs =
       task === this.startupTask
@@ -187,7 +191,7 @@ export class BatchProcess {
           : this.observer.onTaskError(err, task)
       )
       .then(() => {
-        if (this.currentTask === task) {
+        if (this._currentTask === task) {
           this.clearCurrentTask()
         }
       })
@@ -219,7 +223,7 @@ export class BatchProcess {
   // NOTE: Must only be invoked by this.end(), and only expected to be invoked
   // once per instance.
   private async _end(gracefully = true, source: string): Promise<void> {
-    const lastTask = this.currentTask
+    const lastTask = this._currentTask
     this.clearCurrentTask()
 
     // NOTE: We wait on all tasks (even startup tasks) so we can assert that
@@ -311,7 +315,7 @@ export class BatchProcess {
       return
     }
     if (task == null) {
-      task = this.currentTask
+      task = this._currentTask
     }
     const error = new Error(source + ": " + cleanError(_error.message))
     this.logger().warn(this.name + ".onError()", {
@@ -358,7 +362,7 @@ export class BatchProcess {
   private onStderr(data: string | Buffer) {
     if (blank(data)) return
     this.logger().info("onStderr(" + this.pid + "):" + data)
-    const task = this.currentTask
+    const task = this._currentTask
     if (task != null && task.pending) {
       task.onStderr(data)
       this.onData(task)
@@ -376,7 +380,7 @@ export class BatchProcess {
   private onStdout(data: string | Buffer) {
     // logger().debug("onStdout(" + this.pid + "):" + data)
     if (data == null) return
-    const task = this.currentTask
+    const task = this._currentTask
     if (task != null && task.pending) {
       this.observer.onTaskData(data, task)
       task.onStdout(data)
@@ -425,7 +429,7 @@ export class BatchProcess {
   private clearCurrentTask() {
     map(this.currentTaskTimeout, (ea) => clearTimeout(ea))
     this.currentTaskTimeout = undefined
-    this.currentTask = undefined
+    this._currentTask = undefined
     this.lastJobFinshedAt = Date.now()
   }
 

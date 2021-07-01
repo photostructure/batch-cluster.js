@@ -191,6 +191,15 @@ export class BatchCluster extends BatchClusterEmitter {
   }
 
   /**
+   * @return the current running Tasks (mostly for testing)
+   */
+  get currentTasks(): Task<any>[] {
+    return this._procs
+      .map((ea) => ea.currentTask)
+      .filter((ea) => ea != null) as Task<any>[]
+  }
+
+  /**
    * For integration tests:
    */
   get internalErrorCount(): number {

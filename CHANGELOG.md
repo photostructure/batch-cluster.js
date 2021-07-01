@@ -17,6 +17,10 @@ See [Semver](http://semver.org/).
 - 🐞 Backwards-compatible bug fixes
 - 📦 Minor packaging changes
 
+## v6.2.1
+
+- 📦 Added `BatchCluster.currentTasks`
+
 ## v6.2.0
 
 - 📦 Updated development dependencies, which required handling undefined process ids.
