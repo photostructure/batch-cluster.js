@@ -1,7 +1,5 @@
 import { setTimeout } from "timers"
 
-import { map } from "./Object"
-
 export function delay(millis: number, unref = false): Promise<void> {
   return new Promise<void>((resolve) => {
     const t = setTimeout(() => resolve(), millis)
@@ -57,7 +55,7 @@ export function ratelimit<T>(
 export function debounce(timeoutMs: number): (f: () => any) => void {
   let lastTimeout: NodeJS.Timer | undefined
   return (f: () => any) => {
-    map(lastTimeout, clearTimeout)
+    if (lastTimeout != null) clearTimeout(lastTimeout)
     lastTimeout = setTimeout(f, timeoutMs)
   }
 }
