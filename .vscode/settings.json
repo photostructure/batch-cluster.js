@@ -1,6 +1,9 @@
 {
     "typescript.tsdk": "node_modules/typescript/lib",
     "cSpell.ignoreWords": [
-        "cygwin"
+        "cygwin",
+        "debouncer",
+        "debouncing",
+        "rngseed"
     ]
 }
