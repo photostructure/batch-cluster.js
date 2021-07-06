@@ -161,7 +161,7 @@ export class BatchProcess {
   }
 
   get idle(): boolean {
-    return this._currentTask == null
+    return this.dead || this._currentTask == null
   }
 
   get idleMs(): number {
