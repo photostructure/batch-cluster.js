@@ -5,7 +5,7 @@ import * as _p from "process"
 export const isWin = ["win32", "cygwin"].includes(_os.platform())
 
 function safePid(pid: number) {
-  if (typeof pid !== "number") {
+  if (typeof pid !== "number" || pid < 0) {
     throw new Error("invalid pid: " + JSON.stringify(pid))
   } else {
     return Math.floor(pid).toString()
@@ -37,7 +37,6 @@ $ ps -p 32183
 */
 
 /**
- * @export
  * @param {number} pid process id. Required.
  * @returns {Promise<boolean>} true if the given process id is in the local
  * process table. The PID may be paused or a zombie, though.
@@ -48,21 +47,30 @@ export function pidExists(pid: number | null | undefined): Promise<boolean> {
   const cmd = isWin ? "tasklist" : "ps"
   const args = isWin
     ? // NoHeader, FOrmat CSV, FIlter on pid:
-      ["/NH", "/FO", "CSV", "/FI", "PID eq " + needle]
+      [
+        ["/NH", "/FO", "CSV", "/FI", "PID eq " + needle],
+        {
+          windowsHide: true,
+        },
+      ]
     : // linux has "quick" mode (-q) but mac doesn't. We add the ",1" to avoid ps
       // returning exit code 1, which generates an extraneous Error.
-      ["-p", needle + ",1"]
+      [["-p", needle + ",1"]]
   return new Promise((resolve) => {
-    _cp.execFile(cmd, args, (error: Error | null, stdout: string) => {
-      const result =
-        error == null &&
-        new RegExp(
-          isWin ? '"' + needle + '"' : "^\\s*" + needle + "\\b",
-          // The posix regex pattern needs multiline support:
-          "m"
-        ).exec(String(stdout).trim()) != null
-      resolve(result)
-    })
+    _cp.execFile(
+      cmd,
+      ...(args as any),
+      (error: Error | null, stdout: string) => {
+        const result =
+          error == null &&
+          new RegExp(
+            isWin ? '"' + needle + '"' : "^\\s*" + needle + "\\b",
+            // The posix regex pattern needs multiline support:
+            "m"
+          ).exec(String(stdout).trim()) != null
+        resolve(result)
+      }
+    )
   })
 }
 

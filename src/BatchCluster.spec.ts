@@ -95,8 +95,10 @@ describe("BatchCluster", function () {
 
   async function shutdown(bc: BatchCluster) {
     const endPromise = bc.end(true)
+    // "ended" should be true immediately, but it may still be waiting for child
+    // processes to exit:
     expect(bc.ended).to.eql(true)
-    // 10 seconds is a damn long time for a process to exit.
+
     const isShutdown = await until(
       async (count) => {
         const idle = bc.isIdle
@@ -112,19 +114,21 @@ describe("BatchCluster", function () {
           })
         return done
       },
-      3_000,
-      500 // <  don't hammer tasklist too hard
+      10_000, // < mac CI is slow
+      1_000 // < don't hammer tasklist/ps too hard
     )
+    // This should immediately be true: we already waited for the processes to exit.
     const endPromiseResolved = await until(
       () => !endPromise.pending,
-      3_000,
-      500
+      10_000,
+      1_000
     )
     if (!endPromiseResolved || !isShutdown) {
       console.warn("shutdown()", { isShutdown, endPromiseResolved })
     }
     expect(isShutdown).to.eql(true)
     expect(endPromiseResolved).to.eql(true)
+    expect(bc.end(true).settled).to.eql(true)
     expect(bc.internalErrorCount).to.eql(0)
     return
   }
