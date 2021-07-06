@@ -102,7 +102,7 @@ export class BatchProcess {
     return this._taskCount
   }
   get exited(): boolean {
-    return !this.resolvedOnExit.pending
+    return this.resolvedOnExit.settled
   }
   get exitPromise(): Promise<void> {
     return this.resolvedOnExit.promise

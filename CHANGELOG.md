@@ -20,9 +20,18 @@ See [Semver](http://semver.org/).
 
 ## v7.0.0
 
+- 💔 Several fields were renamed to make things more consistent:
+
+  - `BatchCluster.pendingTasks` was renamed to `BatchCluster.pendingTaskCount`.
+  - A new `BatchCluster.pendingTasks` method now matches `BatchCluster.currentTasks`, which both return `Task[]`.
+  - `BatchCluster.busyProcs` was renamed to `busyProcCount`.
+  - `BatchCluster.spawnedProcs` was renamed to `spawnedProcCount`.
+
 - ✨ Added support for "health checks" that run periodically on child processes.
   Both `healthCheckCommand` and `healthCheckIntervalMillis` must be set to
   enable this feature.
+- ✨ New `pidCheckIntervalMillis` to verify internal child process state is kept
+  in sync with the process table. Defaults to every 2 minutes. Will no-op if idle.
 
 - 📦 Cleaned up scheduling: the prior implementation generated a bunch of
   `Promise`s per idle period, which was rough on the GC. Use of `Mutex` is now

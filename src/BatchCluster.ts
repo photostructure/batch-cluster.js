@@ -160,13 +160,13 @@ export class BatchCluster extends BatchClusterEmitter {
    * @return true if all previously-enqueued tasks have settled
    */
   get isIdle(): boolean {
-    return this.tasks.length === 0 && this._procs.every((ea) => ea.idle)
+    return this.tasks.length === 0 && this.busyProcCount === 0
   }
 
   /**
    * @return the number of pending tasks
    */
-  get pendingTasks(): number {
+  get pendingTaskCount(): number {
     return this.tasks.length
   }
 
@@ -180,17 +180,25 @@ export class BatchCluster extends BatchClusterEmitter {
   /**
    * @return the total number of child processes created by this instance
    */
-  get spawnedProcs(): number {
+  get spawnedProcCount(): number {
     return this._spawnedProcs
   }
 
   /**
    * @return the current number of child processes currently servicing tasks
    */
-  get busyProcs(): number {
+  get busyProcCount(): number {
     return this._procs.filter(
+      // don't count procs that are starting up as "busy":
       (ea) => ea.taskCount > 0 && !ea.exited && !ea.idle
     ).length
+  }
+
+  /**
+   * @return the current pending Tasks (mostly for testing)
+   */
+  get pendingTasks() {
+    return this.tasks
   }
 
   /**

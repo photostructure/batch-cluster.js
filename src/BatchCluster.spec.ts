@@ -101,21 +101,28 @@ describe("BatchCluster", function () {
 
     const isShutdown = await until(
       async (count) => {
-        const idle = bc.isIdle
+        const isIdle = bc.isIdle
+        const pendingCommands = bc.pendingTasks.map((ea) => ea.command)
         const runningCommands = bc.currentTasks.map((ea) => ea.command)
-        const pidCount = (await bc.pids()).length
+        const busyProcCount = bc.busyProcCount
+        const pids = await bc.pids()
         const livingPids = await currentTestPids()
         const done =
-          idle &&
-          pidCount === 0 &&
-          livingPids.length === 0 &&
-          runningCommands.length === 0
+          isIdle &&
+          pendingCommands.length === 0 &&
+          runningCommands.length === 0 &&
+          busyProcCount === 0 &&
+          pids.length === 0 &&
+          livingPids.length === 0
+
         if (!done)
           console.log("shutdown(): waiting for end", {
             count,
-            idle,
+            isIdle,
+            pendingCommands,
             runningCommands,
-            pidCount,
+            busyProcCount,
+            pids,
             livingPids,
           })
         return done
@@ -216,7 +223,7 @@ describe("BatchCluster", function () {
                 expect(bc.ended).to.eql(true)
                 expect(bc.isIdle).to.eql(true)
                 expect((await bc.pids()).length).to.eql(0)
-                expect(bc.spawnedProcs).to.eql(0)
+                expect(bc.spawnedProcCount).to.eql(0)
                 expect(events.events).to.eql(expectedEndEvents)
                 expect(testPids()).to.eql([])
                 expect(events.startedPids).to.eql([])
@@ -232,7 +239,10 @@ describe("BatchCluster", function () {
                 const tasks = await Promise.all(runTasks(bc, iterations))
                 assertExpectedResults(tasks)
                 await shutdown(bc)
-                expect(bc.spawnedProcs).to.be.within(maxProcs, iterations + 1)
+                expect(bc.spawnedProcCount).to.be.within(
+                  maxProcs,
+                  iterations + 1
+                )
                 const pids = sortNumeric(testPids())
                 expect(pids.length).to.be.gte(maxProcs)
                 expect(sortNumeric(events.startedPids)).to.eql(pids)
@@ -272,8 +282,8 @@ describe("BatchCluster", function () {
                   // Expect a reasonable number of new pids. Worst case, we
                   // errored after every start, so there may be more then iters
                   // pids spawned.
-                  expect(procs.length).to.eql(bc.spawnedProcs)
-                  expect(bc.spawnedProcs).to.be.within(
+                  expect(procs.length).to.eql(bc.spawnedProcCount)
+                  expect(bc.spawnedProcCount).to.be.within(
                     results.length / opts.maxTasksPerProcess,
                     results.length
                   )
@@ -282,14 +292,17 @@ describe("BatchCluster", function () {
                   if (pids.length > 0)
                     expect(await bc.pids()).to.not.include.members(pids)
 
-                  expect(bc.spawnedProcs).to.be.within(maxProcs, results.length)
+                  expect(bc.spawnedProcCount).to.be.within(
+                    maxProcs,
+                    results.length
+                  )
                   expect(bc.meanTasksPerProc).to.be.within(
                     0.5, // because flaky
                     opts.maxTasksPerProcess
                   )
                   expect((await bc.pids()).length).to.be.lte(maxProcs)
                   expect((await currentTestPids()).length).to.be.lte(
-                    bc.spawnedProcs
+                    bc.spawnedProcCount
                   ) // because flaky
                   await shutdown(bc)
                   return

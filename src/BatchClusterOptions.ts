@@ -1,8 +1,11 @@
 import { ChildProcessFactory } from "./BatchCluster"
 import { BatchProcessOptions } from "./BatchProcessOptions"
 import { InternalBatchProcessOptions } from "./InternalBatchProcessOptions"
-import { blank, toS } from "./String"
 import { logger, Logger } from "./Logger"
+import { blank, toS } from "./String"
+
+const secondMs = 1000
+const minuteMs = 60 * 1000
 
 /**
  * These parameter values have somewhat sensible defaults, but can be
@@ -27,7 +30,7 @@ export class BatchClusterOptions {
    *
    * Defaults to 5 minutes.
    */
-  maxProcAgeMillis = 5 * 60 * 1000
+  maxProcAgeMillis = 5 * minuteMs
 
   /**
    * This is the minimum interval between calls to `this.onIdle`, which
@@ -35,7 +38,7 @@ export class BatchClusterOptions {
    *
    * Must be &gt; 0. Defaults to 5 seconds.
    */
-  onIdleIntervalMillis = 5000
+  onIdleIntervalMillis = 5 * secondMs
 
   /**
    * If the initial `versionCommand` fails for new spawned processes more
@@ -57,7 +60,7 @@ export class BatchClusterOptions {
    *
    * Must be &gt;= 100ms. Defaults to 15 seconds.
    */
-  spawnTimeoutMillis = 15000
+  spawnTimeoutMillis = 15 * secondMs
 
   /**
    * If maxProcs &gt; 1, spawning new child processes to process tasks can slow
@@ -65,7 +68,7 @@ export class BatchClusterOptions {
    *
    * Must be &gt;= 0ms. Defaults to 1.5 seconds.
    */
-  minDelayBetweenSpawnMillis = 1500
+  minDelayBetweenSpawnMillis = 1.5 * secondMs
 
   /**
    * If commands take longer than this, presume the underlying process is dead
@@ -75,7 +78,7 @@ export class BatchClusterOptions {
    *
    * Must be &gt;= 10ms. Defaults to 10 seconds.
    */
-  taskTimeoutMillis = 10000
+  taskTimeoutMillis = 10 * secondMs
 
   /**
    * Processes will be recycled after processing `maxTasksPerProcess` tasks.
@@ -155,7 +158,7 @@ export class BatchClusterOptions {
    *
    * Set this to 0 to disable this feature.
    */
-  pidCheckIntervalMillis = Math.round(this.maxProcAgeMillis / 4)
+  pidCheckIntervalMillis = 2 * minuteMs
 
   /**
    * A BatchCluster instance and associated BatchProcess instances will share
