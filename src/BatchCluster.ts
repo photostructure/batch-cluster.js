@@ -15,7 +15,6 @@ import { Deferred } from "./Deferred"
 import { Logger } from "./Logger"
 import { Mean } from "./Mean"
 import { map } from "./Object"
-import { pidExists } from "./Pids"
 import { Rate } from "./Rate"
 import { Task } from "./Task"
 
@@ -57,6 +56,7 @@ export class BatchCluster extends BatchClusterEmitter {
   private readonly _procs: BatchProcess[] = []
   private _lastUsedProcsIdx = 0
   private _lastSpawnedProcTime = 0
+  private _lastPidsCheckTime = Date.now()
   private readonly tasks: Task[] = []
   private onIdleInterval?: NodeJS.Timer
   private readonly startErrorRate = new Rate()
@@ -237,14 +237,16 @@ export class BatchCluster extends BatchClusterEmitter {
   }
 
   /**
-   * Exposed only for unit tests
+   * Verify that each BatchProcess PID is actually alive.
    *
    * @return the spawned PIDs that are still in the process table.
    */
   async pids(): Promise<number[]> {
     const arr: number[] = []
-    for (const pid of this._procs.map((p) => p.pid)) {
-      if (pid != null && (await pidExists(pid))) arr.push(pid)
+    for (const proc of [...this._procs]) {
+      if (proc != null && !proc.exited && (await proc.running())) {
+        arr.push(proc.pid)
+      }
     }
     return arr
   }
@@ -283,8 +285,19 @@ export class BatchCluster extends BatchClusterEmitter {
     }
   }
 
+  private maybeCheckPids() {
+    if (
+      this.options.pidCheckIntervalMillis > 0 &&
+      this._lastPidsCheckTime + this.options.pidCheckIntervalMillis < Date.now()
+    ) {
+      this._lastPidsCheckTime = Date.now()
+      void this.pids()
+    }
+  }
+
   // NOT ASYNC: updates internal state.
   private vacuumProcs() {
+    this.maybeCheckPids()
     filterInPlace(this._procs, (proc) => {
       // Only idle procs are eligible for deletion:
       if (!proc.idle) return true

@@ -151,6 +151,13 @@ export class BatchClusterOptions {
   healthCheckIntervalMillis = 0
 
   /**
+   * Verify child processes are still running by checking the OS process table.
+   *
+   * Set this to 0 to disable this feature.
+   */
+  pidCheckIntervalMillis = Math.round(this.maxProcAgeMillis / 4)
+
+  /**
    * A BatchCluster instance and associated BatchProcess instances will share
    * this `Logger`. Defaults to the `Logger` instance provided to `setLogger()`.
    */
