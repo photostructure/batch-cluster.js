@@ -101,7 +101,7 @@ describe("BatchCluster", function () {
 
     const isShutdown = await until(
       async (count) => {
-        const idle = bc.isIdle
+        const idle = bc.isIdle()
         const runningCommands = bc.currentTasks.map((ea) => ea.command)
         const pidCount = (await bc.pids()).length
         const livingPids = await currentTestPids()
@@ -214,7 +214,7 @@ describe("BatchCluster", function () {
               it("calling .end() when new no-ops", async () => {
                 await bc.end()
                 expect(bc.ended).to.eql(true)
-                expect(bc.isIdle).to.eql(true)
+                expect(bc.isIdle()).to.eql(true)
                 expect((await bc.pids()).length).to.eql(0)
                 expect(bc.spawnedProcs).to.eql(0)
                 expect(events.events).to.eql(expectedEndEvents)
@@ -434,13 +434,13 @@ describe("BatchCluster", function () {
               processFactory,
             }
             bc = listen(new BatchCluster(opts))
-            expect(bc.isIdle).to.eql(true)
+            expect(bc.isIdle()).to.eql(true)
             const tasks = await Promise.all(
               times(iters, async (i) => {
                 const start = Date.now()
                 const task = new Task("sleep " + sleepTimeMs, parser)
                 const resultP = bc.enqueueTask(task)
-                expect(bc.isIdle).to.eql(false)
+                expect(bc.isIdle()).to.eql(false)
                 const result = JSON.parse(await resultP)
                 const end = Date.now()
                 return { i, start, end, ...result }
@@ -452,7 +452,7 @@ describe("BatchCluster", function () {
               const count = orElse(pid2count.get(pid), 0)
               pid2count.set(pid, count + 1)
             })
-            expect(bc.isIdle).to.eql(true)
+            expect(bc.isIdle()).to.eql(true)
             console.log({
               expectTaskMin,
               expectedTaskMax,
