@@ -13,12 +13,13 @@
     },
     {
       "type": "npm",
-      "script": "tscw",
+      "script": "watch",
       "problemMatcher": [
         "$tsc"
       ],
-      "label": "npm: tscw",
-      "detail": "rimraf dist & tsc -w"
+      "label": "npm: watch",
+      "detail": "rimraf dist & tsc --watch",
+      "group": "build"
     }
   ]
 }
