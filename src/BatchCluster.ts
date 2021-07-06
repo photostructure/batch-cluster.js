@@ -14,7 +14,7 @@ import { BatchProcessOptions } from "./BatchProcessOptions"
 import { Deferred } from "./Deferred"
 import { Logger } from "./Logger"
 import { Mean } from "./Mean"
-import { map } from "./Object"
+import { fromEntries, map } from "./Object"
 import { Rate } from "./Rate"
 import { Task } from "./Task"
 
@@ -63,7 +63,7 @@ export class BatchCluster extends BatchClusterEmitter {
   private _spawnedProcs = 0
   private endPromise?: Deferred<void>
   private _internalErrorCount = 0
-  private readonly childEndCounts = new Map<WhyNotReady, number>()
+  private readonly _childEndCounts = new Map<WhyNotReady, number>()
 
   constructor(
     opts: Partial<BatchClusterOptions> &
@@ -160,7 +160,7 @@ export class BatchCluster extends BatchClusterEmitter {
    * @return true if all previously-enqueued tasks have settled
    */
   get isIdle(): boolean {
-    return this.tasks.length === 0 && this.busyProcCount === 0
+    return this.pendingTaskCount === 0 && this.busyProcCount === 0
   }
 
   /**
@@ -263,7 +263,11 @@ export class BatchCluster extends BatchClusterEmitter {
    * Get ended process counts (used for tests)
    */
   countEndedChildProcs(why: WhyNotReady): number {
-    return this.childEndCounts.get(why) ?? 0
+    return this._childEndCounts.get(why) ?? 0
+  }
+
+  get childEndCounts(): { [key in NonNullable<WhyNotReady>]: number } {
+    return fromEntries([...this._childEndCounts.entries()])
   }
 
   /**
@@ -307,12 +311,12 @@ export class BatchCluster extends BatchClusterEmitter {
   private vacuumProcs() {
     this.maybeCheckPids()
     filterInPlace(this._procs, (proc) => {
-      // Only idle procs are eligible for deletion:
-      if (!proc.idle) return true
+      // Don't bother running procs:
+      if (!proc.ending && !proc.idle) return true
 
-      const why = proc.whyNotHealthy
+      const why = proc.whyNotHealthy // NOT whyNotReady: we don't care about busy procs
       if (why != null) {
-        this.childEndCounts.set(why, 1 + this.countEndedChildProcs(why))
+        this._childEndCounts.set(why, 1 + this.countEndedChildProcs(why))
         void proc.end(true, why)
       }
       return why == null

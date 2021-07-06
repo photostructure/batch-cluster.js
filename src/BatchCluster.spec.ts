@@ -102,14 +102,14 @@ describe("BatchCluster", function () {
     const isShutdown = await until(
       async (count) => {
         const isIdle = bc.isIdle
+        // If bc has been told to shut down, it won't ever finish any pending commands.
         const pendingCommands = bc.pendingTasks.map((ea) => ea.command)
         const runningCommands = bc.currentTasks.map((ea) => ea.command)
         const busyProcCount = bc.busyProcCount
         const pids = await bc.pids()
         const livingPids = await currentTestPids()
+
         const done =
-          isIdle &&
-          pendingCommands.length === 0 &&
           runningCommands.length === 0 &&
           busyProcCount === 0 &&
           pids.length === 0 &&
@@ -138,6 +138,10 @@ describe("BatchCluster", function () {
     )
     if (!endPromiseResolved || !isShutdown) {
       console.warn("shutdown()", { isShutdown, endPromiseResolved })
+    }
+    const cec = bc.childEndCounts
+    if (Object.keys(cec).length > 0) {
+      console.log("childEndCounts", cec)
     }
     expect(isShutdown).to.eql(true)
     expect(endPromiseResolved).to.eql(true)

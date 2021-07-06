@@ -20,3 +20,13 @@ export function orElse<T>(obj: T | undefined, defaultValue: T | (() => T)): T {
     ? defaultValue()
     : defaultValue
 }
+
+export function fromEntries(arr: [string | undefined, any][]) {
+  const o: any = {}
+  for (const [key, value] of arr) {
+    if (key != null) {
+      o[key] = value
+    }
+  }
+  return o
+}

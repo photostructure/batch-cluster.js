@@ -30,8 +30,11 @@ See [Semver](http://semver.org/).
 - ✨ Added support for "health checks" that run periodically on child processes.
   Both `healthCheckCommand` and `healthCheckIntervalMillis` must be set to
   enable this feature.
+
 - ✨ New `pidCheckIntervalMillis` to verify internal child process state is kept
   in sync with the process table. Defaults to every 2 minutes. Will no-op if idle.
+
+- ✨ New `BatchCluster.childEndCounts` to report why child processes were recycled (currently "dead" | "ending" | "closed" | "worn" | "idle" | "broken" | "old" | "timeout" )
 
 - 📦 Cleaned up scheduling: the prior implementation generated a bunch of
   `Promise`s per idle period, which was rough on the GC. Use of `Mutex` is now

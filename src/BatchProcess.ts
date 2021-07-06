@@ -34,7 +34,7 @@ export class BatchProcess {
 
   private _taskCount = -1 // don't count the startupTask
 
-  private ending = false
+  private _ending = false
   /**
    * Supports non-polling notification of process exit
    */
@@ -101,6 +101,15 @@ export class BatchProcess {
   get taskCount(): number {
     return this._taskCount
   }
+  /**
+   * @return {boolean} true if `this.end()` has been requested or the child process has exited.
+   */
+  get ending(): boolean {
+    return this._ending
+  }
+  /**
+   * @return true if the child process has exited and is no longer in the process table.
+   */
   get exited(): boolean {
     return this.resolvedOnExit.settled
   }
@@ -111,7 +120,7 @@ export class BatchProcess {
   get whyNotHealthy() {
     if (this.exited) {
       return "dead"
-    } else if (this.ending) {
+    } else if (this._ending) {
       return "ending"
     } else if (this.proc.stdin == null || this.proc.stdin.destroyed) {
       return "closed"
@@ -161,7 +170,7 @@ export class BatchProcess {
   }
 
   get idle(): boolean {
-    return this.dead || this._currentTask == null
+    return this._currentTask == null
   }
 
   get idleMs(): number {
@@ -173,13 +182,14 @@ export class BatchProcess {
    */
   async running(): Promise<boolean> {
     if (this.dead) {
+      // this.dead is only set if the process table has said we're dead.
       return false
     } else {
       const alive = await pidExists(this.pid)
       if (!alive) {
         // once a PID leaves the process table, it's gone for good:
         this.dead = true
-        this.ending = true
+        this._ending = true
         this.resolvedOnExit.resolve()
       }
       return alive
@@ -298,10 +308,10 @@ export class BatchProcess {
    */
   // NOT ASYNC! needs to change state immediately.
   end(gracefully = true, source: string) {
-    if (this.ending) {
+    if (this._ending) {
       return undefined
     } else {
-      this.ending = true
+      this._ending = true
       return this._end(gracefully, source)
     }
   }
@@ -387,7 +397,7 @@ export class BatchProcess {
   }
 
   private onError(source: string, _error: Error, task?: Task) {
-    if (this.ending) {
+    if (this._ending) {
       // We're ending already, so don't propagate the error.
       // This is expected due to race conditions stdin EPIPE and process shutdown.
       this.logger().debug(
@@ -452,7 +462,7 @@ export class BatchProcess {
     if (task != null && task.pending) {
       task.onStderr(data)
       this.onData(task)
-    } else if (!this.ending) {
+    } else if (!this._ending) {
       // If we're ending and there isn't a task, don't worry about it.
       // Otherwise:
       this.observer.onInternalError(
@@ -471,7 +481,7 @@ export class BatchProcess {
       this.observer.onTaskData(data, task)
       task.onStdout(data)
       this.onData(task)
-    } else if (!this.ending) {
+    } else if (!this._ending) {
       // If we're ending and there isn't a task, don't worry about it.
       // Otherwise:
       this.observer.onInternalError(
