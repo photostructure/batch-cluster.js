@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import * as _p from "process"
+import { env, exit, on, pid, stdout } from "process"
 import { delay } from "./Async"
 import { Mutex } from "./Mutex"
 
@@ -10,32 +10,32 @@ import { Mutex } from "./Mutex"
  * The complexity comes from introducing predictable flakiness.
  */
 
-const newline = _p.env.newline === "crlf" ? "\r\n" : "\n"
+const newline = env.newline === "crlf" ? "\r\n" : "\n"
 
 function write(s: string): boolean {
-  return _p.stdout.write(s + newline)
+  return stdout.write(s + newline)
 }
 
-const ignoreExit = _p.env.ignoreExit === "1"
+const ignoreExit = env.ignoreExit === "1"
 
 if (ignoreExit) {
-  _p.on("SIGINT", () => {
+  on("SIGINT", () => {
     write("ignoring SIGINT")
   })
-  _p.on("SIGTERM", () => {
+  on("SIGTERM", () => {
     write("ignoring SIGTERM")
   })
 }
 
-const failrate = _p.env.failrate == null ? 0 : parseFloat(_p.env.failrate)
+const failrate = env.failrate == null ? 0 : parseFloat(env.failrate)
 const rng =
-  _p.env.rngseed != null ? require("seedrandom")(_p.env.rngseed) : Math.random
+  env.rngseed != null ? require("seedrandom")(env.rngseed) : Math.random
 
 async function onLine(line: string): Promise<void> {
-  // write(`# ${_p.pid} onLine(${line.trim()}) (newline = ${_p.env.newline})`)
+  // write(`# ${_p.pid} onLine(${line.trim()}) (newline = ${env.newline})`)
   const r = rng()
   if (r < failrate) {
-    if (_p.env.unluckyfail === "1") {
+    if (env.unluckyfail === "1") {
       // Make sure streams get debounced:
       write("FAIL")
       await delay(1)
@@ -46,7 +46,7 @@ async function onLine(line: string): Promise<void> {
         ", failrate: " +
         failrate.toFixed(2) +
         ", seed: " +
-        _p.env.rngseed
+        env.rngseed
     )
 
     return
@@ -95,7 +95,7 @@ async function onLine(line: string): Promise<void> {
       case "sleep": {
         const millis = parseInt(tokens[0])
         await delay(millis)
-        write(JSON.stringify({ slept: millis, pid: _p.pid }))
+        write(JSON.stringify({ slept: millis, pid }))
         write("PASS")
         break
       }
@@ -110,8 +110,7 @@ async function onLine(line: string): Promise<void> {
         if (ignoreExit) {
           write("ignoreExit is set")
         } else {
-          // eslint-disable-next-line no-process-exit
-          process.exit(0)
+          exit(0)
         }
         break
       }
