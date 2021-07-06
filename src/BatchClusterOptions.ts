@@ -15,7 +15,7 @@ export class BatchClusterOptions {
    *
    * Defaults to 1.
    */
-  readonly maxProcs: number = 1
+  maxProcs = 1
 
   /**
    * Child processes will be recycled when they reach this age.
@@ -27,7 +27,7 @@ export class BatchClusterOptions {
    *
    * Defaults to 5 minutes.
    */
-  readonly maxProcAgeMillis: number = 5 * 60 * 1000
+  maxProcAgeMillis = 5 * 60 * 1000
 
   /**
    * This is the minimum interval between calls to `this.onIdle`, which
@@ -35,7 +35,7 @@ export class BatchClusterOptions {
    *
    * Must be &gt; 0. Defaults to 5 seconds.
    */
-  readonly onIdleIntervalMillis: number = 5000
+  onIdleIntervalMillis = 5000
 
   /**
    * If the initial `versionCommand` fails for new spawned processes more
@@ -47,18 +47,17 @@ export class BatchClusterOptions {
    *
    * Must be &gt;= 0. Defaults to 10.
    */
-  readonly maxReasonableProcessFailuresPerMinute: number = 10
+  maxReasonableProcessFailuresPerMinute = 10
 
   /**
-   * Spawning new child processes and servicing a "version" task must not
-   * take longer than `spawnTimeoutMillis` before the process is considered
-   * failed, and need to be restarted. Be pessimistic here--windows can
-   * regularly take several seconds to spin up a process, thanks to
-   * antivirus shenanigans.
+   * Spawning new child processes and servicing a "version" task must not take
+   * longer than `spawnTimeoutMillis` before the process is considered failed,
+   * and need to be restarted. Be pessimistic here--windows can regularly take
+   * several seconds to spin up a process, thanks to antivirus shenanigans.
    *
    * Must be &gt;= 100ms. Defaults to 15 seconds.
    */
-  readonly spawnTimeoutMillis: number = 15000
+  spawnTimeoutMillis = 15000
 
   /**
    * If maxProcs &gt; 1, spawning new child processes to process tasks can slow
@@ -66,7 +65,7 @@ export class BatchClusterOptions {
    *
    * Must be &gt;= 0ms. Defaults to 1.5 seconds.
    */
-  readonly minDelayBetweenSpawnMillis: number = 1500
+  minDelayBetweenSpawnMillis = 1500
 
   /**
    * If commands take longer than this, presume the underlying process is dead
@@ -76,31 +75,31 @@ export class BatchClusterOptions {
    *
    * Must be &gt;= 10ms. Defaults to 10 seconds.
    */
-  readonly taskTimeoutMillis: number = 10000
+  taskTimeoutMillis = 10000
 
   /**
-   * Processes will be recycled after processing `maxTasksPerProcess`
-   * tasks. Depending on the commands and platform, batch mode commands
-   * shouldn't exhibit unduly memory leaks for at least tens if not
-   * hundreds of tasks. Setting this to a low number (like less than 10)
-   * will impact performance markedly, due to OS process start/stop
-   * maintenance. Setting this to a very high number (> 1000) may result in
-   * more memory being consumed than necessary.
+   * Processes will be recycled after processing `maxTasksPerProcess` tasks.
+   * Depending on the commands and platform, batch mode commands shouldn't
+   * exhibit unduly memory leaks for at least tens if not hundreds of tasks.
+   * Setting this to a low number (like less than 10) will impact performance
+   * markedly, due to OS process start/stop maintenance. Setting this to a very
+   * high number (> 1000) may result in more memory being consumed than
+   * necessary.
    *
    * Must be &gt;= 0. Defaults to 500
    */
-  readonly maxTasksPerProcess: number = 500
+  maxTasksPerProcess = 500
 
   /**
-   * When `this.end()` is called, or Node broadcasts the `beforeExit`
-   * event, this is the milliseconds spent waiting for currently running
-   * tasks to finish before sending kill signals to child processes.
+   * When `this.end()` is called, or Node broadcasts the `beforeExit` event,
+   * this is the milliseconds spent waiting for currently running tasks to
+   * finish before sending kill signals to child processes.
    *
-   * Setting this value to 0 means child processes will immediately receive
-   * a kill signal to shut down. Any pending requests may be interrupted.
-   * Must be &gt;= 0. Defaults to 500ms.
+   * Setting this value to 0 means child processes will immediately receive a
+   * kill signal to shut down. Any pending requests may be interrupted. Must be
+   * &gt;= 0. Defaults to 500ms.
    */
-  readonly endGracefulWaitTimeMillis: number = 500
+  endGracefulWaitTimeMillis = 500
 
   /**
    * When a task sees a "pass" or "fail" from either stdout or stderr, it needs
@@ -114,7 +113,7 @@ export class BatchClusterOptions {
    *
    * Defaults to 10ms.
    */
-  readonly streamFlushMillis: number = 10
+  streamFlushMillis = 10
 
   /**
    * Should batch-cluster try to clean up after spawned processes that don't
@@ -124,7 +123,7 @@ export class BatchClusterOptions {
    *
    * Defaults to `true`.
    */
-  readonly cleanupChildProcs: boolean = true
+  cleanupChildProcs = true
 
   /**
    * If a child process is idle for more than this value (in milliseconds), shut
@@ -133,13 +132,29 @@ export class BatchClusterOptions {
    * A value of ~10 seconds to a couple minutes would be reasonable. Set this to
    * 0 to disable this feature.
    */
-  readonly maxIdleMsPerProcess: number = 0
+  maxIdleMsPerProcess = 0
+
+  /**
+   * How many failed tasks should a process be allowed to process before it is
+   * recycled?
+   *
+   * Set this to 0 to disable this feature.
+   */
+  maxFailedTasksPerProcess = 2
+
+  /**
+   * If `healthCheckCommand` is set, how frequently should we check for
+   * unhealthy child processes?
+   *
+   * Set this to 0 to disable this feature.
+   */
+  healthCheckIntervalMillis = 0
 
   /**
    * A BatchCluster instance and associated BatchProcess instances will share
    * this `Logger`. Defaults to the `Logger` instance provided to `setLogger()`.
    */
-  readonly logger: () => Logger = logger
+  logger: () => Logger = logger
 }
 
 export type AllOpts = BatchClusterOptions &
@@ -190,7 +205,7 @@ export function verifyOptions(
       Math.max(result.spawnTimeoutMillis, result.taskTimeoutMillis)
     )
   }
-  gte("minDelayBetweenSpawnMillis", 0)
+  gte("minDelayBetweenSpawnMillis", 1)
   gte("onIdleIntervalMillis", 0)
   gte("endGracefulWaitTimeMillis", 0)
   gte("maxReasonableProcessFailuresPerMinute", 0)

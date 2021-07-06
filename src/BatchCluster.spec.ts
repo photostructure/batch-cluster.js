@@ -166,206 +166,215 @@ describe("BatchCluster", function () {
   for (const newline of newlines) {
     for (const maxProcs of [1, 4]) {
       for (const ignoreExit of [false, true]) {
-        describe(
-          inspect(
-            { newline, maxProcs, ignoreExit },
-            { colors: true, breakLength: 100 }
-          ),
-          function () {
-            let bc: BatchCluster
-            const opts = {
-              ...DefaultOpts,
-              maxProcs,
-            }
+        for (const healthcheck of [false, true]) {
+          describe(
+            inspect(
+              { newline, maxProcs, ignoreExit, healthcheck },
+              { colors: true, breakLength: 100 }
+            ),
+            function () {
+              let bc: BatchCluster
+              const opts: any = {
+                ...DefaultOpts,
+                maxProcs,
+              }
 
-            // failrate needs to be high enough to trigger but low enough to allow
-            // retries to succeed.
+              if (healthcheck) {
+                opts.healthCheckIntervalMillis = 50
+                opts.healthCheckCommand = "flaky"
+              }
 
-            beforeEach(function () {
-              this.retries(2)
-              setNewline(newline as any)
-              setIgnoreExit(ignoreExit)
-              bc = listen(new BatchCluster({ ...opts, processFactory }))
-              procs.length = 0
-            })
+              // failrate needs to be high enough to trigger but low enough to allow
+              // retries to succeed.
 
-            afterEach(async () => {
-              await shutdown(bc)
-              expect(bc.internalErrorCount).to.eql(0)
-              return
-            })
+              beforeEach(function () {
+                this.retries(2)
+                setNewline(newline as any)
+                setIgnoreExit(ignoreExit)
+                bc = listen(new BatchCluster({ ...opts, processFactory }))
+                procs.length = 0
+              })
 
-            it("calling .end() when new no-ops", async () => {
-              await bc.end()
-              expect(bc.ended).to.eql(true)
-              expect(bc.isIdle).to.eql(true)
-              expect((await bc.pids()).length).to.eql(0)
-              expect(bc.spawnedProcs).to.eql(0)
-              expect(events.events).to.eql(expectedEndEvents)
-              expect(testPids()).to.eql([])
-              expect(events.startedPids).to.eql([])
-              expect(events.exittedPids).to.eql([])
-              return
-            })
-
-            it("calling .end() after running shuts down child procs", async () => {
-              // This just warms up bc to make child procs:
-              const iterations = maxProcs * 2
-              setFailrate(25) // 25%
-
-              const tasks = await Promise.all(runTasks(bc, iterations))
-              assertExpectedResults(tasks)
-              await shutdown(bc)
-              expect(bc.spawnedProcs).to.be.within(maxProcs, iterations + 1)
-              const pids = sortNumeric(testPids())
-              expect(pids.length).to.be.gte(maxProcs)
-              expect(sortNumeric(events.startedPids)).to.eql(pids)
-              expect(sortNumeric(events.exittedPids)).to.eql(pids)
-              expect(events.events).to.eql(expectedEndEvents)
-              return
-            })
-
-            it(
-              "runs a given batch process roughly " +
-                opts.maxTasksPerProcess +
-                " before recycling",
-              async () => {
-                // make sure we hit an EUNLUCKY:
-                setFailrate(50) // 50%
-                let expectedResultCount = 0
-                const results = await Promise.all(runTasks(bc, maxProcs))
-                expectedResultCount += maxProcs
-                const pids = await bc.pids()
-                const iters = Math.floor(
-                  maxProcs * opts.maxTasksPerProcess * 1.5
-                )
-                results.push(
-                  ...(await Promise.all(
-                    runTasks(bc, iters, expectedResultCount)
-                  ))
-                )
-                expectedResultCount += iters
-                assertExpectedResults(results)
-                expect(results.length).to.eql(expectedResultCount)
-                // And expect some errors:
-                const errorResults = results.filter((ea) =>
-                  ea.startsWith(ErrorPrefix)
-                )
-                expect(errorResults).to.not.eql([])
-
-                // Expect a reasonable number of new pids. Worst case, we
-                // errored after every start, so there may be more then iters
-                // pids spawned.
-                expect(procs.length).to.eql(bc.spawnedProcs)
-                expect(bc.spawnedProcs).to.be.within(
-                  results.length / opts.maxTasksPerProcess,
-                  results.length
-                )
-
-                // Expect no prior pids to remain, as long as there were before-pids:
-                if (pids.length > 0)
-                  expect(await bc.pids()).to.not.include.members(pids)
-
-                expect(bc.spawnedProcs).to.be.within(maxProcs, results.length)
-                expect(bc.meanTasksPerProc).to.be.within(
-                  0.5, // because flaky
-                  opts.maxTasksPerProcess
-                )
-                expect((await bc.pids()).length).to.be.lte(maxProcs)
-                expect((await currentTestPids()).length).to.be.lte(
-                  bc.spawnedProcs
-                ) // because flaky
+              afterEach(async () => {
                 await shutdown(bc)
+                expect(bc.internalErrorCount).to.eql(0)
                 return
-              }
-            )
+              })
 
-            it("recovers from invalid commands", async () => {
-              assertExpectedResults(
-                await Promise.all(runTasks(bc, maxProcs * 4))
+              it("calling .end() when new no-ops", async () => {
+                await bc.end()
+                expect(bc.ended).to.eql(true)
+                expect(bc.isIdle).to.eql(true)
+                expect((await bc.pids()).length).to.eql(0)
+                expect(bc.spawnedProcs).to.eql(0)
+                expect(events.events).to.eql(expectedEndEvents)
+                expect(testPids()).to.eql([])
+                expect(events.startedPids).to.eql([])
+                expect(events.exittedPids).to.eql([])
+                return
+              })
+
+              it("calling .end() after running shuts down child procs", async () => {
+                // This just warms up bc to make child procs:
+                const iterations = maxProcs * 2
+                setFailrate(25) // 25%
+
+                const tasks = await Promise.all(runTasks(bc, iterations))
+                assertExpectedResults(tasks)
+                await shutdown(bc)
+                expect(bc.spawnedProcs).to.be.within(maxProcs, iterations + 1)
+                const pids = sortNumeric(testPids())
+                expect(pids.length).to.be.gte(maxProcs)
+                expect(sortNumeric(events.startedPids)).to.eql(pids)
+                expect(sortNumeric(events.exittedPids)).to.eql(pids)
+                expect(events.events).to.eql(expectedEndEvents)
+                return
+              })
+
+              it(
+                "runs a given batch process roughly " +
+                  opts.maxTasksPerProcess +
+                  " before recycling",
+                async () => {
+                  // make sure we hit an EUNLUCKY:
+                  setFailrate(50) // 50%
+                  let expectedResultCount = 0
+                  const results = await Promise.all(runTasks(bc, maxProcs))
+                  expectedResultCount += maxProcs
+                  const pids = await bc.pids()
+                  const iters = Math.floor(
+                    maxProcs * opts.maxTasksPerProcess * 1.5
+                  )
+                  results.push(
+                    ...(await Promise.all(
+                      runTasks(bc, iters, expectedResultCount)
+                    ))
+                  )
+                  expectedResultCount += iters
+                  assertExpectedResults(results)
+                  expect(results.length).to.eql(expectedResultCount)
+                  // And expect some errors:
+                  const errorResults = results.filter((ea) =>
+                    ea.startsWith(ErrorPrefix)
+                  )
+                  expect(errorResults).to.not.eql([])
+
+                  // Expect a reasonable number of new pids. Worst case, we
+                  // errored after every start, so there may be more then iters
+                  // pids spawned.
+                  expect(procs.length).to.eql(bc.spawnedProcs)
+                  expect(bc.spawnedProcs).to.be.within(
+                    results.length / opts.maxTasksPerProcess,
+                    results.length
+                  )
+
+                  // Expect no prior pids to remain, as long as there were before-pids:
+                  if (pids.length > 0)
+                    expect(await bc.pids()).to.not.include.members(pids)
+
+                  expect(bc.spawnedProcs).to.be.within(maxProcs, results.length)
+                  expect(bc.meanTasksPerProc).to.be.within(
+                    0.5, // because flaky
+                    opts.maxTasksPerProcess
+                  )
+                  expect((await bc.pids()).length).to.be.lte(maxProcs)
+                  expect((await currentTestPids()).length).to.be.lte(
+                    bc.spawnedProcs
+                  ) // because flaky
+                  await shutdown(bc)
+                  return
+                }
               )
-              const errorResults = await Promise.all(
-                times(maxProcs * 2, () =>
-                  bc
-                    .enqueueTask(new Task("nonsense", parser))
-                    .catch((err) => err)
+
+              it("recovers from invalid commands", async () => {
+                assertExpectedResults(
+                  await Promise.all(runTasks(bc, maxProcs * 4))
                 )
-              )
-              expect(
-                errorResults.some((ea) => String(ea).includes("nonsense"))
-              ).to.eql(true, JSON.stringify(errorResults))
-              expect(parserErrors.some((ea) => ea.includes("nonsense"))).to.eql(
-                true,
-                JSON.stringify(parserErrors)
-              )
-              parserErrors.length = 0
-              // BC should recover:
-              assertExpectedResults(
-                await Promise.all(runTasks(bc, maxProcs * 4))
-              )
-              return
-            })
-
-            it("times out slow requests", async () => {
-              const task = new Task(
-                "sleep " + (opts.taskTimeoutMillis + 250), // < make sure it times out
-                parser
-              )
-              return expect(bc.enqueueTask(task)).to.eventually.be.rejectedWith(
-                /timeout|EUNLUCKY/
-              )
-            })
-
-            it("accepts single and multi-line responses", async () => {
-              setFailrate(0)
-              const expected: string[] = []
-              const results = await Promise.all(
-                times(15, (idx) => {
-                  // Make a distribution of single, double, and triple line outputs:
-                  const worlds = times(idx % 3, (ea) => "world " + ea)
-                  expected.push(
-                    [idx + " HELLO", ...worlds].join("\n").toUpperCase()
+                const errorResults = await Promise.all(
+                  times(maxProcs * 2, () =>
+                    bc
+                      .enqueueTask(new Task("nonsense", parser))
+                      .catch((err) => err)
                   )
-                  const cmd = ["upcase " + idx + " hello", ...worlds].join(
-                    "<br>"
-                  )
-                  return bc.enqueueTask(new Task(cmd, parser))
-                })
-              )
-              expect(results).to.eql(expected)
-              return
-            })
+                )
+                expect(
+                  errorResults.some((ea) => String(ea).includes("nonsense"))
+                ).to.eql(true, JSON.stringify(errorResults))
+                expect(
+                  parserErrors.some((ea) => ea.includes("nonsense"))
+                ).to.eql(true, JSON.stringify(parserErrors))
+                parserErrors.length = 0
+                // BC should recover:
+                assertExpectedResults(
+                  await Promise.all(runTasks(bc, maxProcs * 4))
+                )
+                return
+              })
 
-            it("rejects a command that results in FAIL", async function () {
-              const task = new Task("invalid command", parser)
-              let error: Error | undefined
-              let result = ""
-              try {
-                result = await bc.enqueueTask(task)
-              } catch (err) {
-                error = err
-              }
-              expect(String(error)).to.match(/invalid command|UNLUCKY/, result)
-              return
-            })
+              it("times out slow requests", async () => {
+                const task = new Task(
+                  "sleep " + (opts.taskTimeoutMillis + 250), // < make sure it times out
+                  parser
+                )
+                return expect(
+                  bc.enqueueTask(task)
+                ).to.eventually.be.rejectedWith(/timeout|EUNLUCKY/)
+              })
 
-            it("rejects a command that emits to stderr", async function () {
-              const task = new Task("stderr omg this should fail", parser)
-              let error: Error | undefined
-              let result = ""
-              try {
-                result = await bc.enqueueTask(task)
-              } catch (err) {
-                error = err
-              }
-              expect(String(error)).to.match(
-                /omg this should fail|UNLUCKY/,
-                result
-              )
-              return
-            })
-          }
-        )
+              it("accepts single and multi-line responses", async () => {
+                setFailrate(0)
+                const expected: string[] = []
+                const results = await Promise.all(
+                  times(15, (idx) => {
+                    // Make a distribution of single, double, and triple line outputs:
+                    const worlds = times(idx % 3, (ea) => "world " + ea)
+                    expected.push(
+                      [idx + " HELLO", ...worlds].join("\n").toUpperCase()
+                    )
+                    const cmd = ["upcase " + idx + " hello", ...worlds].join(
+                      "<br>"
+                    )
+                    return bc.enqueueTask(new Task(cmd, parser))
+                  })
+                )
+                expect(results).to.eql(expected)
+                return
+              })
+
+              it("rejects a command that results in FAIL", async function () {
+                const task = new Task("invalid command", parser)
+                let error: Error | undefined
+                let result = ""
+                try {
+                  result = await bc.enqueueTask(task)
+                } catch (err) {
+                  error = err
+                }
+                expect(String(error)).to.match(
+                  /invalid command|UNLUCKY/,
+                  result
+                )
+                return
+              })
+
+              it("rejects a command that emits to stderr", async function () {
+                const task = new Task("stderr omg this should fail", parser)
+                let error: Error | undefined
+                let result = ""
+                try {
+                  result = await bc.enqueueTask(task)
+                } catch (err) {
+                  error = err
+                }
+                expect(String(error)).to.match(
+                  /omg this should fail|UNLUCKY/,
+                  result
+                )
+                return
+              })
+            }
+          )
+        }
       }
     }
   }

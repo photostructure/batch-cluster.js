@@ -31,13 +31,13 @@ export class BatchClusterEmitter {
    */
   on(
     event: "taskData",
-    listener: (data: Buffer | string, task: Task<any> | undefined) => void
+    listener: (data: Buffer | string, task: Task | undefined) => void
   ): void
 
   /**
    * Emitted when a task has an error
    */
-  on(event: "taskError", listener: (err: Error, task: Task<any>) => void): void
+  on(event: "taskError", listener: (err: Error, task: Task) => void): void
 
   /**
    * Emitted when a child process has an error during shutdown

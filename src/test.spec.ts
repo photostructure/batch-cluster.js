@@ -59,7 +59,7 @@ describe("test.js", () => {
           d.reject(err)
         }
       })
-      return d.promise
+      return d
     }
   }
 

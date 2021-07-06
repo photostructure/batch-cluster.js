@@ -17,7 +17,7 @@
     "rootDir": "./src", /* Specify the root directory of input files. Use to control the output directory structure with --outDir. */
     "pretty": true,
     "newLine": "LF",
-    "removeComments": true, /* emit comments to output. */
+    "removeComments": false, /* emit comments to output, including d.ts files (!!) */
     // "noEmit": true,                        /* Do not emit outputs. */
     // "importHelpers": true,                 /* Import emit helpers from 'tslib'. */
     "downlevelIteration": false, /* Provide full support for iterables in 'for-of', spread, and destructuring when targeting 'ES5' or 'ES3'. */

@@ -8,13 +8,12 @@ import {
   BatchClusterOptions,
   verifyOptions,
 } from "./BatchClusterOptions"
-import { BatchProcess } from "./BatchProcess"
+import { BatchProcess, WhyNotReady } from "./BatchProcess"
 import { BatchProcessObserver } from "./BatchProcessObserver"
 import { BatchProcessOptions } from "./BatchProcessOptions"
 import { Deferred } from "./Deferred"
 import { Logger } from "./Logger"
 import { Mean } from "./Mean"
-import { Mutex } from "./Mutex"
 import { map } from "./Object"
 import { pidExists } from "./Pids"
 import { Rate } from "./Rate"
@@ -51,7 +50,6 @@ export interface ChildProcessFactory {
  * child tasks can be verified and shut down.
  */
 export class BatchCluster extends BatchClusterEmitter {
-  private readonly m = new Mutex()
   private readonly _tasksPerProc: Mean = new Mean()
   private readonly logger: () => Logger
   readonly options: AllOpts
@@ -59,16 +57,13 @@ export class BatchCluster extends BatchClusterEmitter {
   private readonly _procs: BatchProcess[] = []
   private _lastUsedProcsIdx = 0
   private _lastSpawnedProcTime = 0
-  private readonly tasks: Task<any>[] = []
+  private readonly tasks: Task[] = []
   private onIdleInterval?: NodeJS.Timer
   private readonly startErrorRate = new Rate()
   private _spawnedProcs = 0
   private endPromise?: Deferred<void>
   private _internalErrorCount = 0
-  private readonly childEndCounts = new Map<
-    "old" | "worn" | "idle" | "broken",
-    number
-  >()
+  private readonly childEndCounts = new Map<WhyNotReady, number>()
 
   constructor(
     opts: Partial<BatchClusterOptions> &
@@ -86,12 +81,21 @@ export class BatchCluster extends BatchClusterEmitter {
     }
     this.logger = this.options.logger
     this.observer = {
-      onIdle: () => this.onIdle(),
-      onStartError: (err) => this.emitStartError(err),
-      onTaskData: (data: Buffer | string, task: Task<any> | undefined) =>
-        this.emitter.emit("taskData", data, task),
-      onTaskError: (err, task) => this.emitter.emit("taskError", err, task),
-      onInternalError: (err) => this.emitInternalError(err),
+      onIdle: () => {
+        this.onIdle()
+      },
+      onStartError: (err) => {
+        this.emitStartError(err)
+      },
+      onTaskData: (data, task) => {
+        this.emitter.emit("taskData", data, task)
+      },
+      onTaskError: (err, task, proc) => {
+        this.emitter.emit("taskError", err, task, proc)
+      },
+      onInternalError: (err) => {
+        this.emitInternalError(err)
+      },
     }
     _p.once("beforeExit", this.beforeExitListener)
     _p.once("exit", this.exitListener)
@@ -145,11 +149,10 @@ export class BatchCluster extends BatchClusterEmitter {
     }
     this.tasks.push(task)
     setImmediate(() => this.onIdle())
-    task.promise
-      .then(() => this.onIdle())
-      .catch(() => {
-        //
-      })
+    task.promise.then(
+      () => this.onIdle(),
+      () => null // < ignore errors in this promise chain.
+    )
     return task.promise
   }
 
@@ -193,10 +196,10 @@ export class BatchCluster extends BatchClusterEmitter {
   /**
    * @return the current running Tasks (mostly for testing)
    */
-  get currentTasks(): Task<any>[] {
+  get currentTasks(): Task[] {
     return this._procs
       .map((ea) => ea.currentTask)
-      .filter((ea) => ea != null) as Task<any>[]
+      .filter((ea) => ea != null) as Task[]
   }
 
   /**
@@ -249,7 +252,7 @@ export class BatchCluster extends BatchClusterEmitter {
   /**
    * Get ended process counts (used for tests)
    */
-  countEndedChildProcs(why: "old" | "worn" | "idle" | "broken"): number {
+  countEndedChildProcs(why: WhyNotReady): number {
     return this.childEndCounts.get(why) ?? 0
   }
 
@@ -261,20 +264,23 @@ export class BatchCluster extends BatchClusterEmitter {
     const procs = [...this._procs]
     this._procs.length = 0
     for (const proc of procs) {
-      await proc.end(gracefully, "BatchCluster.closeChildren()")
+      try {
+        await proc.end(gracefully, "BatchCluster.closeChildProcesses()")
+      } catch {
+        // ignore: make sure all procs are ended
+      }
     }
   }
 
-  // NOT ASYNC: updates internal state.
+  // NOT ASYNC: updates internal state:
   private onIdle() {
-    return this.m.runIfIdle(async () => {
-      this.vacuumProcs()
-      while (this.execNextTask()) {
-        //
-      }
-      // setImmediate because we currently have the mutex
-      if (this.tasks.length > 0) setImmediate(() => this.maybeLaunchNewChild())
-    })
+    this.vacuumProcs()
+    while (this.execNextTask()) {
+      //
+    }
+    if (this.tasks.length > 0) {
+      void this.maybeLaunchNewChild()
+    }
   }
 
   // NOT ASYNC: updates internal state.
@@ -283,34 +289,24 @@ export class BatchCluster extends BatchClusterEmitter {
       // Only idle procs are eligible for deletion:
       if (!proc.idle) return true
 
-      const old =
-        this.options.maxProcAgeMillis > 0 &&
-        proc.start + this.options.maxProcAgeMillis < Date.now()
-      const wornOut =
-        this.options.maxTasksPerProcess > 0 &&
-        proc.taskCount >= this.options.maxTasksPerProcess
-      const idle =
-        this.options.maxIdleMsPerProcess > 0 &&
-        proc.idleMs > this.options.maxIdleMsPerProcess
-      const broken = proc.exited
-      const reap = old || wornOut || idle || broken // # me
-      if (reap) {
-        const why = old ? "old" : wornOut ? "worn" : idle ? "idle" : "broken"
+      const why = proc.whyNotHealthy
+      if (why != null) {
         this.childEndCounts.set(why, 1 + this.countEndedChildProcs(why))
         void proc.end(true, why)
       }
-      return !reap
+      return why == null
     })
   }
 
   // NOT ASYNC: updates internal state.
-  private execNextTask() {
+  private execNextTask(): boolean {
     if (this.tasks.length === 0 || this.ended) return false
     const readyProc = rrFindResult(
       this._procs,
       this._lastUsedProcsIdx + 1,
       (ea) => ea.ready
     )
+    // no procs are idle and healthy :(
     if (readyProc == null) return false
 
     const task = this.tasks.shift()
@@ -323,44 +319,79 @@ export class BatchCluster extends BatchClusterEmitter {
 
     const submitted = readyProc.result.execTask(task)
     if (!submitted) {
-      void this.enqueueTask(task)
+      // This isn't an internal error: the proc may have needed to run a health
+      // check. Let's reschedule the task and try again:
+      this.tasks.push(task)
+      // We don't want to return false here (it'll stop the onIdle loop) unless
+      // we actually can't submit the task:
+      return this.execNextTask()
     }
     return submitted
   }
 
-  private readonly maybeLaunchNewChild = () =>
-    this.m.runIfIdle(async () => {
-      // Minimize start time system load. Only launch one new proc at a time
-      if (
-        this.ended ||
-        this.tasks.length === 0 ||
-        this._procs.length >= this.options.maxProcs ||
-        this._lastSpawnedProcTime >
-          Date.now() - this.options.minDelayBetweenSpawnMillis
-      ) {
+  private cannotLaunchNewChild(): boolean {
+    return (
+      this.ended ||
+      this.tasks.length === 0 ||
+      this._procs.length >= this.options.maxProcs ||
+      this._lastSpawnedProcTime >
+        Date.now() - this.options.minDelayBetweenSpawnMillis
+    )
+  }
+
+  // NOT ASYNC: updates internal state.
+  private maybeLaunchNewChild() {
+    if (this.cannotLaunchNewChild()) return
+
+    // prevent other runs:
+    this._lastSpawnedProcTime = Date.now()
+
+    void this._mayLaunchNewChild()
+  }
+
+  private async _mayLaunchNewChild() {
+    // don't check cannotLaunchNewChild() again here: it'll be true because we
+    // just set _lastSpawnedProcTime.
+
+    if (this.ended || this._procs.length >= this.options.maxProcs) return
+
+    try {
+      const child = await this.options.processFactory()
+      const pid = child.pid
+      if (pid == null) {
+        this.emitter.emit("childExit", child)
+        return
+      }
+      const proc = new BatchProcess(child, this.options, this.observer)
+
+      if (this.ended) {
+        void proc.end(false, "ended")
         return
       }
 
-      try {
-        this._lastSpawnedProcTime = Date.now()
-        const child = await this.options.processFactory()
-        const proc = new BatchProcess(child, this.options, this.observer)
-        if (this.ended) {
-          // This should only happen in tests.
-          void proc.end(false, "ended")
-        } else {
-          this._procs.push(proc)
-          this.emitter.emit("childStart", child)
-          void proc.exitedPromise.then(() => {
-            this._tasksPerProc.push(proc.taskCount)
-            this.emitter.emit("childExit", child)
-          })
-        }
-        this._spawnedProcs++
-        return proc
-      } catch (err) {
-        this.emitter.emit("startError", err)
-        return
+      // Bookkeeping (even if we need to shut down `proc`):
+      this._spawnedProcs++
+      this.emitter.emit("childStart", child)
+      void proc.exitPromise.then(() => {
+        this._tasksPerProc.push(proc.taskCount)
+        this.emitter.emit("childExit", child)
+      })
+
+      // Did we call _mayLaunchNewChild() a couple times in parallel?
+      if (this._procs.length >= this.options.maxProcs) {
+        // only vacuum if we're at the limit
+        this.vacuumProcs()
       }
-    })
+      if (this._procs.length >= this.options.maxProcs) {
+        void proc.end(false, "maxProcs")
+        return
+      } else {
+        this._procs.push(proc)
+        return proc
+      }
+    } catch (err) {
+      this.emitter.emit("startError", err)
+      return
+    }
+  }
 }

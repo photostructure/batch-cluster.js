@@ -15,7 +15,26 @@ See [Semver](http://semver.org/).
 ### The `PATCH` version is incremented for
 
 - 🐞 Backwards-compatible bug fixes
+
 - 📦 Minor packaging changes
+
+## v7.0.0
+
+- ✨ Added support for "health checks" that run periodically on child processes.
+  Both `healthCheckCommand` and `healthCheckIntervalMillis` must be set to
+  enable this feature.
+
+- 📦 Cleaned up scheduling: the prior implementation generated a bunch of
+  `Promise`s per idle period, which was rough on the GC. Use of `Mutex` is now
+  relegated to tests.
+
+- 📦 `tsconfig` now emits `ES2018` output and doesn't have `downlevelIteration`,
+  which reduces the size of the generated javascript, but requires contemporary
+  versions of Node.js.
+
+- 📦 `BatchClusterOptions` doesn't mark fields as `readonly` anymore
+
+- 📦 `Task` has a default type of `any` now.
 
 ## v6.2.1
 
