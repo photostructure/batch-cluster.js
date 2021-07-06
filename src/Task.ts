@@ -1,12 +1,16 @@
 import { Deferred } from "./Deferred"
 import { Parser } from "./Parser"
 
+let _taskId = 1
 /**
  * Tasks embody individual jobs given to the underlying child processes. Each
  * instance has a promise that will be resolved or rejected based on the
  * result of the task.
  */
-export class Task<T> {
+export class Task<T = any> {
+  readonly taskId = _taskId++
+  private startedAt?: number
+  private settledAt?: number
   private readonly d = new Deferred<T>()
   private _stdout = ""
   private _stderr = ""
@@ -38,8 +42,18 @@ export class Task<T> {
       : "rejected"
   }
 
+  onStart() {
+    this.startedAt = Date.now()
+  }
+
+  get runtimeMs() {
+    return this.startedAt == null
+      ? undefined
+      : (this.settledAt ?? Date.now()) - this.startedAt
+  }
+
   toString(): string {
-    return this.constructor.name + "(" + this.command + ")"
+    return this.constructor.name + "(" + this.command + ")#" + this.taskId
   }
 
   onStdout(buf: string | Buffer): void {
@@ -60,7 +74,11 @@ export class Task<T> {
 
   /**
    * This is for use by `BatchProcess` only, and will only be called when the
-   * process is complete for this task's command
+   * process is complete for this task's command.
+   *
+   * We don't use this.stdout or this.stderr because BatchProcess is in charge
+   * of stream debouncing, and applying the passRE and failRE patterns to decide
+   * if a task passed or failed.
    */
   async resolve(
     stdout: string,
@@ -69,18 +87,18 @@ export class Task<T> {
   ): Promise<void> {
     try {
       const parseResult = await this.parser(stdout, stderr, passed)
-      this.d.resolve(parseResult)
+      if (this.d.resolve(parseResult)) {
+        this.settledAt = Date.now()
+      }
     } catch (error) {
       this.reject(error)
     }
     return
   }
 
-  /**
-   * This is for use by `BatchProcess` only, and will only be called when the
-   * process has errorred after N retries
-   */
   reject(error: Error): void {
-    this.d.reject(error)
+    if (this.d.reject(error)) {
+      this.settledAt = Date.now()
+    }
   }
 }
