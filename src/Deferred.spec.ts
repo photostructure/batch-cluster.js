@@ -16,7 +16,7 @@ describe("Deferred", () => {
     expect(d.pending).to.eql(false)
     expect(d.fulfilled).to.eql(true)
     expect(d.rejected).to.eql(false)
-    return expect(d.promise).to.become(expected)
+    return expect(d).to.become(expected)
   })
 
   it("rejects out of pending", () => {
@@ -25,7 +25,7 @@ describe("Deferred", () => {
     expect(d.pending).to.eql(false)
     expect(d.fulfilled).to.eql(false)
     expect(d.rejected).to.eql(true)
-    return expect(d.promise).to.eventually.be.rejectedWith(/boom/)
+    return expect(d).to.eventually.be.rejectedWith(/boom/)
   })
 
   it("resolved ignores subsequent resolutions", () => {
@@ -35,7 +35,7 @@ describe("Deferred", () => {
     expect(d.pending).to.eql(false)
     expect(d.fulfilled).to.eql(true)
     expect(d.rejected).to.eql(false)
-    return expect(d.promise).to.become(123)
+    return expect(d).to.become(123)
   })
 
   it("resolved ignores subsequent rejections", () => {
@@ -45,20 +45,20 @@ describe("Deferred", () => {
     expect(d.pending).to.eql(false)
     expect(d.fulfilled).to.eql(true)
     expect(d.rejected).to.eql(false)
-    return expect(d.promise).to.become(123)
+    return expect(d).to.become(123)
   })
 
   it("rejected ignores subsequent resolutions", () => {
     const d = new Deferred<number>()
     expect(d.reject("first boom")).to.eql(true)
     expect(d.resolve(456)).to.eql(false)
-    return expect(d.promise).to.eventually.be.rejectedWith(/first boom/)
+    return expect(d).to.eventually.be.rejectedWith(/first boom/)
   })
 
   it("rejected ignores subsequent rejections", () => {
     const d = new Deferred<number>()
     expect(d.reject("first boom")).to.eql(true)
     expect(d.reject("second boom")).to.eql(false)
-    return expect(d.promise).to.eventually.be.rejectedWith(/first boom/)
+    return expect(d).to.eventually.be.rejectedWith(/first boom/)
   })
 })

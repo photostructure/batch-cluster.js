@@ -12,7 +12,8 @@ enum State {
  * the context of the Promise construction. Also exposes the `pending`,
  * `fulfilled`, or `rejected` state of the promise.
  */
-export class Deferred<T> implements PromiseLike<T> {
+export class Deferred<T> implements Promise<T> {
+  readonly [Symbol.toStringTag] = "Deferred"
   readonly promise: Promise<T>
   private _resolve!: (value: T | PromiseLike<T>) => void
   private _reject!: (reason?: any) => void
@@ -46,6 +47,10 @@ export class Deferred<T> implements PromiseLike<T> {
     return this.state === State.rejected
   }
 
+  get settled(): boolean {
+    return this.fulfilled || this.rejected
+  }
+
   then<TResult1 = T, TResult2 = never>(
     onfulfilled?:
       | ((value: T) => TResult1 | PromiseLike<TResult1>)
@@ -55,12 +60,25 @@ export class Deferred<T> implements PromiseLike<T> {
       | ((reason: any) => TResult2 | PromiseLike<TResult2>)
       | undefined
       | null
-  ): PromiseLike<TResult1 | TResult2> {
+  ): Promise<TResult1 | TResult2> {
     return this.promise.then(onfulfilled, onrejected)
   }
 
+  catch<TResult = never>(
+    onrejected?:
+      | ((reason: any) => TResult | PromiseLike<TResult>)
+      | undefined
+      | null
+  ): Promise<T | TResult> {
+    return this.promise.catch(onrejected)
+  }
+
+  finally(onfinally?: (() => void) | undefined | null): Promise<T> {
+    return this.promise.finally(onfinally)
+  }
+
   resolve(value: T): boolean {
-    if (!this.pending) {
+    if (this.settled) {
       return false
     } else {
       this.state = State.fulfilled
@@ -70,7 +88,7 @@ export class Deferred<T> implements PromiseLike<T> {
   }
 
   reject(reason?: Error | string): boolean {
-    if (!this.pending) {
+    if (this.settled) {
       return false
     } else {
       this.state = State.rejected
@@ -80,16 +98,28 @@ export class Deferred<T> implements PromiseLike<T> {
   }
 
   observe(p: Promise<T>): this {
-    p.then((resolution) => {
-      this.resolve(resolution)
-    }).catch((err) => {
-      this.reject(err)
-    })
+    void observe(this, p)
     return this
   }
 
   observeQuietly(p: Promise<T>): Deferred<T | undefined> {
-    p.then((ea) => this.resolve(ea)).catch(() => this.resolve(undefined as any))
+    void observeQuietly(this, p)
     return this as any
+  }
+}
+
+async function observe<T>(d: Deferred<T>, p: Promise<T>) {
+  try {
+    d.resolve(await p)
+  } catch (err) {
+    d.reject(err)
+  }
+}
+
+async function observeQuietly<T>(d: Deferred<T>, p: Promise<T>) {
+  try {
+    d.resolve(await p)
+  } catch {
+    d.resolve(undefined as any)
   }
 }
