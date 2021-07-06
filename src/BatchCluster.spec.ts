@@ -41,7 +41,7 @@ describe("BatchCluster", function () {
     spawnTimeoutMillis: 2000,
     taskTimeoutMillis: 200, // so the timeout test doesn't timeout
     maxReasonableProcessFailuresPerMinute: 2000, // this is so high because failrate is so high
-    minDelayBetweenSpawnMillis: 0,
+    minDelayBetweenSpawnMillis: 100,
     streamFlushMillis: 100, // ci is slow
   }
 
@@ -378,7 +378,7 @@ describe("BatchCluster", function () {
     afterEach(() => bc.end())
     ;[
       {
-        minDelayBetweenSpawnMillis: 0,
+        minDelayBetweenSpawnMillis: 100,
         expectTaskMin: 3,
         expectedTaskMax: 7,
         expectedProcsMin: maxProcs,
