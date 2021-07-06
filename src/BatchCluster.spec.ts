@@ -102,26 +102,32 @@ describe("BatchCluster", function () {
     const isShutdown = await until(
       async (count) => {
         const idle = bc.isIdle
+        const runningCommands = bc.currentTasks.map((ea) => ea.command)
         const pidCount = (await bc.pids()).length
         const livingPids = await currentTestPids()
-        const done = idle && pidCount === 0 && livingPids.length === 0
-        if (count > 0 && !done)
+        const done =
+          idle &&
+          pidCount === 0 &&
+          livingPids.length === 0 &&
+          runningCommands.length === 0
+        if (!done)
           console.log("shutdown(): waiting for end", {
             count,
             idle,
+            runningCommands,
             pidCount,
             livingPids,
           })
         return done
       },
       10_000, // < mac CI is slow
-      1_000 // < don't hammer tasklist/ps too hard
+      500 // < don't hammer tasklist/ps too hard
     )
     // This should immediately be true: we already waited for the processes to exit.
     const endPromiseResolved = await until(
       () => !endPromise.pending,
       10_000,
-      1_000
+      500
     )
     if (!endPromiseResolved || !isShutdown) {
       console.warn("shutdown()", { isShutdown, endPromiseResolved })
