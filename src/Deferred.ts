@@ -12,7 +12,7 @@ enum State {
  * the context of the Promise construction. Also exposes the `pending`,
  * `fulfilled`, or `rejected` state of the promise.
  */
-export class Deferred<T> implements Promise<T> {
+export class Deferred<T> implements PromiseLike<T> {
   readonly [Symbol.toStringTag] = "Deferred"
   readonly promise: Promise<T>
   private _resolve!: (value: T | PromiseLike<T>) => void
@@ -71,10 +71,6 @@ export class Deferred<T> implements Promise<T> {
       | null
   ): Promise<T | TResult> {
     return this.promise.catch(onrejected)
-  }
-
-  finally(onfinally?: (() => void) | undefined | null): Promise<T> {
-    return this.promise.finally(onfinally)
   }
 
   resolve(value: T): boolean {
