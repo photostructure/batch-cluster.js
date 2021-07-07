@@ -96,7 +96,9 @@
 							<ul class="tsd-index-list">
 								<li class="tsd-kind-property tsd-parent-kind-class"><a href="batchclusteroptions.html#cleanupchildprocs" class="tsd-kind-icon">cleanup<wbr>Child<wbr>Procs</a></li>
 								<li class="tsd-kind-property tsd-parent-kind-class"><a href="batchclusteroptions.html#endgracefulwaittimemillis" class="tsd-kind-icon">end<wbr>Graceful<wbr>Wait<wbr>Time<wbr>Millis</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-class"><a href="batchclusteroptions.html#healthcheckintervalmillis" class="tsd-kind-icon">health<wbr>Check<wbr>Interval<wbr>Millis</a></li>
 								<li class="tsd-kind-property tsd-parent-kind-class"><a href="batchclusteroptions.html#logger" class="tsd-kind-icon">logger</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-class"><a href="batchclusteroptions.html#maxfailedtasksperprocess" class="tsd-kind-icon">max<wbr>Failed<wbr>Tasks<wbr>Per<wbr>Process</a></li>
 								<li class="tsd-kind-property tsd-parent-kind-class"><a href="batchclusteroptions.html#maxidlemsperprocess" class="tsd-kind-icon">max<wbr>Idle<wbr>MsPer<wbr>Process</a></li>
 								<li class="tsd-kind-property tsd-parent-kind-class"><a href="batchclusteroptions.html#maxprocagemillis" class="tsd-kind-icon">max<wbr>Proc<wbr>Age<wbr>Millis</a></li>
 								<li class="tsd-kind-property tsd-parent-kind-class"><a href="batchclusteroptions.html#maxprocs" class="tsd-kind-icon">max<wbr>Procs</a></li>
@@ -104,6 +106,7 @@
 								<li class="tsd-kind-property tsd-parent-kind-class"><a href="batchclusteroptions.html#maxtasksperprocess" class="tsd-kind-icon">max<wbr>Tasks<wbr>Per<wbr>Process</a></li>
 								<li class="tsd-kind-property tsd-parent-kind-class"><a href="batchclusteroptions.html#mindelaybetweenspawnmillis" class="tsd-kind-icon">min<wbr>Delay<wbr>Between<wbr>Spawn<wbr>Millis</a></li>
 								<li class="tsd-kind-property tsd-parent-kind-class"><a href="batchclusteroptions.html#onidleintervalmillis" class="tsd-kind-icon">on<wbr>Idle<wbr>Interval<wbr>Millis</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-class"><a href="batchclusteroptions.html#pidcheckintervalmillis" class="tsd-kind-icon">pid<wbr>Check<wbr>Interval<wbr>Millis</a></li>
 								<li class="tsd-kind-property tsd-parent-kind-class"><a href="batchclusteroptions.html#spawntimeoutmillis" class="tsd-kind-icon">spawn<wbr>Timeout<wbr>Millis</a></li>
 								<li class="tsd-kind-property tsd-parent-kind-class"><a href="batchclusteroptions.html#streamflushmillis" class="tsd-kind-icon">stream<wbr>Flush<wbr>Millis</a></li>
 								<li class="tsd-kind-property tsd-parent-kind-class"><a href="batchclusteroptions.html#tasktimeoutmillis" class="tsd-kind-icon">task<wbr>Timeout<wbr>Millis</a></li>
@@ -133,11 +136,11 @@
 				<h2>Properties</h2>
 				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class">
 					<a name="cleanupchildprocs" class="tsd-anchor"></a>
-					<h3><span class="tsd-flag ts-flagReadonly">Readonly</span> cleanup<wbr>Child<wbr>Procs</h3>
+					<h3>cleanup<wbr>Child<wbr>Procs</h3>
 					<div class="tsd-signature tsd-kind-icon">cleanup<wbr>Child<wbr>Procs<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol"> = true</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/main/src/BatchClusterOptions.ts#L127">BatchClusterOptions.ts:127</a></li>
+							<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/main/src/BatchClusterOptions.ts#L129">BatchClusterOptions.ts:129</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-comment tsd-typography">
@@ -151,31 +154,48 @@
 				</section>
 				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class">
 					<a name="endgracefulwaittimemillis" class="tsd-anchor"></a>
-					<h3><span class="tsd-flag ts-flagReadonly">Readonly</span> end<wbr>Graceful<wbr>Wait<wbr>Time<wbr>Millis</h3>
+					<h3>end<wbr>Graceful<wbr>Wait<wbr>Time<wbr>Millis</h3>
 					<div class="tsd-signature tsd-kind-icon">end<wbr>Graceful<wbr>Wait<wbr>Time<wbr>Millis<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span><span class="tsd-signature-symbol"> = 500</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/main/src/BatchClusterOptions.ts#L103">BatchClusterOptions.ts:103</a></li>
+							<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/main/src/BatchClusterOptions.ts#L105">BatchClusterOptions.ts:105</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-comment tsd-typography">
 						<div class="lead">
-							<p>When <code>this.end()</code> is called, or Node broadcasts the <code>beforeExit</code>
-								event, this is the milliseconds spent waiting for currently running
-							tasks to finish before sending kill signals to child processes.</p>
+							<p>When <code>this.end()</code> is called, or Node broadcasts the <code>beforeExit</code> event,
+								this is the milliseconds spent waiting for currently running tasks to
+							finish before sending kill signals to child processes.</p>
 						</div>
-						<p>Setting this value to 0 means child processes will immediately receive
-							a kill signal to shut down. Any pending requests may be interrupted.
-						Must be &gt;= 0. Defaults to 500ms.</p>
+						<p>Setting this value to 0 means child processes will immediately receive a
+							kill signal to shut down. Any pending requests may be interrupted. Must be
+						&gt;= 0. Defaults to 500ms.</p>
+					</div>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class">
+					<a name="healthcheckintervalmillis" class="tsd-anchor"></a>
+					<h3>health<wbr>Check<wbr>Interval<wbr>Millis</h3>
+					<div class="tsd-signature tsd-kind-icon">health<wbr>Check<wbr>Interval<wbr>Millis<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span><span class="tsd-signature-symbol"> = 0</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/main/src/BatchClusterOptions.ts#L154">BatchClusterOptions.ts:154</a></li>
+						</ul>
+					</aside>
+					<div class="tsd-comment tsd-typography">
+						<div class="lead">
+							<p>If <code>healthCheckCommand</code> is set, how frequently should we check for
+							unhealthy child processes?</p>
+						</div>
+						<p>Set this to 0 to disable this feature.</p>
 					</div>
 				</section>
 				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class">
 					<a name="logger" class="tsd-anchor"></a>
-					<h3><span class="tsd-flag ts-flagReadonly">Readonly</span> logger</h3>
+					<h3>logger</h3>
 					<div class="tsd-signature tsd-kind-icon">logger<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol"> =&gt; </span><a href="../interfaces/logger.html" class="tsd-signature-type" data-tsd-kind="Interface">Logger</a><span class="tsd-signature-symbol"> = ...</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/main/src/BatchClusterOptions.ts#L142">BatchClusterOptions.ts:142</a></li>
+							<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/main/src/BatchClusterOptions.ts#L167">BatchClusterOptions.ts:167</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-type-declaration">
@@ -201,12 +221,29 @@
 					</div>
 				</section>
 				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class">
+					<a name="maxfailedtasksperprocess" class="tsd-anchor"></a>
+					<h3>max<wbr>Failed<wbr>Tasks<wbr>Per<wbr>Process</h3>
+					<div class="tsd-signature tsd-kind-icon">max<wbr>Failed<wbr>Tasks<wbr>Per<wbr>Process<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span><span class="tsd-signature-symbol"> = 2</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/main/src/BatchClusterOptions.ts#L146">BatchClusterOptions.ts:146</a></li>
+						</ul>
+					</aside>
+					<div class="tsd-comment tsd-typography">
+						<div class="lead">
+							<p>How many failed tasks should a process be allowed to process before it is
+							recycled?</p>
+						</div>
+						<p>Set this to 0 to disable this feature.</p>
+					</div>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class">
 					<a name="maxidlemsperprocess" class="tsd-anchor"></a>
-					<h3><span class="tsd-flag ts-flagReadonly">Readonly</span> max<wbr>Idle<wbr>MsPer<wbr>Process</h3>
+					<h3>max<wbr>Idle<wbr>MsPer<wbr>Process</h3>
 					<div class="tsd-signature tsd-kind-icon">max<wbr>Idle<wbr>MsPer<wbr>Process<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span><span class="tsd-signature-symbol"> = 0</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/main/src/BatchClusterOptions.ts#L136">BatchClusterOptions.ts:136</a></li>
+							<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/main/src/BatchClusterOptions.ts#L138">BatchClusterOptions.ts:138</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-comment tsd-typography">
@@ -220,11 +257,11 @@
 				</section>
 				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class">
 					<a name="maxprocagemillis" class="tsd-anchor"></a>
-					<h3><span class="tsd-flag ts-flagReadonly">Readonly</span> max<wbr>Proc<wbr>Age<wbr>Millis</h3>
+					<h3>max<wbr>Proc<wbr>Age<wbr>Millis</h3>
 					<div class="tsd-signature tsd-kind-icon">max<wbr>Proc<wbr>Age<wbr>Millis<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span><span class="tsd-signature-symbol"> = ...</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/main/src/BatchClusterOptions.ts#L30">BatchClusterOptions.ts:30</a></li>
+							<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/main/src/BatchClusterOptions.ts#L33">BatchClusterOptions.ts:33</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-comment tsd-typography">
@@ -239,11 +276,11 @@
 				</section>
 				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class">
 					<a name="maxprocs" class="tsd-anchor"></a>
-					<h3><span class="tsd-flag ts-flagReadonly">Readonly</span> max<wbr>Procs</h3>
+					<h3>max<wbr>Procs</h3>
 					<div class="tsd-signature tsd-kind-icon">max<wbr>Procs<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span><span class="tsd-signature-symbol"> = 1</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/main/src/BatchClusterOptions.ts#L18">BatchClusterOptions.ts:18</a></li>
+							<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/main/src/BatchClusterOptions.ts#L21">BatchClusterOptions.ts:21</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-comment tsd-typography">
@@ -256,11 +293,11 @@
 				</section>
 				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class">
 					<a name="maxreasonableprocessfailuresperminute" class="tsd-anchor"></a>
-					<h3><span class="tsd-flag ts-flagReadonly">Readonly</span> max<wbr>Reasonable<wbr>Process<wbr>Failures<wbr>Per<wbr>Minute</h3>
+					<h3>max<wbr>Reasonable<wbr>Process<wbr>Failures<wbr>Per<wbr>Minute</h3>
 					<div class="tsd-signature tsd-kind-icon">max<wbr>Reasonable<wbr>Process<wbr>Failures<wbr>Per<wbr>Minute<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span><span class="tsd-signature-symbol"> = 10</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/main/src/BatchClusterOptions.ts#L50">BatchClusterOptions.ts:50</a></li>
+							<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/main/src/BatchClusterOptions.ts#L53">BatchClusterOptions.ts:53</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-comment tsd-typography">
@@ -276,33 +313,33 @@
 				</section>
 				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class">
 					<a name="maxtasksperprocess" class="tsd-anchor"></a>
-					<h3><span class="tsd-flag ts-flagReadonly">Readonly</span> max<wbr>Tasks<wbr>Per<wbr>Process</h3>
+					<h3>max<wbr>Tasks<wbr>Per<wbr>Process</h3>
 					<div class="tsd-signature tsd-kind-icon">max<wbr>Tasks<wbr>Per<wbr>Process<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span><span class="tsd-signature-symbol"> = 500</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/main/src/BatchClusterOptions.ts#L92">BatchClusterOptions.ts:92</a></li>
+							<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/main/src/BatchClusterOptions.ts#L94">BatchClusterOptions.ts:94</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-comment tsd-typography">
 						<div class="lead">
-							<p>Processes will be recycled after processing <code>maxTasksPerProcess</code>
-								tasks. Depending on the commands and platform, batch mode commands
-								shouldn&#39;t exhibit unduly memory leaks for at least tens if not
-								hundreds of tasks. Setting this to a low number (like less than 10)
-								will impact performance markedly, due to OS process start/stop
-								maintenance. Setting this to a very high number (&gt; 1000) may result in
-							more memory being consumed than necessary.</p>
+							<p>Processes will be recycled after processing <code>maxTasksPerProcess</code> tasks.
+								Depending on the commands and platform, batch mode commands shouldn&#39;t
+								exhibit unduly memory leaks for at least tens if not hundreds of tasks.
+								Setting this to a low number (like less than 10) will impact performance
+								markedly, due to OS process start/stop maintenance. Setting this to a very
+								high number (&gt; 1000) may result in more memory being consumed than
+							necessary.</p>
 						</div>
 						<p>Must be &gt;= 0. Defaults to 500</p>
 					</div>
 				</section>
 				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class">
 					<a name="mindelaybetweenspawnmillis" class="tsd-anchor"></a>
-					<h3><span class="tsd-flag ts-flagReadonly">Readonly</span> min<wbr>Delay<wbr>Between<wbr>Spawn<wbr>Millis</h3>
-					<div class="tsd-signature tsd-kind-icon">min<wbr>Delay<wbr>Between<wbr>Spawn<wbr>Millis<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span><span class="tsd-signature-symbol"> = 1500</span></div>
+					<h3>min<wbr>Delay<wbr>Between<wbr>Spawn<wbr>Millis</h3>
+					<div class="tsd-signature tsd-kind-icon">min<wbr>Delay<wbr>Between<wbr>Spawn<wbr>Millis<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span><span class="tsd-signature-symbol"> = ...</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/main/src/BatchClusterOptions.ts#L69">BatchClusterOptions.ts:69</a></li>
+							<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/main/src/BatchClusterOptions.ts#L71">BatchClusterOptions.ts:71</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-comment tsd-typography">
@@ -315,11 +352,11 @@
 				</section>
 				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class">
 					<a name="onidleintervalmillis" class="tsd-anchor"></a>
-					<h3><span class="tsd-flag ts-flagReadonly">Readonly</span> on<wbr>Idle<wbr>Interval<wbr>Millis</h3>
-					<div class="tsd-signature tsd-kind-icon">on<wbr>Idle<wbr>Interval<wbr>Millis<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span><span class="tsd-signature-symbol"> = 5000</span></div>
+					<h3>on<wbr>Idle<wbr>Interval<wbr>Millis</h3>
+					<div class="tsd-signature tsd-kind-icon">on<wbr>Idle<wbr>Interval<wbr>Millis<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span><span class="tsd-signature-symbol"> = ...</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/main/src/BatchClusterOptions.ts#L38">BatchClusterOptions.ts:38</a></li>
+							<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/main/src/BatchClusterOptions.ts#L41">BatchClusterOptions.ts:41</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-comment tsd-typography">
@@ -331,32 +368,47 @@
 					</div>
 				</section>
 				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class">
-					<a name="spawntimeoutmillis" class="tsd-anchor"></a>
-					<h3><span class="tsd-flag ts-flagReadonly">Readonly</span> spawn<wbr>Timeout<wbr>Millis</h3>
-					<div class="tsd-signature tsd-kind-icon">spawn<wbr>Timeout<wbr>Millis<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span><span class="tsd-signature-symbol"> = 15000</span></div>
+					<a name="pidcheckintervalmillis" class="tsd-anchor"></a>
+					<h3>pid<wbr>Check<wbr>Interval<wbr>Millis</h3>
+					<div class="tsd-signature tsd-kind-icon">pid<wbr>Check<wbr>Interval<wbr>Millis<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span><span class="tsd-signature-symbol"> = ...</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/main/src/BatchClusterOptions.ts#L61">BatchClusterOptions.ts:61</a></li>
+							<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/main/src/BatchClusterOptions.ts#L161">BatchClusterOptions.ts:161</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-comment tsd-typography">
 						<div class="lead">
-							<p>Spawning new child processes and servicing a &quot;version&quot; task must not
-								take longer than <code>spawnTimeoutMillis</code> before the process is considered
-								failed, and need to be restarted. Be pessimistic here--windows can
-								regularly take several seconds to spin up a process, thanks to
-							antivirus shenanigans.</p>
+							<p>Verify child processes are still running by checking the OS process table.</p>
+						</div>
+						<p>Set this to 0 to disable this feature.</p>
+					</div>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class">
+					<a name="spawntimeoutmillis" class="tsd-anchor"></a>
+					<h3>spawn<wbr>Timeout<wbr>Millis</h3>
+					<div class="tsd-signature tsd-kind-icon">spawn<wbr>Timeout<wbr>Millis<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span><span class="tsd-signature-symbol"> = ...</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/main/src/BatchClusterOptions.ts#L63">BatchClusterOptions.ts:63</a></li>
+						</ul>
+					</aside>
+					<div class="tsd-comment tsd-typography">
+						<div class="lead">
+							<p>Spawning new child processes and servicing a &quot;version&quot; task must not take
+								longer than <code>spawnTimeoutMillis</code> before the process is considered failed,
+								and need to be restarted. Be pessimistic here--windows can regularly take
+							several seconds to spin up a process, thanks to antivirus shenanigans.</p>
 						</div>
 						<p>Must be &gt;= 100ms. Defaults to 15 seconds.</p>
 					</div>
 				</section>
 				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class">
 					<a name="streamflushmillis" class="tsd-anchor"></a>
-					<h3><span class="tsd-flag ts-flagReadonly">Readonly</span> stream<wbr>Flush<wbr>Millis</h3>
+					<h3>stream<wbr>Flush<wbr>Millis</h3>
 					<div class="tsd-signature tsd-kind-icon">stream<wbr>Flush<wbr>Millis<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span><span class="tsd-signature-symbol"> = 10</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/main/src/BatchClusterOptions.ts#L117">BatchClusterOptions.ts:117</a></li>
+							<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/main/src/BatchClusterOptions.ts#L119">BatchClusterOptions.ts:119</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-comment tsd-typography">
@@ -374,11 +426,11 @@
 				</section>
 				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class">
 					<a name="tasktimeoutmillis" class="tsd-anchor"></a>
-					<h3><span class="tsd-flag ts-flagReadonly">Readonly</span> task<wbr>Timeout<wbr>Millis</h3>
-					<div class="tsd-signature tsd-kind-icon">task<wbr>Timeout<wbr>Millis<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span><span class="tsd-signature-symbol"> = 10000</span></div>
+					<h3>task<wbr>Timeout<wbr>Millis</h3>
+					<div class="tsd-signature tsd-kind-icon">task<wbr>Timeout<wbr>Millis<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span><span class="tsd-signature-symbol"> = ...</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/main/src/BatchClusterOptions.ts#L79">BatchClusterOptions.ts:79</a></li>
+							<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/main/src/BatchClusterOptions.ts#L81">BatchClusterOptions.ts:81</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-comment tsd-typography">
@@ -420,7 +472,13 @@
 								<a href="batchclusteroptions.html#endgracefulwaittimemillis" class="tsd-kind-icon">end<wbr>Graceful<wbr>Wait<wbr>Time<wbr>Millis</a>
 							</li>
 							<li class=" tsd-kind-property tsd-parent-kind-class">
+								<a href="batchclusteroptions.html#healthcheckintervalmillis" class="tsd-kind-icon">health<wbr>Check<wbr>Interval<wbr>Millis</a>
+							</li>
+							<li class=" tsd-kind-property tsd-parent-kind-class">
 								<a href="batchclusteroptions.html#logger" class="tsd-kind-icon">logger</a>
+							</li>
+							<li class=" tsd-kind-property tsd-parent-kind-class">
+								<a href="batchclusteroptions.html#maxfailedtasksperprocess" class="tsd-kind-icon">max<wbr>Failed<wbr>Tasks<wbr>Per<wbr>Process</a>
 							</li>
 							<li class=" tsd-kind-property tsd-parent-kind-class">
 								<a href="batchclusteroptions.html#maxidlemsperprocess" class="tsd-kind-icon">max<wbr>Idle<wbr>MsPer<wbr>Process</a>
@@ -442,6 +500,9 @@
 							</li>
 							<li class=" tsd-kind-property tsd-parent-kind-class">
 								<a href="batchclusteroptions.html#onidleintervalmillis" class="tsd-kind-icon">on<wbr>Idle<wbr>Interval<wbr>Millis</a>
+							</li>
+							<li class=" tsd-kind-property tsd-parent-kind-class">
+								<a href="batchclusteroptions.html#pidcheckintervalmillis" class="tsd-kind-icon">pid<wbr>Check<wbr>Interval<wbr>Millis</a>
 							</li>
 							<li class=" tsd-kind-property tsd-parent-kind-class">
 								<a href="batchclusteroptions.html#spawntimeoutmillis" class="tsd-kind-icon">spawn<wbr>Timeout<wbr>Millis</a>

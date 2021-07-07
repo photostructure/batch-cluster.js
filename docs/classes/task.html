@@ -78,7 +78,7 @@
 				<h3>Type parameters</h3>
 				<ul class="tsd-type-parameters">
 					<li>
-						<h4>T</h4>
+						<h4>T = <span class="tsd-signature-type">any</span></h4>
 					</li>
 				</ul>
 			</section>
@@ -105,6 +105,7 @@
 							<ul class="tsd-index-list">
 								<li class="tsd-kind-property tsd-parent-kind-class"><a href="task.html#command" class="tsd-kind-icon">command</a></li>
 								<li class="tsd-kind-property tsd-parent-kind-class"><a href="task.html#parser" class="tsd-kind-icon">parser</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-class"><a href="task.html#taskid" class="tsd-kind-icon">task<wbr>Id</a></li>
 							</ul>
 						</section>
 						<section class="tsd-index-section ">
@@ -112,6 +113,7 @@
 							<ul class="tsd-index-list">
 								<li class="tsd-kind-get-signature tsd-parent-kind-class"><a href="task.html#pending" class="tsd-kind-icon">pending</a></li>
 								<li class="tsd-kind-get-signature tsd-parent-kind-class"><a href="task.html#promise" class="tsd-kind-icon">promise</a></li>
+								<li class="tsd-kind-get-signature tsd-parent-kind-class"><a href="task.html#runtimems" class="tsd-kind-icon">runtime<wbr>Ms</a></li>
 								<li class="tsd-kind-get-signature tsd-parent-kind-class"><a href="task.html#state" class="tsd-kind-icon">state</a></li>
 								<li class="tsd-kind-get-signature tsd-parent-kind-class"><a href="task.html#stderr" class="tsd-kind-icon">stderr</a></li>
 								<li class="tsd-kind-get-signature tsd-parent-kind-class"><a href="task.html#stdout" class="tsd-kind-icon">stdout</a></li>
@@ -120,6 +122,7 @@
 						<section class="tsd-index-section ">
 							<h3>Methods</h3>
 							<ul class="tsd-index-list">
+								<li class="tsd-kind-method tsd-parent-kind-class"><a href="task.html#onstart" class="tsd-kind-icon">on<wbr>Start</a></li>
 								<li class="tsd-kind-method tsd-parent-kind-class"><a href="task.html#onstderr" class="tsd-kind-icon">on<wbr>Stderr</a></li>
 								<li class="tsd-kind-method tsd-parent-kind-class"><a href="task.html#onstdout" class="tsd-kind-icon">on<wbr>Stdout</a></li>
 								<li class="tsd-kind-method tsd-parent-kind-class"><a href="task.html#reject" class="tsd-kind-icon">reject</a></li>
@@ -142,13 +145,13 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/main/src/Task.ts#L12">Task.ts:12</a></li>
+									<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/main/src/Task.ts#L16">Task.ts:16</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-type-parameters-title">Type parameters</h4>
 							<ul class="tsd-type-parameters">
 								<li>
-									<h4>T</h4>
+									<h4>T = <span class="tsd-signature-type">any</span></h4>
 								</li>
 							</ul>
 							<h4 class="tsd-parameters-title">Parameters</h4>
@@ -189,6 +192,16 @@
 					<aside class="tsd-sources">
 					</aside>
 				</section>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class">
+					<a name="taskid" class="tsd-anchor"></a>
+					<h3><span class="tsd-flag ts-flagReadonly">Readonly</span> task<wbr>Id</h3>
+					<div class="tsd-signature tsd-kind-icon">task<wbr>Id<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span><span class="tsd-signature-symbol"> = ...</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/main/src/Task.ts#L11">Task.ts:11</a></li>
+						</ul>
+					</aside>
+				</section>
 			</section>
 			<section class="tsd-panel-group tsd-member-group ">
 				<h2>Accessors</h2>
@@ -202,7 +215,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/main/src/Task.ts#L29">Task.ts:29</a></li>
+									<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/main/src/Task.ts#L33">Task.ts:33</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">boolean</span></h4>
@@ -219,11 +232,28 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/main/src/Task.ts#L25">Task.ts:25</a></li>
+									<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/main/src/Task.ts#L29">Task.ts:29</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">T</span><span class="tsd-signature-symbol">&gt;</span></h4>
 							<p>the resolution or rejection of this task.</p>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-get-signature tsd-parent-kind-class">
+					<a name="runtimems" class="tsd-anchor"></a>
+					<h3>runtime<wbr>Ms</h3>
+					<ul class="tsd-signatures tsd-kind-get-signature tsd-parent-kind-class">
+						<li class="tsd-signature tsd-kind-icon"><span class="tsd-signature-symbol">get</span> runtimeMs<span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">undefined</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">number</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/main/src/Task.ts#L49">Task.ts:49</a></li>
+								</ul>
+							</aside>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">undefined</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">number</span></h4>
 						</li>
 					</ul>
 				</section>
@@ -237,7 +267,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/main/src/Task.ts#L33">Task.ts:33</a></li>
+									<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/main/src/Task.ts#L37">Task.ts:37</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">string</span></h4>
@@ -254,7 +284,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/main/src/Task.ts#L57">Task.ts:57</a></li>
+									<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/main/src/Task.ts#L71">Task.ts:71</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">string</span></h4>
@@ -271,7 +301,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/main/src/Task.ts#L53">Task.ts:53</a></li>
+									<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/main/src/Task.ts#L67">Task.ts:67</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">string</span></h4>
@@ -282,6 +312,23 @@
 			<section class="tsd-panel-group tsd-member-group ">
 				<h2>Methods</h2>
 				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class">
+					<a name="onstart" class="tsd-anchor"></a>
+					<h3>on<wbr>Start</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
+						<li class="tsd-signature tsd-kind-icon">on<wbr>Start<span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/main/src/Task.ts#L45">Task.ts:45</a></li>
+								</ul>
+							</aside>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class">
 					<a name="onstderr" class="tsd-anchor"></a>
 					<h3>on<wbr>Stderr</h3>
 					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
@@ -291,7 +338,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/main/src/Task.ts#L49">Task.ts:49</a></li>
+									<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/main/src/Task.ts#L63">Task.ts:63</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-parameters-title">Parameters</h4>
@@ -314,7 +361,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/main/src/Task.ts#L45">Task.ts:45</a></li>
+									<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/main/src/Task.ts#L59">Task.ts:59</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-parameters-title">Parameters</h4>
@@ -337,15 +384,9 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/main/src/Task.ts#L83">Task.ts:83</a></li>
+									<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/main/src/Task.ts#L99">Task.ts:99</a></li>
 								</ul>
 							</aside>
-							<div class="tsd-comment tsd-typography">
-								<div class="lead">
-									<p>This is for use by <code>BatchProcess</code> only, and will only be called when the
-									process has errorred after N retries</p>
-								</div>
-							</div>
 							<h4 class="tsd-parameters-title">Parameters</h4>
 							<ul class="tsd-parameters">
 								<li>
@@ -366,14 +407,17 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/main/src/Task.ts#L65">Task.ts:65</a></li>
+									<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/main/src/Task.ts#L83">Task.ts:83</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
 								<div class="lead">
 									<p>This is for use by <code>BatchProcess</code> only, and will only be called when the
-									process is complete for this task&#39;s command</p>
+									process is complete for this task&#39;s command.</p>
 								</div>
+								<p>We don&#39;t use this.stdout or this.stderr because BatchProcess is in charge
+									of stream debouncing, and applying the passRE and failRE patterns to decide
+								if a task passed or failed.</p>
 							</div>
 							<h4 class="tsd-parameters-title">Parameters</h4>
 							<ul class="tsd-parameters">
@@ -401,7 +445,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/main/src/Task.ts#L41">Task.ts:41</a></li>
+									<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/main/src/Task.ts#L55">Task.ts:55</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">string</span></h4>
@@ -443,11 +487,17 @@
 							<li class=" tsd-kind-property tsd-parent-kind-class">
 								<a href="task.html#parser" class="tsd-kind-icon">parser</a>
 							</li>
+							<li class=" tsd-kind-property tsd-parent-kind-class">
+								<a href="task.html#taskid" class="tsd-kind-icon">task<wbr>Id</a>
+							</li>
 							<li class=" tsd-kind-get-signature tsd-parent-kind-class">
 								<a href="task.html#pending" class="tsd-kind-icon">pending</a>
 							</li>
 							<li class=" tsd-kind-get-signature tsd-parent-kind-class">
 								<a href="task.html#promise" class="tsd-kind-icon">promise</a>
+							</li>
+							<li class=" tsd-kind-get-signature tsd-parent-kind-class">
+								<a href="task.html#runtimems" class="tsd-kind-icon">runtime<wbr>Ms</a>
 							</li>
 							<li class=" tsd-kind-get-signature tsd-parent-kind-class">
 								<a href="task.html#state" class="tsd-kind-icon">state</a>
@@ -457,6 +507,9 @@
 							</li>
 							<li class=" tsd-kind-get-signature tsd-parent-kind-class">
 								<a href="task.html#stdout" class="tsd-kind-icon">stdout</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class">
+								<a href="task.html#onstart" class="tsd-kind-icon">on<wbr>Start</a>
 							</li>
 							<li class=" tsd-kind-method tsd-parent-kind-class">
 								<a href="task.html#onstderr" class="tsd-kind-icon">on<wbr>Stderr</a>
