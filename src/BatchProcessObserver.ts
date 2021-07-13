@@ -10,4 +10,5 @@ export interface BatchProcessObserver {
   onTaskError(error: Error, task: Task, proc: BatchProcess): void
   onStartError(error: Error): void
   onInternalError(error: Error): void
+  onHealthCheckError(error: Error, proc: BatchProcess): void
 }

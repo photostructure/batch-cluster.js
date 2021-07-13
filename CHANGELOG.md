@@ -18,6 +18,14 @@ See [Semver](http://semver.org/).
 
 - 📦 Minor packaging changes
 
+## v7.1.0
+
+- ✨ Added `on("healthCheckError", err, proc)` event
+
+- 🐞 Reworked when health checks were run, and add tests to validate failing health checks recycle children
+
+- 📦 Rebuild docs
+
 ## v7.0.0
 
 - 💔 Several fields were renamed to make things more consistent:

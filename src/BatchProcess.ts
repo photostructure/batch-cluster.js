@@ -4,13 +4,13 @@ import { BatchProcessObserver } from "./BatchProcessObserver"
 import { Deferred } from "./Deferred"
 import { cleanError, tryEach } from "./Error"
 import { InternalBatchProcessOptions } from "./InternalBatchProcessOptions"
+import { Logger } from "./Logger"
 import { map } from "./Object"
 import { SimpleParser } from "./Parser"
 import { kill, pidExists } from "./Pids"
 import { mapNotDestroyed } from "./Stream"
 import { blank, ensureSuffix, toS } from "./String"
 import { Task } from "./Task"
-import { Logger } from "./Logger"
 
 export type WhyNotReady = BatchProcess["whyNotHealthy"]
 
@@ -22,7 +22,8 @@ export class BatchProcess {
   readonly pid: number
   readonly start = Date.now()
   private lastHealthCheck = Date.now()
-  private lastHealthCheckTaskCount = -1
+  private healthCheckFailures = 0
+
   readonly startupTaskId: number
   private readonly logger: () => Logger
   private lastJobFinshedAt = Date.now()
@@ -122,6 +123,8 @@ export class BatchProcess {
       return "dead"
     } else if (this._ending) {
       return "ending"
+    } else if (this.healthCheckFailures > 0) {
+      return "unhealthy"
     } else if (this.proc.stdin == null || this.proc.stdin.destroyed) {
       return "closed"
     } else if (
@@ -136,7 +139,7 @@ export class BatchProcess {
       return "idle"
     } else if (
       this.opts.maxFailedTasksPerProcess > 0 &&
-      this.failedTaskCount > this.opts.maxFailedTasksPerProcess
+      this.failedTaskCount >= this.opts.maxFailedTasksPerProcess
     ) {
       return "broken"
     } else if (
@@ -222,20 +225,27 @@ export class BatchProcess {
     }
 
     if (
-      this.taskCount !== this.lastHealthCheckTaskCount &&
       this.opts.healthCheckCommand != null &&
       this.opts.healthCheckIntervalMillis > 0 &&
       Date.now() - this.lastHealthCheck > this.opts.healthCheckIntervalMillis
     ) {
       this.lastHealthCheck = Date.now()
-      // console.log("running health check for " + this.pid)
-      this._execTask(new Task(this.opts.healthCheckCommand, SimpleParser))
-      this.lastHealthCheckTaskCount = this.taskCount
+      const t = new Task(this.opts.healthCheckCommand, SimpleParser)
+      t.promise
+        .catch((err) => {
+          // console.log("execTask#" + this.pid + ": health check failed", err)
+          this.observer.onHealthCheckError(err, this)
+          this.healthCheckFailures++
+        })
+        .finally(() => {
+          this.lastHealthCheck = Date.now()
+        })
+      this._execTask(t)
       return false
-    } else {
-      // console.log("running " + task + " on " + this.pid)
-      return this._execTask(task)
     }
+
+    // console.log("running " + task + " on " + this.pid)
+    return this._execTask(task)
   }
 
   private _execTask(task: Task): boolean {
@@ -260,11 +270,6 @@ export class BatchProcess {
     // logger().debug(this.name + ".execTask(): starting", { cmd })
     void task.promise
       .catch((err) => {
-        if (task.command === this.opts.healthCheckCommand) {
-          this.failedTaskCount = this.opts.maxFailedTasksPerProcess
-        } else {
-          this.failedTaskCount++
-        }
         if (isStartupTask) {
           this.observer.onStartError(err)
         } else {

@@ -100,6 +100,17 @@ export async function currentTestPids(): Promise<number[]> {
   return testPids().filter((ea) => alivePids.has(ea))
 }
 
+export function sortNumeric(arr: number[]): number[] {
+  return arr.sort((a, b) => a - b)
+}
+
+export function flatten<T>(arr: (T | T[])[], result: T[] = []): T[] {
+  arr.forEach((ea) =>
+    Array.isArray(ea) ? result.push(...ea) : result.push(ea)
+  )
+  return result
+}
+
 // Seeding the RNG deterministically _should_ give us repeatable
 // flakiness/successes.
 
@@ -121,7 +132,7 @@ function rngseed() {
   return orElse(rngseedOverride, () => rngseedPrefix + rngseedCounter++)
 }
 
-let failrate = "0.1" // 10%
+let failrate = "0.05" // 5%
 
 export function setFailrate(percent = 10) {
   failrate = (percent / 100).toFixed(2)

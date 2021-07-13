@@ -1,7 +1,7 @@
 import { ChildProcess } from "child_process"
 import * as _p from "process"
 import { clearInterval, setInterval } from "timers"
-import { filterInPlace, rrFindResult } from "./Array"
+import { filterInPlace } from "./Array"
 import { BatchClusterEmitter } from "./BatchClusterEmitter"
 import {
   AllOpts,
@@ -54,7 +54,6 @@ export class BatchCluster extends BatchClusterEmitter {
   readonly options: AllOpts
   private readonly observer: BatchProcessObserver
   private readonly _procs: BatchProcess[] = []
-  private _lastUsedProcsIdx = 0
   private _lastSpawnedProcTime = 0
   private _lastPidsCheckTime = Date.now()
   private readonly tasks: Task[] = []
@@ -92,6 +91,9 @@ export class BatchCluster extends BatchClusterEmitter {
       },
       onTaskError: (err, task, proc) => {
         this.emitter.emit("taskError", err, task, proc)
+      },
+      onHealthCheckError: (err, proc) => {
+        this.emitter.emit("healthCheckError", err, proc)
       },
       onInternalError: (err) => {
         this.emitInternalError(err)
@@ -326,11 +328,7 @@ export class BatchCluster extends BatchClusterEmitter {
   // NOT ASYNC: updates internal state.
   private execNextTask(): boolean {
     if (this.tasks.length === 0 || this.ended) return false
-    const readyProc = rrFindResult(
-      this._procs,
-      this._lastUsedProcsIdx + 1,
-      (ea) => ea.ready
-    )
+    const readyProc = this._procs.find((ea) => ea.ready)
     // no procs are idle and healthy :(
     if (readyProc == null) return false
 
@@ -340,9 +338,7 @@ export class BatchCluster extends BatchClusterEmitter {
       return false
     }
 
-    this._lastUsedProcsIdx = readyProc.index
-
-    const submitted = readyProc.result.execTask(task)
+    const submitted = readyProc.execTask(task)
     if (!submitted) {
       // This isn't an internal error: the proc may have needed to run a health
       // check. Let's reschedule the task and try again:

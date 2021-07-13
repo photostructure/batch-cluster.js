@@ -34,13 +34,13 @@
   "author": "Matthew McEachen <matthew-batchcluster@mceachen.org>",
   "license": "MIT",
   "devDependencies": {
-    "@types/chai": "^4.2.19",
+    "@types/chai": "^4.2.21",
     "@types/chai-as-promised": "^7.1.4",
     "@types/chai-string": "^1.4.2",
-    "@types/mocha": "^8.2.2",
-    "@types/node": "^16.0.0",
-    "@typescript-eslint/eslint-plugin": "^4.28.2",
-    "@typescript-eslint/parser": "^4.28.2",
+    "@types/mocha": "^8.2.3",
+    "@types/node": "^16.3.1",
+    "@typescript-eslint/eslint-plugin": "^4.28.3",
+    "@typescript-eslint/parser": "^4.28.3",
     "chai": "^4.3.4",
     "chai-as-promised": "^7.1.1",
     "chai-string": "^1.5.0",
@@ -55,7 +55,7 @@
     "source-map-support": "^0.5.19",
     "split2": "^3.2.2",
     "timekeeper": "^2.2.0",
-    "typedoc": "^0.21.2",
+    "typedoc": "^0.21.4",
     "typescript": "^4.3.5"
   }
 }

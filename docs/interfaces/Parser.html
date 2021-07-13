@@ -55,7 +55,7 @@
 					<a href="../modules.html">batch-cluster</a>
 				</li>
 				<li>
-					<a href="parser.html">Parser</a>
+					<a href="Parser.html">Parser</a>
 				</li>
 			</ul>
 			<h1>Interface Parser&lt;T&gt;</h1>
@@ -99,7 +99,7 @@
 					<li class="tsd-description">
 						<aside class="tsd-sources">
 							<ul>
-								<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/main/src/Parser.ts#L8">Parser.ts:8</a></li>
+								<li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/main/src/Parser.ts#L24">Parser.ts:24</a></li>
 							</ul>
 						</aside>
 						<div class="tsd-comment tsd-typography">
@@ -154,47 +154,47 @@
 			<nav class="tsd-navigation secondary menu-sticky">
 				<ul class="before-current">
 					<li class=" tsd-kind-class">
-						<a href="../classes/batchcluster.html" class="tsd-kind-icon">Batch<wbr>Cluster</a>
+						<a href="../classes/BatchCluster.html" class="tsd-kind-icon">Batch<wbr>Cluster</a>
 					</li>
 					<li class=" tsd-kind-class">
-						<a href="../classes/batchclusteroptions.html" class="tsd-kind-icon">Batch<wbr>Cluster<wbr>Options</a>
+						<a href="../classes/BatchClusterOptions.html" class="tsd-kind-icon">Batch<wbr>Cluster<wbr>Options</a>
 					</li>
 					<li class=" tsd-kind-class tsd-has-type-parameter">
-						<a href="../classes/deferred.html" class="tsd-kind-icon">Deferred</a>
+						<a href="../classes/Deferred.html" class="tsd-kind-icon">Deferred</a>
 					</li>
 					<li class=" tsd-kind-class tsd-has-type-parameter">
-						<a href="../classes/task.html" class="tsd-kind-icon">Task</a>
+						<a href="../classes/Task.html" class="tsd-kind-icon">Task</a>
 					</li>
 					<li class=" tsd-kind-interface">
-						<a href="batchprocessoptions.html" class="tsd-kind-icon">Batch<wbr>Process<wbr>Options</a>
+						<a href="BatchProcessOptions.html" class="tsd-kind-icon">Batch<wbr>Process<wbr>Options</a>
 					</li>
 					<li class=" tsd-kind-interface">
-						<a href="childprocessfactory.html" class="tsd-kind-icon">Child<wbr>Process<wbr>Factory</a>
+						<a href="ChildProcessFactory.html" class="tsd-kind-icon">Child<wbr>Process<wbr>Factory</a>
 					</li>
 					<li class=" tsd-kind-interface">
-						<a href="logger.html" class="tsd-kind-icon">Logger</a>
+						<a href="Logger.html" class="tsd-kind-icon">Logger</a>
 					</li>
 				</ul>
 				<ul class="current">
 					<li class="current tsd-kind-interface tsd-has-type-parameter">
-						<a href="parser.html" class="tsd-kind-icon">Parser</a>
+						<a href="Parser.html" class="tsd-kind-icon">Parser</a>
 					</li>
 				</ul>
 				<ul class="after-current">
 					<li class=" tsd-kind-variable">
-						<a href="../modules.html#consolelogger" class="tsd-kind-icon">Console<wbr>Logger</a>
+						<a href="../modules.html#ConsoleLogger" class="tsd-kind-icon">Console<wbr>Logger</a>
 					</li>
 					<li class=" tsd-kind-variable">
-						<a href="../modules.html#log" class="tsd-kind-icon">Log</a>
+						<a href="../modules.html#Log" class="tsd-kind-icon">Log</a>
 					</li>
 					<li class=" tsd-kind-variable">
-						<a href="../modules.html#loglevels" class="tsd-kind-icon">Log<wbr>Levels</a>
+						<a href="../modules.html#LogLevels" class="tsd-kind-icon">Log<wbr>Levels</a>
 					</li>
 					<li class=" tsd-kind-variable">
-						<a href="../modules.html#nologger" class="tsd-kind-icon">No<wbr>Logger</a>
+						<a href="../modules.html#NoLogger" class="tsd-kind-icon">No<wbr>Logger</a>
 					</li>
 					<li class=" tsd-kind-function">
-						<a href="../modules.html#simpleparser" class="tsd-kind-icon">Simple<wbr>Parser</a>
+						<a href="../modules.html#SimpleParser" class="tsd-kind-icon">Simple<wbr>Parser</a>
 					</li>
 					<li class=" tsd-kind-function">
 						<a href="../modules.html#kill" class="tsd-kind-icon">kill</a>
@@ -203,13 +203,13 @@
 						<a href="../modules.html#logger" class="tsd-kind-icon">logger</a>
 					</li>
 					<li class=" tsd-kind-function">
-						<a href="../modules.html#pidexists" class="tsd-kind-icon">pid<wbr>Exists</a>
+						<a href="../modules.html#pidExists" class="tsd-kind-icon">pid<wbr>Exists</a>
 					</li>
 					<li class=" tsd-kind-function">
 						<a href="../modules.html#pids" class="tsd-kind-icon">pids</a>
 					</li>
 					<li class=" tsd-kind-function">
-						<a href="../modules.html#setlogger" class="tsd-kind-icon">set<wbr>Logger</a>
+						<a href="../modules.html#setLogger" class="tsd-kind-icon">set<wbr>Logger</a>
 					</li>
 				</ul>
 			</nav>
@@ -226,11 +226,12 @@
 				<li class="tsd-kind-method tsd-parent-kind-class"><span class="tsd-kind-icon">Method</span></li>
 			</ul>
 			<ul class="tsd-legend">
-				<li class="tsd-kind-property tsd-parent-kind-class tsd-is-inherited"><span class="tsd-kind-icon">Inherited property</span></li>
-				<li class="tsd-kind-method tsd-parent-kind-class tsd-is-inherited"><span class="tsd-kind-icon">Inherited method</span></li>
+				<li class="tsd-kind-property tsd-parent-kind-interface"><span class="tsd-kind-icon">Property</span></li>
+				<li class="tsd-kind-method tsd-parent-kind-interface"><span class="tsd-kind-icon">Method</span></li>
 			</ul>
 			<ul class="tsd-legend">
-				<li class="tsd-kind-property tsd-parent-kind-interface"><span class="tsd-kind-icon">Property</span></li>
+				<li class="tsd-kind-property tsd-parent-kind-class tsd-is-inherited"><span class="tsd-kind-icon">Inherited property</span></li>
+				<li class="tsd-kind-method tsd-parent-kind-class tsd-is-inherited"><span class="tsd-kind-icon">Inherited method</span></li>
 			</ul>
 		</div>
 	</div>

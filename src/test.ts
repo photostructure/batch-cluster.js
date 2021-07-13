@@ -27,7 +27,13 @@ if (ignoreExit) {
   })
 }
 
-const failrate = env.failrate == null ? 0 : parseFloat(env.failrate)
+function toF(s: string | undefined) {
+  if (s == null) return
+  const f = parseFloat(s)
+  return isNaN(f) ? undefined : f
+}
+
+const failrate = toF(env.failrate) ?? 0
 const rng =
   env.rngseed != null ? require("seedrandom")(env.rngseed) : Math.random
 
@@ -61,8 +67,7 @@ async function onLine(line: string): Promise<void> {
   try {
     switch (firstToken) {
       case "flaky": {
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const flakeRate = parseFloat(tokens.shift()!)
+        const flakeRate = toF(tokens.shift()) ?? failrate
         write(
           "flaky response (" +
             (r < flakeRate ? "FAIL" : "PASS") +

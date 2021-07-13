@@ -1,5 +1,7 @@
 # This is used by the build badge:
 name: CI tests
+env:
+  CI: 1
 
 on:
   push:

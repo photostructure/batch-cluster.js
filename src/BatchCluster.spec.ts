@@ -1,5 +1,5 @@
+import { env } from "process"
 import { inspect } from "util"
-import { flatten, sortNumeric } from "./Array"
 import { delay, until } from "./Async"
 import { BatchCluster } from "./BatchCluster"
 import { BatchClusterOptions } from "./BatchClusterOptions"
@@ -11,6 +11,7 @@ import { Task } from "./Task"
 import {
   currentTestPids,
   expect,
+  flatten,
   parser,
   parserErrors,
   processFactory,
@@ -18,6 +19,7 @@ import {
   setFailrate,
   setIgnoreExit,
   setNewline,
+  sortNumeric,
   testPids,
   times,
 } from "./_chai.spec"
@@ -25,7 +27,10 @@ import {
 const tk = require("timekeeper")
 
 describe("BatchCluster", function () {
-  this.retries(2) // child process forking in CI is flaky
+  if (env.CI === "1") {
+    // child process forking in CI is flaky
+    this.retries(2)
+  }
 
   const ErrorPrefix = "ERROR: "
 
@@ -66,6 +71,8 @@ describe("BatchCluster", function () {
     readonly endErrors: Error[] = []
     readonly internalErrors: Error[] = []
     readonly taskErrors: Error[] = []
+    readonly healthCheckErrors: Error[] = []
+    readonly unhealthyPids: number[] = []
   }
 
   let events = new Events()
@@ -168,6 +175,10 @@ describe("BatchCluster", function () {
         data: toS(data),
       })
     )
+    bc.on("healthCheckError", (err, proc) => {
+      events.healthCheckErrors.push(err)
+      events.unhealthyPids.push(proc.pid)
+    })
     bc.on("taskError", (err) => events.taskErrors.push(err))
 
     const emptyEvents = ["beforeEnd", "end"]
@@ -201,8 +212,8 @@ describe("BatchCluster", function () {
               }
 
               if (healthcheck) {
-                opts.healthCheckIntervalMillis = 50
-                opts.healthCheckCommand = "flaky"
+                opts.healthCheckIntervalMillis = 250
+                opts.healthCheckCommand = "flaky 0.2"
               }
 
               // failrate needs to be high enough to trigger but low enough to allow
@@ -308,6 +319,14 @@ describe("BatchCluster", function () {
                   expect((await currentTestPids()).length).to.be.lte(
                     bc.spawnedProcCount
                   ) // because flaky
+
+                  const counts = bc.childEndCounts
+                  if (healthcheck) {
+                    expect(counts.unhealthy).to.be.gt(0)
+                  } else {
+                    expect(counts.unhealthy ?? 0).to.eql(0)
+                  }
+
                   await shutdown(bc)
                   return
                 }

@@ -1,5 +1,6 @@
 import { ChildProcess } from "child_process"
 import { EventEmitter } from "events"
+import { BatchProcess } from "./BatchProcess"
 import { Task } from "./Task"
 
 export class BatchClusterEmitter {
@@ -37,7 +38,18 @@ export class BatchClusterEmitter {
   /**
    * Emitted when a task has an error
    */
-  on(event: "taskError", listener: (err: Error, task: Task) => void): void
+  on(
+    event: "taskError",
+    listener: (err: Error, task: Task, proc: BatchProcess) => void
+  ): void
+
+  /**
+   * Emitted when a process fails health checks
+   */
+  on(
+    event: "healthCheckError",
+    listener: (err: Error, proc: BatchProcess) => void
+  ): void
 
   /**
    * Emitted when a child process has an error during shutdown
