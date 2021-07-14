@@ -641,7 +641,7 @@ describe("BatchCluster", function () {
         tk.freeze(now + 7000)
         assertExpectedResults(await Promise.all(runTasks(bc, 2)))
         const pidsAfter = await bc.pids()
-        console.dir({ maxProcAgeMillis, pidsBefore, pidsAfter })
+        // console.dir({ maxProcAgeMillis, pidsBefore, pidsAfter })
         exp(pidsBefore, pidsAfter)
         return
       })
