@@ -22,6 +22,8 @@ See [Semver](http://semver.org/).
 
 - ✨ Added `on("healthCheckError", err, proc)` event
 
+- 🐞 Fixed process start lag (due to startup tasks not emitting an `.onIdle`)
+ 
 - 🐞 Reworked when health checks were run, and add tests to validate failing health checks recycle children
 
 - 📦 Rebuild docs
