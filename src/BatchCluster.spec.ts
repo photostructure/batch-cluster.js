@@ -43,7 +43,6 @@ describe("BatchCluster", function () {
     exitCommand: "exit",
     onIdleIntervalMillis: 250, // frequently to speed up tests
     maxTasksPerProcess: 5, // force process churn
-    spawnTimeoutMillis: isWin ? 7000 : 1000,
     taskTimeoutMillis: 200, // so the timeout test doesn't timeout
     maxReasonableProcessFailuresPerMinute: 2000, // this is so high because failrate is so high
     minDelayBetweenSpawnMillis: 100,
@@ -107,10 +106,10 @@ describe("BatchCluster", function () {
     expect(bc.ended).to.eql(true)
 
     const isShutdown = await until(
-      async (count) => {
-        const isIdle = bc.isIdle
+      async () => {
+        // const isIdle = bc.isIdle
         // If bc has been told to shut down, it won't ever finish any pending commands.
-        const pendingCommands = bc.pendingTasks.map((ea) => ea.command)
+        // const pendingCommands = bc.pendingTasks.map((ea) => ea.command)
         const runningCommands = bc.currentTasks.map((ea) => ea.command)
         const busyProcCount = bc.busyProcCount
         const pids = await bc.pids()
@@ -122,16 +121,16 @@ describe("BatchCluster", function () {
           pids.length === 0 &&
           livingPids.length === 0
 
-        if (!done)
-          console.log("shutdown(): waiting for end", {
-            count,
-            isIdle,
-            pendingCommands,
-            runningCommands,
-            busyProcCount,
-            pids,
-            livingPids,
-          })
+        // if (!done)
+        //   console.log("shutdown(): waiting for end", {
+        //     count,
+        //     isIdle,
+        //     pendingCommands,
+        //     runningCommands,
+        //     busyProcCount,
+        //     pids,
+        //     livingPids,
+        //   })
         return done
       },
       10_000, // < mac CI is slow
@@ -146,10 +145,10 @@ describe("BatchCluster", function () {
     if (!endPromiseResolved || !isShutdown) {
       console.warn("shutdown()", { isShutdown, endPromiseResolved })
     }
-    const cec = bc.childEndCounts
-    if (Object.keys(cec).length > 0) {
-      console.log("childEndCounts", cec)
-    }
+    // const cec = bc.childEndCounts
+    // if (Object.keys(cec).length > 0) {
+    //   console.log("childEndCounts", cec)
+    // }
     expect(isShutdown).to.eql(true)
     expect(endPromiseResolved).to.eql(true)
     expect(bc.end(true).settled).to.eql(true)
@@ -213,7 +212,7 @@ describe("BatchCluster", function () {
 
               if (healthcheck) {
                 opts.healthCheckIntervalMillis = 250
-                opts.healthCheckCommand = "flaky 0.2"
+                opts.healthCheckCommand = "flaky 0.5" // fail half the time (ensure we get a proc end due to "unhealthy")
               }
 
               // failrate needs to be high enough to trigger but low enough to allow
@@ -321,9 +320,13 @@ describe("BatchCluster", function () {
                   ) // because flaky
 
                   const unhealthy = bc.countEndedChildProcs("unhealthy")
-                  if (healthcheck) {
+                  // If it's a short spec and we don't have any worn procs, we
+                  // probably don't have any unhealthy procs:
+                  if (healthcheck && bc.countEndedChildProcs("worn") > 2) {
                     expect(unhealthy).to.be.gt(0)
-                  } else {
+                  }
+
+                  if (!healthcheck) {
                     expect(unhealthy).to.eql(0)
                   }
 
@@ -489,14 +492,14 @@ describe("BatchCluster", function () {
               pid2count.set(pid, count + 1)
             })
             expect(bc.isIdle).to.eql(true)
-            console.log({
-              expectTaskMin,
-              expectedTaskMax,
-              maxProcs,
-              uniqPids: pid2count.size,
-              pid2count,
-              bcPids: await bc.pids(),
-            })
+            // console.log({
+            //   expectTaskMin,
+            //   expectedTaskMax,
+            //   maxProcs,
+            //   uniqPids: pid2count.size,
+            //   pid2count,
+            //   bcPids: await bc.pids(),
+            // })
             for (const [, count] of pid2count.entries()) {
               expect(count).to.be.within(expectTaskMin, expectedTaskMax)
             }
@@ -629,6 +632,7 @@ describe("BatchCluster", function () {
             ...DefaultOpts,
             maxProcs: 1,
             maxProcAgeMillis,
+            spawnTimeoutMillis: Math.max(maxProcAgeMillis, 200),
             processFactory,
           })
         )
@@ -668,6 +672,7 @@ describe("BatchCluster", function () {
           "BatchCluster was given invalid options",
           "maxProcAgeMillis must be greater than or equal to " +
             spawnTimeoutMillis,
+          `the max value of spawnTimeoutMillis (${spawnTimeoutMillis}) and taskTimeoutMillis (${DefaultOpts.taskTimeoutMillis})`,
         ])
       }
     })
@@ -688,6 +693,7 @@ describe("BatchCluster", function () {
           "BatchCluster was given invalid options",
           "maxProcAgeMillis must be greater than or equal to " +
             taskTimeoutMillis,
+          `the max value of spawnTimeoutMillis (${DefaultOpts.spawnTimeoutMillis}) and taskTimeoutMillis (${taskTimeoutMillis})`,
         ])
       }
     })
@@ -723,6 +729,7 @@ describe("BatchCluster", function () {
           "maxTasksPerProcess must be greater than or equal to 1",
           "maxProcs must be greater than or equal to 1",
           "maxProcAgeMillis must be greater than or equal to 50",
+          "the max value of spawnTimeoutMillis (50) and taskTimeoutMillis (5)",
           "onIdleIntervalMillis must be greater than or equal to 0",
           "endGracefulWaitTimeMillis must be greater than or equal to 0",
           "streamFlushMillis must be greater than or equal to 0",
