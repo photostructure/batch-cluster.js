@@ -57,7 +57,6 @@ export class BatchProcess {
     // don't let node count the child processes as a reason to stay alive
     this.proc.unref()
 
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     if (proc.pid == null) {
       throw new Error("BatchProcess.constructor: child process pid is null")
     }
@@ -268,21 +267,20 @@ export class BatchProcess {
       )
     }
     // logger().debug(this.name + ".execTask(): starting", { cmd })
-    void task.promise
-      .catch((err) => {
-        if (isStartupTask) {
-          this.observer.onStartError(err)
-        } else {
-          this.observer.onTaskError(err, task, this)
-        }
-      })
-      .finally(() => {
-        // This promise may not run immediately after the task has completed:
-        // there may be another task scheduled already!
-        if (this._currentTask?.taskId === task.taskId) {
-          this.clearCurrentTask()
-        }
-      })
+    void task.promise.catch((err) => {
+      if (isStartupTask) {
+        this.observer.onStartError(err)
+      } else {
+        this.observer.onTaskError(err, task, this)
+      }
+    })
+    void task.promise.finally(() => {
+      // This promise may not run immediately after the task has completed:
+      // there may be another task scheduled already!
+      if (this._currentTask?.taskId === task.taskId) {
+        this.clearCurrentTask()
+      }
+    })
     try {
       task.onStart()
       const stdin = this.proc?.stdin
@@ -529,6 +527,7 @@ export class BatchProcess {
     this.currentTaskTimeout = undefined
     this._currentTask = undefined
     this.lastJobFinshedAt = Date.now()
+    setImmediate(() => this.observer.onIdle())
   }
 
   private resolveCurrentTask(

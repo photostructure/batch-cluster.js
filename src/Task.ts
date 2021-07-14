@@ -53,7 +53,13 @@ export class Task<T = any> {
   }
 
   toString(): string {
-    return this.constructor.name + "(" + this.command + ")#" + this.taskId
+    return (
+      this.constructor.name +
+      "(" +
+      this.command.replace(/\s+/gm, " ").slice(0, 80).trim() +
+      ")#" +
+      this.taskId
+    )
   }
 
   onStdout(buf: string | Buffer): void {
@@ -85,6 +91,7 @@ export class Task<T = any> {
     stderr: string,
     passed: boolean
   ): Promise<void> {
+    if (this.d.fulfilled) return // no-op
     try {
       const parseResult = await this.parser(stdout, stderr, passed)
       if (this.d.resolve(parseResult)) {

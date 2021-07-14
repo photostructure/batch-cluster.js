@@ -330,7 +330,9 @@ export class BatchCluster extends BatchClusterEmitter {
     if (this.tasks.length === 0 || this.ended) return false
     const readyProc = this._procs.find((ea) => ea.ready)
     // no procs are idle and healthy :(
-    if (readyProc == null) return false
+    if (readyProc == null) {
+      return false
+    }
 
     const task = this.tasks.shift()
     if (task == null) {

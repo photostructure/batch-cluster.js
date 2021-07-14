@@ -1,8 +1,6 @@
 import * as _cp from "child_process"
-import * as _os from "os"
 import * as _p from "process"
-
-export const isWin = ["win32", "cygwin"].includes(_os.platform())
+import { isWin } from "./Platform"
 
 function safePid(pid: number) {
   if (typeof pid !== "number" || pid < 0) {

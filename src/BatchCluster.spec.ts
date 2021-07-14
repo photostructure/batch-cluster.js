@@ -5,7 +5,7 @@ import { BatchCluster } from "./BatchCluster"
 import { BatchClusterOptions } from "./BatchClusterOptions"
 import { logger } from "./Logger"
 import { map, orElse } from "./Object"
-import { isWin } from "./Pids"
+import { isWin } from "./Platform"
 import { toS } from "./String"
 import { Task } from "./Task"
 import {
@@ -43,7 +43,7 @@ describe("BatchCluster", function () {
     exitCommand: "exit",
     onIdleIntervalMillis: 250, // frequently to speed up tests
     maxTasksPerProcess: 5, // force process churn
-    spawnTimeoutMillis: 2000,
+    spawnTimeoutMillis: isWin ? 7000 : 1000,
     taskTimeoutMillis: 200, // so the timeout test doesn't timeout
     maxReasonableProcessFailuresPerMinute: 2000, // this is so high because failrate is so high
     minDelayBetweenSpawnMillis: 100,
@@ -320,11 +320,11 @@ describe("BatchCluster", function () {
                     bc.spawnedProcCount
                   ) // because flaky
 
-                  const counts = bc.childEndCounts
+                  const unhealthy = bc.countEndedChildProcs("unhealthy")
                   if (healthcheck) {
-                    expect(counts.unhealthy).to.be.gt(0)
+                    expect(unhealthy).to.be.gt(0)
                   } else {
-                    expect(counts.unhealthy ?? 0).to.eql(0)
+                    expect(unhealthy).to.eql(0)
                   }
 
                   await shutdown(bc)
