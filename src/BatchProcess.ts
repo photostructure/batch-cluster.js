@@ -266,21 +266,20 @@ export class BatchProcess {
         timeoutMs
       )
     }
-    // logger().debug(this.name + ".execTask(): starting", { cmd })
-    void task.promise.catch((err) => {
-      if (isStartupTask) {
-        this.observer.onStartError(err)
-      } else {
-        this.observer.onTaskError(err, task, this)
+    // CAREFUL! If you add a .catch or .finally, the pipeline can emit unhandled
+    // rejections:
+    void task.promise.then(
+      () => this.clearCurrentTask(task),
+      (err) => {
+        if (isStartupTask) {
+          this.observer.onStartError(err)
+        } else {
+          this.observer.onTaskError(err, task, this)
+        }
+        this.clearCurrentTask(task)
       }
-    })
-    void task.promise.finally(() => {
-      // This promise may not run immediately after the task has completed:
-      // there may be another task scheduled already!
-      if (this._currentTask?.taskId === task.taskId) {
-        this.clearCurrentTask()
-      }
-    })
+    )
+
     try {
       task.onStart()
       const stdin = this.proc?.stdin
@@ -522,12 +521,13 @@ export class BatchProcess {
     return
   }
 
-  private clearCurrentTask() {
+  private clearCurrentTask(task?: Task) {
+    setImmediate(() => this.observer.onIdle())
+    if (task != null && task.taskId !== this._currentTask?.taskId) return
     map(this.currentTaskTimeout, (ea) => clearTimeout(ea))
     this.currentTaskTimeout = undefined
     this._currentTask = undefined
     this.lastJobFinshedAt = Date.now()
-    setImmediate(() => this.observer.onIdle())
   }
 
   private resolveCurrentTask(
