@@ -194,10 +194,15 @@ export function verifyOptions(
       errors.push(fieldName + " must not be blank")
     }
   }
-  function gte(fieldName: keyof AllOpts, value: number) {
+  function gte(fieldName: keyof AllOpts, value: number, why?: string) {
     const v = result[fieldName] as number
     if (v < value) {
-      errors.push(fieldName + " must be greater than or equal to " + value)
+      errors.push(
+        fieldName +
+          " must be greater than or equal to " +
+          value +
+          (why == null ? "" : ": " + why)
+      )
     }
   }
   notBlank("versionCommand")
@@ -212,7 +217,8 @@ export function verifyOptions(
   if (opts.maxProcAgeMillis !== 0) {
     gte(
       "maxProcAgeMillis",
-      Math.max(result.spawnTimeoutMillis, result.taskTimeoutMillis)
+      Math.max(result.spawnTimeoutMillis, result.taskTimeoutMillis),
+      `the max value of spawnTimeoutMillis (${result.spawnTimeoutMillis}) and taskTimeoutMillis (${result.taskTimeoutMillis})`
     )
   }
   gte("minDelayBetweenSpawnMillis", 1)
