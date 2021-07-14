@@ -27,9 +27,9 @@ import {
 const tk = require("timekeeper")
 
 describe("BatchCluster", function () {
-  if (env.CI === "1") {
-    // child process forking in CI is flaky
-    this.retries(2)
+  if (String(env.CI) === "1") {
+    // child process forking in CI is flaky.
+    this.retries(3)
   }
 
   const ErrorPrefix = "ERROR: "
