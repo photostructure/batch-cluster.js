@@ -1,3 +1,4 @@
+import { expect, use } from "chai"
 import { ChildProcess, spawn } from "child_process"
 import { join } from "path"
 import * as _p from "process"
@@ -7,10 +8,9 @@ import { Parser } from "./Parser"
 import { pids } from "./Pids"
 import { notBlank } from "./String"
 
-const _chai = require("chai")
-_chai.use(require("chai-string"))
-_chai.use(require("chai-as-promised"))
-_chai.use(require("chai-withintoleranceof"))
+use(require("chai-string"))
+use(require("chai-as-promised"))
+use(require("chai-withintoleranceof"))
 
 export { expect } from "chai"
 
@@ -35,7 +35,16 @@ setLogger(
 
 export const parserErrors: string[] = []
 
+export const unhandledRejections: Error[] = []
+
 beforeEach(() => (parserErrors.length = 0))
+
+process.on("unhandledRejection", (reason: any) => {
+  console.error("unhandledRejection:", reason.stack ?? reason)
+  unhandledRejections.push(reason)
+})
+
+afterEach(() => expect(unhandledRejections).to.eql([]))
 
 export const parser: Parser<string> = (
   stdout: string,
@@ -62,10 +71,6 @@ export const parser: Parser<string> = (
     return str
   }
 }
-
-process.on("unhandledRejection", (reason: any) => {
-  console.error("unhandledRejection:", reason.stack ?? reason)
-})
 
 export function times<T>(n: number, f: (idx: number) => T): T[] {
   return Array(n)
