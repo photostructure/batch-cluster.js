@@ -19,7 +19,7 @@ export interface BatchProcessOptions {
    * If the command outputs to stderr or returns a fail string, the process
    * will be considered unhealthy and recycled.
    */
-  healthCheckCommand?: string
+  healthCheckCommand?: string | undefined
 
   /**
    * Expected text to print if a command passes. Cannot be blank. Strings will
@@ -34,10 +34,10 @@ export interface BatchProcessOptions {
   fail: string | RegExp
 
   /**
-   * Command to end the child batch process. If not provided, stdin will be
-   * closed to signal to the child process that it may terminate, and if it
-   * does not shut down within `endGracefulWaitTimeMillis`, it will be
+   * Command to end the child batch process. If not provided (or undefined),
+   * stdin will be closed to signal to the child process that it may terminate,
+   * and if it does not shut down within `endGracefulWaitTimeMillis`, it will be
    * SIGHUP'ed.
    */
-  exitCommand?: string
+  exitCommand?: string | undefined
 }
