@@ -18,6 +18,10 @@ See [Semver](http://semver.org/).
 
 - 📦 Minor packaging changes
 
+## v7.2.0
+
+- 📦 Upgrade all dev dependencies. Pulling in new TypeScript 4.4 required [redoing all node imports](https://github.com/microsoft/TypeScript/issues/46027#issuecomment-926019016).
+
 ## v7.1.0
 
 - ✨ Added `on("healthCheckError", err, proc)` event
