@@ -1,4 +1,4 @@
-import { ChildProcess } from "child_process"
+import child_process from "child_process"
 import { until } from "./Async"
 import { Deferred } from "./Deferred"
 import { kill, pidExists } from "./Pids"
@@ -14,7 +14,7 @@ import {
 
 describe("test.js", () => {
   class Harness {
-    readonly child: ChildProcess
+    readonly child: child_process.ChildProcess
     public output = ""
     constructor() {
       setFailrate(0)
@@ -55,7 +55,7 @@ describe("test.js", () => {
           f(this.output.trim())
           expect(await this.running()).to.eql(false)
           d.resolve("on exit")
-        } catch (err) {
+        } catch (err: any) {
           d.reject(err)
         }
       })

@@ -1,4 +1,4 @@
-import { debuglog } from "util"
+import util from "util"
 import { map } from "./Object"
 import { notBlank } from "./String"
 
@@ -23,7 +23,7 @@ export const LogLevels: (keyof Logger)[] = [
   "error",
 ]
 
-const _debuglog = debuglog("batch-cluster")
+const _debuglog = util.debuglog("batch-cluster")
 
 const noop = () => undefined
 

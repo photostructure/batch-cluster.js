@@ -1,5 +1,6 @@
-import * as _cp from "child_process"
-import * as _p from "process"
+import child_process from "child_process"
+import process from "process"
+import { map } from "./Object"
 import { isWin } from "./Platform"
 
 function safePid(pid: number) {
@@ -55,7 +56,7 @@ export function pidExists(pid: number | null | undefined): Promise<boolean> {
       // returning exit code 1, which generates an extraneous Error.
       [["-p", needle + ",1"]]
   return new Promise((resolve) => {
-    _cp.execFile(
+    child_process.execFile(
       cmd,
       ...(args as any),
       (error: Error | null, stdout: string) => {
@@ -81,7 +82,7 @@ const posixRe = /^\s*(\d+)/
  */
 export function pids(): Promise<number[]> {
   return new Promise((resolve, reject) => {
-    _cp.execFile(
+    child_process.execFile(
       isWin ? "tasklist" : "ps",
       // NoHeader, FOrmat CSV
       isWin ? ["/NH", "/FO", "CSV"] : ["-e"],
@@ -92,13 +93,12 @@ export function pids(): Promise<number[]> {
           reject(new Error(stderr))
         } else
           resolve(
-            (
-              ("" + stdout)
-                .trim()
-                .split(/[\n\r]+/)
-                .map((ea) => ea.match(isWin ? winRe : posixRe))
-                .filter((m) => m != null) as RegExpMatchArray[]
-            ).map((m) => parseInt(m[1]))
+            ("" + stdout)
+              .trim()
+              .split(/[\n\r]+/)
+              .map((ea) => ea.match(isWin ? winRe : posixRe))
+              .map((m) => map(m?.[0], parseInt))
+              .filter((ea) => ea != null) as number[]
           )
       }
     )
@@ -116,7 +116,7 @@ export function pids(): Promise<number[]> {
 export function kill(pid: number | null | undefined, force = false): void {
   if (pid == null) return
 
-  if (pid === _p.pid || pid === _p.ppid) {
+  if (pid === process.pid || pid === process.ppid) {
     throw new Error("cannot self-terminate")
   }
 
@@ -125,10 +125,10 @@ export function kill(pid: number | null | undefined, force = false): void {
     if (force) {
       args.push("/F")
     }
-    _cp.execFile("taskkill", args)
+    child_process.execFile("taskkill", args)
   } else {
     try {
-      _p.kill(pid, force ? "SIGKILL" : "SIGTERM")
+      process.kill(pid, force ? "SIGKILL" : "SIGTERM")
     } catch (err) {
       if (!String(err).includes("ESRCH")) throw err
     }

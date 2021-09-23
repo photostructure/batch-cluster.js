@@ -107,7 +107,7 @@ export class Deferred<T> implements PromiseLike<T> {
 async function observe<T>(d: Deferred<T>, p: Promise<T>) {
   try {
     d.resolve(await p)
-  } catch (err) {
+  } catch (err: any) {
     d.reject(err)
   }
 }

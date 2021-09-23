@@ -1,20 +1,26 @@
-import { ChildProcess } from "child_process"
-import { EventEmitter } from "events"
+import child_process from "child_process"
+import events from "events"
 import { BatchProcess } from "./BatchProcess"
 import { Task } from "./Task"
 
 export class BatchClusterEmitter {
-  readonly emitter = new EventEmitter()
+  readonly emitter = new events.EventEmitter()
 
   /**
    * Emitted when a child process has started
    */
-  on(event: "childStart", listener: (childProcess: ChildProcess) => void): void
+  on(
+    event: "childStart",
+    listener: (childProcess: child_process.ChildProcess) => void
+  ): void
 
   /**
    * Emitted when a child process has exitted
    */
-  on(event: "childExit", listener: (childProcess: ChildProcess) => void): void
+  on(
+    event: "childExit",
+    listener: (childProcess: child_process.ChildProcess) => void
+  ): void
 
   /**
    * Emitted when a child process has an error when spawning

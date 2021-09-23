@@ -1,10 +1,13 @@
-import { Readable, Writable } from "stream"
+import stream from "stream"
 
-export function end(endable: Writable, contents?: string): Promise<void> {
+export function end(
+  endable: stream.Writable,
+  contents?: string
+): Promise<void> {
   return new Promise<void>((resolve) => endable.end(contents, resolve))
 }
 
-export function mapNotDestroyed<T extends Readable | Writable, R>(
+export function mapNotDestroyed<T extends stream.Readable | stream.Writable, R>(
   obj: T | undefined | null,
   f: (t: T) => R
 ): R | undefined {

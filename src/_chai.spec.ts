@@ -1,7 +1,13 @@
+try {
+  require("source-map-support").install()
+} catch {
+  //
+}
+
 import { expect, use } from "chai"
-import { ChildProcess, spawn } from "child_process"
-import { join } from "path"
-import * as _p from "process"
+import child_process from "child_process"
+import path from "path"
+import process from "process"
 import { Log, logger, setLogger } from "./Logger"
 import { orElse } from "./Object"
 import { Parser } from "./Parser"
@@ -26,8 +32,9 @@ setLogger(
           info: console.log,
           warn: console.warn,
           error: console.error,
+          // tslint:enable: no-unbound-method
         },
-        orElse(_p.env.LOG as any, "error")
+        (process.env.LOG as any) ?? "error"
       )
     )
   )
@@ -94,7 +101,7 @@ declare namespace Chai {
   }
 }
 
-export const procs: ChildProcess[] = []
+export const procs: child_process.ChildProcess[] = []
 
 export function testPids(): number[] {
   return procs.map((proc) => proc.pid).filter((ea) => ea != null) as number[]
@@ -177,15 +184,19 @@ beforeEach(() => {
 })
 
 export const processFactory = () => {
-  const proc = spawn(_p.execPath, [join(__dirname, "test.js")], {
-    env: {
-      rngseed: rngseed(),
-      failrate,
-      newline,
-      ignoreExit,
-      unluckyfail,
-    },
-  })
+  const proc = child_process.spawn(
+    process.execPath,
+    [path.join(__dirname, "test.js")],
+    {
+      env: {
+        rngseed: rngseed(),
+        failrate,
+        newline,
+        ignoreExit,
+        unluckyfail,
+      },
+    }
+  )
   procs.push(proc)
   return proc
 }

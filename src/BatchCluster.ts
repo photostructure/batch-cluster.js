@@ -1,6 +1,6 @@
-import { ChildProcess } from "child_process"
-import * as _p from "process"
-import { clearInterval, setInterval } from "timers"
+import child_process from "child_process"
+import process from "process"
+import timers from "timers"
 import { filterInPlace } from "./Array"
 import { BatchClusterEmitter } from "./BatchClusterEmitter"
 import {
@@ -15,16 +15,17 @@ import { Deferred } from "./Deferred"
 import { Logger } from "./Logger"
 import { Mean } from "./Mean"
 import { fromEntries, map } from "./Object"
+import { Parser } from "./Parser"
 import { Rate } from "./Rate"
 import { Task } from "./Task"
 
 export { BatchClusterOptions } from "./BatchClusterOptions"
-export { BatchProcessOptions } from "./BatchProcessOptions"
 export { Deferred } from "./Deferred"
 export * from "./Logger"
-export { Parser, SimpleParser } from "./Parser"
+export { SimpleParser } from "./Parser"
 export { kill, pidExists, pids } from "./Pids"
 export { Task } from "./Task"
+export type { BatchProcessOptions, Parser }
 
 /**
  * These are required parameters for a given BatchCluster.
@@ -35,7 +36,9 @@ export interface ChildProcessFactory {
    * responsibility of this thunk. Error handlers will be registered as
    * appropriate.
    */
-  readonly processFactory: () => ChildProcess | Promise<ChildProcess>
+  readonly processFactory: () =>
+    | child_process.ChildProcess
+    | Promise<child_process.ChildProcess>
 }
 
 /**
@@ -57,7 +60,7 @@ export class BatchCluster extends BatchClusterEmitter {
   private _lastSpawnedProcTime = 0
   private _lastPidsCheckTime = Date.now()
   private readonly tasks: Task[] = []
-  private onIdleInterval?: NodeJS.Timer
+  private onIdleInterval: NodeJS.Timer | undefined
   private readonly startErrorRate = new Rate()
   private _spawnedProcs = 0
   private endPromise?: Deferred<void>
@@ -72,7 +75,7 @@ export class BatchCluster extends BatchClusterEmitter {
     super()
     this.options = Object.freeze(verifyOptions(opts))
     if (this.options.onIdleIntervalMillis > 0) {
-      this.onIdleInterval = setInterval(
+      this.onIdleInterval = timers.setInterval(
         () => this.onIdle(),
         this.options.onIdleIntervalMillis
       )
@@ -99,8 +102,8 @@ export class BatchCluster extends BatchClusterEmitter {
         this.emitInternalError(err)
       },
     }
-    _p.once("beforeExit", this.beforeExitListener)
-    _p.once("exit", this.exitListener)
+    process.once("beforeExit", this.beforeExitListener)
+    process.once("exit", this.exitListener)
   }
 
   private readonly beforeExitListener = () => this.end(true)
@@ -119,10 +122,10 @@ export class BatchCluster extends BatchClusterEmitter {
   end(gracefully = true): Deferred<void> {
     if (this.endPromise == null) {
       this.emitter.emit("beforeEnd")
-      map(this.onIdleInterval, clearInterval)
+      map(this.onIdleInterval, timers.clearInterval)
       this.onIdleInterval = undefined
-      _p.removeListener("beforeExit", this.beforeExitListener)
-      _p.removeListener("exit", this.exitListener)
+      process.removeListener("beforeExit", this.beforeExitListener)
+      process.removeListener("exit", this.exitListener)
       this.endPromise = new Deferred<void>().observe(
         this.closeChildProcesses(gracefully)
           .catch((err) => {

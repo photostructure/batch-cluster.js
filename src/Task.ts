@@ -97,7 +97,7 @@ export class Task<T = any> {
       if (this.d.resolve(parseResult)) {
         this.settledAt = Date.now()
       }
-    } catch (error) {
+    } catch (error: any) {
       this.reject(error)
     }
     return

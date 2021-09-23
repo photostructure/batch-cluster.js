@@ -1,8 +1,8 @@
-import { setTimeout } from "timers"
+import timers from "timers"
 
 export function delay(millis: number, unref = false): Promise<void> {
   return new Promise<void>((resolve) => {
-    const t = setTimeout(() => resolve(), millis)
+    const t = timers.setTimeout(() => resolve(), millis)
     if (unref) t.unref()
   })
 }
@@ -30,7 +30,7 @@ export async function until(
 }
 
 /**
- * Return a thunk that will call the underlying thunk at most every `minDelayMs`
+ * @return a thunk that will call the underlying thunk at most every `minDelayMs`
  * milliseconds. The thunk will accept a boolean, that, when set, will force the
  * underlying thunk to be called (mostly useful for tests)
  */
@@ -53,9 +53,9 @@ export function ratelimit<T>(
  * @returns a function that accepts a thunk. The thunk will be debounced.
  */
 export function debounce(timeoutMs: number): (f: () => any) => void {
-  let lastTimeout: NodeJS.Timer | undefined
+  let lastTimeout: NodeJS.Timeout | undefined
   return (f: () => any) => {
-    if (lastTimeout != null) clearTimeout(lastTimeout)
-    lastTimeout = setTimeout(f, timeoutMs)
+    if (lastTimeout != null) timers.clearTimeout(lastTimeout)
+    lastTimeout = timers.setTimeout(f, timeoutMs)
   }
 }

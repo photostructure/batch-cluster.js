@@ -1,5 +1,5 @@
-import { env } from "process"
-import { inspect } from "util"
+import process from "process"
+import util from "util"
 import { delay, until } from "./Async"
 import { BatchCluster } from "./BatchCluster"
 import { BatchClusterOptions } from "./BatchClusterOptions"
@@ -27,7 +27,7 @@ import {
 const tk = require("timekeeper")
 
 describe("BatchCluster", function () {
-  if (String(env.CI) === "1") {
+  if (String(process.env.CI) === "1") {
     // child process forking in CI is flaky.
     this.retries(3)
   }
@@ -62,7 +62,7 @@ describe("BatchCluster", function () {
   }
 
   class Events {
-    readonly taskData: { cmd?: string; data: string }[] = []
+    readonly taskData: { cmd: string | undefined; data: string }[] = []
     readonly events: { event: string }[] = []
     readonly startedPids: number[] = []
     readonly exittedPids: number[] = []
@@ -196,10 +196,10 @@ describe("BatchCluster", function () {
 
   for (const newline of newlines) {
     for (const maxProcs of [1, 4]) {
-      for (const ignoreExit of [false, true]) {
+      for (const ignoreExit of [true, false]) {
         for (const healthcheck of [false, true]) {
           describe(
-            inspect(
+            util.inspect(
               { newline, maxProcs, ignoreExit, healthcheck },
               { colors: true, breakLength: 100 }
             ),
@@ -396,7 +396,7 @@ describe("BatchCluster", function () {
                 let result = ""
                 try {
                   result = await bc.enqueueTask(task)
-                } catch (err) {
+                } catch (err: any) {
                   error = err
                 }
                 expect(String(error)).to.match(
@@ -412,7 +412,7 @@ describe("BatchCluster", function () {
                 let result = ""
                 try {
                   result = await bc.enqueueTask(task)
-                } catch (err) {
+                } catch (err: any) {
                   error = err
                 }
                 expect(String(error)).to.match(
@@ -458,7 +458,7 @@ describe("BatchCluster", function () {
         expectedProcsMax,
       }) => {
         it(
-          inspect(
+          util.inspect(
             { minDelayBetweenSpawnMillis },
             { colors: false, breakLength: 100 }
           ),

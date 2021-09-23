@@ -1,3 +1,3 @@
-import { platform } from "os"
+import os from "os"
 
-export const isWin = ["win32", "cygwin"].includes(platform())
+export const isWin = ["win32", "cygwin"].includes(os.platform())

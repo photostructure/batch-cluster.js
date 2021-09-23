@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { env, exit, on, pid, stdout } from "process"
+import process from "process"
 import { delay } from "./Async"
 import { Mutex } from "./Mutex"
 
@@ -10,19 +10,19 @@ import { Mutex } from "./Mutex"
  * The complexity comes from introducing predictable flakiness.
  */
 
-const newline = env.newline === "crlf" ? "\r\n" : "\n"
+const newline = process.env.newline === "crlf" ? "\r\n" : "\n"
 
 function write(s: string): boolean {
-  return stdout.write(s + newline)
+  return process.stdout.write(s + newline)
 }
 
-const ignoreExit = env.ignoreExit === "1"
+const ignoreExit = process.env.ignoreExit === "1"
 
 if (ignoreExit) {
-  on("SIGINT", () => {
+  process.addListener("SIGINT", () => {
     write("ignoring SIGINT")
   })
-  on("SIGTERM", () => {
+  process.addListener("SIGTERM", () => {
     write("ignoring SIGTERM")
   })
 }
@@ -33,15 +33,17 @@ function toF(s: string | undefined) {
   return isNaN(f) ? undefined : f
 }
 
-const failrate = toF(env.failrate) ?? 0
+const failrate = toF(process.env.failrate) ?? 0
 const rng =
-  env.rngseed != null ? require("seedrandom")(env.rngseed) : Math.random
+  process.env.rngseed != null
+    ? require("seedrandom")(process.env.rngseed)
+    : Math.random
 
 async function onLine(line: string): Promise<void> {
-  // write(`# ${_p.pid} onLine(${line.trim()}) (newline = ${env.newline})`)
+  // write(`# ${_p.pid} onLine(${line.trim()}) (newline = ${process.env.newline})`)
   const r = rng()
   if (r < failrate) {
-    if (env.unluckyfail === "1") {
+    if (process.env.unluckyfail === "1") {
       // Make sure streams get debounced:
       write("FAIL")
       await delay(1)
@@ -52,7 +54,7 @@ async function onLine(line: string): Promise<void> {
         ", failrate: " +
         failrate.toFixed(2) +
         ", seed: " +
-        env.rngseed
+        process.env.rngseed
     )
 
     return
@@ -98,9 +100,9 @@ async function onLine(line: string): Promise<void> {
         break
       }
       case "sleep": {
-        const millis = parseInt(tokens[0])
+        const millis = parseInt(tokens[0] ?? "100")
         await delay(millis)
-        write(JSON.stringify({ slept: millis, pid }))
+        write(JSON.stringify({ slept: millis, pid: process.pid }))
         write("PASS")
         break
       }
@@ -115,7 +117,7 @@ async function onLine(line: string): Promise<void> {
         if (ignoreExit) {
           write("ignoreExit is set")
         } else {
-          exit(0)
+          process.exit(0)
         }
         break
       }
