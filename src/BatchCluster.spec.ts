@@ -514,12 +514,14 @@ describe("BatchCluster", function () {
   })
 
   describe("maxProcAgeMillis", function () {
+    // CI is sometimes flaky here
+    this.retries(3)
     const opts = {
       ...DefaultOpts,
       maxProcs: 4,
       maxTasksPerProcess: 100,
-      spawnTimeoutMillis: 1000, // maxProcAge must be >= this
-      maxProcAgeMillis: 1000,
+      spawnTimeoutMillis: 2000, // maxProcAge must be >= this
+      maxProcAgeMillis: 3000,
     }
 
     let bc: BatchCluster
@@ -534,10 +536,7 @@ describe("BatchCluster", function () {
         ))
     )
 
-    afterEach(async () => {
-      await shutdown(bc)
-      return
-    })
+    afterEach(() => shutdown(bc))
 
     it("culls old child procs", async () => {
       assertExpectedResults(
