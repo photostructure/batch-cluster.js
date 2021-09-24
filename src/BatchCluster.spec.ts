@@ -102,6 +102,7 @@ describe("BatchCluster", function () {
   const expectedEndEvents = [{ event: "beforeEnd" }, { event: "end" }]
 
   async function shutdown(bc: BatchCluster) {
+    if (bc == null) return // we skipped the spec
     const endPromise = bc.end(true)
     // "ended" should be true immediately, but it may still be waiting for child
     // processes to exit:
