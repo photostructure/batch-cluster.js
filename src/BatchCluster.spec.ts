@@ -257,7 +257,7 @@ describe("BatchCluster", function () {
                 await shutdown(bc)
                 expect(bc.spawnedProcCount).to.be.within(
                   maxProcs,
-                  iterations + 1
+                  iterations + maxProcs
                 )
                 const pids = sortNumeric(testPids())
                 expect(pids.length).to.be.gte(maxProcs)
