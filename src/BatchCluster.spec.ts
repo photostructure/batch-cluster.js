@@ -1,5 +1,6 @@
 import process from "process"
 import util from "util"
+import { filterInPlace } from "./Array"
 import { delay, until } from "./Async"
 import { BatchCluster } from "./BatchCluster"
 import { BatchClusterOptions } from "./BatchClusterOptions"
@@ -337,7 +338,7 @@ describe("BatchCluster", function () {
                 }
               )
 
-              it("recovers from invalid commands", async () => {
+              it("recovers from invalid commands", async function () {
                 assertExpectedResults(
                   await Promise.all(runTasks(bc, maxProcs * 4))
                 )
@@ -348,12 +349,19 @@ describe("BatchCluster", function () {
                       .catch((err) => err)
                   )
                 )
+                filterInPlace(
+                  errorResults,
+                  (ea) => ea != null && !String(ea).includes("EUNLUCKY")
+                )
                 if (
                   maxProcs === 1 &&
                   ignoreExit === false &&
                   healthcheck === false
                 ) {
                   // We don't expect these to pass with this config:
+                } else if (maxProcs === 1 && errorResults.length === 0) {
+                  console.warn("(all processes were unlucky)")
+                  return this.skip()
                 } else {
                   expect(
                     errorResults.some((ea) => String(ea).includes("nonsense"))
