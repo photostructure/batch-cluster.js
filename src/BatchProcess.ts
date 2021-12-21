@@ -1,6 +1,5 @@
 import * as _cp from "child_process"
-import { debounce, delay, until } from "./Async"
-import { BatchProcessObserver } from "./BatchProcessObserver"
+import { delay, until } from "./Async"
 import { Deferred } from "./Deferred"
 import { cleanError, tryEach } from "./Error"
 import { InternalBatchProcessOptions } from "./InternalBatchProcessOptions"
@@ -9,7 +8,7 @@ import { map } from "./Object"
 import { SimpleParser } from "./Parser"
 import { kill, pidExists } from "./Pids"
 import { mapNotDestroyed } from "./Stream"
-import { blank, ensureSuffix, toS } from "./String"
+import { blank, ensureSuffix } from "./String"
 import { Task } from "./Task"
 
 export type WhyNotReady = BatchProcess["whyNotHealthy"]
@@ -45,12 +44,10 @@ export class BatchProcess {
    */
   private _currentTask: Task | undefined
   private currentTaskTimeout: NodeJS.Timer | undefined
-  private readonly streamDebouncer: (f: () => any) => void
 
   constructor(
     readonly proc: _cp.ChildProcess,
-    readonly opts: InternalBatchProcessOptions,
-    readonly observer: BatchProcessObserver
+    readonly opts: InternalBatchProcessOptions
   ) {
     this.name = "BatchProcess(" + proc.pid + ")"
     this.logger = opts.logger
@@ -81,15 +78,13 @@ export class BatchProcess {
       stderr.on("data", (err) => this.onStderr(err))
     })
 
-    this.streamDebouncer = debounce(opts.streamFlushMillis)
-
     const startupTask = new Task(opts.versionCommand, SimpleParser)
     this.startupTaskId = startupTask.taskId
 
     if (!this.execTask(startupTask)) {
       // This could also be considered a "start error", but if it's just an
       // internal bug and the process starts, don't veto because there's a bug:
-      this.observer.onInternalError(
+      this.opts.observer.onInternalError(
         new Error(this.name + " startup task was not submitted")
       )
     }
@@ -233,7 +228,7 @@ export class BatchProcess {
       t.promise
         .catch((err) => {
           // console.log("execTask#" + this.pid + ": health check failed", err)
-          this.observer.onHealthCheckError(err, this)
+          this.opts.observer.onHealthCheckError(err, this)
           this.healthCheckFailures++
         })
         .finally(() => {
@@ -269,19 +264,23 @@ export class BatchProcess {
     // CAREFUL! If you add a .catch or .finally, the pipeline can emit unhandled
     // rejections:
     void task.promise.then(
-      () => this.clearCurrentTask(task),
-      (err) => {
-        if (isStartupTask) {
-          this.observer.onStartError(err)
-        } else {
-          this.observer.onTaskError(err, task, this)
-        }
+      () => {
         this.clearCurrentTask(task)
+        this.opts.observer.onTaskResolved(task, this)
+      },
+      (err) => {
+        this.clearCurrentTask(task)
+
+        if (isStartupTask) {
+          this.opts.observer.onStartError(err)
+        } else {
+          this.opts.observer.onTaskError(err, task, this)
+        }
       }
     )
 
     try {
-      task.onStart()
+      task.onStart(this.opts)
       const stdin = this.proc?.stdin
       if (stdin == null || stdin.destroyed) {
         task.reject(new Error("proc.stdin unexpectedly closed"))
@@ -435,14 +434,14 @@ export class BatchProcess {
       this.logger().warn(
         this.name + ".onError(): startup task failed: " + error
       )
-      this.observer.onStartError(error)
+      this.opts.observer.onStartError(error)
     }
 
     if (task != null) {
       if (task.pending) {
         task.reject(error)
       } else {
-        this.observer.onInternalError(
+        this.opts.observer.onInternalError(
           new Error(
             `${this.name}.onError(${error}) cannot reject already-fulfilled task.`
           )
@@ -463,13 +462,16 @@ export class BatchProcess {
     const task = this._currentTask
     if (task != null && task.pending) {
       task.onStderr(data)
-      this.onData(task)
     } else if (!this._ending) {
       // If we're ending and there isn't a task, don't worry about it.
       // Otherwise:
-      this.observer.onInternalError(
+      this.opts.observer.onInternalError(
         new Error(
-          "onStderr(" + data + ") no pending currentTask (task: " + task + ")"
+          "onStderr(" +
+            String(data).trim() +
+            ") no pending currentTask (task: " +
+            task +
+            ")"
         )
       )
     }
@@ -480,13 +482,12 @@ export class BatchProcess {
     if (data == null) return
     const task = this._currentTask
     if (task != null && task.pending) {
-      this.observer.onTaskData(data, task)
+      this.opts.observer.onTaskData(data, task)
       task.onStdout(data)
-      this.onData(task)
     } else if (!this._ending) {
       // If we're ending and there isn't a task, don't worry about it.
       // Otherwise:
-      this.observer.onInternalError(
+      this.opts.observer.onInternalError(
         new Error(
           "onStdout(" + data + ") no pending currentTask (task: " + task + ")"
         )
@@ -494,51 +495,12 @@ export class BatchProcess {
     }
   }
 
-  private onData(task: Task) {
-    // We might not have the final flushed contents of the streams (if we got
-    // stderr and stdout simultaneously.)
-    const pass = this.opts.passRE.exec(task.stdout)
-    if (pass != null) {
-      return this.resolveCurrentTask(
-        task,
-        toS(pass[1]).trim(),
-        task.stderr,
-        true
-      )
-    }
-
-    const failout = this.opts.failRE.exec(task.stdout)
-    if (failout != null) {
-      const msg = toS(failout[1]).trim()
-      return this.resolveCurrentTask(task, msg, task.stderr, false)
-    }
-
-    const failerr = this.opts.failRE.exec(task.stderr)
-    if (failerr != null) {
-      const msg = toS(failerr[1]).trim()
-      return this.resolveCurrentTask(task, task.stdout, msg, false)
-    }
-    return
-  }
-
   private clearCurrentTask(task?: Task) {
-    setImmediate(() => this.observer.onIdle())
+    setImmediate(() => this.opts.observer.onIdle())
     if (task != null && task.taskId !== this._currentTask?.taskId) return
     map(this.currentTaskTimeout, (ea) => clearTimeout(ea))
     this.currentTaskTimeout = undefined
     this._currentTask = undefined
     this.lastJobFinshedAt = Date.now()
-  }
-
-  private resolveCurrentTask(
-    task: Task,
-    stdout: string,
-    stderr: string,
-    passed: boolean
-  ) {
-    this.streamDebouncer(() => {
-      task.resolve(stdout, stderr, passed)
-      this.observer.onIdle()
-    })
   }
 }

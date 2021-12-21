@@ -1,7 +1,15 @@
+import { delay } from "./Async"
 import { Deferred } from "./Deferred"
+import { InternalBatchProcessOptions } from "./InternalBatchProcessOptions"
 import { Parser } from "./Parser"
 
+type TaskOptions = Pick<
+  InternalBatchProcessOptions,
+  "streamFlushMillis" | "observer" | "passRE" | "failRE" | "logger"
+>
+
 let _taskId = 1
+
 /**
  * Tasks embody individual jobs given to the underlying child processes. Each
  * instance has a promise that will be resolved or rejected based on the
@@ -9,8 +17,11 @@ let _taskId = 1
  */
 export class Task<T = any> {
   readonly taskId = _taskId++
+  private opts?: TaskOptions
   private startedAt?: number
   private settledAt?: number
+  private _passed?: boolean
+  private _pending = true
   private readonly d = new Deferred<T>()
   private _stdout = ""
   private _stderr = ""
@@ -21,7 +32,17 @@ export class Task<T = any> {
    * @param {Parser<T>} parser is used to parse resulting data from the
    * underlying process to a typed object.
    */
-  constructor(readonly command: string, readonly parser: Parser<T>) {}
+  constructor(readonly command: string, readonly parser: Parser<T>) {
+    this.d.promise.then(
+      () => this.onSettle(),
+      () => this.onSettle()
+    )
+  }
+
+  private onSettle() {
+    this._pending = false
+    this.settledAt ??= Date.now()
+  }
 
   /**
    * @return the resolution or rejection of this task.
@@ -42,7 +63,8 @@ export class Task<T = any> {
       : "rejected"
   }
 
-  onStart() {
+  onStart(opts: TaskOptions) {
+    this.opts = opts
     this.startedAt = Date.now()
   }
 
@@ -62,50 +84,93 @@ export class Task<T = any> {
     )
   }
 
+  // private trace({
+  //   meth,
+  //   desc,
+  //   meta,
+  // }: {
+  //   meth: string
+  //   desc?: string
+  //   meta?: any
+  // }) {
+  //   this.opts
+  //     ?.logger()
+  //     .trace("Task#" + this.taskId + "." + meth + "() " + toS(desc), meta)
+  // }
+
   onStdout(buf: string | Buffer): void {
+    // this.trace({ meth: "onStdout", meta: { buf: buf.toString() } })
     this._stdout += buf.toString()
+    const m = this.opts?.passRE.exec(this._stdout)
+    if (null != m) {
+      // this.trace({ meth: "onStdout", desc: "found pass!", meta: { m } })
+      // remove the pass token from stdout:
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      this._stdout = this._stdout.replace(this.opts!.passRE, "")
+      this.resolve(true)
+    } else {
+      const m2 = this.opts?.failRE.exec(this._stdout)
+      if (null != m2) {
+        // this.trace({ meth: "onStdout", desc: "found fail!", meta: { m2 } })
+        // remove the fail token from stdout:
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        this._stdout = this._stdout.replace(this.opts!.failRE, "")
+        this.resolve(false)
+      }
+    }
   }
 
   onStderr(buf: string | Buffer): void {
+    // this.trace({ meth: "onStderr", meta: { buf: buf.toString() } })
     this._stderr += buf.toString()
+    const m = this.opts?.failRE.exec(this._stderr)
+    if (null != m) {
+      // this.trace({ meth: "onStderr", desc: "found fail!", meta: { m } })
+      // remove the fail token from stderr:
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      this._stderr = this._stderr.replace(this.opts!.failRE, "")
+      this.resolve(false)
+    }
   }
 
-  get stdout(): string {
-    return this._stdout
-  }
+  private async resolve(passed: boolean) {
+    // fail always wins.
+    this._passed = (this._passed ?? true) && passed
 
-  get stderr(): string {
-    return this._stderr
-  }
+    // this.trace({
+    //   meth: "resolve",
+    //   meta: { passed, this_passed: this._passed },
+    // })
 
-  /**
-   * This is for use by `BatchProcess` only, and will only be called when the
-   * process is complete for this task's command.
-   *
-   * We don't use this.stdout or this.stderr because BatchProcess is in charge
-   * of stream debouncing, and applying the passRE and failRE patterns to decide
-   * if a task passed or failed.
-   */
-  async resolve(
-    stdout: string,
-    stderr: string,
-    passed: boolean
-  ): Promise<void> {
-    if (this.d.fulfilled) return // no-op
+    // wait for stderr and stdout to flush:
+    await delay(this.opts?.streamFlushMillis ?? 10, true)
+
+    // we're expecting this method may be called concurrently (if there are both
+    // pass and fail tokens found in stderr and stdout), but we only want to run
+    // this once, so
+    if (!this.d.pending || !this._pending) return
+
+    this._pending = false
+
     try {
-      const parseResult = await this.parser(stdout, stderr, passed)
+      const parseResult = await this.parser(
+        this._stdout,
+        this._stderr,
+        this._passed
+      )
       if (this.d.resolve(parseResult)) {
-        this.settledAt = Date.now()
+      } else {
+        this.opts?.observer.onInternalError(
+          new Error(this.toString() + " ._resolved() more than once")
+        )
       }
     } catch (error: any) {
       this.reject(error)
     }
-    return
   }
 
   reject(error: Error): void {
     if (this.d.reject(error)) {
-      this.settledAt = Date.now()
     }
   }
 }

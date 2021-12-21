@@ -48,14 +48,3 @@ export function ratelimit<T>(
     }
   }
 }
-
-/**
- * @returns a function that accepts a thunk. The thunk will be debounced.
- */
-export function debounce(timeoutMs: number): (f: () => any) => void {
-  let lastTimeout: NodeJS.Timeout | undefined
-  return (f: () => any) => {
-    if (lastTimeout != null) timers.clearTimeout(lastTimeout)
-    lastTimeout = timers.setTimeout(f, timeoutMs)
-  }
-}

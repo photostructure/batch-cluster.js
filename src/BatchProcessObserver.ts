@@ -8,6 +8,7 @@ export interface BatchProcessObserver {
   onIdle(): void
   onTaskData(data: Buffer | string, task: Task | undefined): void
   onTaskError(error: Error, task: Task, proc: BatchProcess): void
+  onTaskResolved(task: Task, proc: BatchProcess): void
   onStartError(error: Error): void
   onInternalError(error: Error): void
   onHealthCheckError(error: Error, proc: BatchProcess): void

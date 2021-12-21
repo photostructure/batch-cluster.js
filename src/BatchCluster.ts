@@ -55,7 +55,6 @@ export class BatchCluster extends BatchClusterEmitter {
   private readonly _tasksPerProc: Mean = new Mean()
   private readonly logger: () => Logger
   readonly options: AllOpts
-  private readonly observer: BatchProcessObserver
   private readonly _procs: BatchProcess[] = []
   private _lastSpawnedProcTime = 0
   private _lastPidsCheckTime = Date.now()
@@ -73,16 +72,7 @@ export class BatchCluster extends BatchClusterEmitter {
       ChildProcessFactory
   ) {
     super()
-    this.options = Object.freeze(verifyOptions(opts))
-    if (this.options.onIdleIntervalMillis > 0) {
-      this.onIdleInterval = timers.setInterval(
-        () => this.onIdle(),
-        this.options.onIdleIntervalMillis
-      )
-      this.onIdleInterval.unref() // < don't prevent node from exiting
-    }
-    this.logger = this.options.logger
-    this.observer = {
+    const observer: BatchProcessObserver = {
       onIdle: () => {
         this.onIdle()
       },
@@ -91,6 +81,9 @@ export class BatchCluster extends BatchClusterEmitter {
       },
       onTaskData: (data, task) => {
         this.emitter.emit("taskData", data, task)
+      },
+      onTaskResolved: (task, proc) => {
+        this.emitter.emit("taskResolved", task, proc)
       },
       onTaskError: (err, task, proc) => {
         this.emitter.emit("taskError", err, task, proc)
@@ -102,6 +95,16 @@ export class BatchCluster extends BatchClusterEmitter {
         this.emitInternalError(err)
       },
     }
+    this.options = Object.freeze(verifyOptions({ ...opts, observer }))
+    if (this.options.onIdleIntervalMillis > 0) {
+      this.onIdleInterval = timers.setInterval(
+        () => this.onIdle(),
+        this.options.onIdleIntervalMillis
+      )
+      this.onIdleInterval.unref() // < don't prevent node from exiting
+    }
+    this.logger = this.options.logger
+
     process.once("beforeExit", this.beforeExitListener)
     process.once("exit", this.exitListener)
   }
@@ -388,7 +391,7 @@ export class BatchCluster extends BatchClusterEmitter {
         this.emitter.emit("childExit", child)
         return
       }
-      const proc = new BatchProcess(child, this.options, this.observer)
+      const proc = new BatchProcess(child, this.options)
 
       if (this.ended) {
         void proc.end(false, "ended")

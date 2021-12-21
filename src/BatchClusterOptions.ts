@@ -1,4 +1,5 @@
 import { ChildProcessFactory } from "./BatchCluster"
+import { BatchProcessObserver } from "./BatchProcessObserver"
 import { BatchProcessOptions } from "./BatchProcessOptions"
 import { InternalBatchProcessOptions } from "./InternalBatchProcessOptions"
 import { logger, Logger } from "./Logger"
@@ -112,7 +113,8 @@ export class BatchClusterOptions {
    * coercion.
    *
    * Note that this puts a hard lower limit on task latency. You don't want to
-   * set this to a large number.
+   * set this to a large number, and you'll potentially miss errors if you set
+   * this to low.
    *
    * Defaults to 10ms.
    */
@@ -167,18 +169,30 @@ export class BatchClusterOptions {
   logger: () => Logger = logger
 }
 
+export interface WithObserver {
+  observer: BatchProcessObserver
+}
+
 export type AllOpts = BatchClusterOptions &
   InternalBatchProcessOptions &
-  ChildProcessFactory
+  ChildProcessFactory &
+  WithObserver
+
+function escapeRegExp(s: string) {
+  return toS(s).replace(/[-.,\\^$*+?()|[\]{}]/g, "\\$&")
+}
 
 function toRe(s: string | RegExp) {
   return s instanceof RegExp
     ? s
-    : new RegExp("^(?:([\\s\\S]*?)(?:\\r?\\n))?" + s + "(?:\\r?\\n)?$")
+    : new RegExp("(?:\\n|^)" + escapeRegExp(s) + "(?:\\r?\\n|$)")
 }
 
 export function verifyOptions(
-  opts: Partial<BatchClusterOptions> & BatchProcessOptions & ChildProcessFactory
+  opts: Partial<BatchClusterOptions> &
+    BatchProcessOptions &
+    ChildProcessFactory &
+    WithObserver
 ): AllOpts {
   const result = {
     ...new BatchClusterOptions(),

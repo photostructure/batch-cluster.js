@@ -42,6 +42,14 @@ export class BatchClusterEmitter {
   ): void
 
   /**
+   * Emitted when a task has been resolved
+   */
+  on(
+    event: "taskResolved",
+    listener: (task: Task, proc: BatchProcess) => void
+  ): void
+
+  /**
    * Emitted when a task has an error
    */
   on(
