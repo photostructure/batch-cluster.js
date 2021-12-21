@@ -243,6 +243,8 @@ export class BatchProcess {
   }
 
   private _execTask(task: Task): boolean {
+    if (this._ending) return false
+    
     this._taskCount++
     this._currentTask = task
     const cmd = ensureSuffix(task.command, "\n")
@@ -463,6 +465,7 @@ export class BatchProcess {
     if (task != null && task.pending) {
       task.onStderr(data)
     } else if (!this._ending) {
+      this.end(false, "onStderr (no current task)")
       // If we're ending and there isn't a task, don't worry about it.
       // Otherwise:
       this.opts.observer.onInternalError(
@@ -485,6 +488,7 @@ export class BatchProcess {
       this.opts.observer.onTaskData(data, task)
       task.onStdout(data)
     } else if (!this._ending) {
+      this.end(false, "onStdout (no current task)")
       // If we're ending and there isn't a task, don't worry about it.
       // Otherwise:
       this.opts.observer.onInternalError(
