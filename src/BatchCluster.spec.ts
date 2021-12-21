@@ -49,7 +49,6 @@ describe("BatchCluster", function () {
     taskTimeoutMillis: 300, // CI machines can be slow. Needs to be short so the timeout test doesn't timeout
     maxReasonableProcessFailuresPerMinute: 2000, // this is so high because failrate is so high
     minDelayBetweenSpawnMillis: 100,
-    
   }
 
   function runTasks(
@@ -106,7 +105,7 @@ describe("BatchCluster", function () {
     if (expectedTaskCount > 0) {
       expect(events.runtimeMs.length).to.be.within(
         Math.floor(expectedTaskCount * 0.5), // because failures
-        Math.ceil(expectedTaskCount * 1.5) // because retries
+        Math.ceil(expectedTaskCount * 2) // because retries
       )
       events.runtimeMs.forEach((ea) =>
         expect(ea).to.be.within(
