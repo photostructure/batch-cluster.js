@@ -25,10 +25,10 @@
     "pretest": "yarn clean && yarn lint && yarn compile",
     "test": "mocha dist/**/*.spec.js",
     "docs:1": "typedoc --options .typedoc.js",
-    "docs:3": "cp .serve.json docs/serve.json",
-    "docs:4": "touch docs/.nojekyll",
-    "docs:5": "yarn serve docs",
-    "docs": "bash -c 'for i in {1..5} ; do yarn docs:$i ; done'"
+    "docs:2": "cp .serve.json docs/serve.json",
+    "docs:3": "touch docs/.nojekyll",
+    "docs:4": "yarn serve docs",
+    "docs": "bash -c 'for i in {1..4} ; do yarn docs:$i ; done'"
   },
   "author": "Matthew McEachen <matthew-batchcluster@mceachen.org>",
   "license": "MIT",
