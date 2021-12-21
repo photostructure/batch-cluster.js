@@ -244,7 +244,7 @@ export class BatchProcess {
 
   private _execTask(task: Task): boolean {
     if (this._ending) return false
-    
+
     this._taskCount++
     this._currentTask = task
     const cmd = ensureSuffix(task.command, "\n")
