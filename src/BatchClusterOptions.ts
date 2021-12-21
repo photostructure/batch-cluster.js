@@ -3,7 +3,7 @@ import { BatchProcessObserver } from "./BatchProcessObserver"
 import { BatchProcessOptions } from "./BatchProcessOptions"
 import { InternalBatchProcessOptions } from "./InternalBatchProcessOptions"
 import { logger, Logger } from "./Logger"
-import { isMac } from "./Platform"
+import { isLinux } from "./Platform"
 import { blank, toS } from "./String"
 
 const secondMs = 1000
@@ -117,10 +117,10 @@ export class BatchClusterOptions {
    * set this to a large number, and you'll potentially miss errors if you set
    * this to low.
    *
-   * Defaults to 10ms on Linux and Windows and 100ms on macOS due to slow stream
+   * Defaults to 10ms on Linux and 100ms on macOS and Windows due to slow stream
    * handling.
    */
-  streamFlushMillis = isMac ? 100 : 10
+  streamFlushMillis = isLinux ? 10 : 100
 
   /**
    * Should batch-cluster try to clean up after spawned processes that don't
