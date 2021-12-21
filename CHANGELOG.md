@@ -18,6 +18,12 @@ See [Semver](http://semver.org/).
 
 - 📦 Minor packaging changes
 
+## v8.0.1
+
+- 🐞/📦 BatchProcess now end on spurious stderr/stdout, and reject tasks if ending.
+
+- 📦 Relaxed default for `streamFlushMillis` to deflake CI
+
 ## v8.0.0
 
 - 💔/📦 RegExp pass/fail strings are escaped (which could conceivably be a breaking change, hence the major version bump)
