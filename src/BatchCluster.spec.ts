@@ -173,7 +173,10 @@ describe("BatchCluster", function () {
     expect(isShutdown).to.eql(true)
     expect(endPromiseResolved).to.eql(true)
     expect(bc.end(true).settled).to.eql(true)
-    expect(bc.internalErrorCount).to.eql(0)
+    expect(bc.internalErrorCount).to.eql(
+      0,
+      inspect({ internalErrors: events.internalErrors })
+    )
     return
   }
 
