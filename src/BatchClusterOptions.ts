@@ -116,9 +116,9 @@ export class BatchClusterOptions {
    * set this to a large number, and you'll potentially miss errors if you set
    * this to low.
    *
-   * Defaults to 10ms.
+   * Defaults to 50ms due to slow stream handling on non-linux OSes.
    */
-  streamFlushMillis = 10
+  streamFlushMillis = 50
 
   /**
    * Should batch-cluster try to clean up after spawned processes that don't

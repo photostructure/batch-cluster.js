@@ -49,6 +49,7 @@ describe("BatchCluster", function () {
     taskTimeoutMillis: 300, // CI machines can be slow. Needs to be short so the timeout test doesn't timeout
     maxReasonableProcessFailuresPerMinute: 2000, // this is so high because failrate is so high
     minDelayBetweenSpawnMillis: 100,
+    
   }
 
   function runTasks(
