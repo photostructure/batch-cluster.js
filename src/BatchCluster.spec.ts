@@ -635,6 +635,9 @@ describe("BatchCluster", function () {
       expect(bc.countEndedChildProcs("old")).to.be.lte(1)
       expect(bc.countEndedChildProcs("worn")).to.be.lte(2)
       // Calling .pids calls .procs(), which culls old procs
+      if ((await bc.pids()).length > 0) {
+        await delay(1000)
+      }
       expect((await bc.pids()).length).to.eql(0)
       return
     })
