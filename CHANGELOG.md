@@ -18,6 +18,18 @@ See [Semver](http://semver.org/).
 
 - 📦 Minor packaging changes
 
+## v8.0.0
+
+- 💔/📦 RegExp pass/fail strings are escaped (which could conceivably be a breaking change, hence the major version bump)
+
+- 📦 Refactored stdout/stderr merging code and added more tests
+
+- 📦 Added new "taskResolved" event
+
+- 📦 Rebuild docs
+
+- 📦 Updated development dependencies
+
 ## v7.2.1
 
 - 📦 Relax typing for optional `BatchProcessOptions` fields
@@ -31,7 +43,7 @@ See [Semver](http://semver.org/).
 - ✨ Added `on("healthCheckError", err, proc)` event
 
 - 🐞 Fixed process start lag (due to startup tasks not emitting an `.onIdle`)
- 
+
 - 🐞 Reworked when health checks were run, and add tests to validate failing health checks recycle children
 
 - 📦 Rebuild docs
