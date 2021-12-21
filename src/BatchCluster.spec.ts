@@ -301,9 +301,10 @@ describe("BatchCluster", function () {
                 "runs a given batch process roughly " +
                   opts.maxTasksPerProcess +
                   " before recycling",
-                async () => {
+                async function () {
+                  this.retries(2) // because we're flaky...
                   // make sure we hit an EUNLUCKY:
-                  setFailrate(50) // 50%
+                  setFailrate(60) // 60%
                   let expectedResultCount = 0
                   const results = await Promise.all(runTasks(bc, maxProcs))
                   expectedResultCount += maxProcs
