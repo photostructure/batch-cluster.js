@@ -120,7 +120,7 @@ export class BatchClusterOptions {
    * Defaults to 10ms on Linux and 100ms on macOS and Windows due to slow stream
    * handling.
    */
-  streamFlushMillis = isLinux ? 10 : 100
+  streamFlushMillis = isLinux ? 15 : 100
 
   /**
    * Should batch-cluster try to clean up after spawned processes that don't
