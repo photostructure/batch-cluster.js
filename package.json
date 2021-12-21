@@ -25,7 +25,6 @@
     "pretest": "yarn clean && yarn lint && yarn compile",
     "test": "mocha dist/**/*.spec.js",
     "docs:1": "typedoc --options .typedoc.js",
-    "docs:2": "echo batch-cluster.js.org > docs/CNAME",
     "docs:3": "cp .serve.json docs/serve.json",
     "docs:4": "touch docs/.nojekyll",
     "docs:5": "yarn serve docs",
