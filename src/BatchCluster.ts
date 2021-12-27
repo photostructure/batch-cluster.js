@@ -375,10 +375,10 @@ export class BatchCluster extends BatchClusterEmitter {
     // prevent other runs:
     this._lastSpawnedProcTime = Date.now()
 
-    void this._mayLaunchNewChild()
+    void this._maybeLaunchNewChild()
   }
 
-  private async _mayLaunchNewChild() {
+  private async _maybeLaunchNewChild() {
     // don't check cannotLaunchNewChild() again here: it'll be true because we
     // just set _lastSpawnedProcTime.
 
