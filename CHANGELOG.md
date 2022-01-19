@@ -18,6 +18,11 @@ See [Semver](http://semver.org/).
 
 - 📦 Minor packaging changes
 
+## v8.1.0
+
+- 📦 Added `BatchCluster.procCount` and `BatchCluster.setMaxProcs`, and new `BatchCluster.ChildEndCountType` which includes a new `tooMany` value, which is incremented when `setMaxProcs` is set to a smaller value.
+- 📦 Updated development dependencies
+
 ## v8.0.1
 
 - 🐞/📦 BatchProcess now end on spurious stderr/stdout, and reject tasks if ending.

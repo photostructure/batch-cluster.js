@@ -41,6 +41,8 @@ export interface ChildProcessFactory {
     | Promise<child_process.ChildProcess>
 }
 
+export type ChildEndCountType = WhyNotReady | "tooMany"
+
 /**
  * BatchCluster instances manage 0 or more homogeneous child processes, and
  * provide the main interface for enqueuing `Task`s via `enqueueTask`.
@@ -64,7 +66,7 @@ export class BatchCluster extends BatchClusterEmitter {
   private _spawnedProcs = 0
   private endPromise?: Deferred<void>
   private _internalErrorCount = 0
-  private readonly _childEndCounts = new Map<WhyNotReady, number>()
+  private readonly _childEndCounts = new Map<ChildEndCountType, number>()
 
   constructor(
     opts: Partial<BatchClusterOptions> &
@@ -95,7 +97,7 @@ export class BatchCluster extends BatchClusterEmitter {
         this.emitInternalError(err)
       },
     }
-    this.options = Object.freeze(verifyOptions({ ...opts, observer }))
+    this.options = verifyOptions({ ...opts, observer })
     if (this.options.onIdleIntervalMillis > 0) {
       this.onIdleInterval = timers.setInterval(
         () => this.onIdle(),
@@ -193,6 +195,13 @@ export class BatchCluster extends BatchClusterEmitter {
   }
 
   /**
+   * @return the current number of spawned child processes. Some (or all) may be idle.
+   */
+  get procCount(): number {
+    return this._procs.length
+  }
+
+  /**
    * @return the current number of child processes currently servicing tasks
    */
   get busyProcCount(): number {
@@ -270,11 +279,11 @@ export class BatchCluster extends BatchClusterEmitter {
   /**
    * Get ended process counts (used for tests)
    */
-  countEndedChildProcs(why: WhyNotReady): number {
+  countEndedChildProcs(why: ChildEndCountType): number {
     return this._childEndCounts.get(why) ?? 0
   }
 
-  get childEndCounts(): { [key in NonNullable<WhyNotReady>]: number } {
+  get childEndCounts(): { [key in NonNullable<ChildEndCountType>]: number } {
     return fromEntries([...this._childEndCounts.entries()])
   }
 
@@ -292,6 +301,17 @@ export class BatchCluster extends BatchClusterEmitter {
         // ignore: make sure all procs are ended
       }
     }
+  }
+
+  /**
+   * Reset the maximum number of active child processes to `maxProcs`. Note that
+   * this is handled gracefully: child processes are only reduced as tasks are
+   * completed.
+   */
+  setMaxProcs(maxProcs: number) {
+    this.options.maxProcs = maxProcs
+    // we may now be able to handle an enqueued task. Vacuum pids and see:
+    this.onIdle()
   }
 
   // NOT ASYNC: updates internal state:
@@ -315,14 +335,21 @@ export class BatchCluster extends BatchClusterEmitter {
     }
   }
 
-  // NOT ASYNC: updates internal state.
-  private vacuumProcs() {
+  /**
+   * Run maintenance on currently spawned child processes. This method is
+   * normally invoked automatically as tasks are enqueued and processed.
+   */
+  // NOT ASYNC: updates internal state. only exported for tests.
+  vacuumProcs() {
     this.maybeCheckPids()
     filterInPlace(this._procs, (proc) => {
       // Don't bother running procs:
       if (!proc.ending && !proc.idle) return true
 
-      const why = proc.whyNotHealthy // NOT whyNotReady: we don't care about busy procs
+      const why =
+        this._procs.length > this.options.maxProcs
+          ? "tooMany"
+          : proc.whyNotHealthy // NOT whyNotReady: we don't care about busy procs
       if (why != null) {
         this._childEndCounts.set(why, 1 + this.countEndedChildProcs(why))
         void proc.end(true, why)

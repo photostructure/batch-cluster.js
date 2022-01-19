@@ -565,6 +565,54 @@ describe("BatchCluster", function () {
     }
   })
 
+  describe("setMaxProcs", function () {
+    const maxProcs = 10
+    const sleepTimeMs = 250
+    let bc: BatchCluster
+    afterEach(() => shutdown(bc))
+
+    it("supports reducing maxProcs", async () => {
+      setFailrate(0)
+      const opts = {
+        ...DefaultOpts,
+        minDelayBetweenSpawnMillis: 10,
+        taskTimeoutMillis: sleepTimeMs * 4, // < don't test timeouts here
+        maxProcs,
+        maxTasksPerProcess: 100, // < don't recycle procs for this test
+        processFactory,
+      }
+      bc = new BatchCluster(opts)
+      const firstBatchPromises: Promise<string>[] = []
+      while (bc.busyProcCount < maxProcs) {
+        firstBatchPromises.push(
+          bc.enqueueTask(new Task("sleep " + sleepTimeMs, parser))
+        )
+        await delay(25)
+        console.log(bc.childEndCounts)
+      }
+      expect(bc.currentTasks.length).to.be.closeTo(maxProcs, 2)
+      expect(bc.busyProcCount).to.be.closeTo(maxProcs, 2)
+      expect(bc.procCount).to.be.closeTo(maxProcs, 2)
+      bc.setMaxProcs(maxProcs / 2)
+
+      const secondBatchPromises = times(maxProcs, () =>
+        bc.enqueueTask(new Task("sleep " + sleepTimeMs, parser))
+      )
+      await Promise.all(firstBatchPromises)
+      bc.vacuumProcs()
+      // We should be dropping BatchProcesses at this point.
+      expect(bc.busyProcCount).to.be.closeTo(maxProcs / 2, 2)
+      expect(bc.procCount).to.be.closeTo(maxProcs / 2, 2)
+
+      await Promise.all(secondBatchPromises)
+
+      expect(bc.procCount).to.be.closeTo(maxProcs / 2, 2)
+      expect(bc.busyProcCount).to.eql(0) // because we're done
+
+      expect(bc.childEndCounts.tooMany).to.be.closeTo(maxProcs / 2, 2)
+    })
+  })
+
   describe("maxProcAgeMillis (cull old children)", function () {
     const opts = {
       ...DefaultOpts,
