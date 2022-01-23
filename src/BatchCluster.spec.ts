@@ -345,7 +345,7 @@ describe("BatchCluster", function () {
                   expect(procs.length).to.eql(bc.spawnedProcCount)
                   expect(bc.spawnedProcCount).to.be.within(
                     results.length / opts.maxTasksPerProcess,
-                    results.length
+                    results.length * 2
                   )
 
                   // Expect no prior pids to remain, as long as there were before-pids:
