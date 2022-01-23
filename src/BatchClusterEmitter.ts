@@ -1,87 +1,121 @@
-import child_process from "child_process"
-import events from "events"
+import _cp from "child_process"
 import { BatchProcess } from "./BatchProcess"
 import { Task } from "./Task"
 
-export class BatchClusterEmitter {
-  readonly emitter = new events.EventEmitter()
-
+/**
+ * This interface describes the BatchCluster's event names as fields. The type
+ * of the field describes the event data payload.
+ *
+ * See {@link BatchClusterEmitter} for more details.
+ */
+export interface BatchClusterEvents {
   /**
    * Emitted when a child process has started
    */
-  on(
-    event: "childStart",
-    listener: (childProcess: child_process.ChildProcess) => void
-  ): void
+  childStart: (childProcess: _cp.ChildProcess) => void
 
   /**
    * Emitted when a child process has exitted
    */
-  on(
-    event: "childExit",
-    listener: (childProcess: child_process.ChildProcess) => void
-  ): void
+  childExit: (childProcess: _cp.ChildProcess) => void
 
   /**
    * Emitted when a child process has an error when spawning
    */
-  on(event: "startError", listener: (err: Error) => void): void
+  startError: (err: Error) => void
 
   /**
    * Emitted when an internal consistency check fails
    */
-  on(event: "internalError", listener: (err: Error) => void): void
+  internalError: (err: Error) => void
 
   /**
    * Emitted when tasks receive data, which may be partial chunks from the task
    * stream.
    */
-  on(
-    event: "taskData",
-    listener: (data: Buffer | string, task: Task | undefined) => void
-  ): void
+  taskData: (
+    data: Buffer | string,
+    task: Task | undefined,
+    proc: BatchProcess
+  ) => void
 
   /**
    * Emitted when a task has been resolved
    */
-  on(
-    event: "taskResolved",
-    listener: (task: Task, proc: BatchProcess) => void
-  ): void
+  taskResolved: (task: Task, proc: BatchProcess) => void
+
+  /**
+   * Emitted when a task times out. Note that a `taskError` event always succeeds these events.
+   */
+  taskTimeout: (timeoutMs: number, task: Task, proc: BatchProcess) => void
 
   /**
    * Emitted when a task has an error
    */
-  on(
-    event: "taskError",
-    listener: (err: Error, task: Task, proc: BatchProcess) => void
-  ): void
+  taskError: (err: Error, task: Task, proc: BatchProcess) => void
 
   /**
    * Emitted when a process fails health checks
    */
-  on(
-    event: "healthCheckError",
-    listener: (err: Error, proc: BatchProcess) => void
-  ): void
+  healthCheckError: (err: Error, proc: BatchProcess) => void
 
   /**
    * Emitted when a child process has an error during shutdown
    */
-  on(event: "endError", listener: (err: Error) => void): void
+  endError: (err: Error) => void
 
   /**
    * Emitted when this instance is in the process of ending.
    */
-  on(event: "beforeEnd", listener: () => void): void
+  beforeEnd: () => void
+
+  /**
+   * Emitted when a task is completed, asking for more work to be scheduled, if
+   * possible.
+   */
+  idle: () => void
 
   /**
    * Emitted when this instance has ended. No child processes should remain at
    * this point.
    */
-  on(event: "end", listener: () => void): void
+  end: () => void
+}
 
-  on(event: string, listener: (...args: any[]) => void): void {
-    this.emitter.on(event, listener)
-  }
+type Args<E extends keyof BatchClusterEvents> = BatchClusterEvents[E] extends (
+  ...args: infer A
+) => void
+  ? A
+  : never
+
+/**
+ * The BatchClusterEmitter signature is built up automatically by the
+ * {@link BatchClusterEvents} interface, which ensures `.on`, `.off`, and
+ * `.emit` signatures are all consistent, and include the correct data payloads
+ * for all of BatchCluster's events.
+ *
+ * This approach has some benefits:
+ *
+ * - it ensures that on(), off(), and emit() signatures are all consistent,
+ * - supports editor autocomplete, and
+ * - offers strong typing,
+ *
+ * but has one drawback:
+ *
+ * - jsdocs don't list all signatures directly: you have to visit the event
+ *   source interface.
+ *
+ * See {@link BatchClusterEvents} for a the list of events and their payload
+ * signatures
+ */
+export interface BatchClusterEmitter {
+  on<E extends keyof BatchClusterEvents>(
+    event: E,
+    listener: (...args: Args<E>) => void
+  ): this
+  off<E extends keyof BatchClusterEvents>(
+    event: E,
+    listener: (...args: Args<E>) => void
+  ): this
+  emit<E extends keyof BatchClusterEvents>(event: E, ...args: Args<E>): boolean
 }

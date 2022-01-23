@@ -46,7 +46,7 @@ describe("BatchCluster", function () {
     exitCommand: "exit",
     onIdleIntervalMillis: 250, // frequently to speed up tests
     maxTasksPerProcess: 5, // force process churn
-    taskTimeoutMillis: 300, // CI machines can be slow. Needs to be short so the timeout test doesn't timeout
+    taskTimeoutMillis: 250, // CI machines can be slow. Needs to be short so the timeout test doesn't timeout
     maxReasonableProcessFailuresPerMinute: 2000, // this is so high because failrate is so high
     minDelayBetweenSpawnMillis: 100,
   }
@@ -212,10 +212,9 @@ describe("BatchCluster", function () {
     })
     bc.on("taskError", (err) => events.taskErrors.push(err))
 
-    const emptyEvents = ["beforeEnd", "end"]
-    emptyEvents.forEach((event) =>
-      bc.on("beforeEnd", () => events.events.push({ event }))
-    )
+    for (const event of ["beforeEnd", "end"] as ("beforeEnd" | "end")[]) {
+      bc.on(event, () => events.events.push({ event }))
+    }
     return bc
   }
 
@@ -225,6 +224,19 @@ describe("BatchCluster", function () {
     // Don't need to test crlf except on windows:
     newlines.push("crlf")
   }
+
+  it("supports .off()", async () => {
+    const emitTimes: number[] = []
+    const bc = new BatchCluster({ ...DefaultOpts, processFactory })
+    const listener = () => emitTimes.push(Date.now())
+    bc.on("idle", listener)
+    bc.emitter.emit("idle")
+    expect(emitTimes.length).to.eql(1)
+    emitTimes.length = 0
+    bc.off("idle", listener)
+    bc.emitter.emit("idle")
+    expect(emitTimes).to.eql([])
+  })
 
   for (const newline of newlines) {
     for (const maxProcs of [1, 4]) {
@@ -236,6 +248,7 @@ describe("BatchCluster", function () {
               { colors: true, breakLength: 100 }
             ),
             function () {
+              this.retries(2) // < recover from CPU hiccups that may break timing assertions
               let bc: BatchCluster
               const opts: any = {
                 ...DefaultOpts,
@@ -588,7 +601,6 @@ describe("BatchCluster", function () {
           bc.enqueueTask(new Task("sleep " + sleepTimeMs, parser))
         )
         await delay(25)
-        console.log(bc.childEndCounts)
       }
       expect(bc.currentTasks.length).to.be.closeTo(maxProcs, 2)
       expect(bc.busyProcCount).to.be.closeTo(maxProcs, 2)

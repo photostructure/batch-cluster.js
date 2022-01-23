@@ -1,5 +1,5 @@
 import { ChildProcessFactory } from "./BatchCluster"
-import { BatchProcessObserver } from "./BatchProcessObserver"
+import { BatchClusterEmitter } from "./BatchClusterEmitter"
 import { BatchProcessOptions } from "./BatchProcessOptions"
 import { InternalBatchProcessOptions } from "./InternalBatchProcessOptions"
 import { logger, Logger } from "./Logger"
@@ -172,7 +172,7 @@ export class BatchClusterOptions {
 }
 
 export interface WithObserver {
-  observer: BatchProcessObserver
+  observer: BatchClusterEmitter
 }
 
 export type AllOpts = BatchClusterOptions &

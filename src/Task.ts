@@ -17,14 +17,13 @@ let _taskId = 1
  */
 export class Task<T = any> {
   readonly taskId = _taskId++
-  private opts?: TaskOptions
-  private startedAt?: number
-  private settledAt?: number
-  private _passed?: boolean
-  private _pending = true
-  private readonly d = new Deferred<T>()
-  private _stdout = ""
-  private _stderr = ""
+  #opts?: TaskOptions
+  #startedAt?: number
+  #parsing = false
+  #settledAt?: number
+  readonly #d = new Deferred<T>()
+  #stdout = ""
+  #stderr = ""
 
   /**
    * @param {string} command is the value written to stdin to perform the given
@@ -33,45 +32,42 @@ export class Task<T = any> {
    * underlying process to a typed object.
    */
   constructor(readonly command: string, readonly parser: Parser<T>) {
-    this.d.promise.then(
-      () => this.onSettle(),
-      () => this.onSettle()
+    // We can't use .finally here, because that creates a promise chain that, if
+    // rejected, results in an uncaught rejection.
+    this.#d.promise.then(
+      () => this.#onSettle(),
+      () => this.#onSettle()
     )
-  }
-
-  private onSettle() {
-    this._pending = false
-    this.settledAt ??= Date.now()
   }
 
   /**
    * @return the resolution or rejection of this task.
    */
   get promise(): Promise<T> {
-    return this.d.promise
+    return this.#d.promise
   }
 
   get pending(): boolean {
-    return this.d.pending
+    return this.#d.pending
   }
 
   get state(): string {
-    return this.d.pending
+    return this.#d.pending
       ? "pending"
-      : this.d.fulfilled
-      ? "resolved"
-      : "rejected"
+      : this.#d.rejected
+      ? "rejected"
+      : "resolved"
   }
 
   onStart(opts: TaskOptions) {
-    this.opts = opts
-    this.startedAt = Date.now()
+    this.#opts = opts
+    this.#startedAt = Date.now()
   }
 
   get runtimeMs() {
-    return this.startedAt == null
+    return this.#startedAt == null
       ? undefined
-      : (this.settledAt ?? Date.now()) - this.startedAt
+      : (this.#settledAt ?? Date.now()) - this.#startedAt
   }
 
   toString(): string {
@@ -84,58 +80,47 @@ export class Task<T = any> {
     )
   }
 
-  // private trace({
-  //   meth,
-  //   desc,
-  //   meta,
-  // }: {
-  //   meth: string
-  //   desc?: string
-  //   meta?: any
-  // }) {
-  //   this.opts
-  //     ?.logger()
-  //     .trace("Task#" + this.taskId + "." + meth + "() " + toS(desc), meta)
-  // }
-
   onStdout(buf: string | Buffer): void {
-    // this.trace({ meth: "onStdout", meta: { buf: buf.toString() } })
-    this._stdout += buf.toString()
-    const m = this.opts?.passRE.exec(this._stdout)
-    if (null != m) {
-      // this.trace({ meth: "onStdout", desc: "found pass!", meta: { m } })
+    this.#stdout += buf.toString()
+    const passRE = this.#opts?.passRE
+    if (passRE != null && passRE.exec(this.#stdout) != null) {
       // remove the pass token from stdout:
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      this._stdout = this._stdout.replace(this.opts!.passRE, "")
-      this.resolve(true)
+      this.#stdout = this.#stdout.replace(passRE, "")
+      this.#resolve(true)
     } else {
-      const m2 = this.opts?.failRE.exec(this._stdout)
-      if (null != m2) {
-        // this.trace({ meth: "onStdout", desc: "found fail!", meta: { m2 } })
+      const failRE = this.#opts?.failRE
+      if (failRE != null && failRE.exec(this.#stdout) != null) {
         // remove the fail token from stdout:
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        this._stdout = this._stdout.replace(this.opts!.failRE, "")
-        this.resolve(false)
+        this.#stdout = this.#stdout.replace(failRE, "")
+        this.#resolve(false)
       }
     }
   }
 
   onStderr(buf: string | Buffer): void {
-    // this.trace({ meth: "onStderr", meta: { buf: buf.toString() } })
-    this._stderr += buf.toString()
-    const m = this.opts?.failRE.exec(this._stderr)
-    if (null != m) {
-      // this.trace({ meth: "onStderr", desc: "found fail!", meta: { m } })
+    this.#stderr += buf.toString()
+    const failRE = this.#opts?.failRE
+    if (failRE != null && failRE.exec(this.#stderr) != null) {
       // remove the fail token from stderr:
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      this._stderr = this._stderr.replace(this.opts!.failRE, "")
-      this.resolve(false)
+      this.#stderr = this.#stderr.replace(failRE, "")
+      this.#resolve(false)
     }
   }
 
-  private async resolve(passed: boolean) {
+  #onSettle() {
+    this.#settledAt ??= Date.now()
+  }
+
+  /**
+   * @return true if the wrapped promise was rejected
+   */
+  reject(error: Error): boolean {
+    return this.#d.reject(error)
+  }
+
+  async #resolve(passed: boolean) {
     // fail always wins.
-    this._passed = (this._passed ?? true) && passed
+    passed = !this.#d.rejected && passed
 
     // this.trace({
     //   meth: "resolve",
@@ -143,34 +128,27 @@ export class Task<T = any> {
     // })
 
     // wait for stderr and stdout to flush:
-    await delay(this.opts?.streamFlushMillis ?? 10, true)
+    await delay(this.#opts?.streamFlushMillis ?? 10, true)
 
     // we're expecting this method may be called concurrently (if there are both
     // pass and fail tokens found in stderr and stdout), but we only want to run
     // this once, so
-    if (!this.d.pending || !this._pending) return
+    if (!this.pending || this.#parsing) return
 
-    this._pending = false
+    // Prevent concurrent parsing:
+    this.#parsing = true
 
     try {
-      const parseResult = await this.parser(
-        this._stdout,
-        this._stderr,
-        this._passed
-      )
-      if (this.d.resolve(parseResult)) {
+      const parseResult = await this.parser(this.#stdout, this.#stderr, passed)
+      if (this.#d.resolve(parseResult)) {
       } else {
-        this.opts?.observer.onInternalError(
+        this.#opts?.observer.emit(
+          "internalError",
           new Error(this.toString() + " ._resolved() more than once")
         )
       }
     } catch (error: any) {
       this.reject(error)
-    }
-  }
-
-  reject(error: Error): void {
-    if (this.d.reject(error)) {
     }
   }
 }
