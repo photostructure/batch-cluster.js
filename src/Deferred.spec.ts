@@ -1,5 +1,5 @@
-import { expect } from "./_chai.spec"
 import { Deferred } from "./Deferred"
+import { expect } from "./_chai.spec"
 
 describe("Deferred", () => {
   it("is born pending", () => {
@@ -38,13 +38,16 @@ describe("Deferred", () => {
     return expect(d).to.become(123)
   })
 
-  it("resolved ignores subsequent rejections", () => {
+  it("resolved respects subsequent rejections", () => {
     const d = new Deferred<number>()
     expect(d.resolve(123)).to.eql(true)
     expect(d.reject("boom")).to.eql(false)
     expect(d.pending).to.eql(false)
-    expect(d.fulfilled).to.eql(true)
-    expect(d.rejected).to.eql(false)
+    // CAUTION: THIS IS WEIRD. The promise is resolved, but something later
+    // wanted to reject, so we assume the rejected state, even though we can't
+    // reach back in the promise chain and un-resolve the promise.
+    expect(d.fulfilled).to.eql(false)
+    expect(d.rejected).to.eql(true)
     return expect(d).to.become(123)
   })
 

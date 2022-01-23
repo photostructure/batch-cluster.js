@@ -15,40 +15,43 @@ enum State {
 export class Deferred<T> implements PromiseLike<T> {
   readonly [Symbol.toStringTag] = "Deferred"
   readonly promise: Promise<T>
-  private _resolve!: (value: T | PromiseLike<T>) => void
-  private _reject!: (reason?: any) => void
-  private state: State = State.pending
+  #resolve!: (value: T | PromiseLike<T>) => void
+  #reject!: (reason?: any) => void
+  #state: State = State.pending
 
   constructor() {
     this.promise = new Promise<T>((resolve, reject) => {
-      this._resolve = resolve
-      this._reject = reject
+      this.#resolve = resolve
+      this.#reject = reject
     })
   }
 
   /**
-   * @return `true` iff `resolve` has been invoked.
+   * @return `true` iff neither `resolve` nor `rejected` have been invoked
    */
   get pending(): boolean {
-    return this.state === State.pending
+    return this.#state === State.pending
   }
 
   /**
-   * @return `true` iff `resolve` has been invoked.
+   * @return `true` iff `resolve` has been invoked
    */
   get fulfilled(): boolean {
-    return this.state === State.fulfilled
+    return this.#state === State.fulfilled
   }
 
   /**
-   * @return `true` iff `resolve` has been invoked.
+   * @return `true` iff `rejected` has been invoked
    */
   get rejected(): boolean {
-    return this.state === State.rejected
+    return this.#state === State.rejected
   }
 
+  /**
+   * @return `true` iff `resolve` or `rejected` have been invoked
+   */
   get settled(): boolean {
-    return this.fulfilled || this.rejected
+    return this.#state !== State.pending
   }
 
   then<TResult1 = T, TResult2 = never>(
@@ -77,18 +80,22 @@ export class Deferred<T> implements PromiseLike<T> {
     if (this.settled) {
       return false
     } else {
-      this.state = State.fulfilled
-      this._resolve(value)
+      this.#state = State.fulfilled
+      this.#resolve(value)
       return true
     }
   }
 
   reject(reason?: Error | string): boolean {
-    if (this.settled) {
+    const wasSettled = this.settled
+    // This isn't great: the wrapped Promise may be in a different state than
+    // #state: but the caller wanted to reject, so even if it already was
+    // resolved, let's try to respect that.
+    this.#state = State.rejected
+    if (wasSettled) {
       return false
     } else {
-      this.state = State.rejected
-      this._reject(reason)
+      this.#reject(reason)
       return true
     }
   }
