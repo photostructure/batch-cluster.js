@@ -1,31 +1,31 @@
 export class Rate {
-  private _eventCount = 0
-  private readonly start = Date.now()
-  private readonly store: number[] = []
+  readonly #start = Date.now()
+  readonly #store: number[] = []
+  #eventCount = 0
 
   constructor(readonly ttlMs: number = 60000) {}
 
   onEvent(): void {
-    this._eventCount++
-    this.store.push(Date.now())
-    this.vacuum()
+    this.#eventCount++
+    this.#store.push(Date.now())
+    this.#vacuum()
   }
 
   get eventCount(): number {
-    return this._eventCount
+    return this.#eventCount
   }
 
   get period(): number {
-    return Date.now() - this.start
+    return Date.now() - this.#start
   }
 
   get eventsPerMs(): number {
-    this.vacuum()
-    const elapsed = Math.max(1, Date.now() - this.start)
-    if (elapsed > this.ttlMs) {
-      return this.store.length / this.ttlMs
+    this.#vacuum()
+    const elapsedMs = Date.now() - this.#start
+    if (elapsedMs > this.ttlMs) {
+      return this.#store.length / this.ttlMs
     } else {
-      return this.store.length / elapsed
+      return this.#store.length / Math.max(1, elapsedMs)
     }
   }
 
@@ -38,19 +38,19 @@ export class Rate {
   }
 
   clear(): this {
-    this.store.length = 0
+    this.#store.length = 0
     return this
   }
 
-  private vacuum() {
+  #vacuum() {
     const minTime = Date.now() - this.ttlMs
     // If nothing's expired, findIndex should return index 0, so this should
     // normally be quite cheap:
-    const firstGoodIndex = this.store.findIndex((ea) => ea > minTime)
+    const firstGoodIndex = this.#store.findIndex((ea) => ea > minTime)
     if (firstGoodIndex === -1) {
       this.clear()
     } else if (firstGoodIndex > 0) {
-      this.store.splice(0, firstGoodIndex)
+      this.#store.splice(0, firstGoodIndex)
     }
   }
 }
