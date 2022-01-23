@@ -18,9 +18,29 @@ See [Semver](http://semver.org/).
 
 - 📦 Minor packaging changes
 
+## v9.0.0
+
+- 💔 The `BatchProcessObserver` signature was deleted, as `BatchClusterEmitter` is
+  now typesafe. Consumers should not have used this signature directly, but in
+  case anyone did, I bumped the major version.
+
+- ✨ Added `BatchCluster.off` to unregister event listeners provided to `BatchCluster.on`.
+
+- 📦 Private fields and methods now use [the `#` private
+  prefix](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Classes/Private_class_fields)
+  rather than the TypeScript `private` modifier.
+
+- 📦 Minor tweaks (fixed several jsdoc errors, simplified some boolean logic,
+  small reduction in promise chains, ...)
+
+- 📦 Updated development dependencies and rebuild docs
+
 ## v8.1.0
 
-- 📦 Added `BatchCluster.procCount` and `BatchCluster.setMaxProcs`, and new `BatchCluster.ChildEndCountType` which includes a new `tooMany` value, which is incremented when `setMaxProcs` is set to a smaller value.
+- 📦 Added `BatchCluster.procCount` and `BatchCluster.setMaxProcs`, and new
+  `BatchCluster.ChildEndCountType` which includes a new `tooMany` value, which
+  is incremented when `setMaxProcs` is set to a smaller value.
+
 - 📦 Updated development dependencies
 
 ## v8.0.1
