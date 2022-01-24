@@ -18,6 +18,10 @@ See [Semver](http://semver.org/).
 
 - 📦 Minor packaging changes
 
+## v9.0.1
+
+- 📦 Don't emit `taskResolved` on startup tasks.
+
 ## v9.0.0
 
 - 💔 The `BatchProcessObserver` signature was deleted, as `BatchClusterEmitter` is
