@@ -248,7 +248,6 @@ describe("BatchCluster", function () {
               { colors: true, breakLength: 100 }
             ),
             function () {
-              this.retries(2) // < recover from CPU hiccups that may break timing assertions
               let bc: BatchCluster
               const opts: any = {
                 ...DefaultOpts,

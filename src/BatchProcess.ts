@@ -271,7 +271,10 @@ export class BatchProcess {
     void task.promise.then(
       () => {
         this.#clearCurrentTask(task)
-        this.opts.observer.emit("taskResolved", task, this)
+
+        if (!isStartupTask) {
+          this.opts.observer.emit("taskResolved", task, this)
+        }
       },
       (err) => {
         this.#clearCurrentTask(task)
