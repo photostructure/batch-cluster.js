@@ -4,7 +4,6 @@ import { filterInPlace } from "./Array"
 import { delay, until } from "./Async"
 import { BatchCluster } from "./BatchCluster"
 import { BatchClusterOptions } from "./BatchClusterOptions"
-import { logger } from "./Logger"
 import { map, orElse } from "./Object"
 import { isWin } from "./Platform"
 import { toS } from "./String"
@@ -71,7 +70,6 @@ describe("BatchCluster", function () {
     readonly exittedPids: number[] = []
     readonly startErrors: Error[] = []
     readonly endErrors: Error[] = []
-    readonly internalErrors: Error[] = []
     readonly taskErrors: Error[] = []
     readonly healthCheckErrors: Error[] = []
     readonly unhealthyPids: number[] = []
@@ -79,6 +77,7 @@ describe("BatchCluster", function () {
   }
 
   let events = new Events()
+  const internalErrors: Error[] = []
   let expectedTaskCount = 0
 
   function assertExpectedResults(results: string[]) {
@@ -99,23 +98,17 @@ describe("BatchCluster", function () {
     expectedTaskCount = 0
   })
 
-  afterEach(() => {
-    expect(events.internalErrors).to.eql([], "internal errors")
+  function postAssertions() {
+    expect(internalErrors).to.eql([], "internal errors")
 
-    if (expectedTaskCount > 0) {
-      expect(events.runtimeMs.length).to.be.within(
-        Math.floor(expectedTaskCount * 0.5), // because failures
-        Math.ceil(expectedTaskCount * 3) // because flaky retries
-      )
-      events.runtimeMs.forEach((ea) =>
-        expect(ea).to.be.within(
-          0,
-          5000,
-          inspect({ runtimeMs: events.runtimeMs })
-        )
-      )
-    }
-  })
+    expect(events.runtimeMs.length).to.be.within(
+      Math.floor(expectedTaskCount * 0.5), // because failures
+      Math.ceil(expectedTaskCount * 3) // because flaky retries
+    )
+    events.runtimeMs.forEach((ea) =>
+      expect(ea).to.be.within(0, 5000, inspect({ runtimeMs: events.runtimeMs }))
+    )
+  }
 
   const expectedEndEvents = [{ event: "beforeEnd" }, { event: "end" }]
 
@@ -173,10 +166,7 @@ describe("BatchCluster", function () {
     expect(isShutdown).to.eql(true)
     expect(endPromiseResolved).to.eql(true)
     expect(bc.end(true).settled).to.eql(true)
-    expect(bc.internalErrorCount).to.eql(
-      0,
-      inspect({ internalErrors: events.internalErrors })
-    )
+    expect(bc.internalErrorCount).to.eql(0, inspect({ internalErrors }))
     return
   }
 
@@ -189,8 +179,8 @@ describe("BatchCluster", function () {
     bc.on("startError", (err) => events.startErrors.push(err))
     bc.on("endError", (err) => events.endErrors.push(err))
     bc.on("internalError", (err) => {
-      logger().warn("BatchCluster.spec listen(): internal error: " + err)
-      events.internalErrors.push(err)
+      console.error("BatchCluster.spec: internal error: " + err)
+      internalErrors.push(err)
     })
     bc.on("taskData", (data, task) =>
       events.taskData.push({
@@ -236,6 +226,7 @@ describe("BatchCluster", function () {
     bc.off("idle", listener)
     bc.emitter.emit("idle")
     expect(emitTimes).to.eql([])
+    postAssertions()
   })
 
   for (const newline of newlines) {
@@ -285,7 +276,7 @@ describe("BatchCluster", function () {
                 expect(testPids()).to.eql([])
                 expect(events.startedPids).to.eql([])
                 expect(events.exittedPids).to.eql([])
-                return
+                postAssertions()
               })
 
               it("calling .end() after running shuts down child procs", async () => {
@@ -306,7 +297,7 @@ describe("BatchCluster", function () {
                 expect(sortNumeric(events.startedPids)).to.eql(pids)
                 expect(sortNumeric(events.exittedPids)).to.eql(pids)
                 expect(events.events).to.eql(expectedEndEvents)
-                return
+                postAssertions()
               })
 
               it(
@@ -376,9 +367,7 @@ describe("BatchCluster", function () {
                   }
 
                   await shutdown(bc)
-                  // no run count assertions:
-                  expectedTaskCount = -1
-                  return
+                  // (no run count assertions)
                 }
               )
 
@@ -420,7 +409,7 @@ describe("BatchCluster", function () {
                 assertExpectedResults(
                   await Promise.all(runTasks(bc, maxProcs * 4))
                 )
-                expectedTaskCount = -1 // disable assertions
+                // (no run count assertions)
                 return
               })
 
@@ -429,9 +418,10 @@ describe("BatchCluster", function () {
                   "sleep " + (opts.taskTimeoutMillis + 250), // < make sure it times out
                   parser
                 )
-                return expect(
+                await expect(
                   bc.enqueueTask(task)
                 ).to.eventually.be.rejectedWith(/timeout|EUNLUCKY/)
+                postAssertions()
               })
 
               it("accepts single and multi-line responses", async () => {
@@ -452,7 +442,8 @@ describe("BatchCluster", function () {
                   })
                 )
                 expect(results).to.eql(expected)
-                return
+
+                postAssertions()
               })
 
               it("rejects a command that results in FAIL", async function () {
@@ -468,7 +459,7 @@ describe("BatchCluster", function () {
                   /invalid command|UNLUCKY/,
                   result
                 )
-                return
+                postAssertions()
               })
 
               it("rejects a command that emits to stderr", async function () {
@@ -484,7 +475,7 @@ describe("BatchCluster", function () {
                   /omg this should fail|UNLUCKY/,
                   result
                 )
-                return
+                postAssertions()
               })
             }
           )
@@ -621,6 +612,8 @@ describe("BatchCluster", function () {
       expect(bc.busyProcCount).to.eql(0) // because we're done
 
       expect(bc.childEndCounts.tooMany).to.be.closeTo(maxProcs / 2, 2)
+
+      postAssertions()
     })
   })
 
@@ -659,7 +652,7 @@ describe("BatchCluster", function () {
       expect(bc.countEndedChildProcs("old")).to.be.gte(2)
       // Calling .pids calls .procs(), which culls old procs
       expect((await bc.pids()).length).to.be.within(0, opts.maxProcs)
-      return
+      postAssertions()
     })
   })
 
@@ -699,7 +692,7 @@ describe("BatchCluster", function () {
         await delay(1000)
       }
       expect((await bc.pids()).length).to.eql(0)
-      return
+      postAssertions()
     })
   })
 
@@ -753,6 +746,7 @@ describe("BatchCluster", function () {
         const pidsAfter = await bc.pids()
         console.dir({ maxProcAgeMillis, pidsBefore, pidsAfter })
         exp(pidsBefore, pidsAfter)
+        postAssertions()
         return
       })
     }
