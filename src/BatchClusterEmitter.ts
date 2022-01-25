@@ -2,7 +2,6 @@ import _cp from "child_process"
 import { BatchProcess } from "./BatchProcess"
 import { Task } from "./Task"
 
-
 type Args<T> = T extends (...args: infer A) => void ? A : never
 
 // Type-safe EventEmitter! Note that this interface is not comprehensive:
