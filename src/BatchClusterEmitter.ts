@@ -2,6 +2,33 @@ import _cp from "child_process"
 import { BatchProcess } from "./BatchProcess"
 import { Task } from "./Task"
 
+
+type Args<T> = T extends (...args: infer A) => void ? A : never
+
+// Type-safe EventEmitter! Note that this interface is not comprehensive:
+// EventEmitter has a bunch of other methods, but batch-cluster doesn't use
+// them, so I didn't bother to type them here.
+export interface TypedEventEmitter<T> {
+  once<E extends keyof T>(
+    eventName: E,
+    listener: (...args: Args<T[E]>) => void
+  ): this
+  on<E extends keyof T>(
+    eventName: E,
+    listener: (...args: Args<T[E]>) => void
+  ): this
+  off<E extends keyof T>(
+    eventName: E,
+    listener: (...args: Args<T[E]>) => void
+  ): this
+  emit<E extends keyof T>(eventName: E, ...args: Args<T[E]>): boolean
+
+  // eslint-disable-next-line @typescript-eslint/ban-types
+  listeners<E extends keyof T>(event: E): Function[]
+
+  removeAllListeners(eventName?: keyof T): this
+}
+
 /**
  * This interface describes the BatchCluster's event names as fields. The type
  * of the field describes the event data payload.
@@ -82,12 +109,6 @@ export interface BatchClusterEvents {
   end: () => void
 }
 
-type Args<E extends keyof BatchClusterEvents> = BatchClusterEvents[E] extends (
-  ...args: infer A
-) => void
-  ? A
-  : never
-
 /**
  * The BatchClusterEmitter signature is built up automatically by the
  * {@link BatchClusterEvents} interface, which ensures `.on`, `.off`, and
@@ -108,14 +129,4 @@ type Args<E extends keyof BatchClusterEvents> = BatchClusterEvents[E] extends (
  * See {@link BatchClusterEvents} for a the list of events and their payload
  * signatures
  */
-export interface BatchClusterEmitter {
-  on<E extends keyof BatchClusterEvents>(
-    event: E,
-    listener: (...args: Args<E>) => void
-  ): this
-  off<E extends keyof BatchClusterEvents>(
-    event: E,
-    listener: (...args: Args<E>) => void
-  ): this
-  emit<E extends keyof BatchClusterEvents>(event: E, ...args: Args<E>): boolean
-}
+export type BatchClusterEmitter = TypedEventEmitter<BatchClusterEvents>
