@@ -18,6 +18,14 @@ See [Semver](http://semver.org/).
 
 - 📦 Minor packaging changes
 
+## v9.1.0
+
+- 🐞/📦 `BatchProcess` exposes a promise for the completion of the startup task,
+  which `BatchCluster` now uses to immediately run `#onIdle` and pop off any
+  pending work.
+
+- 📦 Updated development dependencies and rebuild docs
+
 ## v9.0.1
 
 - 📦 Don't emit `taskResolved` on startup tasks.
