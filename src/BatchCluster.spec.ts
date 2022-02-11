@@ -55,7 +55,6 @@ describe("BatchCluster", function () {
     iterations: number,
     start = 0
   ): Promise<string>[] {
-    expectedTaskCount += iterations
     return times(iterations, (i) =>
       bc
         .enqueueTask(new Task("upcase abc " + (i + start), parser))
@@ -78,7 +77,6 @@ describe("BatchCluster", function () {
 
   let events = new Events()
   const internalErrors: Error[] = []
-  let expectedTaskCount = 0
 
   function assertExpectedResults(results: string[]) {
     const dataResults = flatten(
@@ -95,7 +93,6 @@ describe("BatchCluster", function () {
 
   beforeEach(() => {
     events = new Events()
-    expectedTaskCount = 0
   })
 
   function postAssertions() {
@@ -390,7 +387,6 @@ describe("BatchCluster", function () {
                   // We don't expect these to pass with this config:
                 } else if (maxProcs === 1 && errorResults.length === 0) {
                   console.warn("(all processes were unlucky)")
-                  expectedTaskCount = -1
                   return this.skip()
                 } else {
                   expect(
@@ -433,7 +429,6 @@ describe("BatchCluster", function () {
                     const cmd = ["upcase " + idx + " hello", ...worlds].join(
                       "<br>"
                     )
-                    expectedTaskCount++
                     return bc.enqueueTask(new Task(cmd, parser))
                   })
                 )
@@ -529,7 +524,6 @@ describe("BatchCluster", function () {
             times(iters, async (i) => {
               const start = Date.now()
               const task = new Task("sleep " + sleepTimeMs, parser)
-              expectedTaskCount++
               const resultP = bc.enqueueTask(task)
               expect(bc.isIdle).to.eql(false)
               const result = JSON.parse(await resultP)
