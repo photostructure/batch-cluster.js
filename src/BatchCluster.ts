@@ -109,7 +109,7 @@ export class BatchCluster {
 
     if (this.options.onIdleIntervalMillis > 0) {
       this.#onIdleInterval = timers.setInterval(
-        () => this.onIdle(),
+        () => this.#onIdle(),
         this.options.onIdleIntervalMillis
       )
       this.#onIdleInterval.unref() // < don't prevent node from exiting
@@ -178,8 +178,8 @@ export class BatchCluster {
       )
     }
     this.#tasks.push(task)
-    setImmediate(() => this.onIdle())
-    return task.promise.finally(() => this.onIdle())
+    this.#onIdleLater()
+    return task.promise.finally(this.#onIdleLater)
   }
 
   /**
@@ -300,11 +300,13 @@ export class BatchCluster {
   setMaxProcs(maxProcs: number) {
     this.options.maxProcs = maxProcs
     // we may now be able to handle an enqueued task. Vacuum pids and see:
-    this.onIdle()
+    this.#onIdle()
   }
 
+  readonly #onIdleLater = () => setImmediate(() => this.#onIdle())
+
   // NOT ASYNC: updates internal state:
-  private onIdle() {
+  #onIdle() {
     this.vacuumProcs()
     while (this.#execNextTask()) {
       //
@@ -423,6 +425,8 @@ export class BatchCluster {
         return
       } else {
         this.#procs.push(proc)
+        // As soon as this is ready, run onIdle
+        proc.startupPromise.then(this.#onIdleLater, this.#onIdleLater)
         return proc
       }
     } catch (err) {

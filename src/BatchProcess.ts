@@ -23,7 +23,7 @@ export class BatchProcess {
   #lastHealthCheck = Date.now()
   #healthCheckFailures = 0
 
-  readonly startupTaskId: number
+  readonly #startupTask: Task
   readonly #logger: () => Logger
   #lastJobFinshedAt = Date.now()
 
@@ -78,10 +78,9 @@ export class BatchProcess {
       stderr.on("data", (err) => this.#onStderr(err))
     })
 
-    const startupTask = new Task(opts.versionCommand, SimpleParser)
-    this.startupTaskId = startupTask.taskId
+    this.#startupTask = new Task(opts.versionCommand, SimpleParser)
 
-    if (!this.execTask(startupTask)) {
+    if (!this.execTask(this.#startupTask)) {
       // This could also be considered a "start error", but if it's just an
       // internal bug and the process starts, don't veto because there's a bug:
       this.opts.observer.emit(
@@ -89,6 +88,10 @@ export class BatchProcess {
         new Error(this.name + " startup task was not submitted")
       )
     }
+  }
+  
+  get startupPromise(): Promise<void> {
+    return this.#startupTask.promise
   }
 
   get currentTask(): Task | undefined {
@@ -251,7 +254,7 @@ export class BatchProcess {
     this.#taskCount++
     this.#currentTask = task
     const cmd = ensureSuffix(task.command, "\n")
-    const isStartupTask = task.taskId === this.startupTaskId
+    const isStartupTask = task.taskId === this.#startupTask.taskId
     const timeoutMs = isStartupTask
       ? this.opts.spawnTimeoutMillis
       : this.opts.taskTimeoutMillis

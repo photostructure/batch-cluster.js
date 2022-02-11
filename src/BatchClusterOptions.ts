@@ -38,9 +38,9 @@ export class BatchClusterOptions {
    * This is the minimum interval between calls to `this.onIdle`, which
    * runs pending tasks and shuts down old child processes.
    *
-   * Must be &gt; 0. Defaults to 5 seconds.
+   * Must be &gt; 0. Defaults to 10 seconds.
    */
-  onIdleIntervalMillis = 5 * secondMs
+  onIdleIntervalMillis = 10 * secondMs
 
   /**
    * If the initial `versionCommand` fails for new spawned processes more
