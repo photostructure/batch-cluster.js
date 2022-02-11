@@ -101,10 +101,6 @@ describe("BatchCluster", function () {
   function postAssertions() {
     expect(internalErrors).to.eql([], "internal errors")
 
-    expect(events.runtimeMs.length).to.be.within(
-      Math.floor(expectedTaskCount * 0.5), // because failures
-      Math.ceil(expectedTaskCount * 3) // because flaky retries
-    )
     events.runtimeMs.forEach((ea) =>
       expect(ea).to.be.within(0, 5000, inspect({ runtimeMs: events.runtimeMs }))
     )
