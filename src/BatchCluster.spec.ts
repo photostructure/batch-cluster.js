@@ -603,6 +603,11 @@ describe("BatchCluster", function () {
 
       expect(bc.childEndCounts.tooMany).to.be.closeTo(maxProcs / 2, 2)
 
+      // don't shut down until bc is idle... (otherwise we'll fail due to
+      // "Error: end() called before task completed
+      // ({\"gracefully\":true,\"source\":\"BatchCluster.closeChildProcesses()\"})"
+      await until(() => bc.isIdle, 5000)
+
       postAssertions()
     })
   })
