@@ -1,8 +1,9 @@
-import _cp from "child_process"
-import { BatchProcess } from "./BatchProcess"
+import { BatchProcess, WhyNotHealthy } from "./BatchProcess"
 import { Task } from "./Task"
 
 type Args<T> = T extends (...args: infer A) => void ? A : never
+
+export type ChildEndReason = WhyNotHealthy | "tooMany"
 
 // Type-safe EventEmitter! Note that this interface is not comprehensive:
 // EventEmitter has a bunch of other methods, but batch-cluster doesn't use
@@ -38,12 +39,12 @@ export interface BatchClusterEvents {
   /**
    * Emitted when a child process has started
    */
-  childStart: (childProcess: _cp.ChildProcess) => void
+  childStart: (childProcess: BatchProcess) => void
 
   /**
-   * Emitted when a child process has exitted
+   * Emitted when a child process has ended
    */
-  childExit: (childProcess: _cp.ChildProcess) => void
+  childEnd: (childProcess: BatchProcess, reason: ChildEndReason) => void
 
   /**
    * Emitted when a child process has an error when spawning

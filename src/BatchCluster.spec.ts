@@ -22,17 +22,19 @@ import {
   sortNumeric,
   testPids,
   times,
+  unhandledRejections,
 } from "./_chai.spec"
 
 const isCI = process.env.CI === "1"
 const tk = require("timekeeper")
 
 describe("BatchCluster", function () {
-  if (isCI)
+  if (isCI) {
     beforeEach(function () {
       // child process forking in CI is flaky.
       this.retries(3)
     })
+  }
 
   const ErrorPrefix = "ERROR: "
 
@@ -168,7 +170,7 @@ describe("BatchCluster", function () {
     bc.on("childStart", (cp) =>
       map(cp.pid, (ea) => events.startedPids.push(ea))
     )
-    bc.on("childExit", (cp) => map(cp.pid, (ea) => events.exittedPids.push(ea)))
+    bc.on("childEnd", (cp) => map(cp.pid, (ea) => events.exittedPids.push(ea)))
     bc.on("startError", (err) => events.startErrors.push(err))
     bc.on("endError", (err) => events.endErrors.push(err))
     bc.on("internalError", (err) => {
@@ -565,6 +567,7 @@ describe("BatchCluster", function () {
     afterEach(() => shutdown(bc))
 
     it("supports reducing maxProcs", async () => {
+      // don't fight with flakiness here!
       setFailrate(0)
       const opts = {
         ...DefaultOpts,
@@ -592,16 +595,17 @@ describe("BatchCluster", function () {
       )
       await Promise.all(firstBatchPromises)
       bc.vacuumProcs()
+
       // We should be dropping BatchProcesses at this point.
-      expect(bc.busyProcCount).to.be.closeTo(maxProcs / 2, 2)
-      expect(bc.procCount).to.be.closeTo(maxProcs / 2, 2)
+      expect(bc.busyProcCount).to.be.within(0, maxProcs / 2)
+      expect(bc.procCount).to.be.within(0, maxProcs / 2)
 
       await Promise.all(secondBatchPromises)
 
-      expect(bc.procCount).to.be.closeTo(maxProcs / 2, 2)
       expect(bc.busyProcCount).to.eql(0) // because we're done
 
-      expect(bc.childEndCounts.tooMany).to.be.closeTo(maxProcs / 2, 2)
+      // Assert that there were excess procs shut down:
+      expect(bc.childEndCounts.tooMany).to.be.gt(1)
 
       // don't shut down until bc is idle... (otherwise we'll fail due to
       // "Error: end() called before task completed
@@ -609,6 +613,33 @@ describe("BatchCluster", function () {
       await until(() => bc.isIdle, 5000)
 
       postAssertions()
+    })
+  })
+
+  describe(".end() cleanup", () => {
+    const sleepTimeMs = 1000 // must be longer than non-graceful timeout (currently 250)
+    let bc: BatchCluster
+    afterEach(() => shutdown(bc))
+
+    it("shut down rejects long-running pending tasks", async () => {
+      setFailrate(0)
+      const opts = {
+        ...DefaultOpts,
+        taskTimeoutMillis: sleepTimeMs * 4, // < don't test timeouts here
+        processFactory,
+      }
+      bc = new BatchCluster(opts)
+      // Wait for one job to run (so the process spins up and we're ready to go)
+      await Promise.all(runTasks(bc, 1))
+      const t = bc.enqueueTask(new Task("sleep " + sleepTimeMs, parser))
+      let caught: any
+      t.catch((err) => (caught = err))
+      expect(bc.isIdle).to.eql(false)
+      await bc.end(false) // not graceful just to shut down faster
+      console.log(bc.stats())
+      expect(bc.isIdle).to.eql(true)
+      expect(caught?.message).to.include("end() called before task completed")
+      expect(unhandledRejections).to.eql([])
     })
   })
 

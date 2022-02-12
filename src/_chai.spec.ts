@@ -20,7 +20,7 @@ use(require("chai-withintoleranceof"))
 
 export { expect } from "chai"
 
-// Tests should be quiet unless LOG is set
+// Tests should be quiet unless LOG is set to "trace" or "debug" or "info" or...
 setLogger(
   Log.withLevels(
     Log.withTimestamps(

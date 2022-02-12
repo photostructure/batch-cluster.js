@@ -8,10 +8,30 @@ import { map } from "./Object"
 import { SimpleParser } from "./Parser"
 import { kill, pidExists } from "./Pids"
 import { mapNotDestroyed } from "./Stream"
-import { blank, ensureSuffix } from "./String"
+import { blank, ensureSuffix, toS } from "./String"
 import { Task } from "./Task"
 
-export type WhyNotReady = BatchProcess["whyNotHealthy"]
+export type WhyNotHealthy =
+  | "broken"
+  | "closed"
+  | "ending"
+  | "ended"
+  | "idle"
+  | "old"
+  | "proc.close"
+  | "proc.disconnect"
+  | "proc.error"
+  | "proc.exit"
+  | "stderr.error"
+  | "stderr"
+  | "stdin.error"
+  | "stdout.error"
+  | "timeout"
+  | "tooMany" // < only sent by BatchCluster when maxProcs is reduced
+  | "unhealthy"
+  | "worn"
+
+export type WhyNotReady = WhyNotHealthy | "busy"
 
 /**
  * BatchProcess manages the care and feeding of a single child process.
@@ -28,13 +48,15 @@ export class BatchProcess {
   #lastJobFinshedAt = Date.now()
 
   // Only set to true when `proc.pid` is no longer in the process table.
-  #dead = false
+  #ended = false
+  #ending = false
+
+  #whyNotHealthy?: WhyNotHealthy
 
   failedTaskCount = 0
 
   #taskCount = -1 // don't count the startupTask
 
-  #ending = false
   /**
    * Supports non-polling notification of process exit
    */
@@ -57,12 +79,13 @@ export class BatchProcess {
     if (proc.pid == null) {
       throw new Error("BatchProcess.constructor: child process pid is null")
     }
+
     this.pid = proc.pid
 
     this.proc.on("error", (err) => this.#onError("proc.error", err))
-    this.proc.on("close", () => this.#onExit("close"))
-    this.proc.on("exit", () => this.#onExit("exit"))
-    this.proc.on("disconnect", () => this.#onExit("disconnect"))
+    this.proc.on("close", () => this.#onExit("proc.close"))
+    this.proc.on("exit", () => this.#onExit("proc.exit"))
+    this.proc.on("disconnect", () => this.#onExit("proc.disconnect"))
 
     const stdin = this.proc.stdin
     if (stdin == null) throw new Error("Given proc had no stdin")
@@ -81,15 +104,16 @@ export class BatchProcess {
     this.#startupTask = new Task(opts.versionCommand, SimpleParser)
 
     if (!this.execTask(this.#startupTask)) {
-      // This could also be considered a "start error", but if it's just an
-      // internal bug and the process starts, don't veto because there's a bug:
       this.opts.observer.emit(
         "internalError",
         new Error(this.name + " startup task was not submitted")
       )
     }
+    // this needs to be at the end of the constructor, to ensure everything is
+    // set up on `this`
+    this.opts.observer.emit("childStart", this)
   }
-  
+
   get startupPromise(): Promise<void> {
     return this.#startupTask.promise
   }
@@ -100,6 +124,7 @@ export class BatchProcess {
   get taskCount(): number {
     return this.#taskCount
   }
+
   /**
    * @return true if `this.end()` has been requested or the child process has
    * exited.
@@ -118,9 +143,16 @@ export class BatchProcess {
     return this.#resolvedOnExit.promise
   }
 
-  get whyNotHealthy() {
+  /**
+   * @return a string describing why this process should be recycled, or null if
+   * the process passes all health checks. Note that this doesn't include if
+   * we're already busy: see {@link BatchProcess.whyNotReady} if you need to
+   * know if a process can handle a new task.
+   */
+  get whyNotHealthy(): WhyNotHealthy | null {
+    if (this.#whyNotHealthy != null) return this.#whyNotHealthy
     if (this.exited) {
-      return "dead"
+      return "ended"
     } else if (this.#ending) {
       return "ending"
     } else if (this.#healthCheckFailures > 0) {
@@ -153,7 +185,7 @@ export class BatchProcess {
     ) {
       return "timeout"
     } else {
-      return undefined
+      return null
     }
   }
 
@@ -164,16 +196,28 @@ export class BatchProcess {
     return this.whyNotHealthy == null
   }
 
-  get whyNotReady() {
+  /**
+   * @return true iff no current task. Does not take into consideration if the
+   * process has ended or should be recycled: see {@link BatchProcess.ready}.
+   */
+  get idle(): boolean {
+    return this.#currentTask == null
+  }
+
+  /**
+   * @return a string describing why this process cannot currently handle a new
+   * task, or `undefined` if this process is idle and healthy.
+   */
+  get whyNotReady(): WhyNotReady | null {
     return !this.idle ? "busy" : this.whyNotHealthy
   }
 
+  /**
+   * @return true iff this process is  both healthy and idle, and ready for a
+   * new task.
+   */
   get ready(): boolean {
     return this.whyNotReady == null
-  }
-
-  get idle(): boolean {
-    return this.#currentTask == null
   }
 
   get idleMs(): number {
@@ -184,14 +228,14 @@ export class BatchProcess {
    * @return true if the child process is in the process table
    */
   async running(): Promise<boolean> {
-    if (this.#dead) {
+    if (this.#ended) {
       // this.dead is only set if the process table has said we're dead.
       return false
     } else {
       const alive = await pidExists(this.pid)
       if (!alive) {
         // once a PID leaves the process table, it's gone for good:
-        this.#dead = true
+        this.#ended = true
         this.#ending = true
         this.#resolvedOnExit.resolve()
       }
@@ -208,23 +252,16 @@ export class BatchProcess {
    * process has exited.
    */
   async ended(): Promise<boolean> {
-    return this.#dead || (await this.notRunning())
+    return this.#ended || (await this.notRunning())
   }
 
   async notEnded(): Promise<boolean> {
     return this.ended().then((ea) => !ea)
   }
 
-  // This must not be async, or new instances aren't started as busy (until the
-  // startup task is complete)
-  execTask(task: Task): boolean {
-    const why = this.whyNotReady
-    if (why != null) {
-      // console.log(`execTask(): ${this.pid} not ready: ${why}`)
-      return false
-    }
-
+  maybeRunHealthcheck(): Task | undefined {
     if (
+      this.ready &&
       this.opts.healthCheckCommand != null &&
       this.opts.healthCheckIntervalMillis > 0 &&
       Date.now() - this.#lastHealthCheck > this.opts.healthCheckIntervalMillis
@@ -233,19 +270,23 @@ export class BatchProcess {
       const t = new Task(this.opts.healthCheckCommand, SimpleParser)
       t.promise
         .catch((err) => {
-          // console.log("execTask#" + this.pid + ": health check failed", err)
           this.opts.observer.emit("healthCheckError", err, this)
           this.#healthCheckFailures++
+          // BatchCluster will see we're unhealthy and reap us later
         })
         .finally(() => {
           this.#lastHealthCheck = Date.now()
         })
       this.#execTask(t)
-      return false
+      return t
     }
+    return
+  }
 
-    // console.log("running " + task + " on " + this.pid)
-    return this.#execTask(task)
+  // This must not be async, or new instances aren't started as busy (until the
+  // startup task is complete)
+  execTask(task: Task): boolean {
+    return this.ready ? this.#execTask(task) : false
   }
 
   #execTask(task: Task): boolean {
@@ -259,11 +300,6 @@ export class BatchProcess {
       ? this.opts.spawnTimeoutMillis
       : this.opts.taskTimeoutMillis
     if (timeoutMs > 0) {
-      // logger().trace(this.name + ".execTask(): scheduling timeout", {
-      //   command: task.command,
-      //   timeoutMs,
-      //   pid: this.pid
-      // })
       this.#currentTaskTimeout = setTimeout(
         () => this.#onTimeout(task, timeoutMs),
         timeoutMs
@@ -306,7 +342,7 @@ export class BatchProcess {
       }
     } catch (err) {
       // child process went away. We should too.
-      this.end(false, "proc.stdin.write(cmd)")
+      this.end(false, "stdin.error")
       return false
     }
   }
@@ -314,23 +350,29 @@ export class BatchProcess {
   /**
    * End this child process.
    *
-   * @param gracefully Wait for any current task to be resolved or rejected before shutting down the child process.
-   * @param source who called end() (used for logging)
-   * @return Promise that will be resolved when the process has completed. Subsequent calls to end() will ignore the parameters and return the first endPromise.
+   * @param gracefully Wait for any current task to be resolved or rejected
+   * before shutting down the child process.
+   * @param reason who called end() (used for logging)
+   * @return Promise that will be resolved when the process has completed.
+   * Subsequent calls to end() will ignore the parameters and return the first
+   * endPromise.
    */
   // NOT ASYNC! needs to change state immediately.
-  end(gracefully = true, source: string) {
+  end(gracefully = true, reason: WhyNotHealthy) {
+    this.#whyNotHealthy ??= reason
+
     if (this.#ending) {
       return undefined
     } else {
       this.#ending = true
-      return this.#end(gracefully, source)
+      this.opts.observer.emit("childEnd", this, reason)
+      return this.#end(gracefully)
     }
   }
 
   // NOTE: Must only be invoked by this.end(), and only expected to be invoked
   // once per instance.
-  async #end(gracefully = true, source: string): Promise<void> {
+  async #end(gracefully = true): Promise<void> {
     const lastTask = this.#currentTask
     this.#clearCurrentTask()
 
@@ -353,7 +395,7 @@ export class BatchProcess {
           new Error(
             `end() called before task completed (${JSON.stringify({
               gracefully,
-              source,
+              lastTask,
             })})`
           )
         )
@@ -409,15 +451,15 @@ export class BatchProcess {
     }
   }
 
-  #onError(source: string, _error: Error, task?: Task) {
+  #onError(reason: WhyNotHealthy, error: Error, task?: Task) {
     if (this.#ending) {
       // We're ending already, so don't propagate the error.
       // This is expected due to race conditions stdin EPIPE and process shutdown.
       this.#logger().debug(
         this.name + ".onError() post-end (expected and not propagated)",
         {
-          source,
-          _error,
+          reason,
+          error,
           task,
         }
       )
@@ -426,59 +468,58 @@ export class BatchProcess {
     if (task == null) {
       task = this.#currentTask
     }
-    const error = new Error(source + ": " + cleanError(_error.message))
+    const cleanedError = new Error(reason + ": " + cleanError(error.message))
     this.#logger().warn(this.name + ".onError()", {
-      source,
+      reason,
       task: map(task, (t) => t.command),
-      error,
+      error: cleanedError,
     })
 
-    if (_error.stack != null) {
+    if (error.stack != null) {
       // Error stacks, if set, will not be redefined from a rethrow:
-      error.stack = cleanError(_error.stack)
+      cleanedError.stack = cleanError(error.stack)
     }
 
     // clear the task before ending so the onExit from end() doesn't retry the task:
     this.#clearCurrentTask()
-    void this.end(false, "onError(" + source + ")")
+    void this.end(false, reason)
 
     if (task != null && this.taskCount === 1) {
       this.#logger().warn(
-        this.name + ".onError(): startup task failed: " + error
+        this.name + ".onError(): startup task failed: " + cleanedError
       )
-      this.opts.observer.emit("startError", error)
+      this.opts.observer.emit("startError", cleanedError)
     }
 
     if (task != null) {
       if (task.pending) {
-        task.reject(error)
+        task.reject(cleanedError)
       } else {
         this.opts.observer.emit(
           "internalError",
           new Error(
-            `${this.name}.onError(${error}) cannot reject already-fulfilled task.`
+            `${this.name}.onError(${cleanedError}) cannot reject already-fulfilled task.`
           )
         )
       }
     }
   }
 
-  #onExit(source: string) {
+  #onExit(reason: WhyNotHealthy) {
     this.#resolvedOnExit.resolve()
     // no need to be graceful, it's just for bookkeeping:
-    return this.end(false, "onExit(" + source + ")")
+    return this.end(false, reason)
   }
 
   #onStderr(data: string | Buffer) {
     if (blank(data)) return
-    this.#logger().info("onStderr(" + this.pid + "):" + data)
+    this.#logger().warn(this.name + ".onStderr():" + data)
     const task = this.#currentTask
     if (task != null && task.pending) {
       task.onStderr(data)
     } else if (!this.#ending) {
-      this.end(false, "onStderr (no current task)")
       // If we're ending and there isn't a task, don't worry about it.
-      // Otherwise:
+      this.end(false, "stderr")
       this.opts.observer.emit(
         "internalError",
         new Error(
@@ -493,14 +534,18 @@ export class BatchProcess {
   }
 
   #onStdout(data: string | Buffer) {
-    // logger().debug("onStdout(" + this.pid + "):" + data)
     if (data == null) return
     const task = this.#currentTask
     if (task != null && task.pending) {
       this.opts.observer.emit("taskData", data, task, this)
       task.onStdout(data)
-    } else if (!this.#ending) {
-      this.end(false, "onStdout (no current task)")
+    } else if (this.#ending) {
+      // don't care if we're already being shut down.
+    } else if (!blank(data)) {
+      this.#logger().warn(
+        this.name + ".onStdout(): no current task to handle " + toS(data)
+      )
+      this.end(false, "stdout.error")
       // If we're ending and there isn't a task, don't worry about it.
       // Otherwise:
       this.opts.observer.emit(
