@@ -18,6 +18,10 @@ See [Semver](http://semver.org/).
 
 - 📦 Minor packaging changes
 
+## v10.0.1
+
+- 📦 Export `BatchProcess` interface
+
 ## v10.0.0
 
 - ✨ Process state improvements
