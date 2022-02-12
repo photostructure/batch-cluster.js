@@ -18,6 +18,19 @@ See [Semver](http://semver.org/).
 
 - 📦 Minor packaging changes
 
+## v10.0.0
+
+- ✨ Process state improvements
+
+- 💔 Renamed event s/childExit/childEnd/
+- 💔 `childEnd` and `childStart` events receive BatchProcess instances now
+- 💔 Renamed healthy state s/dead/ended/
+- 📦 make BatchProcess.whyNotHealthy persistent
+- 📦 Added several more WhyNotHealthy values
+- 📦 Perf: filterInPlace and count use for loops rather than closures
+- 📦 add spec to verify .end rejects long-running pending tasks
+- 📦 Updated development dependencies and rebuild docs
+
 ## v9.1.0
 
 - 🐞/📦 `BatchProcess` exposes a promise for the completion of the startup task,
