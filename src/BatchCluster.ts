@@ -25,6 +25,7 @@ import { Rate } from "./Rate"
 import { Task } from "./Task"
 
 export { BatchClusterOptions } from "./BatchClusterOptions"
+export { BatchProcess } from "./BatchProcess"
 export { Deferred } from "./Deferred"
 export * from "./Logger"
 export { SimpleParser } from "./Parser"
