@@ -97,12 +97,6 @@ export interface BatchClusterEvents {
   beforeEnd: () => void
 
   /**
-   * Emitted when a task is completed, asking for more work to be scheduled, if
-   * possible.
-   */
-  idle: () => void
-
-  /**
    * Emitted when this instance has ended. No child processes should remain at
    * this point.
    */

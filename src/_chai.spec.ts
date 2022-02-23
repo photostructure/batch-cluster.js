@@ -67,6 +67,7 @@ export const parser: Parser<string> = (
       stderr,
       passed,
     })
+    // process.stdout.write("!")
     throw new Error(stderr)
   } else {
     const str = stdout
@@ -75,6 +76,7 @@ export const parser: Parser<string> = (
       .join("\n")
       .trim()
     logger().debug("test parser: resolving task", str)
+    // process.stdout.write(".")
     return str
   }
 }

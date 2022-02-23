@@ -1,5 +1,5 @@
 import * as _cp from "child_process"
-import { delay, until } from "./Async"
+import { until } from "./Async"
 import { Deferred } from "./Deferred"
 import { cleanError, tryEach } from "./Error"
 import { InternalBatchProcessOptions } from "./InternalBatchProcessOptions"
@@ -10,6 +10,7 @@ import { kill, pidExists } from "./Pids"
 import { mapNotDestroyed } from "./Stream"
 import { blank, ensureSuffix, toS } from "./String"
 import { Task } from "./Task"
+import { thenOrTimeout } from "./Timeout"
 
 export type WhyNotHealthy =
   | "broken"
@@ -384,9 +385,10 @@ export class BatchProcess {
 
     if (lastTask != null) {
       try {
-        // Let's wait for streams to flush, as that may actually allow the task
-        // to complete successfully. Let's not wait forever, though.
-        await Promise.race([lastTask.promise, delay(gracefully ? 2000 : 250)])
+        // Let's wait for the process to complete and the streams to flush, as
+        // that may actually allow the task to complete successfully. Let's not
+        // wait forever, though.
+        await thenOrTimeout(lastTask.promise, gracefully ? 2000 : 250)
       } catch {
         //
       }
@@ -558,7 +560,6 @@ export class BatchProcess {
   }
 
   #clearCurrentTask(task?: Task) {
-    setImmediate(() => this.opts.observer.emit("idle"))
     if (task != null && task.taskId !== this.#currentTask?.taskId) return
     map(this.#currentTaskTimeout, (ea) => clearTimeout(ea))
     this.#currentTaskTimeout = undefined

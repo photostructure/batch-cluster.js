@@ -187,9 +187,15 @@ export class BatchCluster {
       )
     }
     this.#tasks.push(task)
-    // Run #onIdle now (not later), to make sure the task gets enqueued if
-    // possible, asap
+    // Run #onIdle now (not later), to make sure the task gets enqueued asap if
+    // possible
     this.#onIdle()
+    // Schedule #onIdle when the promise resolves, as there may be other
+    // enqueued jobs to run.
+
+    // Note: we're not using .finally() here, because that would create a new
+    // promise chain that, if rejected, would result in an uncaughtRejection.
+    void task.promise.then(this.#onIdleLater, this.#onIdleLater)
     return task.promise
   }
 
@@ -339,6 +345,7 @@ export class BatchCluster {
     while (this.#execNextTask()) {
       //
     }
+    // this will be a no-op if we're ending or there are no pending tasks or ...
     this.#maybeLaunchNewChild()
   }
 
@@ -352,22 +359,6 @@ export class BatchCluster {
     }
   }
 
-  readonly #canRetainProc = (proc: BatchProcess) => {
-    // don't bother busy procs:
-    if (!proc.idle) return true
-    const why =
-      proc.whyNotHealthy ??
-      (this.#procs.length > this.options.maxProcs ? "tooMany" : null)
-    if (why != null) {
-      void proc.end(true, why)
-      return false
-    }
-
-    if (proc.idle) proc.maybeRunHealthcheck()
-
-    return true
-  }
-
   /**
    * Run maintenance on currently spawned child processes. This method is
    * normally invoked automatically as tasks are enqueued and processed.
@@ -375,7 +366,25 @@ export class BatchCluster {
   // NOT ASYNC: updates internal state. only exported for tests.
   vacuumProcs() {
     this.#maybeCheckPids()
-    filterInPlace(this.#procs, this.#canRetainProc)
+    let pidsToReap = Math.max(0, this.#procs.length - this.options.maxProcs)
+    filterInPlace(this.#procs, (proc) => {
+      // don't bother busy procs:
+      if (proc.idle) {
+        // don't reap more than pidsToReap pids. We can't use #procs.length
+        // within filterInPlace because #procs.length only changes at iteration
+        // completion: the prior impl resulted in all idle pids getting reaped
+        // when maxProcs was reduced.
+        const why = proc.whyNotHealthy ?? (--pidsToReap >= 0 ? "tooMany" : null)
+        if (why != null) {
+          void proc.end(true, why)
+          return false
+        }
+
+        proc.maybeRunHealthcheck()
+      }
+
+      return true
+    })
   }
 
   // NOT ASYNC: updates internal state.
@@ -431,6 +440,8 @@ export class BatchCluster {
       this.#procs.push(proc)
       // As soon as this is ready, run onIdle
       proc.startupPromise.then(this.#onIdleLater, this.#onIdleLater)
+      // Run onIdle on exit
+      proc.exitPromise.then(this.#onIdleLater, this.#onIdleLater)
       return proc
     } catch (err) {
       this.emitter.emit("startError", asError(err))

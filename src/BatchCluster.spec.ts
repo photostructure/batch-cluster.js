@@ -1,5 +1,4 @@
 import process from "process"
-import util, { inspect } from "util"
 import { filterInPlace } from "./Array"
 import { delay, until } from "./Async"
 import { BatchCluster } from "./BatchCluster"
@@ -45,7 +44,9 @@ describe("BatchCluster", function () {
     pass: "PASS",
     fail: "FAIL",
     exitCommand: "exit",
-    onIdleIntervalMillis: 250, // frequently to speed up tests
+    // don't reduce onIdleInterval: it shouldn't be required to finish! See
+    // https://github.com/photostructure/batch-cluster.js/issues/15
+    // onIdleIntervalMillis: xxx
     maxTasksPerProcess: 5, // force process churn
     taskTimeoutMillis: 250, // CI machines can be slow. Needs to be short so the timeout test doesn't timeout
     maxReasonableProcessFailuresPerMinute: 2000, // this is so high because failrate is so high
@@ -101,7 +102,11 @@ describe("BatchCluster", function () {
     expect(internalErrors).to.eql([], "internal errors")
 
     events.runtimeMs.forEach((ea) =>
-      expect(ea).to.be.within(0, 5000, inspect({ runtimeMs: events.runtimeMs }))
+      expect(ea).to.be.within(
+        0,
+        5000,
+        JSON.stringify({ runtimeMs: events.runtimeMs })
+      )
     )
   }
 
@@ -130,38 +135,33 @@ describe("BatchCluster", function () {
           pids.length === 0 &&
           livingPids.length === 0
 
-        // if (!done)
-        //   console.log("shutdown(): waiting for end", {
-        //     count,
-        //     isIdle,
-        //     pendingCommands,
-        //     runningCommands,
-        //     busyProcCount,
-        //     pids,
-        //     livingPids,
-        //   })
+        if (!done)
+          console.log("shutdown(): waiting for end", {
+            runningCommands,
+            busyProcCount,
+            pids,
+            livingPids,
+          })
         return done
       },
       10_000, // < mac CI is slow
-      500 // < don't hammer tasklist/ps too hard
+      1000 // < don't hammer tasklist/ps too hard
     )
-    // This should immediately be true: we already waited for the processes to exit.
-    const endPromiseResolved = await until(
-      () => !endPromise.pending,
-      10_000,
-      500
-    )
-    if (!endPromiseResolved || !isShutdown) {
-      console.warn("shutdown()", { isShutdown, endPromiseResolved })
+    // This should immediately be true: we already waited for the processes to
+    // exit; but node may not have resolved the end promises yet. `await` yields
+    // to those chains.
+    const endPromiseSettled = await until(() => endPromise.settled, 10_000, 50)
+    if (!endPromiseSettled || !isShutdown) {
+      console.warn("shutdown()", { isShutdown, endPromiseSettled })
     }
     // const cec = bc.childEndCounts
     // if (Object.keys(cec).length > 0) {
     //   console.log("childEndCounts", cec)
     // }
     expect(isShutdown).to.eql(true)
-    expect(endPromiseResolved).to.eql(true)
+    expect(endPromiseSettled).to.eql(true)
     expect(bc.end(true).settled).to.eql(true)
-    expect(bc.internalErrorCount).to.eql(0, inspect({ internalErrors }))
+    expect(bc.internalErrorCount).to.eql(0, JSON.stringify({ internalErrors }))
     return
   }
 
@@ -214,12 +214,14 @@ describe("BatchCluster", function () {
     const emitTimes: number[] = []
     const bc = new BatchCluster({ ...DefaultOpts, processFactory })
     const listener = () => emitTimes.push(Date.now())
-    bc.on("idle", listener)
-    bc.emitter.emit("idle")
+    // pick a random event that doesn't require arguments:
+    const evt = "beforeEnd" as const
+    bc.on(evt, listener)
+    bc.emitter.emit(evt)
     expect(emitTimes.length).to.eql(1)
     emitTimes.length = 0
-    bc.off("idle", listener)
-    bc.emitter.emit("idle")
+    bc.off(evt, listener)
+    bc.emitter.emit(evt)
     expect(emitTimes).to.eql([])
     postAssertions()
   })
@@ -229,10 +231,7 @@ describe("BatchCluster", function () {
       for (const ignoreExit of [true, false]) {
         for (const healthcheck of [false, true]) {
           describe(
-            util.inspect(
-              { newline, maxProcs, ignoreExit, healthcheck },
-              { colors: true, breakLength: 100 }
-            ),
+            JSON.stringify({ newline, maxProcs, ignoreExit, healthcheck }),
             function () {
               let bc: BatchCluster
               const opts: any = {
@@ -260,6 +259,59 @@ describe("BatchCluster", function () {
                 expect(bc.internalErrorCount).to.eql(0)
                 return
               })
+
+              if (maxProcs > 1) {
+                it("completes work on multiple child processes", async function () {
+                  this.slow(1) // always show timing
+
+                  const pidSet = new Set<number>()
+                  const errors: Error[] = []
+
+                  for (let i = 0; i < 20; i++) {
+                    // run 4 tasks in parallel:
+                    for (const p of times(maxProcs, () =>
+                      bc.enqueueTask(
+                        new Task(
+                          "sleep " + bc.options.minDelayBetweenSpawnMillis,
+                          parser
+                        )
+                      )
+                    )) {
+                      try {
+                        const result = await p
+                        const { pid } = JSON.parse(result)
+                        if (isNaN(pid)) {
+                          throw new Error(
+                            "invalid output: " + JSON.stringify(result)
+                          )
+                        } else {
+                          pidSet.add(pid)
+                        }
+                      } catch (error) {
+                        errors.push(error as Error)
+                      }
+                    }
+                    if (pidSet.size > 2) break
+                  }
+                  const pids = [...pidSet.values()]
+                  // console.dir({ pids, errors })
+
+                  expect(pids.length).to.be.gt(
+                    2,
+                    "expected more than a couple child processes"
+                  )
+                  expect(pids.every((ea) => process.pid !== ea)).to.eql(
+                    true,
+                    "no child pids, " +
+                      pids.join(", ") +
+                      ", should match this process pid, " +
+                      process.pid
+                  )
+                  expect(
+                    errors.filter((ea) => !String(ea).includes("EUNLUCKY"))
+                  ).to.eql([], "Unexpected errors")
+                })
+              }
 
               it("calling .end() when new no-ops", async () => {
                 await bc.end()
@@ -367,6 +419,7 @@ describe("BatchCluster", function () {
               )
 
               it("recovers from invalid commands", async function () {
+                this.slow(1)
                 assertExpectedResults(
                   await Promise.all(runTasks(bc, maxProcs * 4))
                 )
@@ -478,7 +531,7 @@ describe("BatchCluster", function () {
   }
 
   describe("maxProcs", function () {
-    const iters = 50
+    const iters = 100
     const maxProcs = 10
     const sleepTimeMs = 250
     let bc: BatchCluster
@@ -492,71 +545,62 @@ describe("BatchCluster", function () {
     } of [
       {
         minDelayBetweenSpawnMillis: 100,
-        expectTaskMin: 1,
-        expectedTaskMax: 10,
+        expectTaskMin: 3, // ~5 - delta
+        expectedTaskMax: 17, // ~15 + delta
         expectedProcsMin: maxProcs,
         expectedProcsMax: maxProcs + 2,
       },
       {
         minDelayBetweenSpawnMillis: 500,
         expectTaskMin: 1,
-        expectedTaskMax: 15,
+        expectedTaskMax: 22, // ~20 + delta
         expectedProcsMin: 6,
         expectedProcsMax: 10,
       },
     ]) {
-      it(
-        util.inspect(
-          { minDelayBetweenSpawnMillis },
-          { colors: false, breakLength: 100 }
-        ),
-        async function () {
-          setFailrate(0)
-          const opts = {
-            ...DefaultOpts,
-            taskTimeoutMillis: sleepTimeMs * 4, // < don't test timeouts here
-            maxProcs,
-            maxTasksPerProcess: expectedTaskMax + 5, // < don't recycle procs for this test
-            minDelayBetweenSpawnMillis,
-            processFactory,
-          }
-          bc = listen(new BatchCluster(opts))
-          expect(bc.isIdle).to.eql(true)
-          const tasks = await Promise.all(
-            times(iters, async (i) => {
-              const start = Date.now()
-              const task = new Task("sleep " + sleepTimeMs, parser)
-              const resultP = bc.enqueueTask(task)
-              expect(bc.isIdle).to.eql(false)
-              const result = JSON.parse(await resultP)
-              const end = Date.now()
-              return { i, start, end, ...result }
-            })
-          )
-          const pid2count = new Map<number, number>()
-          tasks.forEach((ea) => {
-            const pid = ea.pid
-            const count = orElse(pid2count.get(pid), 0)
-            pid2count.set(pid, count + 1)
-          })
-          expect(bc.isIdle).to.eql(true)
-          // console.log({
-          //   expectTaskMin,
-          //   expectedTaskMax,
-          //   maxProcs,
-          //   uniqPids: pid2count.size,
-          //   pid2count,
-          //   bcPids: await bc.pids(),
-          // })
-          for (const [, count] of pid2count.entries()) {
-            expect(count).to.be.within(expectTaskMin, expectedTaskMax)
-          }
-          expect(pid2count.size).to.be.within(
-            expectedProcsMin,
-            expectedProcsMax
-          )
+      it(JSON.stringify({ minDelayBetweenSpawnMillis }), async () => {
+        setFailrate(0)
+        const opts = {
+          ...DefaultOpts,
+          taskTimeoutMillis: sleepTimeMs + 10000, // < don't test timeouts here
+          maxProcs,
+          maxTasksPerProcess: expectedTaskMax + 5, // < don't recycle procs for this test
+          minDelayBetweenSpawnMillis,
+          processFactory,
         }
-      )
+        bc = listen(new BatchCluster(opts))
+        expect(bc.isIdle).to.eql(true)
+        const tasks = await Promise.all(
+          times(iters, async (i) => {
+            const start = Date.now()
+            const task = new Task("sleep " + sleepTimeMs, parser)
+            const resultP = bc.enqueueTask(task)
+            expect(bc.isIdle).to.eql(false)
+            const result = JSON.parse(await resultP)
+            const end = Date.now()
+            return { i, start, end, ...result }
+          })
+        )
+        const pid2count = new Map<number, number>()
+        tasks.forEach((ea) => {
+          const pid = ea.pid
+          const count = orElse(pid2count.get(pid), 0)
+          pid2count.set(pid, count + 1)
+        })
+        expect(bc.isIdle).to.eql(true)
+        console.log({
+          expectTaskMin,
+          expectedTaskMax,
+          maxProcs,
+          uniqPids: pid2count.size,
+          pid2count,
+          bcPids: await bc.pids(),
+        })
+        for (const [, count] of pid2count.entries()) {
+          expect(count).to.be.within(expectTaskMin, expectedTaskMax)
+        }
+        expect(pid2count.size).to.be.within(expectedProcsMin, expectedProcsMax)
+      })
     }
   })
 
@@ -588,7 +632,8 @@ describe("BatchCluster", function () {
       expect(bc.currentTasks.length).to.be.closeTo(maxProcs, 2)
       expect(bc.busyProcCount).to.be.closeTo(maxProcs, 2)
       expect(bc.procCount).to.be.closeTo(maxProcs, 2)
-      bc.setMaxProcs(maxProcs / 2)
+      const maxProcs2 = maxProcs / 2
+      bc.setMaxProcs(maxProcs2)
 
       const secondBatchPromises = times(maxProcs, () =>
         bc.enqueueTask(new Task("sleep " + sleepTimeMs, parser))
@@ -597,15 +642,15 @@ describe("BatchCluster", function () {
       bc.vacuumProcs()
 
       // We should be dropping BatchProcesses at this point.
-      expect(bc.busyProcCount).to.be.within(0, maxProcs / 2)
-      expect(bc.procCount).to.be.within(0, maxProcs / 2)
+      expect(bc.busyProcCount).to.be.within(0, maxProcs2)
+      expect(bc.procCount).to.be.within(0, maxProcs2)
 
       await Promise.all(secondBatchPromises)
 
       expect(bc.busyProcCount).to.eql(0) // because we're done
 
       // Assert that there were excess procs shut down:
-      expect(bc.childEndCounts.tooMany).to.be.gt(1)
+      expect(bc.childEndCounts.tooMany).to.be.closeTo(maxProcs - maxProcs2, 2)
 
       // don't shut down until bc is idle... (otherwise we'll fail due to
       // "Error: end() called before task completed
