@@ -302,13 +302,15 @@ export class BatchProcess {
     this.#currentTask = task
     const cmd = ensureSuffix(task.command, "\n")
     const isStartupTask = task.taskId === this.#startupTask.taskId
-    const timeoutMs = isStartupTask
+    const taskTimeoutMs = isStartupTask
       ? this.opts.spawnTimeoutMillis
       : this.opts.taskTimeoutMillis
-    if (timeoutMs > 0) {
+    if (taskTimeoutMs > 0) {
+      // add the stream flush millis to the taskTimeoutMs, because that time
+      // should not be counted against the task.
       this.#currentTaskTimeout = setTimeout(
-        () => this.#onTimeout(task, timeoutMs),
-        timeoutMs
+        () => this.#onTimeout(task, taskTimeoutMs),
+        taskTimeoutMs + this.opts.streamFlushMillis
       )
     }
     // CAREFUL! If you add a .catch or .finally, the pipeline can emit unhandled

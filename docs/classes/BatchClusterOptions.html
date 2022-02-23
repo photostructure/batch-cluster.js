@@ -82,8 +82,8 @@ coercion.</p>
 set this to a large number, and you&#39;ll potentially miss errors if you set
 this to low.</p>
 <p>Defaults to 15ms on Linux and 100ms on macOS and Windows due to slower
-stream handling. Your system may support a smaller value than the default:
-these are somewhat pessimistic.</p>
+stream handling on those platforms. Your system may support a smaller value
+than the default: these are somewhat pessimistic.</p>
 <p>Setting this to 0 makes whatever flushes first--stdout and stderr--and will
 most likely result in internal errors (due to stream buffers not being able
 to be associated to tasks that were just settled)</p>

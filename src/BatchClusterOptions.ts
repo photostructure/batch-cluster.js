@@ -118,8 +118,8 @@ export class BatchClusterOptions {
    * this to low.
    *
    * Defaults to 15ms on Linux and 100ms on macOS and Windows due to slower
-   * stream handling. Your system may support a smaller value than the default:
-   * these are somewhat pessimistic.
+   * stream handling on those platforms. Your system may support a smaller value
+   * than the default: these are somewhat pessimistic.
    *
    * Setting this to 0 makes whatever flushes first--stdout and stderr--and will
    * most likely result in internal errors (due to stream buffers not being able
