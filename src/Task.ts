@@ -1,4 +1,5 @@
 import { delay } from "./Async"
+import { BatchClusterOptions } from "./BatchClusterOptions"
 import { Deferred } from "./Deferred"
 import { InternalBatchProcessOptions } from "./InternalBatchProcessOptions"
 import { Parser } from "./Parser"
@@ -128,7 +129,12 @@ export class Task<T = any> {
     // })
 
     // wait for stderr and stdout to flush:
-    await delay(this.#opts?.streamFlushMillis ?? 10, true)
+    const flushMs =
+      this.#opts?.streamFlushMillis ??
+      new BatchClusterOptions().streamFlushMillis
+    if (flushMs > 0) {
+      await delay(flushMs)
+    }
 
     // we're expecting this method may be called concurrently (if there are both
     // pass and fail tokens found in stderr and stdout), but we only want to run
