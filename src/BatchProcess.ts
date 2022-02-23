@@ -358,7 +358,7 @@ export class BatchProcess {
    * endPromise.
    */
   // NOT ASYNC! needs to change state immediately.
-  end(gracefully = true, reason: WhyNotHealthy) {
+  end(gracefully = true, reason: WhyNotHealthy): Promise<void> | undefined {
     this.#whyNotHealthy ??= reason
 
     if (this.#ending) {
