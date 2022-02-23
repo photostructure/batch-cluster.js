@@ -272,7 +272,10 @@ describe("BatchCluster", function () {
                     for (const p of times(maxProcs, () =>
                       bc.enqueueTask(
                         new Task(
-                          "sleep " + bc.options.minDelayBetweenSpawnMillis,
+                          // this needs to be much less than the
+                          // DefaultOpts.taskTimeoutMillis (250), because we don't
+                          // want timeouts. CI failed when this was 100.
+                          "sleep 25",
                           parser
                         )
                       )
