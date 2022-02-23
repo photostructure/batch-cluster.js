@@ -481,6 +481,11 @@ describe("BatchCluster", function () {
 
               it("accepts single and multi-line responses", async () => {
                 setFailrate(0)
+                if (isCI) {
+                  // don't fight timeouts on GitHub's slower-than-molasses CI boxes:
+                  bc.options.taskTimeoutMillis = 1500
+                }
+
                 const expected: string[] = []
                 const results = await Promise.all(
                   times(15, (idx) => {
