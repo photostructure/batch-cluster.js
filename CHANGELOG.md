@@ -18,6 +18,10 @@ See [Semver](http://semver.org/).
 
 - 📦 Minor packaging changes
 
+## v10.1.0
+
+- 📦 `.end()` and `.closeChildProcesses()` closes all child processes in parallel
+
 ## v10.0.1
 
 - 📦 Export `BatchProcess` interface
