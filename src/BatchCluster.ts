@@ -311,13 +311,13 @@ export class BatchCluster {
   async closeChildProcesses(gracefully = true) {
     const procs = [...this.#procs]
     this.#procs.length = 0
-    for (const proc of procs) {
-      try {
-        await proc.end(gracefully, "ending")
-      } catch {
-        // ignore: make sure all procs are ended
-      }
-    }
+    await Promise.all(
+      procs.map((proc) =>
+        proc
+          .end(gracefully, "ending")
+          ?.catch((err) => this.emitter.emit("endError", asError(err)))
+      )
+    )
   }
 
   /**
