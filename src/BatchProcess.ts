@@ -68,9 +68,14 @@ export class BatchProcess {
   #currentTask: Task | undefined
   #currentTaskTimeout: NodeJS.Timer | undefined
 
+  /**
+   * @param onIdle to be called when internal state changes (like the current
+   * task is resolved, or the process exits)
+   */
   constructor(
     readonly proc: _cp.ChildProcess,
-    readonly opts: InternalBatchProcessOptions
+    readonly opts: InternalBatchProcessOptions,
+    private readonly onIdle: () => void
   ) {
     this.name = "BatchProcess(" + proc.pid + ")"
     this.#logger = opts.logger
@@ -315,6 +320,8 @@ export class BatchProcess {
         if (!isStartupTask) {
           this.opts.observer.emit("taskResolved", task, this)
         }
+        // Call _after_ we've cleared the current task:
+        this.onIdle()
       },
       (err) => {
         this.#clearCurrentTask(task)
@@ -324,6 +331,9 @@ export class BatchProcess {
         } else {
           this.opts.observer.emit("taskError", err, task, this)
         }
+
+        // Call _after_ we've cleared the current task:
+        this.onIdle()
       }
     )
 
@@ -439,6 +449,8 @@ export class BatchProcess {
       )
       await kill(this.proc.pid, true)
     }
+    // OK, we're all cleaned up: parent may be able to spin up another worker:
+    this.onIdle()
     return this.#resolvedOnExit
   }
 

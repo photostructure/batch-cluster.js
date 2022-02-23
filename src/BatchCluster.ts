@@ -187,15 +187,14 @@ export class BatchCluster {
       )
     }
     this.#tasks.push(task)
+
     // Run #onIdle now (not later), to make sure the task gets enqueued asap if
     // possible
     this.#onIdle()
-    // Schedule #onIdle when the promise resolves, as there may be other
-    // enqueued jobs to run.
 
-    // Note: we're not using .finally() here, because that would create a new
-    // promise chain that, if rejected, would result in an uncaughtRejection.
-    void task.promise.then(this.#onIdleLater, this.#onIdleLater)
+    // (BatchProcess will call our #onIdleLater when tasks settle or when they
+    // exit)
+
     return task.promise
   }
 
@@ -436,12 +435,8 @@ export class BatchCluster {
     try {
       this.#spawnedProcs++
       const child = await this.options.processFactory()
-      const proc = new BatchProcess(child, this.options)
+      const proc = new BatchProcess(child, this.options, this.#onIdleLater)
       this.#procs.push(proc)
-      // As soon as this is ready, run onIdle
-      proc.startupPromise.then(this.#onIdleLater, this.#onIdleLater)
-      // Run onIdle on exit
-      proc.exitPromise.then(this.#onIdleLater, this.#onIdleLater)
       return proc
     } catch (err) {
       this.emitter.emit("startError", asError(err))
