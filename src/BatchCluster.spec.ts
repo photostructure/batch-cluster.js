@@ -29,6 +29,7 @@ const tk = require("timekeeper")
 
 describe("BatchCluster", function () {
   if (isCI) {
+    console.log("*** in CI ***")
     beforeEach(function () {
       // child process forking in CI is flaky.
       this.retries(3)
@@ -262,6 +263,10 @@ describe("BatchCluster", function () {
 
               if (maxProcs > 1) {
                 it("completes work on multiple child processes", async function () {
+                  if (isCI) {
+                    // don't fight timeouts on GitHub's slower-than-molasses CI boxes:
+                    bc.options.taskTimeoutMillis = 1500
+                  }
                   this.slow(1) // always show timing
 
                   const pidSet = new Set<number>()
