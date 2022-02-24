@@ -32,7 +32,10 @@
   },
   "release-it": {
     "hooks": {
-      "before:init": "yarn test"
+      "before:init": [
+        "yarn install",
+        "yarn test"
+      ]
     },
     "github": {
       "release": true

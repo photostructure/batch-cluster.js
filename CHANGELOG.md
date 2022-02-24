@@ -18,13 +18,13 @@ See [Semver](http://semver.org/).
 
 - 📦 Minor packaging changes
 
-## v10.2.0
+## v10.1.1
 
 - 🐞 Fixed [issue #15](https://github.com/photostructure/batch-cluster.js/issues/15) by restoring the call to `#onIdleLater` when tasks settle.
 
 - 🐞 Fixed issue with `setMaxProcs` which resulted in all idle processes being reaped
 
-- 📦 The `idle` event was removed. You weren't using it, though, so I'm not bumping major. 
+- 📦 The `idle` event was removed. You weren't using it, though, so I'm not bumping major.
 
 - 📦 Process shutdown is handled more gracefully with new `thenOrTimeout` (rather than the prior `Promise.race` call which resulting in a dangling timeout)
 
