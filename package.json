@@ -30,6 +30,14 @@
     "docs:4": "yarn serve docs",
     "docs": "bash -c 'for i in {1..4} ; do yarn docs:$i ; done'"
   },
+  "release-it": {
+    "hooks": {
+      "before:init": "yarn test"
+    },
+    "github": {
+      "release": true
+    }
+  },
   "author": "Matthew McEachen <matthew-batchcluster@mceachen.org>",
   "license": "MIT",
   "devDependencies": {
