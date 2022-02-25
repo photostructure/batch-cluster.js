@@ -165,8 +165,9 @@ describe("BatchCluster", function () {
     expect(bc.internalErrorCount).to.eql(
       0,
       JSON.stringify({
-        internalErrors,
         internalErrorCount: bc.internalErrorCount,
+        internalErrors,
+        noTaskData: events.noTaskData,
       })
     )
     expect(internalErrors).to.eql([], "no expected internal errors")
