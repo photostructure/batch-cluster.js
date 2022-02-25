@@ -96,6 +96,7 @@ describe("BatchCluster", function () {
 
   beforeEach(function () {
     events = new Events()
+    if (isCI) this.retries(3)
   })
 
   function postAssertions() {
@@ -421,7 +422,7 @@ describe("BatchCluster", function () {
                     expect(procs.length).to.eql(bc.spawnedProcCount)
                     expect(bc.spawnedProcCount).to.be.within(
                       results.length / opts.maxTasksPerProcess,
-                      results.length * 2 // because flaky
+                      results.length * 3 // because flaky
                     )
 
                     // Expect no prior pids to remain, as long as there were before-pids:
@@ -430,7 +431,7 @@ describe("BatchCluster", function () {
 
                     expect(bc.spawnedProcCount).to.be.within(
                       maxProcs,
-                      results.length * 2 // because flaky
+                      results.length * 3 // because flaky
                     )
                     expect(bc.meanTasksPerProc).to.be.within(
                       0.5, // because flaky
