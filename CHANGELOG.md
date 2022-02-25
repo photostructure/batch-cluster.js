@@ -18,6 +18,18 @@ See [Semver](http://semver.org/).
 
 - 📦 Minor packaging changes
 
+## v10.2.0
+
+- ✨/📦 Set `minDelayBetweenSpawnMillis = 0` to fork child processes as soon as they are needed (rather than waiting between `spawn` calls)
+
+- ✨/📦 Set `maxReasonableProcessFailuresPerMinute = 0` to disable process start error rate detection.
+
+- ✨/📦 New `fatalError` event emitted when `maxReasonableProcessFailuresPerMinute` is exceeded and the instance shuts itself down.
+
+- 📦 New simpler `Rate` implementation with better time decay handling
+
+- 📦 Several jsdoc improvements, including exporting `WhyNotHeathy` and `WhyNotReady`
+
 ## v10.1.1
 
 - 🐞 Fixed [issue #15](https://github.com/photostructure/batch-cluster.js/issues/15) by restoring the call to `#onIdleLater` when tasks settle.
