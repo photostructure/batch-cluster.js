@@ -1,5 +1,6 @@
-import { expect, times } from "./_chai.spec"
+import { minuteMs, secondMs } from "./BatchClusterOptions"
 import { Rate } from "./Rate"
+import { expect, times } from "./_chai.spec"
 
 const tk = require("timekeeper")
 
@@ -24,34 +25,46 @@ describe("Rate", () => {
     expectRate(r, 0)
   })
 
-  it("maintains a rate of 0 after time", () => {
-    tk.freeze(now + r.ttlMs)
+  it("maintains a rate of 0 after time with no events", () => {
+    tk.freeze(now + minuteMs)
+    expectRate(r, 0)
+  })
+
+  it("maintains a rate of 0 after time with only 1 event", () => {
+    expectRate(r, 0)
+    r.onEvent()
+    expectRate(r, 0)
+    tk.freeze(now + minuteMs)
     expectRate(r, 0)
   })
 
   it("decays the rate as time elapses", () => {
-    r.onEvent()
-    expectRate(r, 1)
-    tk.freeze(now + 10)
-    expectRate(r, 0.1)
-    tk.freeze(now + r.ttlMs)
     expectRate(r, 0)
+    r.onEvent()
+    expectRate(r, 0)
+    tk.freeze(now + 10)
+    r.onEvent()
+    expectRate(r, 1 / 10)
+    tk.freeze(now + secondMs)
+    expectRate(r, 2 / secondMs)
+    tk.freeze(now + 2 * secondMs)
+    expectRate(r, 1 / secondMs)
+    tk.freeze(now + minuteMs)
+    expectRate(r, 2 / minuteMs)
   })
 
   it("counts events from the same millisecond", () => {
     r.onEvent()
-    expectRate(r, 1)
     r.onEvent()
-    expectRate(r, 2)
     tk.freeze(now + 10)
     expectRate(r, 2 / 10) // 1, not 2, because it will be averaged with 0s
-    tk.freeze(now + r.ttlMs)
-    expectRate(r, 0)
+    tk.freeze(now + minuteMs)
+    expectRate(r, 2 / minuteMs)
   })
 
   for (const events of [10, 100, 1000]) {
     it("calculates average rate for " + events + " events", () => {
-      const period = r.ttlMs
+      const period = minuteMs
       times(events, (i) => {
         tk.freeze(now + (period * i) / events)
         r.onEvent()

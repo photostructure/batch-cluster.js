@@ -1,56 +1,55 @@
-export class Rate {
-  readonly #start = Date.now()
-  readonly #store: number[] = []
-  #eventCount = 0
+import { minuteMs, secondMs } from "./BatchClusterOptions"
 
-  constructor(readonly ttlMs: number = 60000) {}
+export class Rate {
+  #lastEventTs: number | null = null
+  #weightedTotalAvg: number | null = null
+  #eventCount = 0
 
   onEvent(): void {
     this.#eventCount++
-    this.#store.push(Date.now())
-    this.#vacuum()
+    const priorEventTs = this.#lastEventTs
+    const now = Date.now()
+    this.#lastEventTs = now
+
+    if (priorEventTs != null) {
+      const diff = Math.max(now - priorEventTs, 1)
+      this.#weightedTotalAvg =
+        this.#weightedTotalAvg == null
+          ? diff
+          : Math.round((this.#weightedTotalAvg + diff) / 2)
+    }
   }
 
   get eventCount(): number {
     return this.#eventCount
   }
 
-  get period(): number {
-    return Date.now() - this.#start
+  get msPerEvent(): number | null {
+    if (this.#weightedTotalAvg == null || this.#lastEventTs == null) return null
+    // If we haven't seen an event for a while, include that in the estimate:
+    const lastDiff = Date.now() - this.#lastEventTs
+    return lastDiff > this.#weightedTotalAvg
+      ? (this.#weightedTotalAvg + lastDiff) / 2
+      : this.#weightedTotalAvg
   }
 
   get eventsPerMs(): number {
-    this.#vacuum()
-    const elapsedMs = Date.now() - this.#start
-    if (elapsedMs > this.ttlMs) {
-      return this.#store.length / this.ttlMs
-    } else {
-      return this.#store.length / Math.max(1, elapsedMs)
-    }
+    const mpe = this.msPerEvent
+    return mpe == null ? 0 : mpe < 1 ? 1 : 1 / mpe
   }
 
   get eventsPerSecond(): number {
-    return this.eventsPerMs * 1000
+    return this.eventsPerMs * secondMs
   }
 
   get eventsPerMinute(): number {
-    return this.eventsPerSecond * 60
+    return this.eventsPerMs * minuteMs
   }
 
   clear(): this {
-    this.#store.length = 0
+    this.#eventCount = 0
+    this.#lastEventTs = null
+    this.#weightedTotalAvg = null
     return this
-  }
-
-  #vacuum() {
-    const minTime = Date.now() - this.ttlMs
-    // If nothing's expired, findIndex should return index 0, so this should
-    // normally be quite cheap:
-    const firstGoodIndex = this.#store.findIndex((ea) => ea > minTime)
-    if (firstGoodIndex === -1) {
-      this.clear()
-    } else if (firstGoodIndex > 0) {
-      this.#store.splice(0, firstGoodIndex)
-    }
   }
 }
