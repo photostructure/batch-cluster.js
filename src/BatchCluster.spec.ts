@@ -47,7 +47,7 @@ describe("BatchCluster", function () {
     maxReasonableProcessFailuresPerMinute: 0, // disable. We're expecting flakiness.
 
     // we shouldn't need these overrides, but there it is.
-    ...(isCI ? { streamFlushMillis: bco.streamFlushMillis * 3 } : {}), // < CI is slow
+    // ...(isCI ? { streamFlushMillis: bco.streamFlushMillis * 3 } : {}), // < CI is slow
     // onIdleIntervalMillis: 1000,
   }
 

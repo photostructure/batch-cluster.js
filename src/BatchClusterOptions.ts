@@ -3,7 +3,7 @@ import { BatchClusterEmitter } from "./BatchClusterEmitter"
 import { BatchProcessOptions } from "./BatchProcessOptions"
 import { InternalBatchProcessOptions } from "./InternalBatchProcessOptions"
 import { logger, Logger } from "./Logger"
-import { isLinux } from "./Platform"
+import { isMac, isWin } from "./Platform"
 import { blank, toS } from "./String"
 
 export const secondMs = 1000
@@ -120,7 +120,7 @@ export class BatchClusterOptions {
    * If you set this value too low, tasks may be erroneously resolved or
    * rejected (depending on which stream is handled first).
    *
-   * Defaults to 25ms on Linux and 100ms on macOS and Windows due to slower
+   * Defaults to 25ms on Linux, 150ms on macOS, and 250ms Windows due to slower
    * stream flushing on those platforms.
    *
    * Your system may support a smaller value: this is a pessimistic default. If
@@ -130,7 +130,7 @@ export class BatchClusterOptions {
    * most likely result in internal errors (due to stream buffers not being able
    * to be associated to tasks that were just settled)
    */
-  streamFlushMillis = isLinux ? 25 : 100
+  streamFlushMillis = isMac ? 150 : isWin ? 250 : 25
 
   /**
    * Should batch-cluster try to clean up after spawned processes that don't
