@@ -5,7 +5,7 @@ import { kill, pidExists } from "./Pids"
 import {
   expect,
   processFactory,
-  setFailrate,
+  setFailratePct,
   setIgnoreExit,
   setRngseed,
 } from "./_chai.spec"
@@ -17,7 +17,7 @@ describe("test.js", () => {
     readonly child: child_process.ChildProcess
     public output = ""
     constructor() {
-      setFailrate(0)
+      setFailratePct(0)
       this.child = processFactory()
       this.child.on("error", (err: any) => {
         throw err
@@ -160,7 +160,7 @@ describe("test.js", () => {
   })
 
   it("flakes out the first N responses", () => {
-    setFailrate(0)
+    setFailratePct(0)
     setRngseed("hello")
     const h = new Harness()
     // These random numbers are consistent because we have a consistent rngseed:

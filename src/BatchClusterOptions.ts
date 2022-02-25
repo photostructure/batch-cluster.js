@@ -6,8 +6,8 @@ import { logger, Logger } from "./Logger"
 import { isLinux } from "./Platform"
 import { blank, toS } from "./String"
 
-const secondMs = 1000
-const minuteMs = 60 * 1000
+export const secondMs = 1000
+export const minuteMs = 60 * 1000
 
 /**
  * These parameter values have somewhat sensible defaults, but can be
@@ -32,15 +32,16 @@ export class BatchClusterOptions {
    *
    * Defaults to 5 minutes.
    */
-  maxProcAgeMillis = 5 * minuteMs
+  maxProcAgeMillis = 30_000
 
   /**
-   * This is the minimum interval between calls to `this.onIdle`, which
-   * runs pending tasks and shuts down old child processes.
+   * This is the minimum interval between calls to {@link BatchCluster.#onIdle},
+   * which runs general janitorial processes like child process management and
+   * task queue validation.
    *
    * Must be &gt; 0. Defaults to 10 seconds.
    */
-  onIdleIntervalMillis = 10 * secondMs
+  onIdleIntervalMillis = 10_000
 
   /**
    * If the initial `versionCommand` fails for new spawned processes more
@@ -50,7 +51,7 @@ export class BatchClusterOptions {
    * If this backstop didn't exist, new (failing) child processes would be
    * created indefinitely.
    *
-   * Must be &gt;= 0. Defaults to 10.
+   * Set to 0 to disable. Defaults to 10.
    */
   maxReasonableProcessFailuresPerMinute = 10
 
@@ -62,7 +63,7 @@ export class BatchClusterOptions {
    *
    * Must be &gt;= 100ms. Defaults to 15 seconds.
    */
-  spawnTimeoutMillis = 15 * secondMs
+  spawnTimeoutMillis = 15_000
 
   /**
    * If maxProcs &gt; 1, spawning new child processes to process tasks can slow
@@ -70,7 +71,7 @@ export class BatchClusterOptions {
    *
    * Must be &gt;= 0ms. Defaults to 1.5 seconds.
    */
-  minDelayBetweenSpawnMillis = 1.5 * secondMs
+  minDelayBetweenSpawnMillis = 1_500
 
   /**
    * If commands take longer than this, presume the underlying process is dead
@@ -80,7 +81,7 @@ export class BatchClusterOptions {
    *
    * Must be &gt;= 10ms. Defaults to 10 seconds.
    */
-  taskTimeoutMillis = 10 * secondMs
+  taskTimeoutMillis = 10_000
 
   /**
    * Processes will be recycled after processing `maxTasksPerProcess` tasks.
@@ -113,13 +114,18 @@ export class BatchClusterOptions {
    * for slower computers to prevent internal errors due to lack of stream
    * coercion.
    *
-   * Note that this puts a hard lower limit on task latency. You don't want to
-   * set this to a large number, and you'll potentially miss errors if you set
-   * this to low.
+   * Note that this puts a hard lower limit on task latency, so don't set this
+   * to a large number: no task will resolve faster than this value (in millis).
+   *
+   * If you set this value too low, tasks may be erroneously resolved or
+   * rejected (depending on which stream is handled first).
    *
    * Defaults to 15ms on Linux and 100ms on macOS and Windows due to slower
-   * stream handling on those platforms. Your system may support a smaller value
-   * than the default: these are somewhat pessimistic.
+   * stream handling on those platforms.
+   *
+   * Your system (will almost certainly) support a smaller value than this
+   * default: this is a pessimistic default. If this is set too low, you'll see
+   * `internalError` events.
    *
    * Setting this to 0 makes whatever flushes first--stdout and stderr--and will
    * most likely result in internal errors (due to stream buffers not being able
@@ -167,7 +173,7 @@ export class BatchClusterOptions {
    *
    * Set this to 0 to disable this feature.
    */
-  pidCheckIntervalMillis = 2 * minuteMs
+  pidCheckIntervalMillis = 120_000
 
   /**
    * A BatchCluster instance and associated BatchProcess instances will share
@@ -239,13 +245,15 @@ export function verifyOptions(
     gte(
       "maxProcAgeMillis",
       Math.max(result.spawnTimeoutMillis, result.taskTimeoutMillis),
-      `the max value of spawnTimeoutMillis (${result.spawnTimeoutMillis}) and taskTimeoutMillis (${result.taskTimeoutMillis})`
+      `must be greater than the max value of spawnTimeoutMillis (${result.spawnTimeoutMillis}) and taskTimeoutMillis (${result.taskTimeoutMillis})`
     )
   }
-  gte("minDelayBetweenSpawnMillis", 1)
+  // 0 disables:
+  gte("minDelayBetweenSpawnMillis", 0)
   gte("onIdleIntervalMillis", 0)
   gte("endGracefulWaitTimeMillis", 0)
   gte("maxReasonableProcessFailuresPerMinute", 0)
+  // 0 disables:
   gte("streamFlushMillis", 0)
 
   if (errors.length > 0) {

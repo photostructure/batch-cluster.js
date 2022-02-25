@@ -132,7 +132,7 @@ export function flatten<T>(arr: (T | T[])[], result: T[] = []): T[] {
 // to make sure different error pathways are exercised. YYYY-MM-$callcount
 // should do it.
 
-const rngseedPrefix = new Date().toISOString().substr(0, 7) + "."
+const rngseedPrefix = new Date().toISOString().slice(0, 7) + "."
 let rngseedCounter = 0
 let rngseedOverride: string | undefined
 
@@ -148,7 +148,7 @@ function rngseed() {
 
 let failrate = "0.05" // 5%
 
-export function setFailrate(percent = 10) {
+export function setFailratePct(percent = 10) {
   failrate = (percent / 100).toFixed(2)
 }
 
@@ -178,7 +178,7 @@ export function setIgnoreExit(ignore = false) {
 }
 
 beforeEach(() => {
-  setFailrate()
+  setFailratePct()
   setUnluckyFail()
   setNewline()
   setIgnoreExit()
