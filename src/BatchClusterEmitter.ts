@@ -57,6 +57,12 @@ export interface BatchClusterEvents {
   internalError: (err: Error) => void
 
   /**
+   * Emitted when `.end()` is called because the error rate has exceeded
+   * {@link BatchClusterOptions.maxReasonableProcessFailuresPerMinute}
+   */
+  fatalError: (err: Error) => void
+
+  /**
    * Emitted when tasks receive data, which may be partial chunks from the task
    * stream.
    */
