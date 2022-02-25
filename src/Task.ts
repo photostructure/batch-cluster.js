@@ -1,5 +1,4 @@
 import { delay } from "./Async"
-import { BatchClusterOptions } from "./BatchClusterOptions"
 import { Deferred } from "./Deferred"
 import { InternalBatchProcessOptions } from "./InternalBatchProcessOptions"
 import { Parser } from "./Parser"
@@ -123,15 +122,8 @@ export class Task<T = any> {
     // fail always wins.
     passed = !this.#d.rejected && passed
 
-    // this.trace({
-    //   meth: "resolve",
-    //   meta: { passed, this_passed: this._passed },
-    // })
-
     // wait for stderr and stdout to flush:
-    const flushMs =
-      this.#opts?.streamFlushMillis ??
-      new BatchClusterOptions().streamFlushMillis
+    const flushMs = this.#opts?.streamFlushMillis ?? 0
     if (flushMs > 0) {
       await delay(flushMs)
     }
@@ -140,6 +132,10 @@ export class Task<T = any> {
     // pass and fail tokens found in stderr and stdout), but we only want to run
     // this once, so
     if (!this.pending || this.#parsing) return
+
+    // this.#opts
+    // ?.logger()
+    // .trace("Task.#resolve()", { command: this.command, state: this.state })
 
     // Prevent concurrent parsing:
     this.#parsing = true
