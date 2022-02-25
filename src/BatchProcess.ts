@@ -529,7 +529,7 @@ export class BatchProcess {
 
   #onStderr(data: string | Buffer) {
     if (blank(data)) return
-    this.#logger().warn(this.name + ".onStderr():" + data)
+    this.#logger().warn(this.name + ".onStderr(): " + data)
     const task = this.#currentTask
     if (task != null && task.pending) {
       task.onStderr(data)
