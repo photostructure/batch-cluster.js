@@ -45,9 +45,9 @@ describe("BatchCluster", function () {
     maxTasksPerProcess: 5, // force process churn
     taskTimeoutMillis: 250, // CI machines can be slow. Needs to be short so the timeout test doesn't timeout
     maxReasonableProcessFailuresPerMinute: 0, // disable. We're expecting flakiness.
-    
+
     // we shouldn't need these overrides:
-    
+
     // streamFlushMillis: bco.streamFlushMillis * (isCI ? 3 : 1), // < CI is slow
     // onIdleIntervalMillis: 1000,
   }
@@ -73,6 +73,7 @@ describe("BatchCluster", function () {
     readonly endErrors: Error[] = []
     readonly fatalErrors: Error[] = []
     readonly taskErrors: Error[] = []
+    readonly noTaskData: any[] = []
     readonly healthCheckErrors: Error[] = []
     readonly unhealthyPids: number[] = []
     readonly runtimeMs: number[] = []
@@ -161,8 +162,19 @@ describe("BatchCluster", function () {
     expect(isShutdown).to.eql(true)
     expect(endPromiseSettled).to.eql(true)
     expect(bc.end(true).settled).to.eql(true)
-    expect(bc.internalErrorCount).to.eql(0, JSON.stringify({ internalErrors }))
+    expect(bc.internalErrorCount).to.eql(
+      0,
+      JSON.stringify({
+        internalErrors,
+        internalErrorCount: bc.internalErrorCount,
+      })
+    )
     expect(internalErrors).to.eql([], "no expected internal errors")
+    expect(events.noTaskData).to.eql(
+      [],
+      "no expected noTaskData events, but got " +
+        JSON.stringify(events.noTaskData)
+    )
     return
   }
 
@@ -175,6 +187,14 @@ describe("BatchCluster", function () {
     bc.on("startError", (err) => events.startErrors.push(err))
     bc.on("endError", (err) => events.endErrors.push(err))
     bc.on("fatalError", (err) => events.fatalErrors.push(err))
+    bc.on("noTaskData", (stdout, stderr, proc) => {
+      events.noTaskData.push({
+        stdout: toS(stdout),
+        stderr: toS(stderr),
+        proc_pid: proc?.pid,
+        streamFlushMillis: bc.options.streamFlushMillis,
+      })
+    })
     bc.on("internalError", (err) => {
       console.error("BatchCluster.spec: internal error: " + err)
       internalErrors.push(err)
