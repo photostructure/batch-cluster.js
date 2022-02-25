@@ -18,27 +18,51 @@ See [Semver](http://semver.org/).
 
 - 📦 Minor packaging changes
 
+## v10.3.0
+
+- ✨ Exported `Rate`. You might like it.
+
+- ✨ When child processes emit to `stdout` or `stderr` with no current task,
+  prior versions would emit an `internalError`. These are now given their own
+  new `noTaskData` events. Consumers may want to bump up `streamFlushMillis` if
+  they see this in production.
+
+- 🐞/📦 Bumped up the defaults for `streamFlushMillis`.
+
+- 📦 Normalized node imports
+
 ## v10.2.0
 
-- ✨/📦 Set `minDelayBetweenSpawnMillis = 0` to fork child processes as soon as they are needed (rather than waiting between `spawn` calls)
+- ✨/📦 Set `minDelayBetweenSpawnMillis = 0` to fork child processes as soon as
+  they are needed (rather than waiting between `spawn` calls)
 
-- ✨/📦 Set `maxReasonableProcessFailuresPerMinute = 0` to disable process start error rate detection.
+- ✨/📦 Set `maxReasonableProcessFailuresPerMinute = 0` to disable process start
+  error rate detection.
 
-- ✨/📦 New `fatalError` event emitted when `maxReasonableProcessFailuresPerMinute` is exceeded and the instance shuts itself down.
+- ✨/📦 New `fatalError` event emitted when
+  `maxReasonableProcessFailuresPerMinute` is exceeded and the instance shuts
+  itself down.
 
 - 📦 New simpler `Rate` implementation with better time decay handling
 
-- 📦 Several jsdoc improvements, including exporting `WhyNotHeathy` and `WhyNotReady`
+- 📦 Several jsdoc improvements, including exporting `WhyNotHeathy` and
+  `WhyNotReady`
 
 ## v10.1.1
 
-- 🐞 Fixed [issue #15](https://github.com/photostructure/batch-cluster.js/issues/15) by restoring the call to `#onIdleLater` when tasks settle.
+- 🐞 Fixed [issue
+  #15](https://github.com/photostructure/batch-cluster.js/issues/15) by
+  restoring the call to `#onIdleLater` when tasks settle.
 
-- 🐞 Fixed issue with `setMaxProcs` which resulted in all idle processes being reaped
+- 🐞 Fixed issue with `setMaxProcs` which resulted in all idle processes being
+  reaped
 
-- 📦 The `idle` event was removed. You weren't using it, though, so I'm not bumping major.
+- 📦 The `idle` event was removed. _You weren't using it, though, so I'm not
+  bumping major._
 
-- 📦 Process shutdown is handled more gracefully with new `thenOrTimeout` (rather than the prior `Promise.race` call which resulting in a dangling timeout)
+- 📦 Process shutdown is handled more gracefully with new `thenOrTimeout`
+  (rather than the prior `Promise.race` call which resulting in a dangling
+  timeout)
 
 - 📦 Updated development dependencies and rebuild docs
 
