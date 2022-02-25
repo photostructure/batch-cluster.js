@@ -1,4 +1,4 @@
-import * as _cp from "child_process"
+import child_process from "child_process"
 import { until } from "./Async"
 import { Deferred } from "./Deferred"
 import { cleanError, tryEach } from "./Error"
@@ -8,7 +8,7 @@ import { map } from "./Object"
 import { SimpleParser } from "./Parser"
 import { kill, pidExists } from "./Pids"
 import { mapNotDestroyed } from "./Stream"
-import { blank, ensureSuffix, toS } from "./String"
+import { blank, ensureSuffix } from "./String"
 import { Task } from "./Task"
 import { thenOrTimeout } from "./Timeout"
 
@@ -73,7 +73,7 @@ export class BatchProcess {
    * task is resolved, or the process exits)
    */
   constructor(
-    readonly proc: _cp.ChildProcess,
+    readonly proc: child_process.ChildProcess,
     readonly opts: InternalBatchProcessOptions,
     private readonly onIdle: () => void
   ) {
@@ -535,17 +535,8 @@ export class BatchProcess {
       task.onStderr(data)
     } else if (!this.#ending) {
       // If we're ending and there isn't a task, don't worry about it.
-      this.end(false, "stderr")
-      this.opts.observer.emit(
-        "internalError",
-        new Error(
-          "onStderr(" +
-            String(data).trim() +
-            ") no pending currentTask (task: " +
-            task +
-            ")"
-        )
-      )
+      this.opts.observer.emit("noTaskData", null, data, this)
+      void this.end(false, "stderr")
     }
   }
 
@@ -558,18 +549,8 @@ export class BatchProcess {
     } else if (this.#ending) {
       // don't care if we're already being shut down.
     } else if (!blank(data)) {
-      this.#logger().warn(
-        this.name + ".onStdout(): no current task to handle " + toS(data)
-      )
-      this.end(false, "stdout.error")
-      // If we're ending and there isn't a task, don't worry about it.
-      // Otherwise:
-      this.opts.observer.emit(
-        "internalError",
-        new Error(
-          "onStdout(" + data + ") no pending currentTask (task: " + task + ")"
-        )
-      )
+      this.opts.observer.emit("noTaskData", data, null, this)
+      void this.end(false, "stdout.error")
     }
   }
 

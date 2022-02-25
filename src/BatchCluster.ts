@@ -1,5 +1,5 @@
 import child_process from "child_process"
-import EventEmitter from "events"
+import events from "events"
 import process from "process"
 import timers from "timers"
 import { count, filterInPlace } from "./Array"
@@ -22,6 +22,7 @@ import { Mean } from "./Mean"
 import { fromEntries, map } from "./Object"
 import { Parser } from "./Parser"
 import { Rate } from "./Rate"
+import { toS } from "./String"
 import { Task } from "./Task"
 import { thenOrTimeout, Timeout } from "./Timeout"
 
@@ -84,7 +85,7 @@ export class BatchCluster {
   #endPromise?: Deferred<void>
   #internalErrorCount = 0
   readonly #childEndCounts = new Map<ChildEndReason, number>()
-  readonly emitter = new EventEmitter() as BatchClusterEmitter
+  readonly emitter = new events.EventEmitter() as BatchClusterEmitter
 
   constructor(
     opts: Partial<BatchClusterOptions> &
@@ -100,6 +101,19 @@ export class BatchCluster {
 
     this.on("internalError", (error) => {
       this.#logger().error("BatchCluster: INTERNAL ERROR: " + error)
+      this.#internalErrorCount++
+    })
+
+    this.on("noTaskData", (stdout, stderr, proc) => {
+      this.#logger().warn(
+        "BatchCluster: child process emitted data with no current task. Consider setting streamFlushMillis to a higher value.",
+        {
+          streamFlushMillis: this.options.streamFlushMillis,
+          stdout: toS(stdout),
+          stderr: toS(stderr),
+          proc_pid: proc?.pid,
+        }
+      )
       this.#internalErrorCount++
     })
 

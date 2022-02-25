@@ -88,6 +88,16 @@ export interface BatchClusterEvents {
   taskError: (err: Error, task: Task, proc: BatchProcess) => void
 
   /**
+   * Emitted when child processes write to stdout or stderr without a current
+   * task
+   */
+  noTaskData: (
+    stdoutData: string | Buffer | null,
+    stderrData: string | Buffer | null,
+    proc: BatchProcess
+  ) => void
+
+  /**
    * Emitted when a process fails health checks
    */
   healthCheckError: (err: Error, proc: BatchProcess) => void

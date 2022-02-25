@@ -30,8 +30,10 @@ const tk = require("timekeeper")
 describe("BatchCluster", function () {
   const ErrorPrefix = "ERROR: "
 
+  const bco = new BatchClusterOptions()
+
   const DefaultOpts = {
-    ...new BatchClusterOptions(),
+    ...bco,
     maxProcs: 4, // < force concurrency
     versionCommand: "version",
     pass: "PASS",
@@ -43,7 +45,11 @@ describe("BatchCluster", function () {
     maxTasksPerProcess: 5, // force process churn
     taskTimeoutMillis: 250, // CI machines can be slow. Needs to be short so the timeout test doesn't timeout
     maxReasonableProcessFailuresPerMinute: 0, // disable. We're expecting flakiness.
-    onIdleIntervalMillis: 1000,
+    
+    // we shouldn't need these overrides:
+    
+    // streamFlushMillis: bco.streamFlushMillis * (isCI ? 3 : 1), // < CI is slow
+    // onIdleIntervalMillis: 1000,
   }
 
   function runTasks(
@@ -88,7 +94,7 @@ describe("BatchCluster", function () {
     })
   }
 
-  beforeEach(() => {
+  beforeEach(function () {
     events = new Events()
   })
 
