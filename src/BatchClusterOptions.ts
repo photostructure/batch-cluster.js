@@ -120,9 +120,6 @@ export class BatchClusterOptions {
    * If you set this value too low, tasks may be erroneously resolved or
    * rejected (depending on which stream is handled first).
    *
-   * Defaults to 25ms on Linux, 150ms on macOS, and 250ms Windows due to slower
-   * stream flushing on those platforms.
-   *
    * Your system may support a smaller value: this is a pessimistic default. If
    * this is set too low, you'll see `noTaskData` events.
    *
@@ -130,7 +127,7 @@ export class BatchClusterOptions {
    * most likely result in internal errors (due to stream buffers not being able
    * to be associated to tasks that were just settled)
    */
-  streamFlushMillis = isMac ? 150 : isWin ? 250 : 25
+  streamFlushMillis = isMac ? 100 : isWin ? 200 : 20
 
   /**
    * Should batch-cluster try to clean up after spawned processes that don't
