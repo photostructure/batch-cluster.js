@@ -24,6 +24,10 @@ export class Rate {
     return this.#eventCount
   }
 
+  get msSinceLastEvent(): number | null {
+    return this.#lastEventTs == null ? null : Date.now() - this.#lastEventTs
+  }
+
   get msPerEvent(): number | null {
     if (this.#weightedTotalAvg == null || this.#lastEventTs == null) return null
     // If we haven't seen an event for a while, include that in the estimate:

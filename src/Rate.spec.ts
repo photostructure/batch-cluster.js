@@ -36,6 +36,7 @@ describe("Rate", () => {
     expectRate(r, 0)
     tk.freeze(now + minuteMs)
     expectRate(r, 0)
+    expect(r.msSinceLastEvent).to.eql(minuteMs)
   })
 
   it("decays the rate as time elapses", () => {
@@ -43,13 +44,16 @@ describe("Rate", () => {
     r.onEvent()
     expectRate(r, 0)
     tk.freeze(now + 10)
+    expect(r.msSinceLastEvent).to.eql(10)
     r.onEvent()
     expectRate(r, 1 / 10)
     tk.freeze(now + secondMs)
     expectRate(r, 2 / secondMs)
-    tk.freeze(now + 2 * secondMs)
+    tk.freeze(now + 2 * secondMs + 10)
+    expect(r.msSinceLastEvent).to.eql(2 * secondMs)
     expectRate(r, 1 / secondMs)
-    tk.freeze(now + minuteMs)
+    tk.freeze(now + minuteMs + 10)
+    expect(r.msSinceLastEvent).to.eql(minuteMs)
     expectRate(r, 2 / minuteMs)
   })
 
