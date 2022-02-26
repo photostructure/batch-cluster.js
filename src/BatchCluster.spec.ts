@@ -46,8 +46,8 @@ describe("BatchCluster", function () {
     taskTimeoutMillis: 250, // CI machines can be slow. Needs to be short so the timeout test doesn't timeout
     maxReasonableProcessFailuresPerMinute: 0, // disable. We're expecting flakiness.
 
-    // we shouldn't need these overrides, but there it is.
-    ...(isCI ? { streamFlushMillis: bco.streamFlushMillis * 3 } : {}),
+    // we shouldn't need these overrides...
+    // ...(isCI ? { streamFlushMillis: bco.streamFlushMillis * 3 } : {}),
     // onIdleIntervalMillis: 1000,
   }
 
