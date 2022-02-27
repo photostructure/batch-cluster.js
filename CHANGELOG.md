@@ -18,6 +18,12 @@ See [Semver](http://semver.org/).
 
 - 📦 Minor packaging changes
 
+## v10.3.1
+
+- 📦 Add `Rate.msSinceLastEvent`
+
+- 📦 Adjusted `streamFlushMillis` to remove `onTaskData` errors in CI.
+
 ## v10.3.0
 
 - ✨ Exported `Rate`. You might like it.
@@ -27,7 +33,7 @@ See [Semver](http://semver.org/).
   new `noTaskData` events. Consumers may want to bump up `streamFlushMillis` if
   they see this in production.
 
-- 🐞/📦 Bumped up the defaults for `streamFlushMillis`.
+- 🐞/📦 Increased defaults for `streamFlushMillis`, added tests to verify `noTaskData` events don't happen in CI.
 
 - 📦 Normalized node imports
 
