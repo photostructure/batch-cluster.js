@@ -129,7 +129,7 @@ export class BatchClusterOptions {
    */
   // These values were found by trial and error using GitHub CI boxes, which
   // should be the bottom of the barrel, performance-wise, of any computer.
-  streamFlushMillis = isMac ? 100 : isWin ? 250 : 30
+  streamFlushMillis = isMac ? 100 : isWin ? 200 : 30
 
   /**
    * Should batch-cluster try to clean up after spawned processes that don't
