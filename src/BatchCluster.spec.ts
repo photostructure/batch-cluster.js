@@ -608,7 +608,7 @@ describe("BatchCluster", function () {
         setFailratePct(0)
         const opts = {
           ...DefaultOpts,
-          taskTimeoutMillis: sleepTimeMs + 10000, // < don't test timeouts here
+          taskTimeoutMillis: 5_000, // < don't test timeouts here
           maxProcs,
           maxTasksPerProcess: expectedTaskMax + 5, // < don't recycle procs for this test
           minDelayBetweenSpawnMillis,
@@ -662,7 +662,7 @@ describe("BatchCluster", function () {
       const opts = {
         ...DefaultOpts,
         minDelayBetweenSpawnMillis: 0,
-        taskTimeoutMillis: sleepTimeMs * 4, // < don't test timeouts here
+        taskTimeoutMillis: 5_000, // < don't test timeouts here
         maxProcs,
         maxTasksPerProcess: 100, // < don't recycle procs for this test
         processFactory,
