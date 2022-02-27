@@ -12,8 +12,10 @@ import { Mutex } from "./Mutex"
 
 const newline = process.env.newline === "crlf" ? "\r\n" : "\n"
 
-function write(s: string): boolean {
-  return process.stdout.write(s + newline)
+async function write(s: string) {
+  return new Promise<void>((res, rej) =>
+    process.stdout.write(s + newline, (err) => (err == null ? res() : rej(err)))
+  )
 }
 
 const ignoreExit = process.env.ignoreExit === "1"
@@ -43,11 +45,7 @@ async function onLine(line: string): Promise<void> {
   // write(`# ${_p.pid} onLine(${line.trim()}) (newline = ${process.env.newline})`)
   const r = rng()
   if (r < failrate) {
-    if (process.env.unluckyfail === "1") {
-      // Make sure streams get debounced:
-      write("FAIL")
-      await delay(1)
-    }
+    // stderr isn't buffered, so this should be flushed immediately:
     console.error(
       "EUNLUCKY: r: " +
         r.toFixed(2) +
@@ -56,7 +54,11 @@ async function onLine(line: string): Promise<void> {
         ", seed: " +
         process.env.rngseed
     )
-
+    if (process.env.unluckyfail === "1") {
+      // Wait for a bit to ensure streams get merged thanks to streamFlushMillis:
+      await delay(5)
+      await write("FAIL")
+    }
     return
   }
   line = line.trim()
