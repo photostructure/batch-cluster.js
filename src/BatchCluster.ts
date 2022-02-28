@@ -29,10 +29,10 @@ import { thenOrTimeout, Timeout } from "./Timeout"
 export { BatchClusterOptions } from "./BatchClusterOptions"
 export { BatchProcess } from "./BatchProcess"
 export { Deferred } from "./Deferred"
-export { Rate } from "./Rate"
 export * from "./Logger"
 export { SimpleParser } from "./Parser"
 export { kill, pidExists, pids } from "./Pids"
+export { Rate } from "./Rate"
 export { Task } from "./Task"
 export type {
   BatchClusterEmitter,
@@ -73,10 +73,11 @@ export interface ChildProcessFactory {
  * child tasks can be verified and shut down.
  */
 export class BatchCluster {
-  readonly #tasksPerProc: Mean = new Mean()
+  readonly #tasksPerProc = new Mean()
   readonly #logger: () => Logger
   readonly options: AllOpts
   readonly #procs: BatchProcess[] = []
+  #onIdleRequested = false
   #nextSpawnTime = 0
   #lastPidsCheckTime = 0
   readonly #tasks: Task[] = []
@@ -98,6 +99,7 @@ export class BatchCluster {
     this.on("childEnd", (bp, why) => {
       this.#tasksPerProc.push(bp.taskCount)
       this.#childEndCounts.set(why, (this.#childEndCounts.get(why) ?? 0) + 1)
+      this.#onIdleLater()
     })
 
     this.on("internalError", (error) => {
@@ -136,12 +138,14 @@ export class BatchCluster {
           )
         )
         this.end()
+      } else {
+        this.#onIdleLater()
       }
     })
 
     if (this.options.onIdleIntervalMillis > 0) {
       this.#onIdleInterval = timers.setInterval(
-        () => this.#onIdle(),
+        () => this.#onIdleLater(),
         this.options.onIdleIntervalMillis
       )
       this.#onIdleInterval.unref() // < don't prevent node from exiting
@@ -215,7 +219,7 @@ export class BatchCluster {
 
     // Run #onIdle now (not later), to make sure the task gets enqueued asap if
     // possible
-    this.#onIdle()
+    this.#onIdleLater()
 
     // (BatchProcess will call our #onIdleLater when tasks settle or when they
     // exit)
@@ -265,7 +269,15 @@ export class BatchCluster {
     return count(
       this.#procs,
       // don't count procs that are starting up as "busy":
-      (ea) => ea.taskCount > 0 && !ea.exited && !ea.idle
+      (ea) => !ea.starting && !ea.ending && !ea.idle
+    )
+  }
+
+  get startingProcCount(): number {
+    return count(
+      this.#procs,
+      // don't count procs that are starting up as "busy":
+      (ea) => ea.starting && !ea.ending
     )
   }
 
@@ -300,7 +312,7 @@ export class BatchCluster {
   async pids(): Promise<number[]> {
     const arr: number[] = []
     for (const proc of [...this.#procs]) {
-      if (proc != null && !proc.exited && (await proc.running())) {
+      if (proc != null && (await proc.running())) {
         arr.push(proc.pid)
       }
     }
@@ -321,7 +333,7 @@ export class BatchCluster {
       startErrorRatePerMinute: this.#startErrorRate.eventsPerMinute,
       msBeforeNextSpawn: Math.max(0, this.#nextSpawnTime - Date.now()),
       childEndCounts: this.childEndCounts,
-      ending: true === this.#endPromise?.pending,
+      ending: this.#endPromise != null,
       ended: false === this.#endPromise?.pending,
     }
   }
@@ -361,21 +373,29 @@ export class BatchCluster {
   setMaxProcs(maxProcs: number) {
     this.options.maxProcs = maxProcs
     // we may now be able to handle an enqueued task. Vacuum pids and see:
-    this.#onIdle()
+    this.#onIdleLater()
   }
 
-  readonly #onIdleLater = () => setTimeout(() => this.#onIdle(), 1)
+  readonly #onIdleLater = () => {
+    if (!this.#onIdleRequested) {
+      this.#onIdleRequested = true
+      setTimeout(() => this.#onIdle(), 1)
+    }
+  }
 
   // NOT ASYNC: updates internal state:
   #onIdle() {
+    this.#onIdleRequested = false
     this.vacuumProcs()
     while (this.#execNextTask()) {
       //
     }
+    this.#maybeSpawnProcs()
   }
 
   #maybeCheckPids() {
     if (
+      this.options.cleanupChildProcs &&
       this.options.pidCheckIntervalMillis > 0 &&
       this.#lastPidsCheckTime + this.options.pidCheckIntervalMillis < Date.now()
     ) {
@@ -393,9 +413,12 @@ export class BatchCluster {
   // NOT ASYNC: updates internal state. only exported for tests.
   vacuumProcs() {
     this.#maybeCheckPids()
+    const endPromises: (undefined | Promise<void>)[] = []
     let pidsToReap = Math.max(0, this.#procs.length - this.options.maxProcs)
     filterInPlace(this.#procs, (proc) => {
-      // only check idle procs (busy procs shouldn't be reaped unless we're ending)
+      // Only check `.idle` (not `.ready`) procs. We don't want to reap busy
+      // procs unless we're ending, and unhealthy procs (that we want to reap)
+      // won't be `.ready`.
       if (proc.idle) {
         // don't reap more than pidsToReap pids. We can't use #procs.length
         // within filterInPlace because #procs.length only changes at iteration
@@ -403,16 +426,14 @@ export class BatchCluster {
         // when maxProcs was reduced.
         const why = proc.whyNotHealthy ?? (--pidsToReap >= 0 ? "tooMany" : null)
         if (why != null) {
-          void proc.end(true, why)
+          endPromises.push(proc.end(true, why))
           return false
         }
         proc.maybeRunHealthcheck()
       }
       return true
     })
-
-    // this will be a no-op if we're ending or there are no pending tasks or ...
-    this.#maybeSpawnProcs()
+    return Promise.all(endPromises.filter((ea) => ea != null))
   }
 
   /**
@@ -452,37 +473,40 @@ export class BatchCluster {
 
   get #maxSpawnDelay() {
     // 10s delay is certainly long enough for .spawn() to return, even on a
-    // loaded machine.
+    // loaded windows machine.
     return Math.max(10_000, this.options.spawnTimeoutMillis)
   }
 
+  get #procsToSpawn() {
+    const remainingCapacity = this.options.maxProcs - this.#procs.length
+
+    // take into account starting procs, so one task doesn't result in multiple
+    // processes being spawned:
+    const requestedCapacity = this.#tasks.length - this.startingProcCount
+
+    const atLeast0 = Math.max(0, Math.min(remainingCapacity, requestedCapacity))
+
+    return this.options.minDelayBetweenSpawnMillis === 0
+      ? // we can spin up multiple processes in parallel.
+        atLeast0
+      : // Don't spin up more than 1:
+        Math.min(1, atLeast0)
+  }
+
   async #maybeSpawnProcs() {
-    if (
-      this.ended ||
-      this.#tasks.length === 0 ||
-      this.#procs.length >= this.options.maxProcs ||
-      this.#nextSpawnTime > Date.now()
-    ) {
+    let procsToSpawn = this.#procsToSpawn
+
+    if (this.ended || this.#nextSpawnTime > Date.now() || procsToSpawn === 0) {
       return
     }
 
-    // prevent concurrent runs.
+    // prevent concurrent runs:
     this.#nextSpawnTime = Date.now() + this.#maxSpawnDelay
 
-    const procsToLaunch =
-      this.options.minDelayBetweenSpawnMillis === 0
-        ? this.options.maxProcs - this.#procs.length
-        : 1
-
-    this.#logger().trace("BatchCluster.#maybeSpawnProcs()", {
-      procsToLaunch,
-      maxProcs: this.options.maxProcs,
-      procs_length: this.#procs.length,
-    })
-
-    for (let i = 0; i < procsToLaunch; i++) {
-      if (this.#procs.length >= this.options.maxProcs) return
-      if (this.ended) return
+    for (let i = 0; i < procsToSpawn; i++) {
+      if (this.ended) {
+        break
+      }
 
       // Kick the lock down the road:
       this.#nextSpawnTime = Date.now() + this.#maxSpawnDelay
@@ -495,22 +519,23 @@ export class BatchCluster {
           this.options.spawnTimeoutMillis
         )
         if (result === Timeout) {
-          this.emitter.emit(
-            "startError",
-            asError(
-              "Failed to spawn process in " +
-                this.options.spawnTimeoutMillis +
-                "ms"
-            )
-          )
-          // wait for it to complete and immediately shut it down:
-          proc
-            .catch((err) => {
-              this.emitter.emit("startError", asError(err))
+          void proc
+            .then((bp) => {
+              void bp.end(false, "startError")
+              this.emitter.emit(
+                "startError",
+                asError(
+                  "Failed to spawn process in " +
+                    this.options.spawnTimeoutMillis +
+                    "ms"
+                ),
+                bp
+              )
             })
-            .then((ea) => {
-              this.#onIdleLater()
-              void ea?.end(false, "timeout")
+            .catch((err) => {
+              // this should only happen if the processFactory throws a
+              // rejection:
+              this.emitter.emit("startError", asError(err))
             })
         } else {
           this.#logger().debug(
@@ -518,21 +543,25 @@ export class BatchCluster {
             { pid: result.pid }
           )
         }
+
+        // tasks may have been popped off or setMaxProcs may have reduced
+        // maxProcs. Do this at the end so the for loop ends properly.
+        procsToSpawn = Math.min(this.#procsToSpawn, procsToSpawn)
       } catch (err) {
         this.emitter.emit("startError", asError(err))
       }
     }
+
     // YAY WE MADE IT.
     // Only let more children get spawned after minDelay:
-    this.#nextSpawnTime = Date.now() + this.options.minDelayBetweenSpawnMillis
+    const delay = Math.max(100, this.options.minDelayBetweenSpawnMillis)
+    this.#nextSpawnTime = Date.now() + delay
+
     // And schedule #onIdle for that time:
-    setTimeout(
-      () => this.#onIdle(),
-      this.options.minDelayBetweenSpawnMillis + 1
-    ).unref()
+    setTimeout(this.#onIdleLater, delay).unref()
   }
 
-  // must only be called by this.#launchNewChildren()
+  // must only be called by this.#maybeSpawnProcs()
   async #spawnNewProc() {
     // no matter how long it takes to spawn, always push the result into #procs
     // so we don't leak child processes:
