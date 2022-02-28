@@ -47,9 +47,11 @@ export interface BatchClusterEvents {
   childEnd: (childProcess: BatchProcess, reason: ChildEndReason) => void
 
   /**
-   * Emitted when a child process has an error when spawning
+   * Emitted when a child process fails to spin up and run the {@link BatchProcessOptions.versionCommand} successfully within {@link BatchClusterOptions.spawnTimeoutMillis}.
+   *
+   * @param childProcess will be undefined if the error is from {@link ChildProcessFactory.processFactory}
    */
-  startError: (err: Error) => void
+  startError: (err: Error, childProcess?: BatchProcess) => void
 
   /**
    * Emitted when an internal consistency check fails
