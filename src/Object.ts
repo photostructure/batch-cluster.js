@@ -30,3 +30,14 @@ export function fromEntries(arr: [string | undefined, any][]) {
   }
   return o
 }
+
+export function omit<T extends Record<string, any>, S extends keyof T>(
+  t: T,
+  ...keysToOmit: S[]
+): Omit<T, S> {
+  const result = { ...t }
+  for (const ea of keysToOmit) {
+    delete result[ea]
+  }
+  return result
+}
