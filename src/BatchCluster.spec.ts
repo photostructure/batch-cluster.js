@@ -3,7 +3,7 @@ import { filterInPlace } from "./Array"
 import { delay, until } from "./Async"
 import { BatchCluster } from "./BatchCluster"
 import { BatchClusterOptions } from "./BatchClusterOptions"
-import { map, orElse } from "./Object"
+import { map, omit, orElse } from "./Object"
 import { isWin } from "./Platform"
 import { toS } from "./String"
 import { Task } from "./Task"
@@ -67,7 +67,7 @@ describe("BatchCluster", function () {
     readonly taskData: { cmd: string | undefined; data: string }[] = []
     readonly events: { event: string }[] = []
     readonly startedPids: number[] = []
-    readonly exittedPids: number[] = []
+    readonly exitedPids: number[] = []
     readonly startErrors: Error[] = []
     readonly endErrors: Error[] = []
     readonly fatalErrors: Error[] = []
@@ -184,7 +184,7 @@ describe("BatchCluster", function () {
     bc.on("childStart", (cp) =>
       map(cp.pid, (ea) => events.startedPids.push(ea))
     )
-    bc.on("childEnd", (cp) => map(cp.pid, (ea) => events.exittedPids.push(ea)))
+    bc.on("childEnd", (cp) => map(cp.pid, (ea) => events.exitedPids.push(ea)))
     bc.on("startError", (err) => events.startErrors.push(err))
     bc.on("endError", (err) => events.endErrors.push(err))
     bc.on("fatalError", (err) => events.fatalErrors.push(err))
@@ -362,7 +362,7 @@ describe("BatchCluster", function () {
                   expect(events.events).to.eql(expectedEndEvents)
                   expect(testPids()).to.eql([])
                   expect(events.startedPids).to.eql([])
-                  expect(events.exittedPids).to.eql([])
+                  expect(events.exitedPids).to.eql([])
                   postAssertions()
                 })
 
@@ -382,7 +382,7 @@ describe("BatchCluster", function () {
                   const pids = sortNumeric(testPids())
                   expect(pids.length).to.be.gte(maxProcs)
                   expect(sortNumeric(events.startedPids)).to.eql(pids)
-                  expect(sortNumeric(events.exittedPids)).to.eql(pids)
+                  expect(sortNumeric(events.exitedPids)).to.eql(pids)
                   expect(events.events).to.eql(expectedEndEvents)
                   postAssertions()
                 })
@@ -712,6 +712,12 @@ describe("BatchCluster", function () {
     let bc: BatchCluster
     afterEach(() => shutdown(bc))
 
+    function stats() {
+      // we don't want msBeforeNextSpawn because it'll be wiggly and we're not
+      // freezing time (here)
+      return omit(bc.stats(), "msBeforeNextSpawn")
+    }
+
     it("shut down rejects long-running pending tasks", async () => {
       setFailratePct(0)
       const opts = {
@@ -722,12 +728,64 @@ describe("BatchCluster", function () {
       bc = new BatchCluster(opts)
       // Wait for one job to run (so the process spins up and we're ready to go)
       await Promise.all(runTasks(bc, 1))
+
+      expect(stats()).to.eql({
+        pendingTaskCount: 0,
+        currentProcCount: 1,
+        readyProcCount: 1,
+        maxProcCount: 4,
+        internalErrorCount: 0,
+        startErrorRatePerMinute: 0,
+        childEndCounts: {},
+        ending: false,
+        ended: false,
+      })
+
       const t = bc.enqueueTask(new Task("sleep " + sleepTimeMs, parser))
-      let caught: any
+
+      expect(stats()).to.eql({
+        pendingTaskCount: 1,
+        currentProcCount: 1,
+        readyProcCount: 1,
+        maxProcCount: 4,
+        internalErrorCount: 0,
+        startErrorRatePerMinute: 0,
+        childEndCounts: {},
+        ending: false,
+        ended: false,
+      })
+
       t.catch((err) => (caught = err))
+      await delay(2)
+
+      expect(stats()).to.eql({
+        pendingTaskCount: 0, // < yay it's getting processed
+        currentProcCount: 1,
+        readyProcCount: 0,
+        maxProcCount: 4,
+        internalErrorCount: 0,
+        startErrorRatePerMinute: 0,
+        childEndCounts: {},
+        ending: false,
+        ended: false,
+      })
+
+      let caught: any
       expect(bc.isIdle).to.eql(false)
       await bc.end(false) // not graceful just to shut down faster
-      console.log(bc.stats())
+
+      expect(stats()).to.eql({
+        pendingTaskCount: 0,
+        currentProcCount: 0,
+        readyProcCount: 0,
+        maxProcCount: 4,
+        internalErrorCount: 0,
+        startErrorRatePerMinute: 0,
+        childEndCounts: { ending: 1 },
+        ending: true,
+        ended: true,
+      })
+
       expect(bc.isIdle).to.eql(true)
       expect(caught?.message).to.include("end() called before task completed")
       expect(unhandledRejections).to.eql([])
@@ -765,7 +823,12 @@ describe("BatchCluster", function () {
       // 0 because we might get unlucky.
       expect((await bc.pids()).length).to.be.within(0, opts.maxProcs)
       await delay(opts.maxProcAgeMillis + 100)
-      bc["vacuumProcs"]()
+      await bc.vacuumProcs()
+      console.log({
+        childEndCounts: bc.childEndCounts,
+        procCount: bc.procCount,
+        maxProcs: opts.maxProcs,
+      })
       expect(bc.countEndedChildProcs("idle")).to.eql(0)
       expect(bc.countEndedChildProcs("old")).to.be.gte(2)
       // Calling .pids calls .procs(), which culls old procs
@@ -800,8 +863,14 @@ describe("BatchCluster", function () {
       assertExpectedResults(await Promise.all(runTasks(bc, opts.maxProcs + 10)))
       // 0 because we might get unlucky.
       expect((await bc.pids()).length).to.be.within(0, opts.maxProcs)
+      // wait long enough for at least 1 process to be idle and get reaped:
       await delay(opts.maxIdleMsPerProcess + 100)
-      bc["vacuumProcs"]()
+      await bc.vacuumProcs()
+      console.log({
+        childEndCounts: bc.childEndCounts,
+        procCount: bc.procCount,
+        maxProcs: opts.maxProcs,
+      })
       expect(bc.countEndedChildProcs("idle")).to.be.gte(1)
       expect(bc.countEndedChildProcs("old")).to.be.lte(1)
       expect(bc.countEndedChildProcs("worn")).to.be.lte(2)
