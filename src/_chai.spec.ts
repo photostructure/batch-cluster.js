@@ -9,7 +9,6 @@ import child_process from "child_process"
 import path from "path"
 import process from "process"
 import { Log, logger, setLogger } from "./Logger"
-import { orElse } from "./Object"
 import { Parser } from "./Parser"
 import { pids } from "./Pids"
 import { notBlank } from "./String"
@@ -143,16 +142,16 @@ export function setRngseed(seed?: string) {
 function rngseed() {
   // We need a new rngseed for every execution, or all runs will either pass or
   // fail:
-  return orElse(rngseedOverride, () => rngseedPrefix + rngseedCounter++)
+  return rngseedOverride ?? rngseedPrefix + rngseedCounter++
 }
 
-let failrate = "0.05" // 5%
+let failrate: string
 
-export function setFailratePct(percent = 10) {
+export function setFailratePct(percent: number) {
   failrate = (percent / 100).toFixed(2)
 }
 
-let unluckyfail = "1"
+let unluckyfail: "1" | "0"
 
 /**
  * Should EUNLUCKY be handled properly by the test script, and emit a "FAIL", or
@@ -161,27 +160,27 @@ let unluckyfail = "1"
  * Basically setting unluckyfail to true is worst-case behavior for a script,
  * where all flaky errors require a timeout to recover.
  */
-export function setUnluckyFail(b = true) {
+export function setUnluckyFail(b: boolean) {
   unluckyfail = b ? "1" : "0"
 }
 
-let newline = "lf"
+let newline: "lf" | "crlf"
 
-export function setNewline(eol: "lf" | "crlf" = "lf") {
+export function setNewline(eol: "lf" | "crlf") {
   newline = eol
 }
 
-let ignoreExit: "1" | "0" = "0"
+let ignoreExit: "1" | "0"
 
-export function setIgnoreExit(ignore = false) {
+export function setIgnoreExit(ignore: boolean) {
   ignoreExit = ignore ? "1" : "0"
 }
 
 beforeEach(() => {
-  setFailratePct()
-  setUnluckyFail()
-  setNewline()
-  setIgnoreExit()
+  setFailratePct(10)
+  setUnluckyFail(true)
+  setNewline("lf")
+  setIgnoreExit(false)
   setRngseed()
 })
 
