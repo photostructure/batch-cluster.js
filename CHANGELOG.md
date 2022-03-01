@@ -18,6 +18,26 @@ See [Semver](http://semver.org/).
 
 - 📦 Minor packaging changes
 
+## v10.3.2
+
+- 🐞 `BatchCluster#maybeSpawnProcs` in prior versions could spawn too many
+  processes, especially if process startup was slow. Heuristics for when to
+  spawn new processes now take into account pending task length and processes
+  busy due to initial setup.
+
+- 📦 `BatchCluster.vacuumProcs` returns a promise that is only fulfilled after
+  all reaped child processes have completed `BatchProcess.#end`.
+
+- 📦 `BatchProcess.whyNotHealthy` can now return `startError`.
+
+- 📦 `childEnd` is now emitted only after the child process exits
+
+- 📦 `BatchCluster.#onIdle` is debounced during the same event loop
+
+- 📦 Added startup and shutdown spec assertions
+
+- 📦 Updated development dependencies and rebuilt docs
+
 ## v10.3.1
 
 - 📦 Add `Rate.msSinceLastEvent`
@@ -67,7 +87,7 @@ See [Semver](http://semver.org/).
   bumping major._
 
 - 📦 Process shutdown is handled more gracefully with new `thenOrTimeout`
-  (rather than the prior `Promise.race` call which resulting in a dangling
+  (rather than the prior `Promise.race` call which resulted in a dangling
   timeout)
 
 - 📦 Updated development dependencies and rebuild docs
