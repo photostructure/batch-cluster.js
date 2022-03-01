@@ -2,7 +2,7 @@ import process from "process"
 import { filterInPlace } from "./Array"
 import { delay, until } from "./Async"
 import { BatchCluster } from "./BatchCluster"
-import { BatchClusterOptions } from "./BatchClusterOptions"
+import { BatchClusterOptions, secondMs } from "./BatchClusterOptions"
 import { map, omit, orElse } from "./Object"
 import { isWin } from "./Platform"
 import { toS } from "./String"
@@ -390,6 +390,7 @@ describe("BatchCluster", function () {
                     opts.maxTasksPerProcess +
                     " before recycling",
                   async function () {
+                    if (isWin && isCI) this.setTimeout(45 * secondMs)
                     // make sure we hit an EUNLUCKY:
                     setFailratePct(60)
                     let expectedResultCount = 0
