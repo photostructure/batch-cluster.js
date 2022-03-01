@@ -426,6 +426,8 @@ describe("BatchCluster", function () {
                       results.length / opts.maxTasksPerProcess,
                       results.length * (isWin ? 9 : 5) // because flaky
                     )
+                    
+                    await bc.vacuumProcs()
 
                     // Expect no prior pids to remain, as long as there were before-pids:
                     if (pids.length > 0)
