@@ -31,6 +31,8 @@ const tk = require("timekeeper")
 describe("BatchCluster", function () {
   const ErrorPrefix = "ERROR: "
 
+  const ShutdownTimeoutMs = 12 * secondMs
+
   const bco = new BatchClusterOptions()
 
   const DefaultOpts = {
@@ -148,9 +150,12 @@ describe("BatchCluster", function () {
     // Mac CI can be extremely slow to shut down:
     const endOrTimeout = await thenOrTimeout(
       endPromise.promise.then(() => true),
-      12_000
+      ShutdownTimeoutMs
     )
-    const shutdownOrTimeout = await thenOrTimeout(checkShutdown(), 12_000)
+    const shutdownOrTimeout = await thenOrTimeout(
+      until(checkShutdown, ShutdownTimeoutMs, 1000),
+      ShutdownTimeoutMs
+    )
     expect(endOrTimeout).to.eql(true, ".end() failed")
     expect(shutdownOrTimeout).to.eql(true, ".checkShutdown() failed")
 
