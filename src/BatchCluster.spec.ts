@@ -367,7 +367,9 @@ describe("BatchCluster", function () {
                   // This just warms up bc to make child procs:
                   const iterations =
                     maxProcs * (bc.options.maxTasksPerProcess + 1)
-                  setFailratePct(25)
+                  // we're making exact pid assertions below: don't fight
+                  // flakiness.
+                  setFailratePct(0)
 
                   const tasks = await Promise.all(runTasks(bc, iterations))
                   assertExpectedResults(tasks)
