@@ -96,7 +96,6 @@ describe("BatchCluster", function () {
 
   beforeEach(function () {
     events = new Events()
-    if (isCI) this.retries(3)
   })
 
   function postAssertions() {
