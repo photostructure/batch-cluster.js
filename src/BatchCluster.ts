@@ -361,7 +361,7 @@ export class BatchCluster {
       procs.map((proc) =>
         proc
           .end(gracefully, "ending")
-          ?.catch((err) => this.emitter.emit("endError", asError(err)))
+          .catch((err) => this.emitter.emit("endError", asError(err)))
       )
     )
   }
