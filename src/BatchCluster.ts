@@ -332,6 +332,7 @@ export class BatchCluster {
       internalErrorCount: this.#internalErrorCount,
       startErrorRatePerMinute: this.#startErrorRate.eventsPerMinute,
       msBeforeNextSpawn: Math.max(0, this.#nextSpawnTime - Date.now()),
+      spawnedProcCount: this.spawnedProcCount,
       childEndCounts: this.childEndCounts,
       ending: this.#endPromise != null,
       ended: false === this.#endPromise?.pending,
