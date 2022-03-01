@@ -426,7 +426,13 @@ describe("BatchCluster", function () {
                       results.length / opts.maxTasksPerProcess,
                       results.length * (isWin ? 9 : 5) // because flaky
                     )
-                    
+
+                    // So, at this point, we should have at least _asked_ the
+                    // initial child processes to end because they're "worn".
+
+                    // Running vacuumProcs will return a promise that will only
+                    // resolve when those procs have shut down.
+
                     await bc.vacuumProcs()
 
                     // Expect no prior pids to remain, as long as there were before-pids:

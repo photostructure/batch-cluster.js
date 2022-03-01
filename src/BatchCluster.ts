@@ -414,7 +414,7 @@ export class BatchCluster {
   // NOT ASYNC: updates internal state. only exported for tests.
   vacuumProcs() {
     this.#maybeCheckPids()
-    const endPromises: (undefined | Promise<void>)[] = []
+    const endPromises: Promise<void>[] = []
     let pidsToReap = Math.max(0, this.#procs.length - this.options.maxProcs)
     filterInPlace(this.#procs, (proc) => {
       // Only check `.idle` (not `.ready`) procs. We don't want to reap busy
@@ -434,7 +434,7 @@ export class BatchCluster {
       }
       return true
     })
-    return Promise.all(endPromises.filter((ea) => ea != null))
+    return Promise.all(endPromises)
   }
 
   /**

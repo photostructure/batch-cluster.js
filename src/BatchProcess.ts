@@ -1,5 +1,6 @@
 import child_process from "child_process"
 import { until } from "./Async"
+import { Deferred } from "./Deferred"
 import { cleanError, tryEach } from "./Error"
 import { InternalBatchProcessOptions } from "./InternalBatchProcessOptions"
 import { Logger } from "./Logger"
@@ -51,12 +52,6 @@ export class BatchProcess {
   // Only set to true when `proc.pid` is no longer in the process table.
   #starting = true
 
-  // .#end() started:
-  #ending = false
-
-  // .#end() finished:
-  #ended = false
-
   // pidExists() returned false
   #exited = false
 
@@ -71,6 +66,8 @@ export class BatchProcess {
    */
   #currentTask: Task | undefined
   #currentTaskTimeout: NodeJS.Timer | undefined
+
+  #endPromise: undefined | Deferred<void>
 
   /**
    * @param onIdle to be called when internal state changes (like the current
@@ -142,7 +139,7 @@ export class BatchProcess {
    * child process exiting)
    */
   get ending(): boolean {
-    return this.#ending
+    return this.#endPromise != null
   }
 
   /**
@@ -152,7 +149,7 @@ export class BatchProcess {
    * (but expensive!) answer.
    */
   get ended(): boolean {
-    return this.#ended
+    return true === this.#endPromise?.settled
   }
 
   /**
@@ -173,9 +170,9 @@ export class BatchProcess {
    */
   get whyNotHealthy(): WhyNotHealthy | null {
     if (this.#whyNotHealthy != null) return this.#whyNotHealthy
-    if (this.#ended) {
+    if (this.ended) {
       return "ended"
-    } else if (this.#ending) {
+    } else if (this.ending) {
       return "ending"
     } else if (this.#healthCheckFailures > 0) {
       return "unhealthy"
@@ -296,7 +293,7 @@ export class BatchProcess {
   }
 
   #execTask(task: Task): boolean {
-    if (this.#ending) return false
+    if (this.ending) return false
 
     this.#taskCount++
     this.#currentTask = task
@@ -377,15 +374,10 @@ export class BatchProcess {
    * endPromise.
    */
   // NOT ASYNC! needs to change state immediately.
-  end(gracefully = true, reason: WhyNotHealthy): Promise<void> | undefined {
-    this.#whyNotHealthy ??= reason
-
-    if (this.#ending) {
-      return undefined
-    } else {
-      this.#ending = true
-      return this.#end(gracefully, reason)
-    }
+  end(gracefully = true, reason: WhyNotHealthy): Promise<void> {
+    return (this.#endPromise ??= new Deferred<void>().observe(
+      this.#end(gracefully, (this.#whyNotHealthy ??= reason))
+    )).promise
   }
 
   // NOTE: Must only be invoked by this.end(), and only expected to be invoked
@@ -458,7 +450,6 @@ export class BatchProcess {
       )
       await kill(this.proc.pid, true)
     }
-    this.#ended = true
     this.opts.observer.emit("childEnd", this, reason)
   }
 
@@ -474,7 +465,7 @@ export class BatchProcess {
   }
 
   #onError(reason: WhyNotHealthy, error: Error, task?: Task) {
-    if (this.#ending) {
+    if (this.ending) {
       // We're ending already, so don't propagate the error.
       // This is expected due to race conditions stdin EPIPE and process shutdown.
       this.#logger().debug(
@@ -533,7 +524,7 @@ export class BatchProcess {
     const task = this.#currentTask
     if (task != null && task.pending) {
       task.onStderr(data)
-    } else if (!this.#ending) {
+    } else if (!this.ending) {
       // If we're ending and there isn't a task, don't worry about it.
       this.opts.observer.emit("noTaskData", null, data, this)
       void this.end(false, "stderr")
@@ -546,7 +537,7 @@ export class BatchProcess {
     if (task != null && task.pending) {
       this.opts.observer.emit("taskData", data, task, this)
       task.onStdout(data)
-    } else if (this.#ending) {
+    } else if (this.ending) {
       // don't care if we're already being shut down.
     } else if (!blank(data)) {
       this.opts.observer.emit("noTaskData", data, null, this)
