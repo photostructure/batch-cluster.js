@@ -251,11 +251,9 @@ describe("BatchCluster", function () {
 
   for (const newline of newlines) {
     for (const maxProcs of [1, 4]) {
-      // for (const maxProcs of [4]) {
       for (const ignoreExit of [true, false]) {
-        for (const healthcheck of [false, true]) {
-          // for (const minDelayBetweenSpawnMillis of [0, 100]) {
-          for (const minDelayBetweenSpawnMillis of [0]) {
+        for (const healthcheck of [true, false]) {
+          for (const minDelayBetweenSpawnMillis of [0, 100]) {
             describe(
               JSON.stringify({
                 newline,
@@ -420,7 +418,7 @@ describe("BatchCluster", function () {
                     // errored after every start, so there may be more then iters
                     // pids spawned.
                     expect(procs.length).to.eql(bc.spawnedProcCount)
-                    
+
                     expect(bc.spawnedProcCount).to.be.within(
                       results.length / opts.maxTasksPerProcess,
                       results.length * 4 // because flaky
@@ -431,7 +429,7 @@ describe("BatchCluster", function () {
                       expect(await bc.pids()).to.not.include.members(pids)
 
                     expect(bc.meanTasksPerProc).to.be.within(
-                      0.5, // because flaky
+                      0.25, // because flaky
                       opts.maxTasksPerProcess
                     )
                     expect((await bc.pids()).length).to.be.lte(maxProcs)
