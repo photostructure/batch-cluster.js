@@ -191,9 +191,6 @@ export class BatchCluster {
       process.removeListener("exit", this.#exitListener)
       this.#endPromise = new Deferred<void>().observe(
         this.closeChildProcesses(gracefully)
-          .catch((err) => {
-            this.emitter.emit("endError", err)
-          })
           .then(() => {
             this.emitter.emit("end")
           })
@@ -361,7 +358,7 @@ export class BatchCluster {
       procs.map((proc) =>
         proc
           .end(gracefully, "ending")
-          .catch((err) => this.emitter.emit("endError", asError(err)))
+          .catch((err) => this.emitter.emit("endError", asError(err), proc))
       )
     )
   }

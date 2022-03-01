@@ -51,18 +51,18 @@ export interface BatchClusterEvents {
    *
    * @param childProcess will be undefined if the error is from {@link ChildProcessFactory.processFactory}
    */
-  startError: (err: Error, childProcess?: BatchProcess) => void
+  startError: (error: Error, childProcess?: BatchProcess) => void
 
   /**
    * Emitted when an internal consistency check fails
    */
-  internalError: (err: Error) => void
+  internalError: (error: Error) => void
 
   /**
    * Emitted when `.end()` is called because the error rate has exceeded
    * {@link BatchClusterOptions.maxReasonableProcessFailuresPerMinute}
    */
-  fatalError: (err: Error) => void
+  fatalError: (error: Error) => void
 
   /**
    * Emitted when tasks receive data, which may be partial chunks from the task
@@ -87,7 +87,7 @@ export interface BatchClusterEvents {
   /**
    * Emitted when a task has an error
    */
-  taskError: (err: Error, task: Task, proc: BatchProcess) => void
+  taskError: (error: Error, task: Task, proc: BatchProcess) => void
 
   /**
    * Emitted when child processes write to stdout or stderr without a current
@@ -102,12 +102,12 @@ export interface BatchClusterEvents {
   /**
    * Emitted when a process fails health checks
    */
-  healthCheckError: (err: Error, proc: BatchProcess) => void
+  healthCheckError: (error: Error, proc: BatchProcess) => void
 
   /**
    * Emitted when a child process has an error during shutdown
    */
-  endError: (err: Error) => void
+  endError: (error: Error, proc?: BatchProcess) => void
 
   /**
    * Emitted when this instance is in the process of ending.
