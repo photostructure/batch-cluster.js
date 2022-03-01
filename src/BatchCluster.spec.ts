@@ -390,7 +390,7 @@ describe("BatchCluster", function () {
                     opts.maxTasksPerProcess +
                     " before recycling",
                   async function () {
-                    if (isWin && isCI) this.setTimeout(45 * secondMs)
+                    if (isWin && isCI) this.timeout(45 * secondMs)
                     // make sure we hit an EUNLUCKY:
                     setFailratePct(60)
                     let expectedResultCount = 0
