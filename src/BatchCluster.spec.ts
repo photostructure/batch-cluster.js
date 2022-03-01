@@ -7,7 +7,7 @@ import { map, omit, orElse } from "./Object"
 import { isWin } from "./Platform"
 import { toS } from "./String"
 import { Task } from "./Task"
-import { thenOrTimeout, Timeout } from "./Timeout"
+import { thenOrTimeout } from "./Timeout"
 import {
   currentTestPids,
   expect,
