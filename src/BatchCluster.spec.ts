@@ -7,6 +7,7 @@ import { map, omit, orElse } from "./Object"
 import { isWin } from "./Platform"
 import { toS } from "./String"
 import { Task } from "./Task"
+import { thenOrTimeout, Timeout } from "./Timeout"
 import {
   currentTestPids,
   expect,
@@ -119,47 +120,41 @@ describe("BatchCluster", function () {
     // processes to exit:
     expect(bc.ended).to.eql(true)
 
-    const isShutdown = await until(
-      async () => {
-        // const isIdle = bc.isIdle
-        // If bc has been told to shut down, it won't ever finish any pending commands.
-        // const pendingCommands = bc.pendingTasks.map((ea) => ea.command)
-        const runningCommands = bc.currentTasks.map((ea) => ea.command)
-        const busyProcCount = bc.busyProcCount
-        const pids = await bc.pids()
-        const livingPids = await currentTestPids()
+    async function checkShutdown() {
+      // const isIdle = bc.isIdle
+      // If bc has been told to shut down, it won't ever finish any pending commands.
+      // const pendingCommands = bc.pendingTasks.map((ea) => ea.command)
+      const runningCommands = bc.currentTasks.map((ea) => ea.command)
+      const busyProcCount = bc.busyProcCount
+      const pids = await bc.pids()
+      const livingPids = await currentTestPids()
 
-        const done =
-          runningCommands.length === 0 &&
-          busyProcCount === 0 &&
-          pids.length === 0 &&
-          livingPids.length === 0
+      const done =
+        runningCommands.length === 0 &&
+        busyProcCount === 0 &&
+        pids.length === 0 &&
+        livingPids.length === 0
 
-        if (!done)
-          console.log("shutdown(): waiting for end", {
-            runningCommands,
-            busyProcCount,
-            pids,
-            livingPids,
-          })
-        return done
-      },
-      10_000, // < mac CI is slow
-      1000 // < don't hammer tasklist/ps too hard
-    )
-    // This should immediately be true: we already waited for the processes to
-    // exit; but node may not have resolved the end promises yet. `await` yields
-    // to those chains.
-    const endPromiseSettled = await until(() => endPromise.settled, 10_000, 50)
-    if (!endPromiseSettled || !isShutdown) {
-      console.warn("shutdown()", { isShutdown, endPromiseSettled })
+      if (!done)
+        console.log("shutdown(): waiting for end", {
+          runningCommands,
+          busyProcCount,
+          pids,
+          livingPids,
+        })
+      return done
     }
-    // const cec = bc.childEndCounts
-    // if (Object.keys(cec).length > 0) {
-    //   console.log("childEndCounts", cec)
-    // }
-    expect(isShutdown).to.eql(true)
-    expect(endPromiseSettled).to.eql(true)
+
+    // Mac CI can be extremely slow to shut down:
+    const endOrTimeout = await thenOrTimeout(
+      endPromise.promise.then(() => true),
+      12_000
+    )
+    const shutdownOrTimeout = await thenOrTimeout(checkShutdown(), 12_000)
+    expect(endOrTimeout).to.eql(true, ".end() failed")
+    expect(shutdownOrTimeout).to.eql(true, ".checkShutdown() failed")
+
+    // Calling bc.end() again should be a no-op and return the same Deferred:
     expect(bc.end(true).settled).to.eql(true)
     expect(bc.internalErrorCount).to.eql(
       0,

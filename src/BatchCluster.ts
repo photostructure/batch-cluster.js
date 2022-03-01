@@ -190,10 +190,9 @@ export class BatchCluster {
       process.removeListener("beforeExit", this.#beforeExitListener)
       process.removeListener("exit", this.#exitListener)
       this.#endPromise = new Deferred<void>().observe(
-        this.closeChildProcesses(gracefully)
-          .then(() => {
-            this.emitter.emit("end")
-          })
+        this.closeChildProcesses(gracefully).then(() => {
+          this.emitter.emit("end")
+        })
       )
     }
 
