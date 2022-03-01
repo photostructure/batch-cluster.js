@@ -426,7 +426,7 @@ describe("BatchCluster", function () {
 
                     expect(bc.spawnedProcCount).to.be.within(
                       results.length / opts.maxTasksPerProcess,
-                      results.length * (isWin ? 9 : 5) // because flaky
+                      results.length * (isWin ? 10 : 5) // because flaky
                     )
 
                     // So, at this point, we should have at least _asked_ the
