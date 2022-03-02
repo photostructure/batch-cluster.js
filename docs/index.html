@@ -45,31 +45,33 @@ whose source you can examine as an example consumer.</p>
 BatchCluster will ensure a given process is only given one task at a time.</p>
 <ol>
 <li><p>Create a singleton instance of
-<a href="https://photostructure.github.io/batch-cluster.js/classes/batchcluster.html">BatchCluster</a>.</p>
-<p>Note the <a href="https://photostructure.github.io/batch-cluster.js/classes/batchcluster.html#constructor">constructor
+<a href="https://photostructure.github.io/batch-cluster.js/classes/BatchCluster.html">BatchCluster</a>.</p>
+<p>Note the <a href="https://photostructure.github.io/batch-cluster.js/classes/BatchCluster.html#constructor">constructor
 options</a>
 takes a union type of</p>
 <ul>
-<li><a href="https://photostructure.github.io/batch-cluster.js/interfaces/childprocessfactory.html">ChildProcessFactory</a>
+<li><a href="https://photostructure.github.io/batch-cluster.js/interfaces/ChildProcessFactory.html">ChildProcessFactory</a>
 and</li>
-<li><a href="https://photostructure.github.io/batch-cluster.js/interfaces/batchprocessoptions.html">BatchProcessOptions</a>,
+<li><a href="https://photostructure.github.io/batch-cluster.js/interfaces/BatchProcessOptions.html">BatchProcessOptions</a>,
 both of which have no defaults, and</li>
-<li><a href="https://photostructure.github.io/batch-cluster.js/classes/batchclusteroptions.html">BatchClusterOptions</a>,
+<li><a href="https://photostructure.github.io/batch-cluster.js/classes/BatchClusterOptions.html">BatchClusterOptions</a>,
 which has defaults that may or may not be relevant to your application.</li>
 </ul>
 </li>
-<li><p>The <a href="https://photostructure.github.io/batch-cluster.js/modules.html#logger">default</a> logger
+<li><p>The <a href="https://photostructure.github.io/batch-cluster.js/interfaces/Logger.html">default logger</a> 
 writes warning and error messages to <code>console.warn</code> and <code>console.error</code>. You
 can change this to your logger by using
-<a href="https://photostructure.github.io/batch-cluster.js/modules.html#setlogger">setLogger</a>.</p>
+<a href="https://photostructure.github.io/batch-cluster.js/modules.html#setLogger">setLogger</a> or by providing a logger to the <code>BatchCluster</code> constructor.</p>
 </li>
-<li><p>Implement the <a href="https://photostructure.github.io/batch-cluster.js/interfaces/parser.html">Parser</a>
+<li><p>Implement the <a href="https://photostructure.github.io/batch-cluster.js/interfaces/Parser.html">Parser</a>
 class to parse results from your child process.</p>
 </li>
-<li><p>Construct a <a href="https://photostructure.github.io/batch-cluster.js/classes/task.html">Task</a> with the desired command and
-the parser you built in the previous step, and submit it to your BatchCluster
-singleton&#39;s
-<a href="https://photostructure.github.io/batch-cluster.js/classes/batchcluster.html#enqueuetask">enqueueTask</a> method.</p>
+<li><p>Construct or extend the
+<a href="https://photostructure.github.io/batch-cluster.js/classes/Task.html">Task</a>
+class with the desired command and the parser you built in the previous
+step, and submit it to your BatchCluster&#39;s
+<a href="https://photostructure.github.io/batch-cluster.js/classes/BatchCluster.html#enqueueTask">enqueueTask</a>
+method.</p>
 </li>
 </ol>
 <p>See
