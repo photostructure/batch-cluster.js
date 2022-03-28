@@ -30,10 +30,10 @@ const noop = () => undefined
 /**
  * Default `Logger` implementation.
  *
- * - `debug` and `info` go to {@link util.debuglog}("batch-cluster")`. 
+ * - `debug` and `info` go to {@link util.debuglog}("batch-cluster")`.
  *
  * - `warn` and `error` go to `console.warn` and `console.error`.
- * 
+ *
  * @see https://nodejs.org/api/util.html#util_util_debuglog_section
  * @see https://nodejs.org/api/console.html
  */
