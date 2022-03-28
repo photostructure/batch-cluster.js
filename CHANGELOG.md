@@ -18,6 +18,13 @@ See [Semver](http://semver.org/).
 
 - 📦 Minor packaging changes
 
+## v10.4.0
+
+- ✨ If `healthCheckCommand` is set and any task fails, that child process will
+  have a health check run before being put back into rotation.
+
+- 📦 Updated development dependencies and rebuild docs
+
 ## v10.3.2
 
 - 🐞 `BatchCluster#maybeSpawnProcs` in prior versions could spawn too many
