@@ -13,11 +13,11 @@ export interface BatchProcessOptions {
   versionCommand: string
 
   /**
-   * If provided, and healthCheckIntervalMillis is greater than 0, this
-   * command will be sent to child processes.
+   * If provided, and healthCheckIntervalMillis is greater than 0, or the
+   * previous task failed, this command will be sent to child processes.
    *
-   * If the command outputs to stderr or returns a fail string, the process
-   * will be considered unhealthy and recycled.
+   * If the command outputs to stderr or returns a fail string, the process will
+   * be considered unhealthy and recycled.
    */
   healthCheckCommand?: string | undefined
 

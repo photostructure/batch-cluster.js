@@ -48,6 +48,7 @@ export class BatchProcess {
   readonly startupTaskId: number
   readonly #logger: () => Logger
   #lastJobFinshedAt = Date.now()
+  #lastJobFailed = false
 
   // Only set to true when `proc.pid` is no longer in the process table.
   #starting = true
@@ -55,6 +56,7 @@ export class BatchProcess {
   // pidExists() returned false
   #exited = false
 
+  // override for .whyNotHealthy()
   #whyNotHealthy?: WhyNotHealthy
 
   failedTaskCount = 0
@@ -263,14 +265,21 @@ export class BatchProcess {
   }
 
   maybeRunHealthcheck(): Task | undefined {
+    const hcc = this.opts.healthCheckCommand
+    // if there's no health check command, no-op.
+    if (hcc == null || blank(hcc)) return
+
+    // if the prior health check failed, .ready will be false
+    if (!this.ready) return
+
     if (
-      this.ready &&
-      this.opts.healthCheckCommand != null &&
-      this.opts.healthCheckIntervalMillis > 0 &&
-      Date.now() - this.#lastHealthCheck > this.opts.healthCheckIntervalMillis
+      this.#lastJobFailed ||
+      (this.opts.healthCheckIntervalMillis > 0 &&
+        Date.now() - this.#lastHealthCheck >
+          this.opts.healthCheckIntervalMillis)
     ) {
       this.#lastHealthCheck = Date.now()
-      const t = new Task(this.opts.healthCheckCommand, SimpleParser)
+      const t = new Task(hcc, SimpleParser)
       t.promise
         .catch((err) => {
           this.opts.observer.emit("healthCheckError", err, this)
@@ -546,6 +555,7 @@ export class BatchProcess {
   }
 
   #clearCurrentTask(task?: Task) {
+    this.#lastJobFailed = task?.state === "rejected"
     if (task != null && task.taskId !== this.#currentTask?.taskId) return
     map(this.#currentTaskTimeout, (ea) => clearTimeout(ea))
     this.#currentTaskTimeout = undefined
