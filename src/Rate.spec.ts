@@ -1,4 +1,4 @@
-import { minuteMs, secondMs } from "./BatchClusterOptions"
+import { minuteMs } from "./BatchClusterOptions"
 import { Rate } from "./Rate"
 import { expect, times } from "./_chai.spec"
 
@@ -6,16 +6,17 @@ const tk = require("timekeeper")
 
 describe("Rate", () => {
   const now = Date.now()
-  let r: Rate
+  const r = new Rate()
 
   beforeEach(() => {
     tk.freeze(now)
-    r = new Rate()
+    // clear() must be called _after_ freezing time
+    r.clear()
   })
 
   after(() => tk.reset())
 
-  function expectRate(rate: Rate, epm: number, tol = 0.5) {
+  function expectRate(rate: Rate, epm: number, tol = 0.1) {
     expect(rate.eventsPerMs).to.be.withinToleranceOf(epm, tol)
     expect(rate.eventsPerSecond).to.be.withinToleranceOf(epm * 1000, tol)
     expect(rate.eventsPerMinute).to.be.withinToleranceOf(epm * 60 * 1000, tol)
@@ -30,50 +31,46 @@ describe("Rate", () => {
     expectRate(r, 0)
   })
 
-  it("maintains a rate of 0 after time with only 1 event", () => {
-    expectRate(r, 0)
-    r.onEvent()
-    expectRate(r, 0)
-    tk.freeze(now + minuteMs)
-    expectRate(r, 0)
-    expect(r.msSinceLastEvent).to.eql(minuteMs)
-  })
+  for (const cnt of [1, 2, 3, 4]) {
+    it(
+      "decays the rate from " + cnt + " simultaneous event(s) as time elapses",
+      () => {
+        times(cnt, () => r.onEvent())
+        expectRate(r, 0)
+        tk.freeze(now + 100)
+        expectRate(r, 0)
+        tk.freeze(now + r.warmupMs + 1)
+        expectRate(r, cnt / r.warmupMs)
+        tk.freeze(now + 2 * r.warmupMs)
+        expectRate(r, cnt / (2 * r.warmupMs))
+        tk.freeze(now + 3 * r.warmupMs)
+        expectRate(r, cnt / (3 * r.warmupMs))
+        tk.freeze(now + r.periodMs)
+        expectRate(r, 0)
+        expect(r.msSinceLastEvent).to.eql(minuteMs)
+      }
+    )
+  }
 
-  it("decays the rate as time elapses", () => {
-    expectRate(r, 0)
-    r.onEvent()
-    expectRate(r, 0)
-    tk.freeze(now + 10)
-    expect(r.msSinceLastEvent).to.eql(10)
-    r.onEvent()
-    expectRate(r, 1 / 10)
-    tk.freeze(now + secondMs)
-    expectRate(r, 2 / secondMs)
-    tk.freeze(now + 2 * secondMs + 10)
-    expect(r.msSinceLastEvent).to.eql(2 * secondMs)
-    expectRate(r, 1 / secondMs)
-    tk.freeze(now + minuteMs + 10)
-    expect(r.msSinceLastEvent).to.eql(minuteMs)
-    expectRate(r, 2 / minuteMs)
-  })
-
-  it("counts events from the same millisecond", () => {
-    r.onEvent()
-    r.onEvent()
-    tk.freeze(now + 10)
-    expectRate(r, 2 / 10) // 1, not 2, because it will be averaged with 0s
-    tk.freeze(now + minuteMs)
-    expectRate(r, 2 / minuteMs)
-  })
-
-  for (const events of [10, 100, 1000]) {
-    it("calculates average rate for " + events + " events", () => {
-      const period = minuteMs
-      times(events, (i) => {
-        tk.freeze(now + (period * i) / events)
-        r.onEvent()
-      })
-      expectRate(r, events / period, 0.25)
-    })
+  for (const events of [5, 10, 100, 1000]) {
+    it(
+      "calculates average rate for " + events + " events, and then decays",
+      () => {
+        const period = r.periodMs
+        times(events, (i) => {
+          tk.freeze(now + (period * i) / events)
+          r.onEvent()
+        })
+        expectRate(r, events / period, 0.3)
+        tk.freeze(now + 1.25 * r.periodMs)
+        expectRate(r, 0.75 * (events / period), 0.3)
+        tk.freeze(now + 1.5 * r.periodMs)
+        expectRate(r, 0.5 * (events / period), 0.3)
+        tk.freeze(now + 1.75 * r.periodMs)
+        expectRate(r, 0.25 * (events / period), 0.3)
+        tk.freeze(now + 2 * r.periodMs)
+        expectRate(r, 0)
+      }
+    )
   }
 })

@@ -1,22 +1,45 @@
 import { minuteMs, secondMs } from "./BatchClusterOptions"
 
+// Implementation notes:
+
+// The prior implementation relied on a weighted average of milliseconds between
+// events, which didn't behave well when a series of events happend in the same
+// millisecond, and didn't correctly recover if events ceased completely (which
+// would be expected if this was an error or timeout rate).
+
+// Keeping each event time in an array makes these calculations more precise,
+// but suffers from more memory consumption when measuring high rates and using
+// a large periodMs.
+
 export class Rate {
+  #start = Date.now()
+  readonly #priorEventTimestamps: number[] = []
   #lastEventTs: number | null = null
-  #weightedTotalAvg: number | null = null
   #eventCount = 0
+
+  /**
+   * @param periodMs the length of time to retain event timestamps for computing
+   * rate. Events older than this value will be discarded.
+   * @param warmupMs return `null` from {@link #msPerEvent} if it's been less
+   * than `warmupMs` since construction or {@link #clear}.
+   */
+  constructor(readonly periodMs = minuteMs, readonly warmupMs = secondMs) {}
 
   onEvent(): void {
     this.#eventCount++
-    const priorEventTs = this.#lastEventTs
     const now = Date.now()
+    this.#priorEventTimestamps.push(now)
     this.#lastEventTs = now
+  }
 
-    if (priorEventTs != null) {
-      const diff = Math.max(now - priorEventTs, 1)
-      this.#weightedTotalAvg =
-        this.#weightedTotalAvg == null
-          ? diff
-          : Math.round((this.#weightedTotalAvg + diff) / 2)
+  #vacuum() {
+    const expired = Date.now() - this.periodMs
+    const firstValidIndex = this.#priorEventTimestamps.findIndex(
+      (ea) => ea > expired
+    )
+    if (firstValidIndex === -1) this.#priorEventTimestamps.length = 0
+    else if (firstValidIndex > 0) {
+      this.#priorEventTimestamps.splice(0, firstValidIndex)
     }
   }
 
@@ -29,12 +52,11 @@ export class Rate {
   }
 
   get msPerEvent(): number | null {
-    if (this.#weightedTotalAvg == null || this.#lastEventTs == null) return null
-    // If we haven't seen an event for a while, include that in the estimate:
-    const lastDiff = Date.now() - this.#lastEventTs
-    return lastDiff > this.#weightedTotalAvg
-      ? (this.#weightedTotalAvg + lastDiff) / 2
-      : this.#weightedTotalAvg
+    const msSinceStart = Date.now() - this.#start
+    if (this.#lastEventTs == null || msSinceStart < this.warmupMs) return null
+    this.#vacuum()
+    const events = this.#priorEventTimestamps.length
+    return events === 0 ? null : Math.min(this.periodMs, msSinceStart) / events
   }
 
   get eventsPerMs(): number {
@@ -51,9 +73,10 @@ export class Rate {
   }
 
   clear(): this {
-    this.#eventCount = 0
+    this.#start = Date.now()
+    this.#priorEventTimestamps.length = 0
     this.#lastEventTs = null
-    this.#weightedTotalAvg = null
+    this.#eventCount = 0
     return this
   }
 }

@@ -18,6 +18,10 @@ See [Semver](http://semver.org/).
 
 - 📦 Minor packaging changes
 
+## v10.4.1
+
+- 📦 Improved concurrent event `Rate` measurement.
+
 ## v10.4.0
 
 - ✨ If `healthCheckCommand` is set and any task fails, that child process will
