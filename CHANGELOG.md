@@ -18,6 +18,12 @@ See [Semver](http://semver.org/).
 
 - 📦 Minor packaging changes
 
+## v10.4.2
+
+- 🐞 Fix [`unref` is not a function](https://github.com/photostructure/batch-cluster.js/issues/16)
+
+- 📦 Updated development dependencies and rebuild docs
+
 ## v10.4.1
 
 - 📦 Improved concurrent event `Rate` measurement.
