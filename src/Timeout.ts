@@ -1,3 +1,4 @@
+import timers from "timers"
 export const Timeout = Symbol("timeout")
 
 export async function thenOrTimeout<T>(
@@ -7,7 +8,7 @@ export async function thenOrTimeout<T>(
   return new Promise<T | typeof Timeout>(async (resolve, reject) => {
     let pending = true
     try {
-      const t = setTimeout(() => {
+      const t = timers.setTimeout(() => {
         if (pending) {
           pending = false
           resolve(Timeout)

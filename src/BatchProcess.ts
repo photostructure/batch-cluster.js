@@ -1,4 +1,5 @@
 import child_process from "child_process"
+import timers from "timers"
 import { until } from "./Async"
 import { Deferred } from "./Deferred"
 import { cleanError, tryEach } from "./Error"
@@ -314,7 +315,7 @@ export class BatchProcess {
     if (taskTimeoutMs > 0) {
       // add the stream flush millis to the taskTimeoutMs, because that time
       // should not be counted against the task.
-      this.#currentTaskTimeout = setTimeout(
+      this.#currentTaskTimeout = timers.setTimeout(
         () => this.#onTimeout(task, taskTimeoutMs),
         taskTimeoutMs + this.opts.streamFlushMillis
       )

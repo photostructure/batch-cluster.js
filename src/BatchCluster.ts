@@ -376,7 +376,7 @@ export class BatchCluster {
   readonly #onIdleLater = () => {
     if (!this.#onIdleRequested) {
       this.#onIdleRequested = true
-      setTimeout(() => this.#onIdle(), 1)
+      timers.setTimeout(() => this.#onIdle(), 1)
     }
   }
 
@@ -555,7 +555,7 @@ export class BatchCluster {
     this.#nextSpawnTime = Date.now() + delay
 
     // And schedule #onIdle for that time:
-    setTimeout(this.#onIdleLater, delay).unref()
+    timers.setTimeout(this.#onIdleLater, delay).unref()
   }
 
   // must only be called by this.#maybeSpawnProcs()
