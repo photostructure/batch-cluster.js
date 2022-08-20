@@ -18,6 +18,10 @@ See [Semver](http://semver.org/).
 
 - 📦 Minor packaging changes
 
+## v11.0.0
+
+- 💔 Drop official support for Node 12. 
+
 ## v10.4.3
 
 - 🐞 Fix support for zero value of `maxProcAgeMillis`
