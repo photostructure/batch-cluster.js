@@ -7,7 +7,7 @@ import { isMac, isWin } from "./Platform"
 import { blank, toS } from "./String"
 
 export const secondMs = 1000
-export const minuteMs = 60 * 1000
+export const minuteMs = 60 * secondMs
 
 /**
  * These parameter values have somewhat sensible defaults, but can be
@@ -32,7 +32,7 @@ export class BatchClusterOptions {
    *
    * Defaults to 5 minutes.
    */
-  maxProcAgeMillis = 30_000
+  maxProcAgeMillis = 5 * minuteMs
 
   /**
    * This is the minimum interval between calls to {@link BatchCluster.#onIdle},
@@ -41,7 +41,7 @@ export class BatchClusterOptions {
    *
    * Must be &gt; 0. Defaults to 10 seconds.
    */
-  onIdleIntervalMillis = 10_000
+  onIdleIntervalMillis = 10 * secondMs
 
   /**
    * If the initial `versionCommand` fails for new spawned processes more
@@ -63,7 +63,7 @@ export class BatchClusterOptions {
    *
    * Must be &gt;= 100ms. Defaults to 15 seconds.
    */
-  spawnTimeoutMillis = 15_000
+  spawnTimeoutMillis = 15 * secondMs
 
   /**
    * If maxProcs &gt; 1, spawning new child processes to process tasks can slow
@@ -71,7 +71,7 @@ export class BatchClusterOptions {
    *
    * Must be &gt;= 0ms. Defaults to 1.5 seconds.
    */
-  minDelayBetweenSpawnMillis = 1_500
+  minDelayBetweenSpawnMillis = 1.5 * secondMs
 
   /**
    * If commands take longer than this, presume the underlying process is dead
@@ -81,7 +81,7 @@ export class BatchClusterOptions {
    *
    * Must be &gt;= 10ms. Defaults to 10 seconds.
    */
-  taskTimeoutMillis = 10_000
+  taskTimeoutMillis = 10 * secondMs
 
   /**
    * Processes will be recycled after processing `maxTasksPerProcess` tasks.
@@ -171,7 +171,7 @@ export class BatchClusterOptions {
    *
    * Set this to 0 to disable this feature.
    */
-  pidCheckIntervalMillis = 120_000
+  pidCheckIntervalMillis = 2 * minuteMs
 
   /**
    * A BatchCluster instance and associated BatchProcess instances will share
@@ -213,12 +213,14 @@ export function verifyOptions(
   }
 
   const errors: string[] = []
+
   function notBlank(fieldName: keyof AllOpts) {
     const v = toS(result[fieldName])
     if (blank(v)) {
       errors.push(fieldName + " must not be blank")
     }
   }
+
   function gte(fieldName: keyof AllOpts, value: number, why?: string) {
     const v = result[fieldName] as number
     if (v < value) {
@@ -230,6 +232,7 @@ export function verifyOptions(
       )
     }
   }
+
   notBlank("versionCommand")
   notBlank("pass")
   notBlank("fail")
@@ -239,7 +242,8 @@ export function verifyOptions(
   gte("maxTasksPerProcess", 1)
 
   gte("maxProcs", 1)
-  if (opts.maxProcAgeMillis !== 0) {
+
+  if (opts.maxProcAgeMillis != null && opts.maxProcAgeMillis > 0) {
     gte(
       "maxProcAgeMillis",
       Math.max(result.spawnTimeoutMillis, result.taskTimeoutMillis),
@@ -256,7 +260,7 @@ export function verifyOptions(
 
   if (errors.length > 0) {
     throw new Error(
-      "BatchCluster was given invalid options: " + errors.join(", ")
+      "BatchCluster was given invalid options: " + errors.join("; ")
     )
   }
 

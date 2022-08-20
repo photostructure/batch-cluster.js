@@ -13,8 +13,9 @@ import { Parser } from "./Parser"
 import { pids } from "./Pids"
 import { notBlank } from "./String"
 
-use(require("chai-string"))
 use(require("chai-as-promised"))
+use(require("chai-string"))
+use(require("chai-subset"))
 use(require("chai-withintoleranceof"))
 
 export { expect } from "chai"

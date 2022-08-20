@@ -2,7 +2,8 @@ import process from "process"
 import { filterInPlace } from "./Array"
 import { delay, until } from "./Async"
 import { BatchCluster } from "./BatchCluster"
-import { BatchClusterOptions, secondMs } from "./BatchClusterOptions"
+import { secondMs } from "./BatchClusterOptions"
+import { DefaultTestOptions } from "./DefaultTestOptions.spec"
 import { map, omit, orElse } from "./Object"
 import { isWin } from "./Platform"
 import { toS } from "./String"
@@ -48,27 +49,6 @@ describe("BatchCluster", function () {
   const ErrorPrefix = "ERROR: "
 
   const ShutdownTimeoutMs = 12 * secondMs
-
-  const bco = new BatchClusterOptions()
-
-  const DefaultOpts = {
-    ...bco,
-    maxProcs: 4, // < force concurrency
-    versionCommand: "version",
-    pass: "PASS",
-    fail: "FAIL",
-    exitCommand: "exit",
-    // don't reduce onIdleInterval: it shouldn't be required to finish! See
-    // https://github.com/photostructure/batch-cluster.js/issues/15
-    // onIdleIntervalMillis: xxx
-    maxTasksPerProcess: 5, // force process churn
-    taskTimeoutMillis: 250, // CI machines can be slow. Needs to be short so the timeout test doesn't timeout
-    maxReasonableProcessFailuresPerMinute: 0, // disable. We're expecting flakiness.
-
-    // we shouldn't need these overrides...
-    // ...(isCI ? { streamFlushMillis: bco.streamFlushMillis * 3 } : {}),
-    // onIdleIntervalMillis: 1000,
-  }
 
   function runTasks(
     bc: BatchCluster,
@@ -215,9 +195,9 @@ describe("BatchCluster", function () {
       console.error("BatchCluster.spec: internal error: " + err)
       internalErrors.push(err)
     })
-    bc.on("taskData", (data, task) =>
+    bc.on("taskData", (data, task: Task | undefined) =>
       events.taskData.push({
-        cmd: map(task, (ea) => ea.command),
+        cmd: task?.command,
         data: toS(data),
       })
     )
@@ -250,7 +230,7 @@ describe("BatchCluster", function () {
 
   it("supports .off()", async () => {
     const emitTimes: number[] = []
-    const bc = new BatchCluster({ ...DefaultOpts, processFactory })
+    const bc = new BatchCluster({ ...DefaultTestOptions, processFactory })
     const listener = () => emitTimes.push(Date.now())
     // pick a random event that doesn't require arguments:
     const evt = "beforeEnd" as const
@@ -280,7 +260,7 @@ describe("BatchCluster", function () {
               function () {
                 let bc: BatchCluster
                 const opts: any = {
-                  ...DefaultOpts,
+                  ...DefaultTestOptions,
                   maxProcs,
                   minDelayBetweenSpawnMillis,
                 }
@@ -323,7 +303,7 @@ describe("BatchCluster", function () {
                         bc.enqueueTask(
                           new Task(
                             // this needs to be much less than the
-                            // DefaultOpts.taskTimeoutMillis (250), because we don't
+                            // DefaultTestOptions.taskTimeoutMillis (250), because we don't
                             // want timeouts. CI failed when this was 100.
                             "sleep 25",
                             parser
@@ -633,7 +613,7 @@ describe("BatchCluster", function () {
       it(JSON.stringify({ minDelayBetweenSpawnMillis }), async () => {
         setFailratePct(0)
         const opts = {
-          ...DefaultOpts,
+          ...DefaultTestOptions,
           taskTimeoutMillis: 5_000, // < don't test timeouts here
           maxProcs,
           maxTasksPerProcess: expectedTaskMax + 5, // < don't recycle procs for this test
@@ -686,7 +666,7 @@ describe("BatchCluster", function () {
       // don't fight with flakiness here!
       setFailratePct(0)
       const opts = {
-        ...DefaultOpts,
+        ...DefaultTestOptions,
         minDelayBetweenSpawnMillis: 0,
         taskTimeoutMillis: 5_000, // < don't test timeouts here
         maxProcs,
@@ -747,7 +727,7 @@ describe("BatchCluster", function () {
     it("shut down rejects long-running pending tasks", async () => {
       setFailratePct(0)
       const opts = {
-        ...DefaultOpts,
+        ...DefaultTestOptions,
         taskTimeoutMillis: sleepTimeMs * 4, // < don't test timeouts here
         processFactory,
       }
@@ -824,7 +804,7 @@ describe("BatchCluster", function () {
 
   describe("maxProcAgeMillis (cull old children)", function () {
     const opts = {
-      ...DefaultOpts,
+      ...DefaultTestOptions,
       maxProcs: 4,
       maxTasksPerProcess: 100,
       spawnTimeoutMillis: 2000, // maxProcAge must be >= this
@@ -869,7 +849,7 @@ describe("BatchCluster", function () {
 
   describe("maxIdleMsPerProcess", function () {
     const opts = {
-      ...DefaultOpts,
+      ...DefaultTestOptions,
       maxProcs: 4,
       maxIdleMsPerProcess: 1000,
       maxProcAgeMillis: 30_000,
@@ -949,7 +929,7 @@ describe("BatchCluster", function () {
 
         bc = listen(
           new BatchCluster({
-            ...DefaultOpts,
+            ...DefaultTestOptions,
             maxProcs: 1,
             maxProcAgeMillis,
             spawnTimeoutMillis: Math.max(maxProcAgeMillis, 200),
@@ -967,99 +947,5 @@ describe("BatchCluster", function () {
         return
       })
     }
-  })
-
-  describe("opts parsing", () => {
-    function errToArr(err: any) {
-      return err
-        .toString()
-        .split(/[:,]/)
-        .map((ea: string) => ea.trim())
-    }
-
-    it("requires maxProcAgeMillis to be > spawnTimeoutMillis", () => {
-      const spawnTimeoutMillis = DefaultOpts.taskTimeoutMillis + 1
-      try {
-        new BatchCluster({
-          processFactory,
-          ...DefaultOpts,
-          spawnTimeoutMillis,
-          maxProcAgeMillis: spawnTimeoutMillis - 1,
-        })
-        throw new Error("expected an error due to invalid opts")
-      } catch (err) {
-        expect(errToArr(err)).to.eql([
-          "Error",
-          "BatchCluster was given invalid options",
-          "maxProcAgeMillis must be greater than or equal to " +
-            spawnTimeoutMillis,
-          `must be greater than the max value of spawnTimeoutMillis (${spawnTimeoutMillis}) and taskTimeoutMillis (${DefaultOpts.taskTimeoutMillis})`,
-        ])
-      }
-    })
-
-    it("requires maxProcAgeMillis to be > taskTimeoutMillis", () => {
-      const taskTimeoutMillis = DefaultOpts.spawnTimeoutMillis + 1
-      try {
-        new BatchCluster({
-          processFactory,
-          ...DefaultOpts,
-          taskTimeoutMillis,
-          maxProcAgeMillis: taskTimeoutMillis - 1,
-        })
-        throw new Error("expected an error due to invalid opts")
-      } catch (err) {
-        expect(errToArr(err)).to.eql([
-          "Error",
-          "BatchCluster was given invalid options",
-          "maxProcAgeMillis must be greater than or equal to " +
-            taskTimeoutMillis,
-          `must be greater than the max value of spawnTimeoutMillis (${DefaultOpts.spawnTimeoutMillis}) and taskTimeoutMillis (${taskTimeoutMillis})`,
-        ])
-      }
-    })
-
-    it("reports on invalid opts", () => {
-      try {
-        new BatchCluster({
-          processFactory,
-          versionCommand: "",
-          pass: "",
-          fail: "",
-
-          spawnTimeoutMillis: 50,
-          taskTimeoutMillis: 5,
-          maxTasksPerProcess: 0,
-          minDelayBetweenSpawnMillis: -1,
-
-          maxProcs: -1,
-          maxProcAgeMillis: -1,
-          maxReasonableProcessFailuresPerMinute: -1,
-          onIdleIntervalMillis: -1,
-          endGracefulWaitTimeMillis: -1,
-          streamFlushMillis: -1,
-        })
-        throw new Error("expected an error due to invalid opts")
-      } catch (err) {
-        expect(errToArr(err)).to.eql([
-          "Error",
-          "BatchCluster was given invalid options",
-          "versionCommand must not be blank",
-          "pass must not be blank",
-          "fail must not be blank",
-          "spawnTimeoutMillis must be greater than or equal to 100",
-          "taskTimeoutMillis must be greater than or equal to 10",
-          "maxTasksPerProcess must be greater than or equal to 1",
-          "maxProcs must be greater than or equal to 1",
-          "maxProcAgeMillis must be greater than or equal to 50",
-          "must be greater than the max value of spawnTimeoutMillis (50) and taskTimeoutMillis (5)",
-          "minDelayBetweenSpawnMillis must be greater than or equal to 0",
-          "onIdleIntervalMillis must be greater than or equal to 0",
-          "endGracefulWaitTimeMillis must be greater than or equal to 0",
-          "maxReasonableProcessFailuresPerMinute must be greater than or equal to 0",
-          "streamFlushMillis must be greater than or equal to 0",
-        ])
-      }
-    })
   })
 })

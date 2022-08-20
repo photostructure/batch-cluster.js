@@ -18,6 +18,11 @@ See [Semver](http://semver.org/).
 
 - 📦 Minor packaging changes
 
+## v10.4.3
+
+- 🐞 Fix support for zero value of `maxProcAgeMillis`
+- 📦 Updated development dependencies and rebuild docs
+
 ## v10.4.2
 
 - 🐞 Fix [`unref` is not a function](https://github.com/photostructure/batch-cluster.js/issues/16)
