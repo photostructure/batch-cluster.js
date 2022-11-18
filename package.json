@@ -31,6 +31,11 @@
     "docs": "bash -c 'for i in {1..4} ; do yarn docs:$i ; done'"
   },
   "release-it": {
+    "src": {
+      "tagName": "v%s",
+      "commitArgs": "-S",
+      "tagArgs": "-S"
+    },
     "hooks": {
       "before:init": [
         "yarn install",
