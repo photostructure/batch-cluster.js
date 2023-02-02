@@ -1,5 +1,5 @@
-import { expect } from "./_chai.spec"
 import { map } from "./Object"
+import { expect } from "./_chai.spec"
 
 describe("Object", () => {
   describe("map()", () => {
