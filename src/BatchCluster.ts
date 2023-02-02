@@ -7,6 +7,7 @@ import {
   BatchClusterEmitter,
   BatchClusterEvents,
   ChildEndReason,
+  TypedEventEmitter,
 } from "./BatchClusterEmitter"
 import {
   AllOpts,
@@ -35,6 +36,7 @@ export { kill, pidExists, pids } from "./Pids"
 export { Rate } from "./Rate"
 export { Task } from "./Task"
 export type {
+  TypedEventEmitter,
   BatchClusterEmitter,
   BatchClusterEvents,
   BatchProcessOptions,
