@@ -41,7 +41,7 @@
     "hooks": {
       "before:init": [
         "yarn install",
-        "yarn test"
+        "yarn lint"
       ]
     },
     "github": {
