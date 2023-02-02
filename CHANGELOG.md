@@ -18,20 +18,28 @@ See [Semver](http://semver.org/).
 
 - 📦 Minor packaging changes
 
+## v12.0.0
+
+- 💔/✨ `pidExists` and `killPid` are no longer `async`, as process management
+  is now performed via `node:process.kill()`, instead of forking `ps` or `tasklist`.
+
+- 📦 Updated development dependencies and rebuilt docs
+
 ## v11.0.0
 
-- 💔 Drop official support for Node 12. 
+- 💔 Drop official support for Node 12: [EOL was 2022-04-30](https://github.com/nodejs/release#end-of-life-releases)
 
 ## v10.4.3
 
 - 🐞 Fix support for zero value of `maxProcAgeMillis`
-- 📦 Updated development dependencies and rebuild docs
+
+- 📦 Updated development dependencies and rebuilt docs
 
 ## v10.4.2
 
 - 🐞 Fix [`unref` is not a function](https://github.com/photostructure/batch-cluster.js/issues/16)
 
-- 📦 Updated development dependencies and rebuild docs
+- 📦 Updated development dependencies and rebuilt docs
 
 ## v10.4.1
 
@@ -42,7 +50,7 @@ See [Semver](http://semver.org/).
 - ✨ If `healthCheckCommand` is set and any task fails, that child process will
   have a health check run before being put back into rotation.
 
-- 📦 Updated development dependencies and rebuild docs
+- 📦 Updated development dependencies and rebuilt docs
 
 ## v10.3.2
 
@@ -116,7 +124,7 @@ See [Semver](http://semver.org/).
   (rather than the prior `Promise.race` call which resulted in a dangling
   timeout)
 
-- 📦 Updated development dependencies and rebuild docs
+- 📦 Updated development dependencies and rebuilt docs
 
 ## v10.1.0
 
@@ -133,11 +141,11 @@ See [Semver](http://semver.org/).
 - 💔 Renamed event s/childExit/childEnd/
 - 💔 `childEnd` and `childStart` events receive BatchProcess instances now
 - 💔 Renamed healthy state s/dead/ended/
-- 📦 make BatchProcess.whyNotHealthy persistent
+- 📦 Made BatchProcess.whyNotHealthy persistent
 - 📦 Added several more WhyNotHealthy values
 - 📦 Perf: filterInPlace and count use for loops rather than closures
-- 📦 add spec to verify .end rejects long-running pending tasks
-- 📦 Updated development dependencies and rebuild docs
+- 📦 Added spec to verify `.end` rejects long-running pending tasks
+- 📦 Updated development dependencies and rebuilt docs
 
 ## v9.1.0
 
