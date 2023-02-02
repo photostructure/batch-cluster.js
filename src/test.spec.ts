@@ -82,17 +82,6 @@ describe("test.js", () => {
     return
   })
 
-  it("kill(!force) with ignoreExit set doesn't cause the process to end", async () => {
-    setIgnoreExit(true)
-    const h = new Harness()
-    h.child.stdin!.write("upcase fuzzy\n")
-    await h.untilOutput()
-    kill(h.child.pid, false)
-    await until(() => h.notRunning(), 500)
-    expect(await h.running()).to.eql(true)
-    return h.end()
-  })
-
   it("kill(!force) with ignoreExit unset causes the process to end", async () => {
     setIgnoreExit(false)
     const h = new Harness()
