@@ -18,6 +18,13 @@ See [Semver](http://semver.org/).
 
 - 📦 Minor packaging changes
 
+## v12.1.0
+
+- 🐞 `pidExists` now handles `EPERM` properly (previous implementation would
+  mischaracterize pids as being dead due to insufficient permissions)
+
+- 📦 Updated development dependencies and rebuilt docs
+
 ## v12.0.0
 
 - 💔/✨ `pidExists` and `killPid` are no longer `async`, as process management
