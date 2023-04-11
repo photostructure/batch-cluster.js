@@ -14,10 +14,15 @@ export function pidExists(pid: number | undefined): boolean {
     // signal 0 can be used to test for the existence of a process
     // see https://nodejs.org/dist/latest-v18.x/docs/api/process.html#processkillpid-signal
     return process.kill(pid, 0)
-  } catch (err) {
+  } catch (err: any) {
+    // We're expecting err.code to be either "EPERM" (if we don't have
+    // permission to send `pid` and message), or "ESRCH" if that pid doesn't
+    // exist. EPERM means it _does_ exist!
+    if (err.code === "EPERM") return true
+
     // failed to get priority--assume the pid is gone.
+    return false
   }
-  return false
 }
 
 /**
