@@ -12,7 +12,7 @@
 <div class="col-content">
 <div class="tsd-page-title">
 <h2>batch-cluster</h2></div>
-<div class="tsd-panel tsd-typography"><a id="md:batch-cluster" class="tsd-anchor"></a><h1><a href="#$batch-cluster" style="color:inherit;text-decoration:none">batch-cluster</a></h1><p><strong>Efficient, concurrent work via batch-mode command-line tools from within Node.js.</strong></p>
+<div class="tsd-panel tsd-typography"><a id="md:batch-cluster" class="tsd-anchor"></a><h1><a href="#md:batch-cluster">batch-cluster</a></h1><p><strong>Efficient, concurrent work via batch-mode command-line tools from within Node.js.</strong></p>
 <p><a href="https://www.npmjs.com/package/batch-cluster"><img src="https://img.shields.io/npm/v/batch-cluster.svg" alt="npm version"></a>
 <a href="https://github.com/photostructure/batch-cluster.js/actions/workflows/node.js.yml"><img src="https://github.com/photostructure/batch-cluster.js/actions/workflows/node.js.yml/badge.svg?branch=main" alt="Build status"></a>
 <a href="https://github.com/photostructure/batch-cluster.js/issues"><img src="https://img.shields.io/github/issues/photostructure/batch-cluster.js.svg" alt="GitHub issues"></a>
@@ -35,11 +35,11 @@ memory leaks.</p>
 <p>As of version 4, retry logic for tasks is a separate concern from this module.</p>
 <p>This package powers <a href="https://photostructure.github.io/exiftool-vendored.js/">exiftool-vendored</a>,
 whose source you can examine as an example consumer.</p>
-<a id="md:installation" class="tsd-anchor"></a><h2><a href="#$installation" style="color:inherit;text-decoration:none">Installation</a></h2><p>Depending on your yarn/npm preference:</p>
+<a id="md:installation" class="tsd-anchor"></a><h2><a href="#md:installation">Installation</a></h2><p>Depending on your yarn/npm preference:</p>
 <pre><code class="language-bash"><span class="hl-0">$ </span><span class="hl-1">yarn</span><span class="hl-0"> </span><span class="hl-1">add</span><span class="hl-0"> </span><span class="hl-1">batch-cluster</span><br/><span class="hl-2"># or</span><br/><span class="hl-0">$ </span><span class="hl-1">npm</span><span class="hl-0"> </span><span class="hl-1">install</span><span class="hl-0"> </span><span class="hl-1">--save</span><span class="hl-0"> </span><span class="hl-1">batch-cluster</span>
-</code></pre>
-<a id="md:changelog" class="tsd-anchor"></a><h2><a href="#$changelog" style="color:inherit;text-decoration:none">Changelog</a></h2><p>See <a href="https://github.com/photostructure/batch-cluster.js/blob/main/CHANGELOG.md">CHANGELOG.md</a>.</p>
-<a id="md:usage" class="tsd-anchor"></a><h2><a href="#$usage" style="color:inherit;text-decoration:none">Usage</a></h2><p>The child process must use <code>stdin</code> and <code>stdout</code> for control/response.
+</code><button>Copy</button></pre>
+<a id="md:changelog" class="tsd-anchor"></a><h2><a href="#md:changelog">Changelog</a></h2><p>See <a href="https://github.com/photostructure/batch-cluster.js/blob/main/CHANGELOG.md">CHANGELOG.md</a>.</p>
+<a id="md:usage" class="tsd-anchor"></a><h2><a href="#md:usage">Usage</a></h2><p>The child process must use <code>stdin</code> and <code>stdout</code> for control/response.
 BatchCluster will ensure a given process is only given one task at a time.</p>
 <ol>
 <li><p>Create a singleton instance of
@@ -76,7 +76,7 @@ method.</p>
 <a href="https://github.com/photostructure/batch-cluster.js/blob/main/src/test.ts">src/test.ts</a>
 for an example child process. Note that the script is <em>designed</em> to be flaky on
 order to test BatchCluster&#39;s retry and error handling code.</p>
-<a id="md:caution" class="tsd-anchor"></a><h2><a href="#$caution" style="color:inherit;text-decoration:none">Caution</a></h2><p>The default <code>BatchClusterOptions.cleanupChildProcs</code> value of <code>true</code> means that BatchCluster will try to use <code>ps</code> to ensure Node&#39;s view of process state are correct, and that errant
+<a id="md:caution" class="tsd-anchor"></a><h2><a href="#md:caution">Caution</a></h2><p>The default <code>BatchClusterOptions.cleanupChildProcs</code> value of <code>true</code> means that BatchCluster will try to use <code>ps</code> to ensure Node&#39;s view of process state are correct, and that errant
 processes are cleaned up.</p>
 <p>If you run this in a docker image based off Alpine or Debian Slim, <strong>this won&#39;t work properly unless you install the <code>procps</code> package.</strong></p>
 <p><a href="https://github.com/photostructure/batch-cluster.js/issues/13">See issue #13 for details.</a></p>

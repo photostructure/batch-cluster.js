@@ -146,13 +146,12 @@ task is resolved, or the process exits)</p>
 <ul class="tsd-signatures">
 <li class="tsd-signature" id="ended.ended-1"><span class="tsd-signature-symbol">get</span> ended<span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">boolean</span></li>
 <li class="tsd-description">
-<div class="tsd-comment tsd-typography">
-<h3>Returns</h3><p>true if <code>this.end()</code> has completed running, which includes child
+<div class="tsd-comment tsd-typography"></div>
+<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">boolean</span></h4><p>true if <code>this.end()</code> has completed running, which includes child
 process cleanup. Note that this may return <code>true</code> and the process table may
 still include the child pid. Call <a href="../modules.html" class="tsd-kind-project">.running()</a> for an authoritative
 (but expensive!) answer.</p>
-</div>
-<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">boolean</span></h4><aside class="tsd-sources">
+<aside class="tsd-sources">
 <ul>
 <li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/main/src/BatchProcess.ts#L154">BatchProcess.ts:154</a></li></ul></aside></li></ul></section>
 <section class="tsd-panel tsd-member"><a id="ending" class="tsd-anchor"></a>
@@ -160,11 +159,10 @@ still include the child pid. Call <a href="../modules.html" class="tsd-kind-proj
 <ul class="tsd-signatures">
 <li class="tsd-signature" id="ending.ending-1"><span class="tsd-signature-symbol">get</span> ending<span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">boolean</span></li>
 <li class="tsd-description">
-<div class="tsd-comment tsd-typography">
-<h3>Returns</h3><p>true if <code>this.end()</code> has been requested (which may be due to the
+<div class="tsd-comment tsd-typography"></div>
+<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">boolean</span></h4><p>true if <code>this.end()</code> has been requested (which may be due to the
 child process exiting)</p>
-</div>
-<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">boolean</span></h4><aside class="tsd-sources">
+<aside class="tsd-sources">
 <ul>
 <li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/main/src/BatchProcess.ts#L144">BatchProcess.ts:144</a></li></ul></aside></li></ul></section>
 <section class="tsd-panel tsd-member"><a id="exited" class="tsd-anchor"></a>
@@ -172,13 +170,12 @@ child process exiting)</p>
 <ul class="tsd-signatures">
 <li class="tsd-signature" id="exited.exited-1"><span class="tsd-signature-symbol">get</span> exited<span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">boolean</span></li>
 <li class="tsd-description">
-<div class="tsd-comment tsd-typography">
-<h3>Returns</h3><p>true if the child process has exited and is no longer in the
+<div class="tsd-comment tsd-typography"></div>
+<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">boolean</span></h4><p>true if the child process has exited and is no longer in the
 process table. Note that this may be erroneously false if the process table
 hasn&#39;t been checked. Call <a href="../modules.html" class="tsd-kind-project">.running()</a> for an authoritative (but
 expensive!) answer.</p>
-</div>
-<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">boolean</span></h4><aside class="tsd-sources">
+<aside class="tsd-sources">
 <ul>
 <li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/main/src/BatchProcess.ts#L164">BatchProcess.ts:164</a></li></ul></aside></li></ul></section>
 <section class="tsd-panel tsd-member"><a id="healthy" class="tsd-anchor"></a>
@@ -186,10 +183,9 @@ expensive!) answer.</p>
 <ul class="tsd-signatures">
 <li class="tsd-signature" id="healthy.healthy-1"><span class="tsd-signature-symbol">get</span> healthy<span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">boolean</span></li>
 <li class="tsd-description">
-<div class="tsd-comment tsd-typography">
-<h3>Returns</h3><p>true if the process doesn&#39;t need to be recycled.</p>
-</div>
-<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">boolean</span></h4><aside class="tsd-sources">
+<div class="tsd-comment tsd-typography"></div>
+<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">boolean</span></h4><p>true if the process doesn&#39;t need to be recycled.</p>
+<aside class="tsd-sources">
 <ul>
 <li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/main/src/BatchProcess.ts#L217">BatchProcess.ts:217</a></li></ul></aside></li></ul></section>
 <section class="tsd-panel tsd-member"><a id="idle" class="tsd-anchor"></a>
@@ -197,11 +193,10 @@ expensive!) answer.</p>
 <ul class="tsd-signatures">
 <li class="tsd-signature" id="idle.idle-1"><span class="tsd-signature-symbol">get</span> idle<span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">boolean</span></li>
 <li class="tsd-description">
-<div class="tsd-comment tsd-typography">
-<h3>Returns</h3><p>true iff no current task. Does not take into consideration if the
+<div class="tsd-comment tsd-typography"></div>
+<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">boolean</span></h4><p>true iff no current task. Does not take into consideration if the
 process has ended or should be recycled: see <a href="BatchProcess.html#ready" class="tsd-kind-accessor">ready</a>.</p>
-</div>
-<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">boolean</span></h4><aside class="tsd-sources">
+<aside class="tsd-sources">
 <ul>
 <li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/main/src/BatchProcess.ts#L225">BatchProcess.ts:225</a></li></ul></aside></li></ul></section>
 <section class="tsd-panel tsd-member"><a id="idleMs" class="tsd-anchor"></a>
@@ -217,11 +212,10 @@ process has ended or should be recycled: see <a href="BatchProcess.html#ready" c
 <ul class="tsd-signatures">
 <li class="tsd-signature" id="ready.ready-1"><span class="tsd-signature-symbol">get</span> ready<span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">boolean</span></li>
 <li class="tsd-description">
-<div class="tsd-comment tsd-typography">
-<h3>Returns</h3><p>true iff this process is  both healthy and idle, and ready for a
+<div class="tsd-comment tsd-typography"></div>
+<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">boolean</span></h4><p>true iff this process is  both healthy and idle, and ready for a
 new task.</p>
-</div>
-<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">boolean</span></h4><aside class="tsd-sources">
+<aside class="tsd-sources">
 <ul>
 <li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/main/src/BatchProcess.ts#L241">BatchProcess.ts:241</a></li></ul></aside></li></ul></section>
 <section class="tsd-panel tsd-member"><a id="starting" class="tsd-anchor"></a>
@@ -245,13 +239,12 @@ new task.</p>
 <ul class="tsd-signatures">
 <li class="tsd-signature" id="whyNotHealthy.whyNotHealthy-1"><span class="tsd-signature-symbol">get</span> whyNotHealthy<span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">null</span><span class="tsd-signature-symbol"> | </span><a href="../types/WhyNotHealthy.html" class="tsd-signature-type tsd-kind-type-alias">WhyNotHealthy</a></li>
 <li class="tsd-description">
-<div class="tsd-comment tsd-typography">
-<h3>Returns</h3><p>a string describing why this process should be recycled, or null if
+<div class="tsd-comment tsd-typography"></div>
+<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">null</span><span class="tsd-signature-symbol"> | </span><a href="../types/WhyNotHealthy.html" class="tsd-signature-type tsd-kind-type-alias">WhyNotHealthy</a></h4><p>a string describing why this process should be recycled, or null if
 the process passes all health checks. Note that this doesn&#39;t include if
 we&#39;re already busy: see <a href="BatchProcess.html#whyNotReady" class="tsd-kind-accessor">whyNotReady</a> if you need to
 know if a process can handle a new task.</p>
-</div>
-<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">null</span><span class="tsd-signature-symbol"> | </span><a href="../types/WhyNotHealthy.html" class="tsd-signature-type tsd-kind-type-alias">WhyNotHealthy</a></h4><aside class="tsd-sources">
+<aside class="tsd-sources">
 <ul>
 <li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/main/src/BatchProcess.ts#L174">BatchProcess.ts:174</a></li></ul></aside></li></ul></section>
 <section class="tsd-panel tsd-member"><a id="whyNotReady" class="tsd-anchor"></a>
@@ -259,11 +252,10 @@ know if a process can handle a new task.</p>
 <ul class="tsd-signatures">
 <li class="tsd-signature" id="whyNotReady.whyNotReady-1"><span class="tsd-signature-symbol">get</span> whyNotReady<span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">null</span><span class="tsd-signature-symbol"> | </span><a href="../types/WhyNotReady.html" class="tsd-signature-type tsd-kind-type-alias">WhyNotReady</a></li>
 <li class="tsd-description">
-<div class="tsd-comment tsd-typography">
-<h3>Returns</h3><p>a string describing why this process cannot currently handle a new
+<div class="tsd-comment tsd-typography"></div>
+<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">null</span><span class="tsd-signature-symbol"> | </span><a href="../types/WhyNotReady.html" class="tsd-signature-type tsd-kind-type-alias">WhyNotReady</a></h4><p>a string describing why this process cannot currently handle a new
 task, or <code>undefined</code> if this process is idle and healthy.</p>
-</div>
-<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">null</span><span class="tsd-signature-symbol"> | </span><a href="../types/WhyNotReady.html" class="tsd-signature-type tsd-kind-type-alias">WhyNotReady</a></h4><aside class="tsd-sources">
+<aside class="tsd-sources">
 <ul>
 <li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/main/src/BatchProcess.ts#L233">BatchProcess.ts:233</a></li></ul></aside></li></ul></section></section>
 <section class="tsd-panel-group tsd-member-group">
@@ -274,10 +266,6 @@ task, or <code>undefined</code> if this process is idle and healthy.</p>
 <li class="tsd-signature tsd-anchor-link" id="end.end-1"><span class="tsd-kind-call-signature">end</span><span class="tsd-signature-symbol">(</span><span class="tsd-kind-parameter">gracefully</span><span class="tsd-signature-symbol">?</span>, <span class="tsd-kind-parameter">reason</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type ">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">void</span><span class="tsd-signature-symbol">&gt;</span><a href="#end.end-1" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></li>
 <li class="tsd-description">
 <div class="tsd-comment tsd-typography"><p>End this child process.</p>
-
-<h3>Returns</h3><p>Promise that will be resolved when the process has completed.
-Subsequent calls to end() will ignore the parameters and return the first
-endPromise.</p>
 </div>
 <div class="tsd-parameters">
 <h4 class="tsd-parameters-title">Parameters</h4>
@@ -291,7 +279,10 @@ before shutting down the child process.</p>
 <h5><span class="tsd-kind-parameter">reason</span>: <a href="../types/WhyNotHealthy.html" class="tsd-signature-type tsd-kind-type-alias">WhyNotHealthy</a></h5>
 <div class="tsd-comment tsd-typography"><p>who called end() (used for logging)</p>
 </div></li></ul></div>
-<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type ">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">void</span><span class="tsd-signature-symbol">&gt;</span></h4><aside class="tsd-sources">
+<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type ">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">void</span><span class="tsd-signature-symbol">&gt;</span></h4><p>Promise that will be resolved when the process has completed.
+Subsequent calls to end() will ignore the parameters and return the first
+endPromise.</p>
+<aside class="tsd-sources">
 <ul>
 <li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/main/src/BatchProcess.ts#L387">BatchProcess.ts:387</a></li></ul></aside></li></ul></section>
 <section class="tsd-panel tsd-member"><a id="execTask" class="tsd-anchor"></a>
@@ -328,10 +319,9 @@ before shutting down the child process.</p>
 <ul class="tsd-signatures">
 <li class="tsd-signature tsd-anchor-link" id="running.running-1"><span class="tsd-kind-call-signature">running</span><span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type ">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol">&gt;</span><a href="#running.running-1" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></li>
 <li class="tsd-description">
-<div class="tsd-comment tsd-typography">
-<h3>Returns</h3><p>true if the child process is in the process table</p>
-</div>
-<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type ">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol">&gt;</span></h4><aside class="tsd-sources">
+<div class="tsd-comment tsd-typography"></div>
+<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type ">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol">&gt;</span></h4><p>true if the child process is in the process table</p>
+<aside class="tsd-sources">
 <ul>
 <li>Defined in <a href="https://github.com/photostructure/batch-cluster.js/blob/main/src/BatchProcess.ts#L252">BatchProcess.ts:252</a></li></ul></aside></li></ul></section></section></div>
 <div class="col-sidebar">
