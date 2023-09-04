@@ -3,7 +3,7 @@ export const Timeout = Symbol("timeout")
 
 export async function thenOrTimeout<T>(
   p: Promise<T>,
-  timeoutMs: number
+  timeoutMs: number,
 ): Promise<T | typeof Timeout> {
   return new Promise<T | typeof Timeout>(async (resolve, reject) => {
     let pending = true

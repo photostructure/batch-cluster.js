@@ -79,7 +79,7 @@ export class BatchProcess {
   constructor(
     readonly proc: child_process.ChildProcess,
     readonly opts: InternalBatchProcessOptions,
-    private readonly onIdle: () => void
+    private readonly onIdle: () => void,
   ) {
     this.name = "BatchProcess(" + proc.pid + ")"
     this.#logger = opts.logger
@@ -117,7 +117,7 @@ export class BatchProcess {
     if (!this.execTask(startupTask)) {
       this.opts.observer.emit(
         "internalError",
-        new Error(this.name + " startup task was not submitted")
+        new Error(this.name + " startup task was not submitted"),
       )
     }
     // this needs to be at the end of the constructor, to ensure everything is
@@ -317,7 +317,7 @@ export class BatchProcess {
       // should not be counted against the task.
       this.#currentTaskTimeout = timers.setTimeout(
         () => this.#onTimeout(task, taskTimeoutMs),
-        taskTimeoutMs + this.opts.streamFlushMillis
+        taskTimeoutMs + this.opts.streamFlushMillis,
       )
     }
     // CAREFUL! If you add a .catch or .finally, the pipeline can emit unhandled
@@ -349,7 +349,7 @@ export class BatchProcess {
 
         // Call _after_ we've cleared the current task:
         this.onIdle()
-      }
+      },
     )
 
     try {
@@ -386,7 +386,7 @@ export class BatchProcess {
   // NOT ASYNC! needs to change state immediately.
   end(gracefully = true, reason: WhyNotHealthy): Promise<void> {
     return (this.#endPromise ??= new Deferred<void>().observe(
-      this.#end(gracefully, (this.#whyNotHealthy ??= reason))
+      this.#end(gracefully, (this.#whyNotHealthy ??= reason)),
     )).promise
   }
 
@@ -419,8 +419,8 @@ export class BatchProcess {
             `end() called before task completed (${JSON.stringify({
               gracefully,
               lastTask,
-            })})`
-          )
+            })})`,
+          ),
         )
       }
     }
@@ -456,7 +456,7 @@ export class BatchProcess {
       (await this.running())
     ) {
       this.#logger().warn(
-        this.name + ".end(): force-killing still-running child."
+        this.name + ".end(): force-killing still-running child.",
       )
       await kill(this.proc.pid, true)
     }
@@ -484,7 +484,7 @@ export class BatchProcess {
           reason,
           error,
           task,
-        }
+        },
       )
       return
     }
@@ -509,7 +509,7 @@ export class BatchProcess {
 
     if (task != null && this.taskCount === 1) {
       this.#logger().warn(
-        this.name + ".onError(): startup task failed: " + cleanedError
+        this.name + ".onError(): startup task failed: " + cleanedError,
       )
       this.opts.observer.emit("startError", cleanedError)
     }
@@ -521,8 +521,8 @@ export class BatchProcess {
         this.opts.observer.emit(
           "internalError",
           new Error(
-            `${this.name}.onError(${cleanedError}) cannot reject already-fulfilled task.`
-          )
+            `${this.name}.onError(${cleanedError}) cannot reject already-fulfilled task.`,
+          ),
         )
       }
     }

@@ -25,7 +25,7 @@ import { Parser } from "./Parser"
 import { Rate } from "./Rate"
 import { toS } from "./String"
 import { Task } from "./Task"
-import { thenOrTimeout, Timeout } from "./Timeout"
+import { Timeout, thenOrTimeout } from "./Timeout"
 
 export { BatchClusterOptions } from "./BatchClusterOptions"
 export { BatchProcess } from "./BatchProcess"
@@ -36,12 +36,12 @@ export { kill, pidExists, pids } from "./Pids"
 export { Rate } from "./Rate"
 export { Task } from "./Task"
 export type {
-  TypedEventEmitter,
   BatchClusterEmitter,
   BatchClusterEvents,
   BatchProcessOptions,
   ChildEndReason as ChildExitReason,
   Parser,
+  TypedEventEmitter,
   WhyNotHealthy,
   WhyNotReady,
 }
@@ -94,7 +94,7 @@ export class BatchCluster {
   constructor(
     opts: Partial<BatchClusterOptions> &
       BatchProcessOptions &
-      ChildProcessFactory
+      ChildProcessFactory,
   ) {
     this.options = verifyOptions({ ...opts, observer: this.emitter })
 
@@ -117,7 +117,7 @@ export class BatchCluster {
           stdout: toS(stdout),
           stderr: toS(stderr),
           proc_pid: proc?.pid,
-        }
+        },
       )
       this.#internalErrorCount++
     })
@@ -136,8 +136,8 @@ export class BatchCluster {
             error +
               "(start errors/min: " +
               this.#startErrorRate.eventsPerMinute.toFixed(2) +
-              ")"
-          )
+              ")",
+          ),
         )
         this.end()
       } else {
@@ -148,7 +148,7 @@ export class BatchCluster {
     if (this.options.onIdleIntervalMillis > 0) {
       this.#onIdleInterval = timers.setInterval(
         () => this.#onIdleLater(),
-        this.options.onIdleIntervalMillis
+        this.options.onIdleIntervalMillis,
       )
       this.#onIdleInterval.unref() // < don't prevent node from exiting
     }
@@ -194,7 +194,7 @@ export class BatchCluster {
       this.#endPromise = new Deferred<void>().observe(
         this.closeChildProcesses(gracefully).then(() => {
           this.emitter.emit("end")
-        })
+        }),
       )
     }
 
@@ -210,7 +210,7 @@ export class BatchCluster {
   enqueueTask<T>(task: Task<T>): Promise<T> {
     if (this.ended) {
       task.reject(
-        new Error("BatchCluster has ended, cannot enqueue " + task.command)
+        new Error("BatchCluster has ended, cannot enqueue " + task.command),
       )
     }
     this.#tasks.push(task)
@@ -267,7 +267,7 @@ export class BatchCluster {
     return count(
       this.#procs,
       // don't count procs that are starting up as "busy":
-      (ea) => !ea.starting && !ea.ending && !ea.idle
+      (ea) => !ea.starting && !ea.ending && !ea.idle,
     )
   }
 
@@ -275,7 +275,7 @@ export class BatchCluster {
     return count(
       this.#procs,
       // don't count procs that are starting up as "busy":
-      (ea) => ea.starting && !ea.ending
+      (ea) => ea.starting && !ea.ending,
     )
   }
 
@@ -359,8 +359,8 @@ export class BatchCluster {
       procs.map((proc) =>
         proc
           .end(gracefully, "ending")
-          .catch((err) => this.emitter.emit("endError", asError(err), proc))
-      )
+          .catch((err) => this.emitter.emit("endError", asError(err), proc)),
+      ),
     )
   }
 
@@ -515,7 +515,7 @@ export class BatchCluster {
         const proc = this.#spawnNewProc()
         const result = await thenOrTimeout(
           proc,
-          this.options.spawnTimeoutMillis
+          this.options.spawnTimeoutMillis,
         )
         if (result === Timeout) {
           void proc
@@ -526,9 +526,9 @@ export class BatchCluster {
                 asError(
                   "Failed to spawn process in " +
                     this.options.spawnTimeoutMillis +
-                    "ms"
+                    "ms",
                 ),
-                bp
+                bp,
               )
             })
             .catch((err) => {
@@ -539,7 +539,7 @@ export class BatchCluster {
         } else {
           this.#logger().debug(
             "BatchCluster.#maybeSpawnProcs() started healthy child process",
-            { pid: result.pid }
+            { pid: result.pid },
           )
         }
 

@@ -11,15 +11,15 @@ export type ChildEndReason = WhyNotHealthy | "tooMany"
 export interface TypedEventEmitter<T> {
   once<E extends keyof T>(
     eventName: E,
-    listener: (...args: Args<T[E]>) => void
+    listener: (...args: Args<T[E]>) => void,
   ): this
   on<E extends keyof T>(
     eventName: E,
-    listener: (...args: Args<T[E]>) => void
+    listener: (...args: Args<T[E]>) => void,
   ): this
   off<E extends keyof T>(
     eventName: E,
-    listener: (...args: Args<T[E]>) => void
+    listener: (...args: Args<T[E]>) => void,
   ): this
   emit<E extends keyof T>(eventName: E, ...args: Args<T[E]>): boolean
 
@@ -71,7 +71,7 @@ export interface BatchClusterEvents {
   taskData: (
     data: Buffer | string,
     task: Task | undefined,
-    proc: BatchProcess
+    proc: BatchProcess,
   ) => void
 
   /**
@@ -96,7 +96,7 @@ export interface BatchClusterEvents {
   noTaskData: (
     stdoutData: string | Buffer | null,
     stderrData: string | Buffer | null,
-    proc: BatchProcess
+    proc: BatchProcess,
   ) => void
 
   /**

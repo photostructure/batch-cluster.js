@@ -20,7 +20,7 @@ export function filterInPlace<T>(arr: T[], filter: (t: T) => boolean): T[] {
 
 export function count<T>(
   arr: T[],
-  predicate: (t: T, idx: number) => boolean
+  predicate: (t: T, idx: number) => boolean,
 ): number {
   let acc = 0
   for (let idx = 0; idx < arr.length; idx++) {

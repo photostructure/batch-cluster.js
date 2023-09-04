@@ -109,9 +109,9 @@ export const Log = {
           map(message, (ea) =>
             delegate[level](
               new Date().toISOString() + " | " + ea,
-              ...optionalParams
-            )
-          ))
+              ...optionalParams,
+            ),
+          )),
     )
     return timestamped
   },
@@ -121,7 +121,7 @@ export const Log = {
     const filtered: any = {}
     LogLevels.forEach(
       (ea, idx) =>
-        (filtered[ea] = idx < minLogLevelIndex ? noop : l[ea].bind(l))
+        (filtered[ea] = idx < minLogLevelIndex ? noop : l[ea].bind(l)),
     )
     return filtered
   },

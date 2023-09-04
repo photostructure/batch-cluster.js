@@ -40,7 +40,7 @@ function arrayEqualish<T>(a: T[], b: T[], maxAcceptableDiffs: number) {
           maxAcceptableDiffs,
           minLength,
           common_length: common.length,
-        })
+        }),
     )
   }
 }
@@ -53,12 +53,12 @@ describe("BatchCluster", function () {
   function runTasks(
     bc: BatchCluster,
     iterations: number,
-    start = 0
+    start = 0,
   ): Promise<string>[] {
     return times(iterations, (i) =>
       bc
         .enqueueTask(new Task("upcase abc " + (i + start), parser))
-        .catch((err) => ErrorPrefix + err)
+        .catch((err) => ErrorPrefix + err),
     )
   }
 
@@ -82,7 +82,7 @@ describe("BatchCluster", function () {
 
   function assertExpectedResults(results: string[]) {
     const dataResults = flatten(
-      events.taskData.map((ea) => ea.data.split(/[\n\r]+/))
+      events.taskData.map((ea) => ea.data.split(/[\n\r]+/)),
     )
 
     results.forEach((result, index) => {
@@ -104,8 +104,8 @@ describe("BatchCluster", function () {
       expect(ea).to.be.within(
         0,
         5000,
-        JSON.stringify({ runtimeMs: events.runtimeMs })
-      )
+        JSON.stringify({ runtimeMs: events.runtimeMs }),
+      ),
     )
   }
 
@@ -146,11 +146,11 @@ describe("BatchCluster", function () {
     // Mac CI can be extremely slow to shut down:
     const endOrTimeout = await thenOrTimeout(
       endPromise.promise.then(() => true),
-      ShutdownTimeoutMs
+      ShutdownTimeoutMs,
     )
     const shutdownOrTimeout = await thenOrTimeout(
       until(checkShutdown, ShutdownTimeoutMs, 1000),
-      ShutdownTimeoutMs
+      ShutdownTimeoutMs,
     )
     expect(endOrTimeout).to.eql(true, ".end() failed")
     expect(shutdownOrTimeout).to.eql(true, ".checkShutdown() failed")
@@ -163,13 +163,13 @@ describe("BatchCluster", function () {
         internalErrorCount: bc.internalErrorCount,
         internalErrors,
         noTaskData: events.noTaskData,
-      })
+      }),
     )
     expect(internalErrors).to.eql([], "no expected internal errors")
     expect(events.noTaskData).to.eql(
       [],
       "no expected noTaskData events, but got " +
-        JSON.stringify(events.noTaskData)
+        JSON.stringify(events.noTaskData),
     )
     return
   }
@@ -177,7 +177,7 @@ describe("BatchCluster", function () {
   function listen(bc: BatchCluster) {
     // This is a typings verification, too:
     bc.on("childStart", (cp) =>
-      map(cp.pid, (ea) => events.startedPids.push(ea))
+      map(cp.pid, (ea) => events.startedPids.push(ea)),
     )
     bc.on("childEnd", (cp) => map(cp.pid, (ea) => events.exitedPids.push(ea)))
     bc.on("startError", (err) => events.startErrors.push(err))
@@ -199,7 +199,7 @@ describe("BatchCluster", function () {
       events.taskData.push({
         cmd: task?.command,
         data: toS(data),
-      })
+      }),
     )
 
     bc.on("taskResolved", (task: Task) => {
@@ -306,16 +306,16 @@ describe("BatchCluster", function () {
                             // DefaultTestOptions.taskTimeoutMillis (250), because we don't
                             // want timeouts. CI failed when this was 100.
                             "sleep 25",
-                            parser
-                          )
-                        )
+                            parser,
+                          ),
+                        ),
                       )) {
                         try {
                           const result = await p
                           const { pid } = JSON.parse(result)
                           if (isNaN(pid)) {
                             throw new Error(
-                              "invalid output: " + JSON.stringify(result)
+                              "invalid output: " + JSON.stringify(result),
                             )
                           } else {
                             pidSet.add(pid)
@@ -331,17 +331,17 @@ describe("BatchCluster", function () {
 
                     expect(pids.length).to.be.gt(
                       2,
-                      "expected more than a couple child processes"
+                      "expected more than a couple child processes",
                     )
                     expect(pids.every((ea) => process.pid !== ea)).to.eql(
                       true,
                       "no child pids, " +
                         pids.join(", ") +
                         ", should match this process pid, " +
-                        process.pid
+                        process.pid,
                     )
                     expect(
-                      errors.filter((ea) => !String(ea).includes("EUNLUCKY"))
+                      errors.filter((ea) => !String(ea).includes("EUNLUCKY")),
                     ).to.eql([], "Unexpected errors")
                   })
                 }
@@ -373,7 +373,7 @@ describe("BatchCluster", function () {
                   console.log(bc.stats())
                   expect(bc.spawnedProcCount).to.be.within(
                     maxProcs,
-                    (iterations + maxProcs) * 3 // because flaky
+                    (iterations + maxProcs) * 3, // because flaky
                   )
                   const pids = testPids()
                   expect(pids.length).to.be.gte(maxProcs)
@@ -398,12 +398,12 @@ describe("BatchCluster", function () {
                     expectedResultCount += maxProcs
                     const pids = await bc.pids()
                     const iters = Math.floor(
-                      maxProcs * opts.maxTasksPerProcess * 1.5
+                      maxProcs * opts.maxTasksPerProcess * 1.5,
                     )
                     results.push(
                       ...(await Promise.all(
-                        runTasks(bc, iters, expectedResultCount)
-                      ))
+                        runTasks(bc, iters, expectedResultCount),
+                      )),
                     )
                     console.log(bc.stats())
 
@@ -413,7 +413,7 @@ describe("BatchCluster", function () {
 
                     // expect some errors:
                     const errorResults = results.filter((ea) =>
-                      ea.startsWith(ErrorPrefix)
+                      ea.startsWith(ErrorPrefix),
                     )
                     expect(errorResults).to.not.eql([])
 
@@ -424,7 +424,7 @@ describe("BatchCluster", function () {
 
                     expect(bc.spawnedProcCount).to.be.within(
                       results.length / opts.maxTasksPerProcess,
-                      results.length * (isWin ? 10 : 5) // because flaky
+                      results.length * (isWin ? 10 : 5), // because flaky
                     )
 
                     // So, at this point, we should have at least _asked_ the
@@ -441,11 +441,11 @@ describe("BatchCluster", function () {
 
                     expect(bc.meanTasksPerProc).to.be.within(
                       0.25, // because flaky
-                      opts.maxTasksPerProcess
+                      opts.maxTasksPerProcess,
                     )
                     expect((await bc.pids()).length).to.be.lte(maxProcs)
                     expect((await currentTestPids()).length).to.be.lte(
-                      bc.spawnedProcCount
+                      bc.spawnedProcCount,
                     ) // because flaky
 
                     const unhealthy = bc.countEndedChildProcs("unhealthy")
@@ -461,24 +461,24 @@ describe("BatchCluster", function () {
 
                     await shutdown(bc)
                     // (no run count assertions)
-                  }
+                  },
                 )
 
                 it("recovers from invalid commands", async function () {
                   this.slow(1)
                   assertExpectedResults(
-                    await Promise.all(runTasks(bc, maxProcs * 4))
+                    await Promise.all(runTasks(bc, maxProcs * 4)),
                   )
                   const errorResults = await Promise.all(
                     times(maxProcs * 2, () =>
                       bc
                         .enqueueTask(new Task("nonsense", parser))
-                        .catch((err) => err)
-                    )
+                        .catch((err) => err),
+                    ),
                   )
                   filterInPlace(
                     errorResults,
-                    (ea) => ea != null && !String(ea).includes("EUNLUCKY")
+                    (ea) => ea != null && !String(ea).includes("EUNLUCKY"),
                   )
                   if (
                     maxProcs === 1 &&
@@ -491,16 +491,18 @@ describe("BatchCluster", function () {
                     return this.skip()
                   } else {
                     expect(
-                      errorResults.some((ea) => String(ea).includes("nonsense"))
+                      errorResults.some((ea) =>
+                        String(ea).includes("nonsense"),
+                      ),
                     ).to.eql(true, JSON.stringify(errorResults))
                     expect(
-                      parserErrors.some((ea) => ea.includes("nonsense"))
+                      parserErrors.some((ea) => ea.includes("nonsense")),
                     ).to.eql(true, JSON.stringify(parserErrors))
                   }
                   parserErrors.length = 0
                   // BC should recover:
                   assertExpectedResults(
-                    await Promise.all(runTasks(bc, maxProcs * 4))
+                    await Promise.all(runTasks(bc, maxProcs * 4)),
                   )
                   // (no run count assertions)
                   return
@@ -509,10 +511,10 @@ describe("BatchCluster", function () {
                 it("times out slow requests", async () => {
                   const task = new Task(
                     "sleep " + (opts.taskTimeoutMillis + 250), // < make sure it times out
-                    parser
+                    parser,
                   )
                   await expect(
-                    bc.enqueueTask(task)
+                    bc.enqueueTask(task),
                   ).to.eventually.be.rejectedWith(/timeout|EUNLUCKY/)
                   postAssertions()
                 })
@@ -530,13 +532,13 @@ describe("BatchCluster", function () {
                       // Make a distribution of single, double, and triple line outputs:
                       const worlds = times(idx % 3, (ea) => "world " + ea)
                       expected.push(
-                        [idx + " HELLO", ...worlds].join("\n").toUpperCase()
+                        [idx + " HELLO", ...worlds].join("\n").toUpperCase(),
                       )
                       const cmd = ["upcase " + idx + " hello", ...worlds].join(
-                        "<br>"
+                        "<br>",
                       )
                       return bc.enqueueTask(new Task(cmd, parser))
-                    })
+                    }),
                   )
                   expect(results).to.eql(expected)
 
@@ -554,7 +556,7 @@ describe("BatchCluster", function () {
                   }
                   expect(String(error)).to.match(
                     /invalid command|UNLUCKY/,
-                    result
+                    result,
                   )
                   postAssertions()
                 })
@@ -570,11 +572,11 @@ describe("BatchCluster", function () {
                   }
                   expect(String(error)).to.match(
                     /omg this should fail|UNLUCKY/,
-                    result
+                    result,
                   )
                   postAssertions()
                 })
-              }
+              },
             )
           }
         }
@@ -631,7 +633,7 @@ describe("BatchCluster", function () {
             const result = JSON.parse(await resultP)
             const end = Date.now()
             return { i, start, end, ...result }
-          })
+          }),
         )
         const pid2count = new Map<number, number>()
         tasks.forEach((ea) => {
@@ -677,7 +679,7 @@ describe("BatchCluster", function () {
       const firstBatchPromises: Promise<string>[] = []
       while (bc.busyProcCount < maxProcs) {
         firstBatchPromises.push(
-          bc.enqueueTask(new Task("sleep " + sleepTimeMs, parser))
+          bc.enqueueTask(new Task("sleep " + sleepTimeMs, parser)),
         )
         await delay(25)
       }
@@ -688,7 +690,7 @@ describe("BatchCluster", function () {
       bc.setMaxProcs(maxProcs2)
 
       const secondBatchPromises = times(maxProcs, () =>
-        bc.enqueueTask(new Task("sleep " + sleepTimeMs, parser))
+        bc.enqueueTask(new Task("sleep " + sleepTimeMs, parser)),
       )
       await Promise.all(firstBatchPromises)
       bc.vacuumProcs()
@@ -820,15 +822,15 @@ describe("BatchCluster", function () {
           new BatchCluster({
             ...opts,
             processFactory,
-          })
-        ))
+          }),
+        )),
     )
 
     afterEach(() => shutdown(bc))
 
     it("culls old child procs", async () => {
       assertExpectedResults(
-        await Promise.all(runTasks(bc, opts.maxProcs + 100))
+        await Promise.all(runTasks(bc, opts.maxProcs + 100)),
       )
       // 0 because we might get unlucky.
       expect((await bc.pids()).length).to.be.within(0, opts.maxProcs)
@@ -863,8 +865,8 @@ describe("BatchCluster", function () {
           new BatchCluster({
             ...opts,
             processFactory,
-          })
-        ))
+          }),
+        )),
     )
 
     afterEach(() => shutdown(bc))
@@ -934,7 +936,7 @@ describe("BatchCluster", function () {
             maxProcAgeMillis,
             spawnTimeoutMillis: Math.max(maxProcAgeMillis, 200),
             processFactory,
-          })
+          }),
         )
         assertExpectedResults(await Promise.all(runTasks(bc, 2)))
         const pidsBefore = await bc.pids()

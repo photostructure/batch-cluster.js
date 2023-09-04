@@ -3,7 +3,10 @@ export class Mean {
   private _min?: number = undefined
   private _max?: number = undefined
 
-  constructor(n = 0, private sum = 0) {
+  constructor(
+    n = 0,
+    private sum = 0,
+  ) {
     this._n = n
   }
 

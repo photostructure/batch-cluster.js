@@ -14,7 +14,9 @@ const newline = process.env.newline === "crlf" ? "\r\n" : "\n"
 
 async function write(s: string) {
   return new Promise<void>((res, rej) =>
-    process.stdout.write(s + newline, (err) => (err == null ? res() : rej(err)))
+    process.stdout.write(s + newline, (err) =>
+      err == null ? res() : rej(err),
+    ),
   )
 }
 
@@ -52,7 +54,7 @@ async function onLine(line: string): Promise<void> {
         ", failrate: " +
         failrate.toFixed(2) +
         ", seed: " +
-        process.env.rngseed
+        process.env.rngseed,
     )
     if (process.env.unluckyfail === "1") {
       // Wait for a bit to ensure streams get merged thanks to streamFlushMillis:
@@ -81,7 +83,7 @@ async function onLine(line: string): Promise<void> {
             flakeRate.toFixed(2) +
             // Extra information is used for context:
             (tokens.length > 0 ? ", " + tokens.join(" ") : "") +
-            ")"
+            ")",
         )
         if (r < flakeRate) {
           write("FAIL")

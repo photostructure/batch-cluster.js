@@ -31,12 +31,15 @@ export class Task<T = any> {
    * @param {Parser<T>} parser is used to parse resulting data from the
    * underlying process to a typed object.
    */
-  constructor(readonly command: string, readonly parser: Parser<T>) {
+  constructor(
+    readonly command: string,
+    readonly parser: Parser<T>,
+  ) {
     // We can't use .finally here, because that creates a promise chain that, if
     // rejected, results in an uncaught rejection.
     this.#d.promise.then(
       () => this.#onSettle(),
-      () => this.#onSettle()
+      () => this.#onSettle(),
     )
   }
 
@@ -146,7 +149,7 @@ export class Task<T = any> {
       } else {
         this.#opts?.observer.emit(
           "internalError",
-          new Error(this.toString() + " ._resolved() more than once")
+          new Error(this.toString() + " ._resolved() more than once"),
         )
       }
     } catch (error: any) {

@@ -203,7 +203,7 @@ export function verifyOptions(
   opts: Partial<BatchClusterOptions> &
     BatchProcessOptions &
     ChildProcessFactory &
-    WithObserver
+    WithObserver,
 ): AllOpts {
   const result = {
     ...new BatchClusterOptions(),
@@ -228,7 +228,7 @@ export function verifyOptions(
         fieldName +
           " must be greater than or equal to " +
           value +
-          (why == null ? "" : ": " + why)
+          (why == null ? "" : ": " + why),
       )
     }
   }
@@ -247,7 +247,7 @@ export function verifyOptions(
     gte(
       "maxProcAgeMillis",
       Math.max(result.spawnTimeoutMillis, result.taskTimeoutMillis),
-      `must be greater than the max value of spawnTimeoutMillis (${result.spawnTimeoutMillis}) and taskTimeoutMillis (${result.taskTimeoutMillis})`
+      `must be greater than the max value of spawnTimeoutMillis (${result.spawnTimeoutMillis}) and taskTimeoutMillis (${result.taskTimeoutMillis})`,
     )
   }
   // 0 disables:
@@ -260,7 +260,7 @@ export function verifyOptions(
 
   if (errors.length > 0) {
     throw new Error(
-      "BatchCluster was given invalid options: " + errors.join("; ")
+      "BatchCluster was given invalid options: " + errors.join("; "),
     )
   }
 

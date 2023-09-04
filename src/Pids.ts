@@ -70,9 +70,9 @@ export function pids(): Promise<number[]> {
               .split(/[\n\r]+/)
               .map((ea) => ea.match(isWin ? winRe : posixRe))
               .map((m) => map(m?.[0], parseInt))
-              .filter((ea) => ea != null) as number[]
+              .filter((ea) => ea != null) as number[],
           )
-      }
+      },
     )
   })
 }

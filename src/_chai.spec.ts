@@ -34,10 +34,10 @@ setLogger(
           error: console.error,
           // tslint:enable: no-unbound-method
         },
-        (process.env.LOG as any) ?? "error"
-      )
-    )
-  )
+        (process.env.LOG as any) ?? "error",
+      ),
+    ),
+  ),
 )
 
 export const parserErrors: string[] = []
@@ -56,7 +56,7 @@ afterEach(() => expect(unhandledRejections).to.eql([]))
 export const parser: Parser<string> = (
   stdout: string,
   stderr: string | undefined,
-  passed: boolean
+  passed: boolean,
 ) => {
   if (stderr != null) {
     parserErrors.push(stderr)
@@ -92,7 +92,7 @@ export function times<T>(n: number, f: (idx: number) => T): T[] {
 type WithinTolerance = (
   expected: number,
   tol: number | number[],
-  message?: string
+  message?: string,
 ) => Chai.Assertion
 
 // eslint-disable-next-line @typescript-eslint/no-namespace
@@ -120,7 +120,7 @@ export function sortNumeric(arr: number[]): number[] {
 
 export function flatten<T>(arr: (T | T[])[], result: T[] = []): T[] {
   arr.forEach((ea) =>
-    Array.isArray(ea) ? result.push(...ea) : result.push(ea)
+    Array.isArray(ea) ? result.push(...ea) : result.push(ea),
   )
   return result
 }
@@ -197,7 +197,7 @@ export const processFactory = () => {
         ignoreExit,
         unluckyfail,
       },
-    }
+    },
   )
   procs.push(proc)
   return proc

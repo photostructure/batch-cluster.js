@@ -27,7 +27,7 @@ export interface Parser<T> {
 export const SimpleParser: Parser<string> = (
   stdout: string,
   stderr: string | undefined,
-  passed: boolean
+  passed: boolean,
 ) => {
   if (!passed) throw new Error("task failed")
   if (notBlank(stderr)) throw new Error(stderr)

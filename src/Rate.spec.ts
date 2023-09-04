@@ -48,7 +48,7 @@ describe("Rate", () => {
         tk.freeze(now + r.periodMs)
         expectRate(r, 0)
         expect(r.msSinceLastEvent).to.eql(minuteMs)
-      }
+      },
     )
   }
 
@@ -70,7 +70,7 @@ describe("Rate", () => {
         expectRate(r, 0.25 * (events / period), 0.3)
         tk.freeze(now + 2 * r.periodMs)
         expectRate(r, 0)
-      }
+      },
     )
   }
 })

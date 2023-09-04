@@ -23,7 +23,10 @@ export class Rate {
    * @param warmupMs return `null` from {@link #msPerEvent} if it's been less
    * than `warmupMs` since construction or {@link #clear}.
    */
-  constructor(readonly periodMs = minuteMs, readonly warmupMs = secondMs) {}
+  constructor(
+    readonly periodMs = minuteMs,
+    readonly warmupMs = secondMs,
+  ) {}
 
   onEvent(): void {
     this.#eventCount++
@@ -35,7 +38,7 @@ export class Rate {
   #vacuum() {
     const expired = Date.now() - this.periodMs
     const firstValidIndex = this.#priorEventTimestamps.findIndex(
-      (ea) => ea > expired
+      (ea) => ea > expired,
     )
     if (firstValidIndex === -1) this.#priorEventTimestamps.length = 0
     else if (firstValidIndex > 0) {

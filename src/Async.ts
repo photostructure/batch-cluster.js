@@ -14,7 +14,7 @@ export function delay(millis: number, unref = false): Promise<void> {
 export async function until(
   f: (count: number) => boolean | Promise<boolean>,
   timeoutMs: number,
-  delayMs = 50
+  delayMs = 50,
 ): Promise<boolean> {
   const timeoutAt = Date.now() + timeoutMs
   let count = 0
@@ -36,7 +36,7 @@ export async function until(
  */
 export function ratelimit<T>(
   f: () => T,
-  minDelayMs: number
+  minDelayMs: number,
 ): () => T | undefined {
   let next = 0
   return (force?: boolean) => {

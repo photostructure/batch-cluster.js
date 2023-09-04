@@ -66,7 +66,7 @@ describe("test.js", () => {
   it("results in expected output", async () => {
     const h = new Harness()
     const a = h.assertStdout((ea) =>
-      expect(ea).to.eql("HELLO\nPASS\nworld\nPASS\nFAIL\nv1.2.3\nPASS")
+      expect(ea).to.eql("HELLO\nPASS\nworld\nPASS\nFAIL\nv1.2.3\nPASS"),
     )
     h.child.stdin!.end("upcase Hello\ndowncase World\ninvalid input\nversion\n")
     return a
@@ -162,8 +162,8 @@ describe("test.js", () => {
           "PASS",
           "flaky response (FAIL, r: 0.55, flakeRate: 1.00)",
           "FAIL",
-        ].join("\n")
-      )
+        ].join("\n"),
+      ),
     )
     h.child.stdin!.end("flaky .5\nflaky 0\nflaky 1\nexit\n")
     return a
