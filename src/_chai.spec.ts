@@ -5,9 +5,9 @@ try {
 }
 
 import { expect, use } from "chai"
-import child_process from "child_process"
-import path from "path"
-import process from "process"
+import child_process from "node:child_process"
+import path from "node:path"
+import process from "node:process"
 import { Log, logger, setLogger } from "./Logger"
 import { Parser } from "./Parser"
 import { pids } from "./Pids"

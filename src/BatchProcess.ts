@@ -1,5 +1,5 @@
-import child_process from "child_process"
-import timers from "timers"
+import child_process from "node:child_process"
+import timers from "node:timers"
 import { until } from "./Async"
 import { Deferred } from "./Deferred"
 import { cleanError, tryEach } from "./Error"
@@ -68,7 +68,7 @@ export class BatchProcess {
    * Should be undefined if this instance is not currently processing a task.
    */
   #currentTask: Task | undefined
-  #currentTaskTimeout: NodeJS.Timer | undefined
+  #currentTaskTimeout: NodeJS.Timeout | undefined
 
   #endPromise: undefined | Deferred<void>
 

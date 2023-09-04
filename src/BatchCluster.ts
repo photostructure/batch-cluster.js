@@ -1,7 +1,7 @@
-import child_process from "child_process"
-import events from "events"
-import process from "process"
-import timers from "timers"
+import child_process from "node:child_process"
+import events from "node:events"
+import process from "node:process"
+import timers from "node:timers"
 import { count, filterInPlace } from "./Array"
 import {
   BatchClusterEmitter,
@@ -83,7 +83,7 @@ export class BatchCluster {
   #nextSpawnTime = 0
   #lastPidsCheckTime = 0
   readonly #tasks: Task[] = []
-  #onIdleInterval: NodeJS.Timer | undefined
+  #onIdleInterval: NodeJS.Timeout | undefined
   readonly #startErrorRate = new Rate()
   #spawnedProcs = 0
   #endPromise?: Deferred<void>

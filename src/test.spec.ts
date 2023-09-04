@@ -1,4 +1,4 @@
-import child_process from "child_process"
+import child_process from "node:child_process"
 import { until } from "./Async"
 import { Deferred } from "./Deferred"
 import { kill, pidExists } from "./Pids"

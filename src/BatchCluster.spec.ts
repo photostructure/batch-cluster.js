@@ -1,4 +1,4 @@
-import process from "process"
+import process from "node:process"
 import { filterInPlace } from "./Array"
 import { delay, until } from "./Async"
 import { BatchCluster } from "./BatchCluster"

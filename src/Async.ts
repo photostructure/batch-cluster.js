@@ -1,4 +1,4 @@
-import timers from "timers"
+import timers from "node:timers"
 
 export function delay(millis: number, unref = false): Promise<void> {
   return new Promise<void>((resolve) => {

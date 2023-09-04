@@ -1,4 +1,4 @@
-import util from "util"
+import util from "node:util"
 import { map } from "./Object"
 import { notBlank } from "./String"
 

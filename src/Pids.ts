@@ -1,5 +1,5 @@
-import child_process from "child_process"
-import process from "process"
+import child_process from "node:child_process"
+import process from "node:process"
 import { map } from "./Object"
 import { isWin } from "./Platform"
 
