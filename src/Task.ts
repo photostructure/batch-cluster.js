@@ -58,8 +58,8 @@ export class Task<T = any> {
     return this.#d.pending
       ? "pending"
       : this.#d.rejected
-      ? "rejected"
-      : "resolved"
+        ? "rejected"
+        : "resolved"
   }
 
   onStart(opts: TaskOptions) {

@@ -17,8 +17,8 @@ export function orElse<T>(obj: T | undefined, defaultValue: T | (() => T)): T {
   return obj != null
     ? obj
     : isFunction(defaultValue)
-    ? defaultValue()
-    : defaultValue
+      ? defaultValue()
+      : defaultValue
 }
 
 export function fromEntries(arr: [string | undefined, any][]) {
