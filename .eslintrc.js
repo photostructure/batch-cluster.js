@@ -22,6 +22,7 @@ module.exports = {
     ],
     "@typescript-eslint/no-explicit-any": "off",
     "@typescript-eslint/no-var-requires": "off",
+    "@typescript-eslint/await-thenable": ["error"],
     eqeqeq: ["warn", "always", { null: "ignore" }],
     "import/no-cycle": "warn",
     "import/no-unresolved": "off",
