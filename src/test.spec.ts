@@ -118,7 +118,7 @@ describe("test.js", () => {
 
   it("returns a valid pid", async () => {
     const h = new Harness()
-    expect(await pidExists(h.child.pid)).to.eql(true)
+    expect(pidExists(h.child.pid)).to.eql(true)
     await h.end()
     return
   })
