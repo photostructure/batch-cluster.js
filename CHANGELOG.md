@@ -18,6 +18,21 @@ See [Semver](http://semver.org/).
 
 - 📦 Minor packaging changes
 
+## v13.0.0
+
+- 💔 Dropped official support for [Node v16, which is EOL](https://nodejs.org/en/blog/announcements/nodejs16-eol/).
+
+- 💔 Several methods, including BatchCluster#pids() were changed from async to sync (as they were needlessly async).
+
+- 📦 A number of timeout options can now be validly 0 to disable timeouts:
+
+  - `spawnTimeoutMillis`
+  - `taskTimeoutMillis`
+
+- 📦 Added eslint `@typescript-eslint/await-thenable` rule and delinted.
+
+- 📦 Updated development dependencies and rebuilt docs
+
 ## v12.1.0
 
 - 🐞 `pidExists` now handles `EPERM` properly (previous implementation would
