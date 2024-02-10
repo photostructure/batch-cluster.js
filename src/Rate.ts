@@ -20,8 +20,8 @@ export class Rate {
   /**
    * @param periodMs the length of time to retain event timestamps for computing
    * rate. Events older than this value will be discarded.
-   * @param warmupMs return `null` from {@link #msPerEvent} if it's been less
-   * than `warmupMs` since construction or {@link #clear}.
+   * @param warmupMs return `null` from {@link Rate#msPerEvent} if it's been less
+   * than `warmupMs` since construction or {@link Rate#clear}.
    */
   constructor(
     readonly periodMs = minuteMs,
