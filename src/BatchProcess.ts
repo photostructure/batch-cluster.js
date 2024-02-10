@@ -2,13 +2,13 @@ import child_process from "node:child_process"
 import timers from "node:timers"
 import { until } from "./Async"
 import { Deferred } from "./Deferred"
-import { cleanError, tryEach } from "./Error"
+import { cleanError } from "./Error"
 import { InternalBatchProcessOptions } from "./InternalBatchProcessOptions"
 import { Logger } from "./Logger"
 import { map } from "./Object"
 import { SimpleParser } from "./Parser"
 import { kill, pidExists } from "./Pids"
-import { mapNotDestroyed } from "./Stream"
+import { destroy } from "./Stream"
 import { blank, ensureSuffix } from "./String"
 import { Task } from "./Task"
 import { thenOrTimeout } from "./Timeout"
@@ -54,7 +54,6 @@ export class BatchProcess {
   // Only set to true when `proc.pid` is no longer in the process table.
   #starting = true
 
-  // pidExists() returned false
   #exited = false
 
   // override for .whyNotHealthy()
@@ -148,7 +147,7 @@ export class BatchProcess {
   /**
    * @return true if `this.end()` has completed running, which includes child
    * process cleanup. Note that this may return `true` and the process table may
-   * still include the child pid. Call {@link .running()} for an authoritative
+   * still include the child pid. Call {@link BatchProcess#running()} for an authoritative
    * (but expensive!) answer.
    */
   get ended(): boolean {
@@ -158,7 +157,7 @@ export class BatchProcess {
   /**
    * @return true if the child process has exited and is no longer in the
    * process table. Note that this may be erroneously false if the process table
-   * hasn't been checked. Call {@link .running()} for an authoritative (but
+   * hasn't been checked. Call {@link BatchProcess#running()} for an authoritative (but
    * expensive!) answer.
    */
   get exited(): boolean {
@@ -249,10 +248,10 @@ export class BatchProcess {
   /**
    * @return true if the child process is in the process table
    */
-  async running(): Promise<boolean> {
+  running(): boolean {
     if (this.#exited) return false
 
-    const alive = await pidExists(this.pid)
+    const alive = pidExists(this.pid)
     if (!alive) {
       this.#exited = true
       // once a PID leaves the process table, it's gone for good.
@@ -261,8 +260,8 @@ export class BatchProcess {
     return alive
   }
 
-  notRunning(): Promise<boolean> {
-    return this.running().then((ea) => !ea)
+  notRunning(): boolean {
+    return !this.running()
   }
 
   maybeRunHealthcheck(): Task | undefined {
@@ -425,15 +424,35 @@ export class BatchProcess {
       }
     }
 
-    const cmd = map(this.opts.exitCommand, (ea) => ensureSuffix(ea, "\n"))
+    // Ignore EPIPE on .end(): if the process immediately ends after the exit
+    // command, we'll get an EPIPE, so, shush error events *before* we tell the
+    // child process to exit. See https://github.com/nodejs/node/issues/26828
+    for (const ea of [
+      this.proc,
+      this.proc.stdin,
+      this.proc.stdout,
+      this.proc.stderr,
+    ]) {
+      ea?.removeAllListeners("error")
+    }
 
-    // proc cleanup:
-    tryEach([
-      () => mapNotDestroyed(this.proc.stdin, (ea) => ea.end(cmd)),
-      () => mapNotDestroyed(this.proc.stdout, (ea) => ea.destroy()),
-      () => mapNotDestroyed(this.proc.stderr, (ea) => ea.destroy()),
-      () => this.proc.disconnect(),
-    ])
+    if (true === this.proc.stdin?.writable) {
+      const exitCmd =
+        this.opts.exitCommand == null
+          ? null
+          : ensureSuffix(this.opts.exitCommand, "\n")
+      try {
+        this.proc.stdin?.end(exitCmd)
+      } catch {
+        // don't care
+      }
+    }
+
+    // None of this *should* be necessary, but we're trying to be as hygienic as
+    // we can to avoid process zombification.
+    destroy(this.proc.stdin)
+    destroy(this.proc.stdout)
+    destroy(this.proc.stderr)
 
     if (
       this.opts.cleanupChildProcs &&
@@ -441,11 +460,10 @@ export class BatchProcess {
       this.opts.endGracefulWaitTimeMillis > 0 &&
       !this.#exited
     ) {
-      // Wait for the end command to take effect:
+      // Wait for the exit command to take effect:
       await this.#awaitNotRunning(this.opts.endGracefulWaitTimeMillis / 2)
       // If it's still running, send the pid a signal:
-      if ((await this.running()) && this.proc.pid != null)
-        await kill(this.proc.pid)
+      if (this.running() && this.proc.pid != null) this.proc.kill()
       // Wait for the signal handler to work:
       await this.#awaitNotRunning(this.opts.endGracefulWaitTimeMillis / 2)
     }
@@ -453,13 +471,15 @@ export class BatchProcess {
     if (
       this.opts.cleanupChildProcs &&
       this.proc.pid != null &&
-      (await this.running())
+      this.running()
     ) {
       this.#logger().warn(
         this.name + ".end(): force-killing still-running child.",
       )
-      await kill(this.proc.pid, true)
+      kill(this.proc.pid, true)
     }
+    // disconnect may not be a function on proc!
+    this.proc.disconnect?.()
     this.opts.observer.emit("childEnd", this, reason)
   }
 
@@ -475,32 +495,24 @@ export class BatchProcess {
   }
 
   #onError(reason: WhyNotHealthy, error: Error, task?: Task) {
-    if (this.ending) {
-      // We're ending already, so don't propagate the error.
-      // This is expected due to race conditions stdin EPIPE and process shutdown.
-      this.#logger().debug(
-        this.name + ".onError() post-end (expected and not propagated)",
-        {
-          reason,
-          error,
-          task,
-        },
-      )
-      return
-    }
     if (task == null) {
       task = this.#currentTask
     }
     const cleanedError = new Error(reason + ": " + cleanError(error.message))
+    if (error.stack != null) {
+      // Error stacks, if set, will not be redefined from a rethrow:
+      cleanedError.stack = cleanError(error.stack)
+    }
     this.#logger().warn(this.name + ".onError()", {
       reason,
       task: map(task, (t) => t.command),
       error: cleanedError,
     })
 
-    if (error.stack != null) {
-      // Error stacks, if set, will not be redefined from a rethrow:
-      cleanedError.stack = cleanError(error.stack)
+    if (this.ending) {
+      // .#end is already disconnecting the error listeners, but in any event,
+      // we don't really care about errors after we've been told to shut down.
+      return
     }
 
     // clear the task before ending so the onExit from end() doesn't retry the task:

@@ -307,10 +307,10 @@ export class BatchCluster {
    *
    * @return the spawned PIDs that are still in the process table.
    */
-  async pids(): Promise<number[]> {
+  pids(): number[] {
     const arr: number[] = []
     for (const proc of [...this.#procs]) {
-      if (proc != null && (await proc.running())) {
+      if (proc != null && proc.running()) {
         arr.push(proc.pid)
       }
     }
@@ -470,13 +470,13 @@ export class BatchCluster {
     return submitted
   }
 
-  get #maxSpawnDelay() {
+  #maxSpawnDelay() {
     // 10s delay is certainly long enough for .spawn() to return, even on a
     // loaded windows machine.
     return Math.max(10_000, this.options.spawnTimeoutMillis)
   }
 
-  get #procsToSpawn() {
+  #procsToSpawn() {
     const remainingCapacity = this.options.maxProcs - this.#procs.length
 
     // take into account starting procs, so one task doesn't result in multiple
@@ -493,14 +493,14 @@ export class BatchCluster {
   }
 
   async #maybeSpawnProcs() {
-    let procsToSpawn = this.#procsToSpawn
+    let procsToSpawn = this.#procsToSpawn()
 
     if (this.ended || this.#nextSpawnTime > Date.now() || procsToSpawn === 0) {
       return
     }
 
     // prevent concurrent runs:
-    this.#nextSpawnTime = Date.now() + this.#maxSpawnDelay
+    this.#nextSpawnTime = Date.now() + this.#maxSpawnDelay()
 
     for (let i = 0; i < procsToSpawn; i++) {
       if (this.ended) {
@@ -508,7 +508,7 @@ export class BatchCluster {
       }
 
       // Kick the lock down the road:
-      this.#nextSpawnTime = Date.now() + this.#maxSpawnDelay
+      this.#nextSpawnTime = Date.now() + this.#maxSpawnDelay()
       this.#spawnedProcs++
 
       try {
@@ -545,7 +545,7 @@ export class BatchCluster {
 
         // tasks may have been popped off or setMaxProcs may have reduced
         // maxProcs. Do this at the end so the for loop ends properly.
-        procsToSpawn = Math.min(this.#procsToSpawn, procsToSpawn)
+        procsToSpawn = Math.min(this.#procsToSpawn(), procsToSpawn)
       } catch (err) {
         this.emitter.emit("startError", asError(err))
       }

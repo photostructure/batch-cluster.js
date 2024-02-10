@@ -35,7 +35,7 @@ describe("BatchClusterOptions", () => {
           "BatchCluster was given invalid options",
           "maxProcAgeMillis must be greater than or equal to " +
             spawnTimeoutMillis,
-          `must be greater than the max value of spawnTimeoutMillis (${spawnTimeoutMillis}) and taskTimeoutMillis (${DefaultTestOptions.taskTimeoutMillis})`,
+          `the max value of spawnTimeoutMillis (${spawnTimeoutMillis}) and taskTimeoutMillis (${DefaultTestOptions.taskTimeoutMillis})`,
         ])
       }
     })
@@ -56,9 +56,21 @@ describe("BatchClusterOptions", () => {
           "BatchCluster was given invalid options",
           "maxProcAgeMillis must be greater than or equal to " +
             taskTimeoutMillis,
-          `must be greater than the max value of spawnTimeoutMillis (${DefaultTestOptions.spawnTimeoutMillis}) and taskTimeoutMillis (${taskTimeoutMillis})`,
+          `the max value of spawnTimeoutMillis (${DefaultTestOptions.spawnTimeoutMillis}) and taskTimeoutMillis (${taskTimeoutMillis})`,
         ])
       }
+    })
+
+    it("allows maxProcAgeMillis to be 0", () => {
+      const taskTimeoutMillis = DefaultTestOptions.spawnTimeoutMillis + 1
+      bc = new BatchCluster({
+        processFactory,
+        ...DefaultTestOptions,
+        taskTimeoutMillis,
+        maxProcAgeMillis: 0,
+      })
+
+      expect(bc.options.maxProcAgeMillis).to.equal(0)
     })
 
     it("reports on invalid opts", () => {
@@ -69,8 +81,6 @@ describe("BatchClusterOptions", () => {
           pass: "",
           fail: "",
 
-          spawnTimeoutMillis: 50,
-          taskTimeoutMillis: 5,
           maxTasksPerProcess: 0,
           minDelayBetweenSpawnMillis: -1,
 
@@ -89,12 +99,11 @@ describe("BatchClusterOptions", () => {
           "versionCommand must not be blank",
           "pass must not be blank",
           "fail must not be blank",
-          "spawnTimeoutMillis must be greater than or equal to 100",
-          "taskTimeoutMillis must be greater than or equal to 10",
           "maxTasksPerProcess must be greater than or equal to 1",
           "maxProcs must be greater than or equal to 1",
-          "maxProcAgeMillis must be greater than or equal to 50",
-          "must be greater than the max value of spawnTimeoutMillis (50) and taskTimeoutMillis (5)",
+          "maxProcAgeMillis must be greater than or equal to 15000",
+          // DON'T PANIC: this is just a continuation of the previous error message.
+          "the max value of spawnTimeoutMillis (15000) and taskTimeoutMillis (10000)",
           "minDelayBetweenSpawnMillis must be greater than or equal to 0",
           "onIdleIntervalMillis must be greater than or equal to 0",
           "endGracefulWaitTimeMillis must be greater than or equal to 0",

@@ -1,15 +1,13 @@
-import stream from "node:stream"
+import { Readable, Writable } from "node:stream"
 
-export function end(
-  endable: stream.Writable,
-  contents?: string,
-): Promise<void> {
-  return new Promise<void>((resolve) => endable.end(contents, resolve))
-}
-
-export function mapNotDestroyed<T extends stream.Readable | stream.Writable, R>(
-  obj: T | undefined | null,
-  f: (t: T) => R,
-): R | undefined {
-  return obj != null && !obj.destroyed ? f(obj) : undefined
+export function destroy(stream: Readable | Writable | null) {
+  try {
+    // .end() may result in an EPIPE when the child process exits. We don't
+    // care. We just want to make sure the stream is closed.
+    stream?.removeAllListeners("error")
+    // It's fine to call .destroy() on a stream that's already destroyed.
+    stream?.destroy?.()
+  } catch {
+    // don't care
+  }
 }

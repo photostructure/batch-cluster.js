@@ -25,19 +25,17 @@ export class BatchClusterOptions {
   /**
    * Child processes will be recycled when they reach this age.
    *
-   * If this value is set to 0, child processes will not "age out".
-   *
    * This value must not be less than `spawnTimeoutMillis` or
    * `taskTimeoutMillis`.
    *
-   * Defaults to 5 minutes.
+   * Defaults to 5 minutes. Set to 0 to disable.
    */
   maxProcAgeMillis = 5 * minuteMs
 
   /**
-   * This is the minimum interval between calls to {@link BatchCluster.#onIdle},
-   * which runs general janitorial processes like child process management and
-   * task queue validation.
+   * This is the minimum interval between calls to BatchCluster's #onIdle
+   * method, which runs general janitorial processes like child process
+   * management and task queue validation.
    *
    * Must be &gt; 0. Defaults to 10 seconds.
    */
@@ -51,7 +49,7 @@ export class BatchClusterOptions {
    * If this backstop didn't exist, new (failing) child processes would be
    * created indefinitely.
    *
-   * Set to 0 to disable. Defaults to 10.
+   * Defaults to 10. Set to 0 to disable.
    */
   maxReasonableProcessFailuresPerMinute = 10
 
@@ -61,7 +59,7 @@ export class BatchClusterOptions {
    * and need to be restarted. Be pessimistic here--windows can regularly take
    * several seconds to spin up a process, thanks to antivirus shenanigans.
    *
-   * Must be &gt;= 100ms. Defaults to 15 seconds.
+   * Defaults to 15 seconds. Set to 0 to disable.
    */
   spawnTimeoutMillis = 15 * secondMs
 
@@ -79,7 +77,7 @@ export class BatchClusterOptions {
    *
    * This should be set to something on the order of seconds.
    *
-   * Must be &gt;= 10ms. Defaults to 10 seconds.
+   * Defaults to 10 seconds. Set to 0 to disable.
    */
   taskTimeoutMillis = 10 * secondMs
 
@@ -224,12 +222,8 @@ export function verifyOptions(
   function gte(fieldName: keyof AllOpts, value: number, why?: string) {
     const v = result[fieldName] as number
     if (v < value) {
-      errors.push(
-        fieldName +
-          " must be greater than or equal to " +
-          value +
-          (why == null ? "" : ": " + why),
-      )
+      const msg = `${fieldName} must be greater than or equal to ${value}${blank(why) ? "" : ": " + why}`
+      errors.push(msg)
     }
   }
 
@@ -237,17 +231,19 @@ export function verifyOptions(
   notBlank("pass")
   notBlank("fail")
 
-  gte("spawnTimeoutMillis", 100)
-  gte("taskTimeoutMillis", 10)
   gte("maxTasksPerProcess", 1)
 
   gte("maxProcs", 1)
 
-  if (opts.maxProcAgeMillis != null && opts.maxProcAgeMillis > 0) {
+  if (
+    opts.maxProcAgeMillis != null &&
+    opts.maxProcAgeMillis > 0 &&
+    result.taskTimeoutMillis
+  ) {
     gte(
       "maxProcAgeMillis",
       Math.max(result.spawnTimeoutMillis, result.taskTimeoutMillis),
-      `must be greater than the max value of spawnTimeoutMillis (${result.spawnTimeoutMillis}) and taskTimeoutMillis (${result.taskTimeoutMillis})`,
+      `the max value of spawnTimeoutMillis (${result.spawnTimeoutMillis}) and taskTimeoutMillis (${result.taskTimeoutMillis})`,
     )
   }
   // 0 disables:
@@ -255,7 +251,6 @@ export function verifyOptions(
   gte("onIdleIntervalMillis", 0)
   gte("endGracefulWaitTimeMillis", 0)
   gte("maxReasonableProcessFailuresPerMinute", 0)
-  // 0 disables:
   gte("streamFlushMillis", 0)
 
   if (errors.length > 0) {
