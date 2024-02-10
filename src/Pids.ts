@@ -18,7 +18,7 @@ export function pidExists(pid: number | undefined): boolean {
     // We're expecting err.code to be either "EPERM" (if we don't have
     // permission to send `pid` and message), or "ESRCH" if that pid doesn't
     // exist. EPERM means it _does_ exist!
-    if (err.code === "EPERM") return true
+    if (err?.code === "EPERM") return true
 
     // failed to get priority--assume the pid is gone.
     return false
