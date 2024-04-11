@@ -74,7 +74,7 @@ export const NoLogger: Logger = Object.freeze({
   error: noop,
 })
 
-let _logger: Logger = NoLogger
+let _logger: Logger = _debuglog.enabled ? ConsoleLogger : NoLogger
 
 export function setLogger(l: Logger): void {
   if (LogLevels.some((ea) => typeof l[ea] !== "function")) {
