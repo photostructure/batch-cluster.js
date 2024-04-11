@@ -1,6 +1,7 @@
 {
   "reject": [
     "@types/chai",
-    "chai"
+    "chai",
+    "eslint"
   ]
 }
