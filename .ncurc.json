@@ -2,6 +2,8 @@
   "reject": [
     "@types/chai",
     "chai",
-    "eslint"
+    "eslint",
+    "rimraf",
+    "rimraf why: https://github.com/isaacs/rimraf/issues/316 (!!)"
   ]
 }
