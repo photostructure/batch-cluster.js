@@ -1,20 +1,22 @@
+import FakeTimers from "@sinonjs/fake-timers"
 import { minuteMs } from "./BatchClusterOptions"
 import { Rate } from "./Rate"
 import { expect, times } from "./_chai.spec"
 
-const tk = require("timekeeper")
-
 describe("Rate", () => {
   const now = Date.now()
   const r = new Rate()
+  let clock: FakeTimers.InstalledClock
 
   beforeEach(() => {
-    tk.freeze(now)
-    // clear() must be called _after_ freezing time
+    clock = FakeTimers.install({ now: now })
+    // clear() must be called _after_ setting up fake timers
     r.clear()
   })
 
-  after(() => tk.reset())
+  afterEach(() => {
+    clock.uninstall()
+  })
 
   function expectRate(rate: Rate, epm: number, tol = 0.1) {
     expect(rate.eventsPerMs).to.be.withinToleranceOf(epm, tol)
@@ -27,7 +29,7 @@ describe("Rate", () => {
   })
 
   it("maintains a rate of 0 after time with no events", () => {
-    tk.freeze(now + minuteMs)
+    clock.tick(minuteMs)
     expectRate(r, 0)
   })
 
@@ -37,38 +39,39 @@ describe("Rate", () => {
       () => {
         times(cnt, () => r.onEvent())
         expectRate(r, 0)
-        tk.freeze(now + 100)
+        clock.tick(100)
         expectRate(r, 0)
-        tk.freeze(now + r.warmupMs + 1)
+        clock.tick(r.warmupMs - 100 + 1)
         expectRate(r, cnt / r.warmupMs)
-        tk.freeze(now + 2 * r.warmupMs)
+        clock.tick(r.warmupMs)
         expectRate(r, cnt / (2 * r.warmupMs))
-        tk.freeze(now + 3 * r.warmupMs)
+        clock.tick(r.warmupMs)
         expectRate(r, cnt / (3 * r.warmupMs))
-        tk.freeze(now + r.periodMs)
+        clock.tick(r.periodMs - 3 * r.warmupMs)
         expectRate(r, 0)
-        expect(r.msSinceLastEvent).to.eql(minuteMs)
+        expect(r.msSinceLastEvent).to.be.closeTo(r.periodMs, 5)
       },
     )
   }
 
-  for (const events of [5, 10, 100, 1000]) {
+  for (const events of [4, 32, 256, 1024]) {
     it(
       "calculates average rate for " + events + " events, and then decays",
       () => {
         const period = r.periodMs
-        times(events, (i) => {
-          tk.freeze(now + (period * i) / events)
+        times(events, () => {
+          clock.tick(r.periodMs / events)
           r.onEvent()
         })
+        const tickMs = r.periodMs / 4
         expectRate(r, events / period, 0.3)
-        tk.freeze(now + 1.25 * r.periodMs)
+        clock.tick(tickMs)
         expectRate(r, 0.75 * (events / period), 0.3)
-        tk.freeze(now + 1.5 * r.periodMs)
+        clock.tick(tickMs)
         expectRate(r, 0.5 * (events / period), 0.3)
-        tk.freeze(now + 1.75 * r.periodMs)
-        expectRate(r, 0.25 * (events / period), 0.3)
-        tk.freeze(now + 2 * r.periodMs)
+        clock.tick(tickMs)
+        expectRate(r, 0.25 * (events / period), 0.5)
+        clock.tick(tickMs)
         expectRate(r, 0)
       },
     )

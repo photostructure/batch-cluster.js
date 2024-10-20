@@ -23,7 +23,7 @@ export interface TypedEventEmitter<T> {
   ): this
   emit<E extends keyof T>(eventName: E, ...args: Args<T[E]>): boolean
 
-  // eslint-disable-next-line @typescript-eslint/ban-types
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
   listeners<E extends keyof T>(event: E): Function[]
 
   removeAllListeners(eventName?: keyof T): this

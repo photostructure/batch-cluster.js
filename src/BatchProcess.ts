@@ -365,7 +365,7 @@ export class BatchProcess {
         })
         return true
       }
-    } catch (err) {
+    } catch {
       // child process went away. We should too.
       this.end(false, "stdin.error")
       return false

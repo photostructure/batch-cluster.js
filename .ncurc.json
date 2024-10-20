@@ -1,6 +1,9 @@
 {
   "reject": [
     "@types/chai",
+    "@types/chai-as-promised",
+    "chai-as-promised",
+    "chai-as-promised why: v8 went to ESM",
     "chai",
     "eslint",
     "rimraf",

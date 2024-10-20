@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-require-imports */
 try {
   require("source-map-support").install()
 } catch {

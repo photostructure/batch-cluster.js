@@ -8,7 +8,7 @@ export function tryEach(arr: (() => void)[]): void {
   for (const f of arr) {
     try {
       f()
-    } catch (_) {
+    } catch {
       //
     }
   }

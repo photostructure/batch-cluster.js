@@ -40,7 +40,8 @@ function toF(s: string | undefined) {
 const failrate = toF(process.env.failrate) ?? 0
 const rng =
   process.env.rngseed != null
-    ? require("seedrandom")(process.env.rngseed)
+    ? // eslint-disable-next-line @typescript-eslint/no-require-imports
+      require("seedrandom")(process.env.rngseed)
     : Math.random
 
 async function onLine(line: string): Promise<void> {
@@ -148,5 +149,6 @@ async function onLine(line: string): Promise<void> {
 const m = new Mutex()
 
 process.stdin
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
   .pipe(require("split2")())
   .on("data", (ea: string) => m.serial(() => onLine(ea)))

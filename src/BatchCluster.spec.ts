@@ -1,14 +1,5 @@
+import FakeTimers from "@sinonjs/fake-timers"
 import process from "node:process"
-import { filterInPlace } from "./Array"
-import { delay, until } from "./Async"
-import { BatchCluster } from "./BatchCluster"
-import { secondMs } from "./BatchClusterOptions"
-import { DefaultTestOptions } from "./DefaultTestOptions.spec"
-import { map, omit, orElse } from "./Object"
-import { isWin } from "./Platform"
-import { toS } from "./String"
-import { Task } from "./Task"
-import { thenOrTimeout } from "./Timeout"
 import {
   currentTestPids,
   expect,
@@ -24,9 +15,18 @@ import {
   times,
   unhandledRejections,
 } from "./_chai.spec"
+import { filterInPlace } from "./Array"
+import { delay, until } from "./Async"
+import { BatchCluster } from "./BatchCluster"
+import { secondMs } from "./BatchClusterOptions"
+import { DefaultTestOptions } from "./DefaultTestOptions.spec"
+import { map, omit, orElse } from "./Object"
+import { isWin } from "./Platform"
+import { toS } from "./String"
+import { Task } from "./Task"
+import { thenOrTimeout } from "./Timeout"
 
 const isCI = process.env.CI === "1"
-const tk = require("timekeeper")
 
 function arrayEqualish<T>(a: T[], b: T[], maxAcceptableDiffs: number) {
   const common = a.filter((ea) => b.includes(ea))
@@ -901,11 +901,20 @@ describe("BatchCluster", function () {
 
   describe("maxProcAgeMillis (recycling procs)", () => {
     let bc: BatchCluster
+    let clock: FakeTimers.InstalledClock
+
+    beforeEach(() => {
+      clock = FakeTimers.install({
+        shouldClearNativeTimers: true,
+        shouldAdvanceTime: true,
+      })
+    })
 
     afterEach(() => {
-      tk.reset()
+      clock.uninstall()
       return shutdown(bc)
     })
+
     for (const { maxProcAgeMillis, ctx, exp } of [
       {
         maxProcAgeMillis: 0,
@@ -929,8 +938,6 @@ describe("BatchCluster", function () {
       it("(" + maxProcAgeMillis + "): " + ctx, async function () {
         // TODO: look into why this fails in CI on windows
         if (isWin && isCI) return this.skip()
-        const start = Date.now()
-        tk.freeze(start)
         setFailratePct(0)
 
         bc = listen(
@@ -944,7 +951,7 @@ describe("BatchCluster", function () {
         )
         assertExpectedResults(await Promise.all(runTasks(bc, 2)))
         const pidsBefore = bc.pids()
-        tk.freeze(start + 7000)
+        clock.tick(7000)
         assertExpectedResults(await Promise.all(runTasks(bc, 2)))
         const pidsAfter = bc.pids()
         console.dir({ maxProcAgeMillis, pidsBefore, pidsAfter })
