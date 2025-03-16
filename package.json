@@ -59,7 +59,7 @@
     "@types/sinonjs__fake-timers": "^8.1.5",
     "@typescript-eslint/eslint-plugin": "^8.10.0",
     "@typescript-eslint/parser": "^8.10.0",
-    "chai": "^4.3.10",
+    "chai": "^5.2.0",
     "chai-as-promised": "^7.1.2",
     "chai-string": "^1.5.0",
     "chai-subset": "^1.6.0",
