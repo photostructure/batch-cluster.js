@@ -20,7 +20,7 @@ import { delay, until } from "./Async"
 import { BatchCluster } from "./BatchCluster"
 import { secondMs } from "./BatchClusterOptions"
 import { DefaultTestOptions } from "./DefaultTestOptions.spec"
-import { map, omit, orElse } from "./Object"
+import { map, omit } from "./Object"
 import { isWin } from "./Platform"
 import { toS } from "./String"
 import { Task } from "./Task"
@@ -642,7 +642,7 @@ describe("BatchCluster", function () {
         const pid2count = new Map<number, number>()
         tasks.forEach((ea) => {
           const pid = ea.pid
-          const count = orElse(pid2count.get(pid), 0)
+          const count = pid2count.get(pid) ?? 0
           pid2count.set(pid, count + 1)
         })
         expect(bc.isIdle).to.eql(true)

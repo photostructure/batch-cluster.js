@@ -13,14 +13,6 @@ export function isFunction(obj: any): obj is () => any {
   return typeof obj === "function"
 }
 
-export function orElse<T>(obj: T | undefined, defaultValue: T | (() => T)): T {
-  return obj != null
-    ? obj
-    : isFunction(defaultValue)
-      ? defaultValue()
-      : defaultValue
-}
-
 export function fromEntries(arr: [string | undefined, any][]) {
   const o: any = {}
   for (const [key, value] of arr) {
