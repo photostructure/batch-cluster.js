@@ -16,19 +16,19 @@
     "node": ">=14"
   },
   "scripts": {
-    "ci": "yarn install --frozen-lockfile",
+    "ci": "npm ci",
     "clean": "rimraf dist",
     "prettier": "prettier --write src/*.ts",
-    "lint": "yarn eslint src --ext .ts",
+    "lint": "eslint src --ext .ts",
     "compile": "tsc",
     "watch": "rimraf dist & tsc --watch",
-    "pretest": "yarn clean && yarn lint && yarn compile",
+    "pretest": "npm run clean && npm run lint && npm run compile",
     "test": "mocha dist/**/*.spec.js",
     "docs:1": "typedoc --options .typedoc.js",
     "docs:2": "cp .serve.json docs/serve.json",
     "docs:3": "touch docs/.nojekyll",
-    "docs:4": "yarn serve docs",
-    "docs": "bash -c 'for i in {1..4} ; do yarn docs:$i ; done'"
+    "docs:4": "serve docs",
+    "docs": "bash -c 'for i in {1..4} ; do npm run docs:$i ; done'"
   },
   "release-it": {
     "src": {
@@ -38,8 +38,8 @@
     },
     "hooks": {
       "before:init": [
-        "yarn install",
-        "yarn lint"
+        "npm install",
+        "npm run lint"
       ]
     },
     "github": {

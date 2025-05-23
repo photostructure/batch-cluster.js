@@ -32,11 +32,7 @@ whose source you can examine as an example consumer.
 
 ## Installation
 
-Depending on your yarn/npm preference:
-
 ```bash
-$ yarn add batch-cluster
-# or
 $ npm install --save batch-cluster
 ```
 
