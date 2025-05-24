@@ -13,7 +13,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ### Testing & Quality
 - `npm test` - Run all tests (includes linting and compilation)
 - `npm run lint` - Run ESLint on TypeScript source files
-- `npm run prettier` - Format code with Prettier
+- `npm run fmt` - Format code with Prettier
 - `mocha dist/**/*.spec.js` - Run specific test files after compilation
 
 ### Documentation
@@ -60,3 +60,9 @@ The test suite uses a custom test script (`src/test.ts`) that simulates a batch-
 - Targets ES2019, CommonJS modules
 - Outputs to `dist/` with source maps and declarations
 - No implicit any, strict null checks, no unchecked indexed access
+
+## Code Style Guidelines
+
+- **Null checks**: Always use explicit `x == null` or `x != null` checks. Do not use falsy/truthy checks for nullish values.
+  - Good: `if (value != null)`, `if (value == null)`
+  - Bad: `if (value)`, `if (!value)`
