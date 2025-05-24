@@ -1,10 +1,8 @@
-import { isFunction } from "./Object"
-
-export function blank(s: string | Buffer | undefined): boolean {
-  return s == null || String(s).trim().length === 0
+export function blank(s: unknown): boolean {
+  return s == null || toS(s).trim().length === 0
 }
 
-export function notBlank(s: string | undefined): s is string {
+export function notBlank(s: unknown): boolean {
   return !blank(s)
 }
 
@@ -12,6 +10,7 @@ export function ensureSuffix(s: string, suffix: string): string {
   return s.endsWith(suffix) ? s : s + suffix
 }
 
-export function toS(s: any): string {
-  return s == null ? "" : isFunction(s.toString) ? s.toString() : String(s)
+export function toS(s: unknown): string {
+  /* eslint-disable-next-line @typescript-eslint/no-base-to-string */
+  return s == null ? "" : s.toString()
 }
