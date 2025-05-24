@@ -2,7 +2,7 @@ import util from "node:util"
 import { map } from "./Object"
 import { notBlank } from "./String"
 
-type LogFunc = (message: string, ...optionalParams: any[]) => void
+type LogFunc = (message: string, ...optionalParams: unknown[]) => void
 
 /**
  * Simple interface for logging.
@@ -56,11 +56,17 @@ export const ConsoleLogger: Logger = Object.freeze({
   /**
    * Delegates to `console.warn`
    */
-  warn: console.warn,
+  warn: (...args: unknown[]) => {
+    // eslint-disable-next-line no-console
+    console.warn(...args)
+  },
   /**
    * Delegates to `console.error`
    */
-  error: console.error,
+  error: (...args: unknown[]) => {
+    // eslint-disable-next-line no-console
+    console.error(...args)
+  },
 })
 
 /**
@@ -78,7 +84,7 @@ let _logger: Logger = _debuglog.enabled ? ConsoleLogger : NoLogger
 
 export function setLogger(l: Logger): void {
   if (LogLevels.some((ea) => typeof l[ea] !== "function")) {
-    throw new Error("invalid logger, must implement " + LogLevels)
+    throw new Error("invalid logger, must implement " + LogLevels.join(", "))
   }
   _logger = l
 }
@@ -89,12 +95,12 @@ export function logger(): Logger {
 
 export const Log = {
   withLevels: (delegate: Logger): Logger => {
-    const timestamped: any = {}
+    const timestamped: Logger = {} as Logger
     LogLevels.forEach((ea) => {
       const prefix = (ea + " ").substring(0, 5) + " | "
-      timestamped[ea] = (message?: any, ...optionalParams: any[]) => {
-        if (notBlank(message)) {
-          delegate[ea](prefix + message, ...optionalParams)
+      timestamped[ea] = (message?: unknown, ...optionalParams: unknown[]) => {
+        if (notBlank(String(message))) {
+          delegate[ea](prefix + String(message), ...optionalParams)
         }
       }
     })
@@ -102,13 +108,16 @@ export const Log = {
   },
 
   withTimestamps: (delegate: Logger) => {
-    const timestamped: any = {}
+    const timestamped: Logger = {} as Logger
     LogLevels.forEach(
       (level) =>
-        (timestamped[level] = (message?: any, ...optionalParams: any[]) =>
+        (timestamped[level] = (
+          message?: unknown,
+          ...optionalParams: unknown[]
+        ) =>
           map(message, (ea) =>
             delegate[level](
-              new Date().toISOString() + " | " + ea,
+              new Date().toISOString() + " | " + String(ea),
               ...optionalParams,
             ),
           )),
@@ -118,7 +127,7 @@ export const Log = {
 
   filterLevels: (l: Logger, minLogLevel: keyof Logger) => {
     const minLogLevelIndex = LogLevels.indexOf(minLogLevel)
-    const filtered: any = {}
+    const filtered: Logger = {} as Logger
     LogLevels.forEach(
       (ea, idx) =>
         (filtered[ea] = idx < minLogLevelIndex ? noop : l[ea].bind(l)),
