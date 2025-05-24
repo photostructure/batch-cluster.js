@@ -1,4 +1,4 @@
-import { blank, toS } from "./String"
+import { toNotBlank } from "./String"
 
 /**
  * When we wrap errors, an Error always prefixes the toString() and stack with
@@ -14,14 +14,22 @@ export function tryEach(arr: (() => void)[]): void {
   }
 }
 
-export function cleanError(s: any): string {
+export function cleanError(s: unknown): string {
   return String(s)
     .trim()
     .replace(/^error: /i, "")
 }
 
-export function asError(err: any): Error {
+export function asError(err: unknown): Error {
   return err instanceof Error
     ? err
-    : new Error(blank(err) ? "(unknown)" : toS(err))
+    : new Error(
+        toNotBlank(
+          err != null && typeof err === "object" && "message" in err
+            ? err?.message
+            : undefined,
+        ) ??
+          toNotBlank(err) ??
+          "(unknown)",
+      )
 }

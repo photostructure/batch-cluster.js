@@ -70,24 +70,28 @@ export interface BatchClusterEvents {
    */
   taskData: (
     data: Buffer | string,
-    task: Task | undefined,
+    task: Task<unknown> | undefined,
     proc: BatchProcess,
   ) => void
 
   /**
    * Emitted when a task has been resolved
    */
-  taskResolved: (task: Task, proc: BatchProcess) => void
+  taskResolved: (task: Task<unknown>, proc: BatchProcess) => void
 
   /**
    * Emitted when a task times out. Note that a `taskError` event always succeeds these events.
    */
-  taskTimeout: (timeoutMs: number, task: Task, proc: BatchProcess) => void
+  taskTimeout: (
+    timeoutMs: number,
+    task: Task<unknown>,
+    proc: BatchProcess,
+  ) => void
 
   /**
    * Emitted when a task has an error
    */
-  taskError: (error: Error, task: Task, proc: BatchProcess) => void
+  taskError: (error: Error, task: Task<unknown>, proc: BatchProcess) => void
 
   /**
    * Emitted when child processes write to stdout or stderr without a current

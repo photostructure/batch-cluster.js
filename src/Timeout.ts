@@ -9,26 +9,30 @@ export async function thenOrTimeout<T>(
   // something else in that case?
   return timeoutMs <= 1
     ? p
-    : new Promise<T | typeof Timeout>(async (resolve, reject) => {
+    : new Promise<T | typeof Timeout>((resolve, reject) => {
         let pending = true
-        try {
-          const t = timers.setTimeout(() => {
+        const t = timers.setTimeout(() => {
+          if (pending) {
+            pending = false
+            resolve(Timeout)
+          }
+        }, timeoutMs)
+
+        p.then(
+          (result) => {
             if (pending) {
               pending = false
-              resolve(Timeout)
+              clearTimeout(t)
+              resolve(result)
             }
-          }, timeoutMs)
-          const result = await p
-          if (pending) {
-            pending = false
-            clearTimeout(t)
-            resolve(result)
-          }
-        } catch (err) {
-          if (pending) {
-            pending = false
-            reject(err)
-          }
-        }
+          },
+          (err: unknown) => {
+            if (pending) {
+              pending = false
+              clearTimeout(t)
+              reject(err instanceof Error ? err : new Error(String(err)))
+            }
+          },
+        )
       })
 }

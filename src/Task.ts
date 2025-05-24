@@ -15,7 +15,7 @@ let _taskId = 1
  * instance has a promise that will be resolved or rejected based on the
  * result of the task.
  */
-export class Task<T = any> {
+export class Task<T = unknown> {
   readonly taskId = _taskId++
   #opts?: TaskOptions
   #startedAt?: number
@@ -89,13 +89,13 @@ export class Task<T = any> {
     if (passRE != null && passRE.exec(this.#stdout) != null) {
       // remove the pass token from stdout:
       this.#stdout = this.#stdout.replace(passRE, "")
-      this.#resolve(true)
+      void this.#resolve(true)
     } else {
       const failRE = this.#opts?.failRE
       if (failRE != null && failRE.exec(this.#stdout) != null) {
         // remove the fail token from stdout:
         this.#stdout = this.#stdout.replace(failRE, "")
-        this.#resolve(false)
+        void this.#resolve(false)
       }
     }
   }
@@ -106,7 +106,7 @@ export class Task<T = any> {
     if (failRE != null && failRE.exec(this.#stderr) != null) {
       // remove the fail token from stderr:
       this.#stderr = this.#stderr.replace(failRE, "")
-      this.#resolve(false)
+      void this.#resolve(false)
     }
   }
 
@@ -146,14 +146,15 @@ export class Task<T = any> {
     try {
       const parseResult = await this.parser(this.#stdout, this.#stderr, passed)
       if (this.#d.resolve(parseResult)) {
+        // success
       } else {
         this.#opts?.observer.emit(
           "internalError",
           new Error(this.toString() + " ._resolved() more than once"),
         )
       }
-    } catch (error: any) {
-      this.reject(error)
+    } catch (error: unknown) {
+      this.reject(error instanceof Error ? error : new Error(String(error)))
     }
   }
 }

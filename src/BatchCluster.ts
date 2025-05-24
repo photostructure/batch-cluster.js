@@ -1,4 +1,3 @@
-import child_process from "node:child_process"
 import events from "node:events"
 import process from "node:process"
 import timers from "node:timers"
@@ -9,18 +8,17 @@ import {
   ChildEndReason,
   TypedEventEmitter,
 } from "./BatchClusterEmitter"
-import {
-  AllOpts,
-  BatchClusterOptions,
-  verifyOptions,
-} from "./BatchClusterOptions"
+import { BatchClusterOptions } from "./BatchClusterOptions"
+import type { BatchClusterStats } from "./BatchClusterStats"
 import { BatchProcess, WhyNotHealthy, WhyNotReady } from "./BatchProcess"
 import { BatchProcessOptions } from "./BatchProcessOptions"
+import type { ChildProcessFactory } from "./ChildProcessFactory"
+import { CombinedBatchProcessOptions } from "./CombinedBatchProcessOptions"
 import { Deferred } from "./Deferred"
 import { asError } from "./Error"
 import { Logger } from "./Logger"
 import { Mean } from "./Mean"
-import { fromEntries, map } from "./Object"
+import { verifyOptions } from "./OptionsVerifier"
 import { Parser } from "./Parser"
 import { Rate } from "./Rate"
 import { toS } from "./String"
@@ -38,30 +36,14 @@ export { Task } from "./Task"
 export type {
   BatchClusterEmitter,
   BatchClusterEvents,
+  BatchClusterStats,
   BatchProcessOptions,
   ChildEndReason as ChildExitReason,
+  ChildProcessFactory,
   Parser,
   TypedEventEmitter,
   WhyNotHealthy,
   WhyNotReady,
-}
-
-/**
- * These are required parameters for a given BatchCluster.
- */
-export interface ChildProcessFactory {
-  /**
-   * Expected to be a simple call to execFile. Platform-specific code is the
-   * responsibility of this thunk. Error handlers will be registered as
-   * appropriate.
-   *
-   * If this function throws an error or rejects the promise _after_ you've
-   * spawned a child process, **the child process may continue to run** and leak
-   * system resources.
-   */
-  readonly processFactory: () =>
-    | child_process.ChildProcess
-    | Promise<child_process.ChildProcess>
 }
 
 /**
@@ -77,7 +59,7 @@ export interface ChildProcessFactory {
 export class BatchCluster {
   readonly #tasksPerProc = new Mean()
   readonly #logger: () => Logger
-  readonly options: AllOpts
+  readonly options: CombinedBatchProcessOptions
   readonly #procs: BatchProcess[] = []
   #onIdleRequested = false
   #nextSpawnTime = 0
@@ -105,7 +87,7 @@ export class BatchCluster {
     })
 
     this.on("internalError", (error) => {
-      this.#logger().error("BatchCluster: INTERNAL ERROR: " + error)
+      this.#logger().error("BatchCluster: INTERNAL ERROR: " + String(error))
       this.#internalErrorCount++
     })
 
@@ -123,7 +105,7 @@ export class BatchCluster {
     })
 
     this.on("startError", (error) => {
-      this.#logger().warn("BatchCluster.onStartError(): " + error)
+      this.#logger().warn("BatchCluster.onStartError(): " + String(error))
       this.#startErrorRate.onEvent()
       if (
         this.options.maxReasonableProcessFailuresPerMinute > 0 &&
@@ -133,7 +115,7 @@ export class BatchCluster {
         this.emitter.emit(
           "fatalError",
           new Error(
-            error +
+            String(error) +
               "(start errors/min: " +
               this.#startErrorRate.eventsPerMinute.toFixed(2) +
               ")",
@@ -169,8 +151,12 @@ export class BatchCluster {
    */
   readonly off = this.emitter.off.bind(this.emitter)
 
-  readonly #beforeExitListener = () => this.end(true)
-  readonly #exitListener = () => this.end(false)
+  readonly #beforeExitListener = () => {
+    void this.end(true)
+  }
+  readonly #exitListener = () => {
+    void this.end(false)
+  }
 
   get ended(): boolean {
     return this.#endPromise != null
@@ -187,7 +173,8 @@ export class BatchCluster {
 
     if (this.#endPromise == null) {
       this.emitter.emit("beforeEnd")
-      map(this.#onIdleInterval, timers.clearInterval)
+      if (this.#onIdleInterval != null)
+        timers.clearInterval(this.#onIdleInterval)
       this.#onIdleInterval = undefined
       process.removeListener("beforeExit", this.#beforeExitListener)
       process.removeListener("exit", this.#exitListener)
@@ -213,7 +200,7 @@ export class BatchCluster {
         new Error("BatchCluster has ended, cannot enqueue " + task.command),
       )
     }
-    this.#tasks.push(task)
+    this.#tasks.push(task as Task<unknown>)
 
     // Run #onIdle now (not later), to make sure the task gets enqueued asap if
     // possible
@@ -292,7 +279,7 @@ export class BatchCluster {
   get currentTasks(): Task[] {
     return this.#procs
       .map((ea) => ea.currentTask)
-      .filter((ea) => ea != null) as Task[]
+      .filter((ea): ea is Task => ea != null)
   }
 
   /**
@@ -320,7 +307,7 @@ export class BatchCluster {
   /**
    * For diagnostics. Contents may change.
    */
-  stats() {
+  stats(): BatchClusterStats {
     const readyProcCount = count(this.#procs, (ea) => ea.ready)
     return {
       pendingTaskCount: this.#tasks.length,
@@ -344,15 +331,18 @@ export class BatchCluster {
     return this.#childEndCounts.get(why) ?? 0
   }
 
-  get childEndCounts(): { [key in NonNullable<ChildEndReason>]: number } {
-    return fromEntries([...this.#childEndCounts.entries()])
+  get childEndCounts(): Record<NonNullable<ChildEndReason>, number> {
+    return Object.fromEntries([...this.#childEndCounts.entries()]) as Record<
+      NonNullable<ChildEndReason>,
+      number
+    >
   }
 
   /**
    * Shut down any currently-running child processes. New child processes will
    * be started automatically to handle new tasks.
    */
-  async closeChildProcesses(gracefully = true) {
+  async closeChildProcesses(gracefully = true): Promise<void> {
     const procs = [...this.#procs]
     this.#procs.length = 0
     await Promise.all(
@@ -385,11 +375,11 @@ export class BatchCluster {
   // NOT ASYNC: updates internal state:
   #onIdle() {
     this.#onIdleRequested = false
-    this.vacuumProcs()
+    void this.vacuumProcs()
     while (this.#execNextTask()) {
       //
     }
-    this.#maybeSpawnProcs()
+    void this.#maybeSpawnProcs()
   }
 
   #maybeCheckPids() {

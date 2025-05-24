@@ -66,7 +66,7 @@ export class BatchProcess {
   /**
    * Should be undefined if this instance is not currently processing a task.
    */
-  #currentTask: Task | undefined
+  #currentTask: Task<unknown> | undefined
   #currentTaskTimeout: NodeJS.Timeout | undefined
 
   #endPromise: undefined | Deferred<void>
@@ -92,9 +92,15 @@ export class BatchProcess {
     this.pid = proc.pid
 
     this.proc.on("error", (err) => this.#onError("proc.error", err))
-    this.proc.on("close", () => this.end(false, "proc.close"))
-    this.proc.on("exit", () => this.end(false, "proc.exit"))
-    this.proc.on("disconnect", () => this.end(false, "proc.disconnect"))
+    this.proc.on("close", () => {
+      void this.end(false, "proc.close")
+    })
+    this.proc.on("exit", () => {
+      void this.end(false, "proc.exit")
+    })
+    this.proc.on("disconnect", () => {
+      void this.end(false, "proc.disconnect")
+    })
 
     const stdin = this.proc.stdin
     if (stdin == null) throw new Error("Given proc had no stdin")
@@ -103,11 +109,11 @@ export class BatchProcess {
     const stdout = this.proc.stdout
     if (stdout == null) throw new Error("Given proc had no stdout")
     stdout.on("error", (err) => this.#onError("stdout.error", err))
-    stdout.on("data", (d) => this.#onStdout(d))
+    stdout.on("data", (d: string | Buffer) => this.#onStdout(d))
 
     map(this.proc.stderr, (stderr) => {
       stderr.on("error", (err) => this.#onError("stderr.error", err))
-      stderr.on("data", (err) => this.#onStderr(err))
+      stderr.on("data", (err: string | Buffer) => this.#onStderr(err))
     })
 
     const startupTask = new Task(opts.versionCommand, SimpleParser)
@@ -255,7 +261,7 @@ export class BatchProcess {
     if (!alive) {
       this.#exited = true
       // once a PID leaves the process table, it's gone for good.
-      this.end(false, "proc.exit")
+      void this.end(false, "proc.exit")
     }
     return alive
   }
@@ -264,7 +270,7 @@ export class BatchProcess {
     return !this.running()
   }
 
-  maybeRunHealthcheck(): Task | undefined {
+  maybeRunHealthcheck(): Task<unknown> | undefined {
     const hcc = this.opts.healthCheckCommand
     // if there's no health check command, no-op.
     if (hcc == null || blank(hcc)) return
@@ -282,7 +288,11 @@ export class BatchProcess {
       const t = new Task(hcc, SimpleParser)
       t.promise
         .catch((err) => {
-          this.opts.observer.emit("healthCheckError", err, this)
+          this.opts.observer.emit(
+            "healthCheckError",
+            err instanceof Error ? err : new Error(String(err)),
+            this,
+          )
           this.#healthCheckFailures++
           // BatchCluster will see we're unhealthy and reap us later
         })
@@ -290,22 +300,22 @@ export class BatchProcess {
           this.#lastHealthCheck = Date.now()
         })
       this.#execTask(t)
-      return t
+      return t as Task<unknown>
     }
     return
   }
 
   // This must not be async, or new instances aren't started as busy (until the
   // startup task is complete)
-  execTask(task: Task): boolean {
+  execTask<T>(task: Task<T>): boolean {
     return this.ready ? this.#execTask(task) : false
   }
 
-  #execTask(task: Task): boolean {
+  #execTask<T>(task: Task<T>): boolean {
     if (this.ending) return false
 
     this.#taskCount++
-    this.#currentTask = task
+    this.#currentTask = task as Task<unknown>
     const cmd = ensureSuffix(task.command, "\n")
     const isStartupTask = task.taskId === this.startupTaskId
     const taskTimeoutMs = isStartupTask
@@ -315,7 +325,7 @@ export class BatchProcess {
       // add the stream flush millis to the taskTimeoutMs, because that time
       // should not be counted against the task.
       this.#currentTaskTimeout = timers.setTimeout(
-        () => this.#onTimeout(task, taskTimeoutMs),
+        () => this.#onTimeout(task as Task<unknown>, taskTimeoutMs),
         taskTimeoutMs + this.opts.streamFlushMillis,
       )
     }
@@ -323,27 +333,35 @@ export class BatchProcess {
     // rejections:
     void task.promise.then(
       () => {
-        this.#clearCurrentTask(task)
+        this.#clearCurrentTask(task as Task<unknown>)
         // this.#logger().trace("task completed", { task })
 
         if (isStartupTask) {
           // no need to emit taskResolved for startup tasks.
           this.#starting = false
         } else {
-          this.opts.observer.emit("taskResolved", task, this)
+          this.opts.observer.emit("taskResolved", task as Task<unknown>, this)
         }
         // Call _after_ we've cleared the current task:
         this.onIdle()
       },
       (error) => {
-        this.#clearCurrentTask(task)
+        this.#clearCurrentTask(task as Task<unknown>)
         // this.#logger().trace("task failed", { task, err: error })
 
         if (isStartupTask) {
-          this.opts.observer.emit("startError", error)
-          this.end(false, "startError")
+          this.opts.observer.emit(
+            "startError",
+            error instanceof Error ? error : new Error(String(error)),
+          )
+          void this.end(false, "startError")
         } else {
-          this.opts.observer.emit("taskError", error, task, this)
+          this.opts.observer.emit(
+            "taskError",
+            error instanceof Error ? error : new Error(String(error)),
+            task as Task<unknown>,
+            this,
+          )
         }
 
         // Call _after_ we've cleared the current task:
@@ -367,7 +385,7 @@ export class BatchProcess {
       }
     } catch {
       // child process went away. We should too.
-      this.end(false, "stdin.error")
+      void this.end(false, "stdin.error")
       return false
     }
   }
@@ -487,14 +505,14 @@ export class BatchProcess {
     return until(() => this.notRunning(), timeout)
   }
 
-  #onTimeout(task: Task, timeoutMs: number): void {
+  #onTimeout(task: Task<unknown>, timeoutMs: number): void {
     if (task.pending) {
       this.opts.observer.emit("taskTimeout", timeoutMs, task, this)
       this.#onError("timeout", new Error("waited " + timeoutMs + "ms"), task)
     }
   }
 
-  #onError(reason: WhyNotHealthy, error: Error, task?: Task) {
+  #onError(reason: WhyNotHealthy, error: Error, task?: Task<unknown>) {
     if (task == null) {
       task = this.#currentTask
     }
@@ -521,7 +539,7 @@ export class BatchProcess {
 
     if (task != null && this.taskCount === 1) {
       this.#logger().warn(
-        this.name + ".onError(): startup task failed: " + cleanedError,
+        this.name + ".onError(): startup task failed: " + String(cleanedError),
       )
       this.opts.observer.emit("startError", cleanedError)
     }
@@ -542,7 +560,7 @@ export class BatchProcess {
 
   #onStderr(data: string | Buffer) {
     if (blank(data)) return
-    this.#logger().warn(this.name + ".onStderr(): " + data)
+    this.#logger().warn(this.name + ".onStderr(): " + String(data))
     const task = this.#currentTask
     if (task != null && task.pending) {
       task.onStderr(data)
@@ -567,7 +585,7 @@ export class BatchProcess {
     }
   }
 
-  #clearCurrentTask(task?: Task) {
+  #clearCurrentTask(task?: Task<unknown>) {
     this.#lastJobFailed = task?.state === "rejected"
     if (task != null && task.taskId !== this.#currentTask?.taskId) return
     map(this.#currentTaskTimeout, (ea) => clearTimeout(ea))
