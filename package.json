@@ -18,8 +18,8 @@
   "scripts": {
     "ci": "npm ci",
     "clean": "rimraf dist",
-    "prettier": "prettier --write src/*.ts",
-    "lint": "eslint src --ext .ts",
+    "fmt": "prettier --write src/*.ts",
+    "lint": "eslint src",
     "compile": "tsc",
     "watch": "rimraf dist & tsc --watch",
     "pretest": "npm run clean && npm run lint && npm run compile",
@@ -49,6 +49,7 @@
   "author": "Matthew McEachen <matthew-batchcluster@photostructure.com>",
   "license": "MIT",
   "devDependencies": {
+    "@eslint/js": "^9.27.0",
     "@sinonjs/fake-timers": "^14.0.0",
     "@types/chai": "^4.3.11",
     "@types/chai-as-promised": "^7",
@@ -57,16 +58,15 @@
     "@types/mocha": "^10.0.10",
     "@types/node": "^22.15.21",
     "@types/sinonjs__fake-timers": "^8.1.5",
-    "@typescript-eslint/eslint-plugin": "^8.32.1",
-    "@typescript-eslint/parser": "^8.32.1",
     "chai": "^4.3.10",
     "chai-as-promised": "^7.1.2",
     "chai-string": "^1.6.0",
     "chai-subset": "^1.6.0",
     "chai-withintoleranceof": "^1.0.1",
-    "eslint": "^8.57.0",
+    "eslint": "^9.27.0",
     "eslint-plugin-import": "^2.31.0",
-    "mocha": "^11.4.0",
+    "globals": "^16.1.0",
+    "mocha": "^11.5.0",
     "npm-check-updates": "^18.0.1",
     "prettier": "^3.5.3",
     "prettier-plugin-organize-imports": "^4.1.0",
@@ -76,6 +76,7 @@
     "source-map-support": "^0.5.21",
     "split2": "^4.2.0",
     "typedoc": "^0.28.4",
-    "typescript": "~5.8.3"
+    "typescript": "~5.8.3",
+    "typescript-eslint": "^8.32.1"
   }
 }
