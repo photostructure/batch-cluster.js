@@ -1,10 +1,6 @@
-import { ChildProcessFactory } from "./BatchCluster"
 import { BatchClusterEmitter } from "./BatchClusterEmitter"
-import { BatchProcessOptions } from "./BatchProcessOptions"
-import { InternalBatchProcessOptions } from "./InternalBatchProcessOptions"
 import { logger, Logger } from "./Logger"
 import { isMac, isWin } from "./Platform"
-import { blank, toS } from "./String"
 
 export const secondMs = 1000
 export const minuteMs = 60 * secondMs
@@ -180,84 +176,4 @@ export class BatchClusterOptions {
 
 export interface WithObserver {
   observer: BatchClusterEmitter
-}
-
-export type AllOpts = BatchClusterOptions &
-  InternalBatchProcessOptions &
-  ChildProcessFactory &
-  WithObserver
-
-function escapeRegExp(s: string) {
-  return toS(s).replace(/[-.,\\^$*+?()|[\]{}]/g, "\\$&")
-}
-
-function toRe(s: string | RegExp) {
-  return s instanceof RegExp
-    ? s
-    : new RegExp("(?:\\n|^)" + escapeRegExp(s) + "(?:\\r?\\n|$)")
-}
-
-export function verifyOptions(
-  opts: Partial<BatchClusterOptions> &
-    BatchProcessOptions &
-    ChildProcessFactory &
-    WithObserver,
-): AllOpts {
-  const result = {
-    ...new BatchClusterOptions(),
-    ...opts,
-    passRE: toRe(opts.pass),
-    failRE: toRe(opts.fail),
-  }
-
-  const errors: string[] = []
-
-  function notBlank(fieldName: keyof AllOpts) {
-    const v = toS(result[fieldName])
-    if (blank(v)) {
-      errors.push(fieldName + " must not be blank")
-    }
-  }
-
-  function gte(fieldName: keyof AllOpts, value: number, why?: string) {
-    const v = result[fieldName] as number
-    if (v < value) {
-      const msg = `${fieldName} must be greater than or equal to ${value}${blank(why) ? "" : ": " + why}`
-      errors.push(msg)
-    }
-  }
-
-  notBlank("versionCommand")
-  notBlank("pass")
-  notBlank("fail")
-
-  gte("maxTasksPerProcess", 1)
-
-  gte("maxProcs", 1)
-
-  if (
-    opts.maxProcAgeMillis != null &&
-    opts.maxProcAgeMillis > 0 &&
-    result.taskTimeoutMillis
-  ) {
-    gte(
-      "maxProcAgeMillis",
-      Math.max(result.spawnTimeoutMillis, result.taskTimeoutMillis),
-      `the max value of spawnTimeoutMillis (${result.spawnTimeoutMillis}) and taskTimeoutMillis (${result.taskTimeoutMillis})`,
-    )
-  }
-  // 0 disables:
-  gte("minDelayBetweenSpawnMillis", 0)
-  gte("onIdleIntervalMillis", 0)
-  gte("endGracefulWaitTimeMillis", 0)
-  gte("maxReasonableProcessFailuresPerMinute", 0)
-  gte("streamFlushMillis", 0)
-
-  if (errors.length > 0) {
-    throw new Error(
-      "BatchCluster was given invalid options: " + errors.join("; "),
-    )
-  }
-
-  return result
 }
