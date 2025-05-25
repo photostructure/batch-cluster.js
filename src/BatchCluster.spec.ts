@@ -88,7 +88,7 @@ describe("BatchCluster", function () {
     results.forEach((result, index) => {
       if (!result.startsWith(ErrorPrefix)) {
         expect(result).to.eql("ABC " + index)
-        expect(dataResults).to.include(result)
+        expect(dataResults.toString()).to.include(result)
       }
     })
   }
@@ -209,7 +209,7 @@ describe("BatchCluster", function () {
     bc.on("taskResolved", (task: Task) => {
       const runtimeMs = task.runtimeMs
       expect(runtimeMs).to.not.eql(undefined)
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+
       events.runtimeMs.push(runtimeMs!)
     })
 
@@ -232,7 +232,7 @@ describe("BatchCluster", function () {
     newlines.push("crlf")
   }
 
-  it("supports .off()", async () => {
+  it("supports .off()", () => {
     const emitTimes: number[] = []
     const bc = new BatchCluster({ ...DefaultTestOptions, processFactory })
     const listener = () => emitTimes.push(Date.now())
@@ -477,13 +477,30 @@ describe("BatchCluster", function () {
                     times(maxProcs * 2, () =>
                       bc
                         .enqueueTask(new Task("nonsense", parser))
-                        .catch((err) => err),
+                        .catch((err: unknown) => err),
                     ),
                   )
-                  filterInPlace(
-                    errorResults,
-                    (ea) => ea != null && !String(ea).includes("EUNLUCKY"),
-                  )
+                  function convertErrorToString(ea: unknown): string {
+                    if (ea == null) return "[unknown]"
+                    if (ea instanceof Error) return ea.message
+                    if (typeof ea === "string") return ea
+                    if (typeof ea === "object") {
+                      try {
+                        return JSON.stringify(ea)
+                      } catch {
+                        return "[object Object]"
+                      }
+                    }
+                    if (typeof ea === "number" || typeof ea === "boolean") {
+                      return String(ea)
+                    }
+                    return "[unknown]"
+                  }
+
+                  filterInPlace(errorResults, (ea) => {
+                    const errorStr = convertErrorToString(ea)
+                    return !errorStr.includes("EUNLUCKY")
+                  })
                   if (
                     maxProcs === 1 &&
                     ignoreExit === false &&
@@ -634,7 +651,9 @@ describe("BatchCluster", function () {
             const task = new Task("sleep " + sleepTimeMs, parser)
             const resultP = bc.enqueueTask(task)
             expect(bc.isIdle).to.eql(false)
-            const result = JSON.parse(await resultP)
+            const result = JSON.parse(await resultP) as {
+              pid: number
+            } & Record<string, unknown>
             const end = Date.now()
             return { i, start, end, ...result }
           }),
@@ -727,7 +746,7 @@ describe("BatchCluster", function () {
     function stats() {
       // we don't want msBeforeNextSpawn because it'll be wiggly and we're not
       // freezing time (here)
-      return omit(bc.stats(), "msBeforeNextSpawn")
+      return omit(bc.stats(), "msBeforeNextSpawn") as Record<string, unknown>
     }
 
     it("shut down rejects long-running pending tasks", async () => {
@@ -769,7 +788,7 @@ describe("BatchCluster", function () {
         ended: false,
       })
 
-      t.catch((err) => (caught = err))
+      t.catch((err: unknown) => (caught = err))
       await delay(2)
 
       expect(stats()).to.eql({
@@ -785,7 +804,7 @@ describe("BatchCluster", function () {
         ended: false,
       })
 
-      let caught: any
+      let caught: unknown
       expect(bc.isIdle).to.eql(false)
       await bc.end(false) // not graceful just to shut down faster
 
@@ -803,7 +822,9 @@ describe("BatchCluster", function () {
       })
 
       expect(bc.isIdle).to.eql(true)
-      expect(caught?.message).to.include("end() called before task completed")
+      expect((caught as Error)?.message).to.include(
+        "end() called before task completed",
+      )
       expect(unhandledRejections).to.eql([])
     })
   })

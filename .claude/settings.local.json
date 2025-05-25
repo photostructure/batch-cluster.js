@@ -10,7 +10,8 @@
       "Bash(sed:*)",
       "Bash(npm test)",
       "Bash(npx eslint:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(npm t)"
     ],
     "deny": []
   }

@@ -1,14 +1,14 @@
 import { BatchCluster } from "./BatchCluster"
-import { verifyOptions } from "./BatchClusterOptions"
 import { DefaultTestOptions } from "./DefaultTestOptions.spec"
+import { verifyOptions } from "./OptionsVerifier"
 import { expect, processFactory } from "./_chai.spec"
 
 describe("BatchClusterOptions", () => {
   let bc: BatchCluster
   afterEach(() => bc?.end(false))
   describe("verifyOptions()", () => {
-    function errToArr(err: any) {
-      return err.toString().split(/\s*[:;]\s*/)
+    function errToArr(err: unknown): string[] {
+      return String(err).split(/\s*[:;]\s*/)
     }
 
     it("allows 0 maxProcAgeMillis", () => {
