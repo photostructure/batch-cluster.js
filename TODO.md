@@ -3,9 +3,9 @@
 
 ## 4. **Extract Responsibilities from BatchCluster** 📦
 - [x] Create `ProcessPoolManager` class for process lifecycle management
-- [ ] Create `TaskQueueManager` class for task scheduling and assignment
-- [ ] Create `ProcessHealthMonitor` class for health checking logic
-- [ ] Create `BatchClusterEventCoordinator` for centralized event handling
+- [x] Create `TaskQueueManager` class with test for task scheduling and assignment
+- [ ] Create `ProcessHealthMonitor` class with test for health checking logic
+- [ ] Create `BatchClusterEventCoordinator` with test for centralized event handling
 
 ## 5. **Extract Responsibilities from BatchProcess** 📦
 - [ ] Create `StreamHandler` class for stdout/stderr processing
