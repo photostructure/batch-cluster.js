@@ -27,13 +27,11 @@ setLogger(
     Log.withTimestamps(
       Log.filterLevels(
         {
-          // tslint:disable: no-unbound-method
           trace: console.log,
           debug: console.log,
           info: console.log,
           warn: console.warn,
           error: console.error,
-          // tslint:enable: no-unbound-method
         },
         (process.env.LOG as any) ?? "error",
       ),
