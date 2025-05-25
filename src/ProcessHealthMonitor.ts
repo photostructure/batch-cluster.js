@@ -178,6 +178,7 @@ export class ProcessHealthMonitor {
           this.emitter.emit(
             "healthCheckError",
             err instanceof Error ? err : new Error(String(err)),
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
             process as any, // Type assertion for event emission
           )
           state.healthCheckFailures++
