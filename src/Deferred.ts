@@ -16,7 +16,7 @@ export class Deferred<T> implements PromiseLike<T> {
   readonly [Symbol.toStringTag] = "Deferred"
   readonly promise: Promise<T>
   #resolve!: (value: T | PromiseLike<T>) => void
-  #reject!: (reason?: any) => void
+  #reject!: (reason?: unknown) => void
   #state: State = State.pending
 
   constructor() {
@@ -55,23 +55,14 @@ export class Deferred<T> implements PromiseLike<T> {
   }
 
   then<TResult1 = T, TResult2 = never>(
-    onfulfilled?:
-      | ((value: T) => TResult1 | PromiseLike<TResult1>)
-      | undefined
-      | null,
-    onrejected?:
-      | ((reason: any) => TResult2 | PromiseLike<TResult2>)
-      | undefined
-      | null,
+    onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | null,
+    onrejected?: ((reason: unknown) => TResult2 | PromiseLike<TResult2>) | null,
   ): Promise<TResult1 | TResult2> {
     return this.promise.then(onfulfilled, onrejected)
   }
 
   catch<TResult = never>(
-    onrejected?:
-      | ((reason: any) => TResult | PromiseLike<TResult>)
-      | undefined
-      | null,
+    onrejected?: ((reason: unknown) => TResult | PromiseLike<TResult>) | null,
   ): Promise<T | TResult> {
     return this.promise.catch(onrejected)
   }
@@ -107,15 +98,15 @@ export class Deferred<T> implements PromiseLike<T> {
 
   observeQuietly(p: Promise<T>): Deferred<T | undefined> {
     void observeQuietly(this, p)
-    return this as any
+    return this as Deferred<T | undefined>
   }
 }
 
 async function observe<T>(d: Deferred<T>, p: Promise<T>) {
   try {
     d.resolve(await p)
-  } catch (err: any) {
-    d.reject(err)
+  } catch (err: unknown) {
+    d.reject(err instanceof Error ? err : new Error(String(err)))
   }
 }
 
@@ -123,6 +114,6 @@ async function observeQuietly<T>(d: Deferred<T>, p: Promise<T>) {
   try {
     d.resolve(await p)
   } catch {
-    d.resolve(undefined as any)
+    d.resolve(undefined as T)
   }
 }
