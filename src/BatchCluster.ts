@@ -484,65 +484,110 @@ export class BatchCluster {
   }
 
   async #maybeSpawnProcs() {
-    let procsToSpawn = this.#procsToSpawn()
-
-    if (this.ended || this.#nextSpawnTime > Date.now() || procsToSpawn === 0) {
+    if (!this.#shouldAttemptSpawn()) {
       return
     }
 
+    this.#prepareForSpawning()
+    await this.#spawnProcesses()
+    this.#scheduleNextSpawnOpportunity()
+  }
+
+  /**
+   * Check if we should attempt to spawn processes
+   */
+  #shouldAttemptSpawn(): boolean {
+    const procsToSpawn = this.#procsToSpawn()
+    return !this.ended && this.#nextSpawnTime <= Date.now() && procsToSpawn > 0
+  }
+
+  /**
+   * Prepare for spawning by setting up concurrency controls
+   */
+  #prepareForSpawning(): void {
     // prevent concurrent runs:
     this.#nextSpawnTime = Date.now() + this.#maxSpawnDelay()
+  }
+
+  /**
+   * Spawn the required number of processes
+   */
+  async #spawnProcesses(): Promise<void> {
+    let procsToSpawn = this.#procsToSpawn()
 
     for (let i = 0; i < procsToSpawn; i++) {
       if (this.ended) {
         break
       }
 
-      // Kick the lock down the road:
-      this.#nextSpawnTime = Date.now() + this.#maxSpawnDelay()
-      this.#spawnedProcs++
+      await this.#spawnSingleProcess()
 
-      try {
-        const proc = this.#spawnNewProc()
-        const result = await thenOrTimeout(
-          proc,
-          this.options.spawnTimeoutMillis,
-        )
-        if (result === Timeout) {
-          void proc
-            .then((bp) => {
-              void bp.end(false, "startError")
-              this.emitter.emit(
-                "startError",
-                asError(
-                  "Failed to spawn process in " +
-                    this.options.spawnTimeoutMillis +
-                    "ms",
-                ),
-                bp,
-              )
-            })
-            .catch((err) => {
-              // this should only happen if the processFactory throws a
-              // rejection:
-              this.emitter.emit("startError", asError(err))
-            })
-        } else {
-          this.#logger().debug(
-            "BatchCluster.#maybeSpawnProcs() started healthy child process",
-            { pid: result.pid },
-          )
-        }
-
-        // tasks may have been popped off or setMaxProcs may have reduced
-        // maxProcs. Do this at the end so the for loop ends properly.
-        procsToSpawn = Math.min(this.#procsToSpawn(), procsToSpawn)
-      } catch (err) {
-        this.emitter.emit("startError", asError(err))
-      }
+      // tasks may have been popped off or setMaxProcs may have reduced
+      // maxProcs. Do this at the end so the for loop ends properly.
+      procsToSpawn = Math.min(this.#procsToSpawn(), procsToSpawn)
     }
+  }
 
-    // YAY WE MADE IT.
+  /**
+   * Spawn a single process with timeout and error handling
+   */
+  async #spawnSingleProcess(): Promise<void> {
+    // Kick the lock down the road:
+    this.#nextSpawnTime = Date.now() + this.#maxSpawnDelay()
+    this.#spawnedProcs++
+
+    try {
+      const proc = this.#spawnNewProc()
+      const result = await thenOrTimeout(proc, this.options.spawnTimeoutMillis)
+
+      if (result === Timeout) {
+        this.#handleSpawnTimeout(proc)
+      } else {
+        this.#handleSuccessfulSpawn(result)
+      }
+    } catch (err) {
+      this.emitter.emit("startError", asError(err))
+    }
+  }
+
+  /**
+   * Handle process spawn timeout
+   */
+  #handleSpawnTimeout(proc: Promise<BatchProcess>): void {
+    void proc
+      .then((bp) => {
+        void bp.end(false, "startError")
+        this.emitter.emit(
+          "startError",
+          asError(
+            "Failed to spawn process in " +
+              this.options.spawnTimeoutMillis +
+              "ms",
+          ),
+          bp,
+        )
+      })
+      .catch((err) => {
+        // this should only happen if the processFactory throws a
+        // rejection:
+        this.emitter.emit("startError", asError(err))
+      })
+  }
+
+  /**
+   * Handle successful process spawn
+   */
+  #handleSuccessfulSpawn(result: BatchProcess): void {
+    this.#logger().debug(
+      "BatchCluster.#spawnProcesses() started healthy child process",
+      { pid: result.pid },
+    )
+  }
+
+  /**
+   * Schedule the next spawn opportunity
+   */
+  #scheduleNextSpawnOpportunity(): void {
     // Only let more children get spawned after minDelay:
     const delay = Math.max(100, this.options.minDelayBetweenSpawnMillis)
     this.#nextSpawnTime = Date.now() + delay

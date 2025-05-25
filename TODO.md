@@ -16,7 +16,7 @@
 - [x] Move health check logic to shared `ProcessHealthMonitor`
 
 ## 6. **Refactor Long Methods** 📏
-- [ ] Break down `BatchCluster.#maybeSpawnProcs()` into smaller methods
+- [x] Break down `BatchCluster.#maybeSpawnProcs()` into smaller methods
 - [ ] Break down `BatchProcess.#end()` into smaller methods
 - [ ] Refactor `BatchProcess.whyNotHealthy` using strategy pattern
 - [ ] Simplify `BatchCluster.vacuumProcs()` logic
