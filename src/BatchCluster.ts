@@ -404,26 +404,42 @@ export class BatchCluster {
   vacuumProcs() {
     this.#maybeCheckPids()
     const endPromises: Promise<void>[] = []
-    let pidsToReap = Math.max(0, this.#procs.length - this.options.maxProcs)
+    const pidsToReap = Math.max(0, this.#procs.length - this.options.maxProcs)
+
+    return this.#processIdleHealthyProcs(pidsToReap, endPromises)
+  }
+
+  #processIdleHealthyProcs(
+    pidsToReap: number,
+    endPromises: Promise<void>[],
+  ): Promise<void[]> {
+    let remainingPidsToReap = pidsToReap
+
     filterInPlace(this.#procs, (proc) => {
-      // Only check `.idle` (not `.ready`) procs. We don't want to reap busy
-      // procs unless we're ending, and unhealthy procs (that we want to reap)
-      // won't be `.ready`.
-      if (proc.idle) {
-        // don't reap more than pidsToReap pids. We can't use #procs.length
-        // within filterInPlace because #procs.length only changes at iteration
-        // completion: the prior impl resulted in all idle pids getting reaped
-        // when maxProcs was reduced.
-        const why = proc.whyNotHealthy ?? (--pidsToReap >= 0 ? "tooMany" : null)
-        if (why != null) {
-          endPromises.push(proc.end(true, why))
-          return false
-        }
-        proc.maybeRunHealthcheck()
+      if (!proc.idle) return true
+
+      const reason = this.#getProcessTerminationReason(
+        proc,
+        remainingPidsToReap,
+      )
+      if (reason != null) {
+        endPromises.push(proc.end(true, reason))
+        remainingPidsToReap--
+        return false
       }
+
+      proc.maybeRunHealthcheck()
       return true
     })
+
     return Promise.all(endPromises)
+  }
+
+  #getProcessTerminationReason(
+    proc: BatchProcess,
+    remainingPidsToReap: number,
+  ): WhyNotHealthy | null {
+    return proc.whyNotHealthy ?? (remainingPidsToReap > 0 ? "tooMany" : null)
   }
 
   /**

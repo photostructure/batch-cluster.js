@@ -1,4 +1,8 @@
 import { BatchClusterEmitter } from "./BatchClusterEmitter"
+import {
+  CompositeHealthCheckStrategy,
+  HealthCheckStrategy,
+} from "./HealthCheckStrategy"
 import { InternalBatchProcessOptions } from "./InternalBatchProcessOptions"
 import { SimpleParser } from "./Parser"
 import { blank } from "./String"
@@ -37,11 +41,14 @@ export class ProcessHealthMonitor {
     }
   >()
 
+  private readonly healthStrategy: HealthCheckStrategy
+
   constructor(
     private readonly options: InternalBatchProcessOptions,
     private readonly emitter: BatchClusterEmitter,
+    healthStrategy?: HealthCheckStrategy,
   ) {
-    // Logger is available via options.logger if needed in the future
+    this.healthStrategy = healthStrategy ?? new CompositeHealthCheckStrategy()
   }
 
   /**
@@ -91,47 +98,12 @@ export class ProcessHealthMonitor {
   ): WhyNotHealthy | null {
     if (overrideReason != null) return overrideReason
 
-    if (process.ended) {
-      return "ended"
-    } else if (process.ending) {
-      return "ending"
-    }
-
     const state = this.#healthCheckStates.get(process.pid)
     if (state != null && state.healthCheckFailures > 0) {
       return "unhealthy"
     }
 
-    if (process.proc.stdin == null || process.proc.stdin.destroyed) {
-      return "closed"
-    } else if (
-      this.options.maxTasksPerProcess > 0 &&
-      process.taskCount >= this.options.maxTasksPerProcess
-    ) {
-      return "worn"
-    } else if (
-      this.options.maxIdleMsPerProcess > 0 &&
-      process.idleMs > this.options.maxIdleMsPerProcess
-    ) {
-      return "idle"
-    } else if (
-      this.options.maxFailedTasksPerProcess > 0 &&
-      process.failedTaskCount >= this.options.maxFailedTasksPerProcess
-    ) {
-      return "broken"
-    } else if (
-      this.options.maxProcAgeMillis > 0 &&
-      process.start + this.options.maxProcAgeMillis < Date.now()
-    ) {
-      return "old"
-    } else if (
-      this.options.taskTimeoutMillis > 0 &&
-      (process.currentTask?.runtimeMs ?? 0) > this.options.taskTimeoutMillis
-    ) {
-      return "timeout"
-    } else {
-      return null
-    }
+    return this.healthStrategy.assess(process, this.options)
   }
 
   /**
