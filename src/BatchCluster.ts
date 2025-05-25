@@ -20,6 +20,7 @@ import { Logger } from "./Logger"
 import { Mean } from "./Mean"
 import { verifyOptions } from "./OptionsVerifier"
 import { Parser } from "./Parser"
+import { validateProcpsAvailable } from "./ProcpsChecker"
 import { Rate } from "./Rate"
 import { toS } from "./String"
 import { Task } from "./Task"
@@ -32,6 +33,7 @@ export { Deferred } from "./Deferred"
 export * from "./Logger"
 export { SimpleParser } from "./Parser"
 export { kill, pidExists, pids } from "./Pids"
+export { ProcpsMissingError } from "./ProcpsChecker"
 export { Rate } from "./Rate"
 export { Task } from "./Task"
 export type {
@@ -79,6 +81,9 @@ export class BatchCluster {
       BatchProcessOptions &
       ChildProcessFactory,
   ) {
+    // Validate that required process listing commands are available
+    validateProcpsAvailable()
+
     this.options = verifyOptions({ ...opts, observer: this.emitter })
 
     this.on("childEnd", (bp, why) => {
