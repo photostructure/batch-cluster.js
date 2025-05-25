@@ -5,6 +5,7 @@ import { BatchProcess } from "./BatchProcess"
 import { CombinedBatchProcessOptions } from "./CombinedBatchProcessOptions"
 import { asError } from "./Error"
 import { Logger } from "./Logger"
+import { ProcessHealthMonitor } from "./ProcessHealthMonitor"
 import { Timeout, thenOrTimeout } from "./Timeout"
 
 /**
@@ -14,6 +15,7 @@ import { Timeout, thenOrTimeout } from "./Timeout"
 export class ProcessPoolManager {
   readonly #procs: BatchProcess[] = []
   readonly #logger: () => Logger
+  readonly #healthMonitor: ProcessHealthMonitor
   #nextSpawnTime = 0
   #lastPidsCheckTime = 0
   #spawnedProcs = 0
@@ -24,6 +26,7 @@ export class ProcessPoolManager {
     private readonly onIdle: () => void,
   ) {
     this.#logger = options.logger
+    this.#healthMonitor = new ProcessHealthMonitor(options, emitter)
   }
 
   /**
@@ -259,7 +262,12 @@ export class ProcessPoolManager {
     // so we don't leak child processes:
     const procOrPromise = this.options.processFactory()
     const proc = await procOrPromise
-    const result = new BatchProcess(proc, this.options, this.onIdle)
+    const result = new BatchProcess(
+      proc,
+      this.options,
+      this.onIdle,
+      this.#healthMonitor,
+    )
     this.#procs.push(result)
     return result
   }

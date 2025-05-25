@@ -3,7 +3,11 @@ import events from "node:events"
 import { expect, processFactory } from "./_chai.spec"
 import { BatchClusterEmitter } from "./BatchClusterEmitter"
 import { logger } from "./Logger"
-import { StreamHandler, StreamHandlerOptions, StreamContext } from "./StreamHandler"
+import {
+  StreamContext,
+  StreamHandler,
+  StreamHandlerOptions,
+} from "./StreamHandler"
 import { Task } from "./Task"
 
 describe("StreamHandler", function () {
@@ -20,7 +24,7 @@ describe("StreamHandler", function () {
   beforeEach(function () {
     emitter = new events.EventEmitter() as BatchClusterEmitter
     streamHandler = new StreamHandler(options, emitter)
-    
+
     onErrorCalls = []
     endCalls = []
 
@@ -41,7 +45,7 @@ describe("StreamHandler", function () {
   describe("initial state", function () {
     it("should initialize correctly", function () {
       expect(streamHandler).to.not.be.undefined
-      
+
       const stats = streamHandler.getStats()
       expect(stats.handlerActive).to.be.true
       expect(stats.emitterConnected).to.be.true
@@ -75,18 +79,22 @@ describe("StreamHandler", function () {
 
     it("should throw error if stdin is missing", function () {
       const invalidProcess = { stdin: null } as child_process.ChildProcess
-      
+
       expect(() => {
         streamHandler.setupStreamListeners(invalidProcess, mockContext)
       }).to.throw("Given proc had no stdin")
     })
 
     it("should throw error if stdout is missing", function () {
-      const invalidProcess = { 
-        stdin: { on: () => { /* mock implementation */ } }, // Mock stdin with on method
+      const invalidProcess = {
+        stdin: {
+          on: () => {
+            /* mock implementation */
+          },
+        }, // Mock stdin with on method
         stdout: null,
       } as any as child_process.ChildProcess
-      
+
       expect(() => {
         streamHandler.setupStreamListeners(invalidProcess, mockContext)
       }).to.throw("Given proc had no stdout")
@@ -114,7 +122,9 @@ describe("StreamHandler", function () {
       // Create a mock task
       mockTask = {
         pending: true,
-        onStdout: () => { /* mock implementation */ },
+        onStdout: () => {
+          /* mock implementation */
+        },
       } as unknown as Task<unknown>
     })
 
@@ -186,7 +196,9 @@ describe("StreamHandler", function () {
     it("should not process stdout when task is not pending", function () {
       const nonPendingTask = {
         pending: false,
-        onStdout: () => { /* mock implementation */ },
+        onStdout: () => {
+          /* mock implementation */
+        },
       } as unknown as Task<unknown>
 
       mockContext.currentTask = nonPendingTask
@@ -217,7 +229,9 @@ describe("StreamHandler", function () {
       // Create a mock task
       mockTask = {
         pending: true,
-        onStderr: () => { /* mock implementation */ },
+        onStderr: () => {
+          /* mock implementation */
+        },
       } as unknown as Task<unknown>
     })
 
@@ -272,7 +286,9 @@ describe("StreamHandler", function () {
     it("should not process stderr when task is not pending", function () {
       const nonPendingTask = {
         pending: false,
-        onStderr: () => { /* mock implementation */ },
+        onStderr: () => {
+          /* mock implementation */
+        },
       } as unknown as Task<unknown>
 
       mockContext.currentTask = nonPendingTask
@@ -295,7 +311,7 @@ describe("StreamHandler", function () {
       expect(streamHandler.isBlankData("\t")).to.be.true
       expect(streamHandler.isBlankData(null)).to.be.true
       expect(streamHandler.isBlankData(undefined)).to.be.true
-      
+
       expect(streamHandler.isBlankData("text")).to.be.false
       expect(streamHandler.isBlankData("  text  ")).to.be.false
       expect(streamHandler.isBlankData(Buffer.from("data"))).to.be.false
@@ -303,7 +319,7 @@ describe("StreamHandler", function () {
 
     it("should provide handler statistics", function () {
       const stats = streamHandler.getStats()
-      
+
       expect(stats).to.have.property("handlerActive")
       expect(stats).to.have.property("emitterConnected")
       expect(stats.handlerActive).to.be.true
@@ -324,8 +340,12 @@ describe("StreamHandler", function () {
 
       mockTask = {
         pending: true,
-        onStdout: () => { /* mock implementation */ },
-        onStderr: () => { /* mock implementation */ },
+        onStdout: () => {
+          /* mock implementation */
+        },
+        onStderr: () => {
+          /* mock implementation */
+        },
       } as unknown as Task<unknown>
     })
 
@@ -369,8 +389,12 @@ describe("StreamHandler", function () {
 
       mockTask = {
         pending: true,
-        onStdout: () => { /* mock implementation */ },
-        onStderr: () => { /* mock implementation */ },
+        onStdout: () => {
+          /* mock implementation */
+        },
+        onStderr: () => {
+          /* mock implementation */
+        },
       } as unknown as Task<unknown>
     })
 
@@ -390,13 +414,13 @@ describe("StreamHandler", function () {
       // Start with active task
       mockContext.currentTask = mockTask
       streamHandler.processStdout("initial output", mockContext)
-      
+
       expect(taskDataEvents).to.have.length(1)
-      
+
       // Task completes, no current task
       mockContext.currentTask = undefined
       streamHandler.processStdout("stray output", mockContext)
-      
+
       expect(noTaskDataEvents).to.have.length(1)
       expect(endCalls).to.have.length(1)
       expect(endCalls[0]?.reason).to.eql("stdout.error")

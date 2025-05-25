@@ -1,5 +1,8 @@
 # Code Review TODO List for batch-cluster.js
 
+## 1. **Throw error at startup if procps is missing**
+- [ ] Throw error if `ps` is missing on non-windows (see https://github.com/photostructure/batch-cluster.js/issues/13 and https://github.com/photostructure/batch-cluster.js/issues/39) 
+
 
 ## 4. **Extract Responsibilities from BatchCluster** 📦
 - [x] Create `ProcessPoolManager` class for process lifecycle management
@@ -10,7 +13,7 @@
 ## 5. **Extract Responsibilities from BatchProcess** 📦
 - [x] Create `StreamHandler` class for stdout/stderr processing
 - [x] Extract process termination logic into separate utility
-- [ ] Move health check logic to shared `ProcessHealthMonitor`
+- [x] Move health check logic to shared `ProcessHealthMonitor`
 
 ## 6. **Refactor Long Methods** 📏
 - [ ] Break down `BatchCluster.#maybeSpawnProcs()` into smaller methods

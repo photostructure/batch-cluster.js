@@ -7,6 +7,7 @@ import { Logger } from "./Logger"
 import { map } from "./Object"
 import { SimpleParser } from "./Parser"
 import { pidExists } from "./Pids"
+import { ProcessHealthMonitor } from "./ProcessHealthMonitor"
 import { ProcessTerminator } from "./ProcessTerminator"
 import { blank, ensureSuffix } from "./String"
 import { Task } from "./Task"
@@ -19,14 +20,12 @@ export class BatchProcess {
   readonly name: string
   readonly pid: number
   readonly start = Date.now()
-  #lastHealthCheck = Date.now()
-  #healthCheckFailures = 0
 
   readonly startupTaskId: number
   readonly #logger: () => Logger
   readonly #terminator: ProcessTerminator
+  readonly #healthMonitor: ProcessHealthMonitor
   #lastJobFinshedAt = Date.now()
-  #lastJobFailed = false
 
   // Only set to true when `proc.pid` is no longer in the process table.
   #starting = true
@@ -56,10 +55,13 @@ export class BatchProcess {
     readonly proc: child_process.ChildProcess,
     readonly opts: InternalBatchProcessOptions,
     private readonly onIdle: () => void,
+    healthMonitor?: ProcessHealthMonitor,
   ) {
     this.name = "BatchProcess(" + proc.pid + ")"
     this.#logger = opts.logger
     this.#terminator = new ProcessTerminator(opts)
+    this.#healthMonitor =
+      healthMonitor ?? new ProcessHealthMonitor(opts, opts.observer)
     // don't let node count the child processes as a reason to stay alive
     this.proc.unref()
 
@@ -103,6 +105,10 @@ export class BatchProcess {
         new Error(this.name + " startup task was not submitted"),
       )
     }
+
+    // Initialize health monitoring for this process
+    this.#healthMonitor.initializeProcess(this.pid)
+
     // this needs to be at the end of the constructor, to ensure everything is
     // set up on `this`
     this.opts.observer.emit("childStart", this)
@@ -155,43 +161,7 @@ export class BatchProcess {
    * know if a process can handle a new task.
    */
   get whyNotHealthy(): WhyNotHealthy | null {
-    if (this.#whyNotHealthy != null) return this.#whyNotHealthy
-    if (this.ended) {
-      return "ended"
-    } else if (this.ending) {
-      return "ending"
-    } else if (this.#healthCheckFailures > 0) {
-      return "unhealthy"
-    } else if (this.proc.stdin == null || this.proc.stdin.destroyed) {
-      return "closed"
-    } else if (
-      this.opts.maxTasksPerProcess > 0 &&
-      this.taskCount >= this.opts.maxTasksPerProcess
-    ) {
-      return "worn"
-    } else if (
-      this.opts.maxIdleMsPerProcess > 0 &&
-      this.idleMs > this.opts.maxIdleMsPerProcess
-    ) {
-      return "idle"
-    } else if (
-      this.opts.maxFailedTasksPerProcess > 0 &&
-      this.failedTaskCount >= this.opts.maxFailedTasksPerProcess
-    ) {
-      return "broken"
-    } else if (
-      this.opts.maxProcAgeMillis > 0 &&
-      this.start + this.opts.maxProcAgeMillis < Date.now()
-    ) {
-      return "old"
-    } else if (
-      (this.opts.taskTimeoutMillis > 0 && this.#currentTask?.runtimeMs) ??
-      0 > this.opts.taskTimeoutMillis
-    ) {
-      return "timeout"
-    } else {
-      return null
-    }
+    return this.#healthMonitor.assessHealth(this, this.#whyNotHealthy)
   }
 
   /**
@@ -249,38 +219,7 @@ export class BatchProcess {
   }
 
   maybeRunHealthcheck(): Task<unknown> | undefined {
-    const hcc = this.opts.healthCheckCommand
-    // if there's no health check command, no-op.
-    if (hcc == null || blank(hcc)) return
-
-    // if the prior health check failed, .ready will be false
-    if (!this.ready) return
-
-    if (
-      this.#lastJobFailed ||
-      (this.opts.healthCheckIntervalMillis > 0 &&
-        Date.now() - this.#lastHealthCheck >
-          this.opts.healthCheckIntervalMillis)
-    ) {
-      this.#lastHealthCheck = Date.now()
-      const t = new Task(hcc, SimpleParser)
-      t.promise
-        .catch((err) => {
-          this.opts.observer.emit(
-            "healthCheckError",
-            err instanceof Error ? err : new Error(String(err)),
-            this,
-          )
-          this.#healthCheckFailures++
-          // BatchCluster will see we're unhealthy and reap us later
-        })
-        .finally(() => {
-          this.#lastHealthCheck = Date.now()
-        })
-      this.#execTask(t)
-      return t as Task<unknown>
-    }
-    return
+    return this.#healthMonitor.maybeRunHealthcheck(this)
   }
 
   // This must not be async, or new instances aren't started as busy (until the
@@ -400,10 +339,12 @@ export class BatchProcess {
       this.#exited,
       () => this.running(),
     )
-    
+
+    // Clean up health monitoring for this process
+    this.#healthMonitor.cleanupProcess(this.pid)
+
     this.opts.observer.emit("childEnd", this, reason)
   }
-
 
   #onTimeout(task: Task<unknown>, timeoutMs: number): void {
     if (task.pending) {
@@ -486,7 +427,13 @@ export class BatchProcess {
   }
 
   #clearCurrentTask(task?: Task<unknown>) {
-    this.#lastJobFailed = task?.state === "rejected"
+    const taskFailed = task?.state === "rejected"
+    if (taskFailed) {
+      this.#healthMonitor.recordJobFailure(this.pid)
+    } else if (task != null) {
+      this.#healthMonitor.recordJobSuccess(this.pid)
+    }
+
     if (task != null && task.taskId !== this.#currentTask?.taskId) return
     map(this.#currentTaskTimeout, (ea) => clearTimeout(ea))
     this.#currentTaskTimeout = undefined
