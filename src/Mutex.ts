@@ -6,7 +6,7 @@ import { Deferred } from "./Deferred"
  */
 export class Mutex {
   private _pushCount = 0
-  private readonly _arr: Deferred<any>[] = []
+  private readonly _arr: Deferred<unknown>[] = []
 
   private get arr() {
     filterInPlace(this._arr, (ea) => ea.pending)
