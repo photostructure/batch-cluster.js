@@ -11,7 +11,9 @@
       "Bash(npm test)",
       "Bash(npx eslint:*)",
       "Bash(git add:*)",
-      "Bash(npm t)"
+      "Bash(npm t)",
+      "Bash(mocha:*)",
+      "Bash(npx mocha:*)"
     ],
     "deny": []
   }
