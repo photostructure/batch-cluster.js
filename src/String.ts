@@ -6,6 +6,11 @@ export function notBlank(s: unknown): boolean {
   return !blank(s)
 }
 
+export function toNotBlank(s: unknown): string | undefined {
+  const result = toS(s).trim()
+  return result.length === 0 ? undefined : result
+}
+
 export function ensureSuffix(s: string, suffix: string): string {
   return s.endsWith(suffix) ? s : s + suffix
 }
