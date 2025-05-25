@@ -10,8 +10,6 @@ import {
   setRngseed,
 } from "./_chai.spec"
 
-/* eslint-disable @typescript-eslint/no-non-null-assertion */
-
 describe("test.js", () => {
   class Harness {
     readonly child: child_process.ChildProcess
@@ -32,18 +30,18 @@ describe("test.js", () => {
     }
     async end(): Promise<void> {
       this.child.stdin!.end(null)
-      await until(() => this.running().then((ea) => !ea), 1000)
+      await until(() => this.notRunning(), 1000)
       if (await this.running()) {
         console.error("Ack, I had to kill child pid " + this.child.pid)
         kill(this.child.pid)
       }
       return
     }
-    async running(): Promise<boolean> {
+    running(): boolean {
       return pidExists(this.child.pid)
     }
-    async notRunning(): Promise<boolean> {
-      return this.running().then((ea) => !ea)
+    notRunning(): boolean {
+      return !this.running()
     }
     async assertStdout(f: (output: string) => void) {
       // The OS may take a bit before the PID shows up in the process table:
