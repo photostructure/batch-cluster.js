@@ -1,8 +1,11 @@
 import events from "node:events"
 import { expect } from "./_chai.spec"
 import { BatchClusterEmitter } from "./BatchClusterEmitter"
+import {
+  BatchClusterEventCoordinator,
+  EventCoordinatorOptions,
+} from "./BatchClusterEventCoordinator"
 import { BatchProcess } from "./BatchProcess"
-import { BatchClusterEventCoordinator, EventCoordinatorOptions } from "./BatchClusterEventCoordinator"
 import { logger } from "./Logger"
 import { Task } from "./Task"
 
@@ -143,7 +146,9 @@ describe("BatchClusterEventCoordinator", function () {
       emitter.emit("startError", error)
 
       // Rate might be 0 initially due to warmup period
-      expect(eventCoordinator.startErrorRatePerMinute).to.be.greaterThanOrEqual(0)
+      expect(eventCoordinator.startErrorRatePerMinute).to.be.greaterThanOrEqual(
+        0,
+      )
       expect(endClusterCalledCount).to.eql(0)
       expect(onIdleCalledCount).to.eql(1)
     })
@@ -151,12 +156,12 @@ describe("BatchClusterEventCoordinator", function () {
     it("should have logic to trigger fatal error based on rate", function () {
       // This test verifies the logic exists, but doesn't test timing-dependent rate calculation
       // which depends on the Rate class's warmup period
-      
+
       const testOptions: EventCoordinatorOptions = {
         ...options,
         maxReasonableProcessFailuresPerMinute: 5,
       }
-      
+
       const testCoordinator = new BatchClusterEventCoordinator(
         emitter,
         testOptions,
@@ -166,8 +171,10 @@ describe("BatchClusterEventCoordinator", function () {
 
       // Verify that start error rate tracking is working
       emitter.emit("startError", new Error("Test error"))
-      expect(testCoordinator.startErrorRatePerMinute).to.be.greaterThanOrEqual(0)
-      
+      expect(testCoordinator.startErrorRatePerMinute).to.be.greaterThanOrEqual(
+        0,
+      )
+
       // The actual fatal error triggering depends on Rate class timing
       // which is tested in the Rate class's own tests
     })
@@ -218,7 +225,12 @@ describe("BatchClusterEventCoordinator", function () {
       const mockProcess = {} as BatchProcess
       const testData = "test data"
 
-      const result = eventCoordinator.events.emit("taskData", testData, mockTask, mockProcess)
+      const result = eventCoordinator.events.emit(
+        "taskData",
+        testData,
+        mockTask,
+        mockProcess,
+      )
 
       expect(result).to.be.true
       expect(eventReceived).to.be.true
@@ -320,7 +332,7 @@ describe("BatchClusterEventCoordinator", function () {
     it("should have callback integration for endCluster", function () {
       // This test verifies that the endCluster callback is properly integrated
       // The actual triggering depends on Rate class timing which is complex to test
-      
+
       const testCoordinator = new BatchClusterEventCoordinator(
         emitter,
         options,
@@ -330,7 +342,7 @@ describe("BatchClusterEventCoordinator", function () {
 
       // Verify the coordinator is set up and callbacks are connected
       expect(testCoordinator.events).to.equal(emitter)
-      
+
       // The endCluster callback integration is verified through the logic
       // The actual rate-based triggering is tested in integration scenarios
     })

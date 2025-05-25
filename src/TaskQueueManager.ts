@@ -57,7 +57,10 @@ export class TaskQueueManager {
    * Attempt to assign the next task to a ready process.
    * Returns true if a task was successfully assigned.
    */
-  tryAssignNextTask(readyProcess: BatchProcess | undefined, retries = 1): boolean {
+  tryAssignNextTask(
+    readyProcess: BatchProcess | undefined,
+    retries = 1,
+  ): boolean {
     if (this.#tasks.length === 0 || retries < 0) {
       return false
     }
@@ -83,10 +86,13 @@ export class TaskQueueManager {
       return this.tryAssignNextTask(readyProcess, retries - 1)
     }
 
-    this.#logger().trace("TaskQueueManager.tryAssignNextTask(): submitted task", {
-      child_pid: readyProcess.pid,
-      task,
-    })
+    this.#logger().trace(
+      "TaskQueueManager.tryAssignNextTask(): submitted task",
+      {
+        child_pid: readyProcess.pid,
+        task,
+      },
+    )
 
     return submitted
   }
@@ -97,7 +103,7 @@ export class TaskQueueManager {
    */
   processQueue(findReadyProcess: () => BatchProcess | undefined): number {
     let assignedCount = 0
-    
+
     while (this.#tasks.length > 0) {
       const readyProcess = findReadyProcess()
       if (!this.tryAssignNextTask(readyProcess)) {
@@ -105,7 +111,7 @@ export class TaskQueueManager {
       }
       assignedCount++
     }
-    
+
     return assignedCount
   }
 

@@ -55,7 +55,9 @@ export class StreamHandler {
 
     map(proc.stderr, (stderr) => {
       stderr.on("error", (err) => context.onError("stderr.error", err))
-      stderr.on("data", (data: string | Buffer) => this.#onStderr(data, context))
+      stderr.on("data", (data: string | Buffer) =>
+        this.#onStderr(data, context),
+      )
     })
   }
 
@@ -64,7 +66,7 @@ export class StreamHandler {
    */
   #onStdout(data: string | Buffer, context: StreamContext): void {
     if (data == null) return
-    
+
     const task = context.currentTask
     if (task != null && task.pending) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
@@ -84,9 +86,9 @@ export class StreamHandler {
    */
   #onStderr(data: string | Buffer, context: StreamContext): void {
     if (blank(data)) return
-    
+
     this.#logger().warn(context.name + ".onStderr(): " + String(data))
-    
+
     const task = context.currentTask
     if (task != null && task.pending) {
       task.onStderr(data)

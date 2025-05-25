@@ -20,7 +20,7 @@ export class ProcessTerminator {
 
   /**
    * Terminates a child process gracefully or forcefully
-   * 
+   *
    * @param proc The child process to terminate
    * @param processName Name for logging purposes
    * @param pid Process ID
@@ -111,9 +111,10 @@ export class ProcessTerminator {
       return
     }
 
-    const exitCmd = this.opts.exitCommand == null
-      ? null
-      : ensureSuffix(this.opts.exitCommand, "\n")
+    const exitCmd =
+      this.opts.exitCommand == null
+        ? null
+        : ensureSuffix(this.opts.exitCommand, "\n")
 
     try {
       proc.stdin.end(exitCmd)
@@ -145,15 +146,21 @@ export class ProcessTerminator {
     }
 
     // Wait for the exit command to take effect
-    await this.#awaitNotRunning(this.opts.endGracefulWaitTimeMillis / 2, isRunning)
-    
+    await this.#awaitNotRunning(
+      this.opts.endGracefulWaitTimeMillis / 2,
+      isRunning,
+    )
+
     // If still running, send kill signal
     if (isRunning() && proc.pid != null) {
       proc.kill()
     }
-    
+
     // Wait for the signal handler to work
-    await this.#awaitNotRunning(this.opts.endGracefulWaitTimeMillis / 2, isRunning)
+    await this.#awaitNotRunning(
+      this.opts.endGracefulWaitTimeMillis / 2,
+      isRunning,
+    )
   }
 
   #forceKillIfRunning(
@@ -161,11 +168,7 @@ export class ProcessTerminator {
     processName: string,
     isRunning: () => boolean,
   ): void {
-    if (
-      this.opts.cleanupChildProcs &&
-      proc.pid != null &&
-      isRunning()
-    ) {
+    if (this.opts.cleanupChildProcs && proc.pid != null && isRunning()) {
       this.#logger().warn(
         `${processName}.terminate(): force-killing still-running child.`,
       )
@@ -173,7 +176,10 @@ export class ProcessTerminator {
     }
   }
 
-  async #awaitNotRunning(timeout: number, isRunning: () => boolean): Promise<void> {
+  async #awaitNotRunning(
+    timeout: number,
+    isRunning: () => boolean,
+  ): Promise<void> {
     await until(() => !isRunning(), timeout)
   }
 }

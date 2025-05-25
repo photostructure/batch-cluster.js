@@ -1,9 +1,9 @@
 import { BatchClusterEmitter } from "./BatchClusterEmitter"
-import { WhyNotHealthy, WhyNotReady } from "./WhyNotHealthy"
 import { InternalBatchProcessOptions } from "./InternalBatchProcessOptions"
 import { SimpleParser } from "./Parser"
 import { blank } from "./String"
 import { Task } from "./Task"
+import { WhyNotHealthy, WhyNotReady } from "./WhyNotHealthy"
 
 /**
  * Interface for objects that can be health checked
@@ -28,11 +28,14 @@ export interface HealthCheckable {
  * Provides centralized health assessment and monitoring capabilities.
  */
 export class ProcessHealthMonitor {
-  readonly #healthCheckStates = new Map<number, {
-    lastHealthCheck: number
-    healthCheckFailures: number
-    lastJobFailed: boolean
-  }>()
+  readonly #healthCheckStates = new Map<
+    number,
+    {
+      lastHealthCheck: number
+      healthCheckFailures: number
+      lastJobFailed: boolean
+    }
+  >()
 
   constructor(
     private readonly options: InternalBatchProcessOptions,
@@ -87,7 +90,7 @@ export class ProcessHealthMonitor {
     overrideReason?: WhyNotHealthy,
   ): WhyNotHealthy | null {
     if (overrideReason != null) return overrideReason
-    
+
     if (process.ended) {
       return "ended"
     } else if (process.ending) {
@@ -141,7 +144,10 @@ export class ProcessHealthMonitor {
   /**
    * Assess why a process is not ready (combines health and business)
    */
-  assessReadiness(process: HealthCheckable, overrideReason?: WhyNotHealthy): WhyNotReady | null {
+  assessReadiness(
+    process: HealthCheckable,
+    overrideReason?: WhyNotHealthy,
+  ): WhyNotReady | null {
     return !process.idle ? "busy" : this.assessHealth(process, overrideReason)
   }
 
@@ -155,7 +161,9 @@ export class ProcessHealthMonitor {
   /**
    * Run a health check on a process if needed
    */
-  maybeRunHealthcheck(process: HealthCheckable & { execTask: (task: Task<unknown>) => boolean }): Task<unknown> | undefined {
+  maybeRunHealthcheck(
+    process: HealthCheckable & { execTask: (task: Task<unknown>) => boolean },
+  ): Task<unknown> | undefined {
     const hcc = this.options.healthCheckCommand
     // if there's no health check command, no-op.
     if (hcc == null || blank(hcc)) return
@@ -169,7 +177,8 @@ export class ProcessHealthMonitor {
     if (
       state.lastJobFailed ||
       (this.options.healthCheckIntervalMillis > 0 &&
-        Date.now() - state.lastHealthCheck > this.options.healthCheckIntervalMillis)
+        Date.now() - state.lastHealthCheck >
+          this.options.healthCheckIntervalMillis)
     ) {
       state.lastHealthCheck = Date.now()
       const t = new Task(hcc, SimpleParser)
@@ -187,7 +196,7 @@ export class ProcessHealthMonitor {
         .finally(() => {
           state.lastHealthCheck = Date.now()
         })
-      
+
       // Execute the health check task on the process
       if (process.execTask(t as Task<unknown>)) {
         return t as Task<unknown>
@@ -206,14 +215,14 @@ export class ProcessHealthMonitor {
   } {
     let totalFailures = 0
     let processesWithFailures = 0
-    
+
     for (const state of this.#healthCheckStates.values()) {
       totalFailures += state.healthCheckFailures
       if (state.healthCheckFailures > 0) {
         processesWithFailures++
       }
     }
-    
+
     return {
       monitoredProcesses: this.#healthCheckStates.size,
       totalHealthCheckFailures: totalFailures,

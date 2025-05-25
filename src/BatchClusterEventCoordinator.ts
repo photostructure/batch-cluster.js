@@ -40,8 +40,12 @@ export class BatchClusterEventCoordinator {
    */
   #setupEventHandlers(): void {
     this.emitter.on("childEnd", (bp, why) => this.#handleChildEnd(bp, why))
-    this.emitter.on("internalError", (error) => this.#handleInternalError(error))
-    this.emitter.on("noTaskData", (stdout, stderr, proc) => this.#handleNoTaskData(stdout, stderr, proc))
+    this.emitter.on("internalError", (error) =>
+      this.#handleInternalError(error),
+    )
+    this.emitter.on("noTaskData", (stdout, stderr, proc) =>
+      this.#handleNoTaskData(stdout, stderr, proc),
+    )
     this.emitter.on("startError", (error) => this.#handleStartError(error))
   }
 
@@ -50,7 +54,10 @@ export class BatchClusterEventCoordinator {
    */
   #handleChildEnd(process: BatchProcess, reason: ChildEndReason): void {
     this.#tasksPerProc.push(process.taskCount)
-    this.#childEndCounts.set(reason, (this.#childEndCounts.get(reason) ?? 0) + 1)
+    this.#childEndCounts.set(
+      reason,
+      (this.#childEndCounts.get(reason) ?? 0) + 1,
+    )
     this.onIdleLater()
   }
 
@@ -88,10 +95,11 @@ export class BatchClusterEventCoordinator {
   #handleStartError(error: Error): void {
     this.#logger().warn("BatchCluster.onStartError(): " + String(error))
     this.#startErrorRate.onEvent()
-    
+
     if (
       this.options.maxReasonableProcessFailuresPerMinute > 0 &&
-      this.#startErrorRate.eventsPerMinute > this.options.maxReasonableProcessFailuresPerMinute
+      this.#startErrorRate.eventsPerMinute >
+        this.options.maxReasonableProcessFailuresPerMinute
     ) {
       this.emitter.emit(
         "fatalError",
@@ -155,7 +163,10 @@ export class BatchClusterEventCoordinator {
       meanTasksPerProc: this.meanTasksPerProc,
       internalErrorCount: this.internalErrorCount,
       startErrorRatePerMinute: this.startErrorRatePerMinute,
-      totalChildEndEvents: [...this.#childEndCounts.values()].reduce((sum, count) => sum + count, 0),
+      totalChildEndEvents: [...this.#childEndCounts.values()].reduce(
+        (sum, count) => sum + count,
+        0,
+      ),
       childEndReasons: Object.keys(this.childEndCounts),
     }
   }

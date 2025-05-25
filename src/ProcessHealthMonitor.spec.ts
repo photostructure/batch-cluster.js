@@ -3,7 +3,7 @@ import { expect, processFactory } from "./_chai.spec"
 import { BatchClusterEmitter } from "./BatchClusterEmitter"
 import { DefaultTestOptions } from "./DefaultTestOptions.spec"
 import { verifyOptions } from "./OptionsVerifier"
-import { ProcessHealthMonitor, HealthCheckable } from "./ProcessHealthMonitor"
+import { HealthCheckable, ProcessHealthMonitor } from "./ProcessHealthMonitor"
 import { Task } from "./Task"
 
 describe("ProcessHealthMonitor", function () {
@@ -13,7 +13,7 @@ describe("ProcessHealthMonitor", function () {
 
   beforeEach(function () {
     emitter = new events.EventEmitter() as BatchClusterEmitter
-    
+
     const options = verifyOptions({
       ...DefaultTestOptions,
       processFactory,
@@ -26,7 +26,7 @@ describe("ProcessHealthMonitor", function () {
       maxProcAgeMillis: 20000, // Must be > spawnTimeoutMillis
       taskTimeoutMillis: 1000,
     })
-    
+
     healthMonitor = new ProcessHealthMonitor(options, emitter)
 
     // Create a healthy mock process
@@ -47,7 +47,7 @@ describe("ProcessHealthMonitor", function () {
   describe("process lifecycle", function () {
     it("should initialize process health monitoring", function () {
       healthMonitor.initializeProcess(mockProcess.pid)
-      
+
       const state = healthMonitor.getProcessHealthState(mockProcess.pid)
       expect(state).to.not.be.undefined
       expect(state?.healthCheckFailures).to.eql(0)
@@ -56,10 +56,12 @@ describe("ProcessHealthMonitor", function () {
 
     it("should cleanup process health monitoring", function () {
       healthMonitor.initializeProcess(mockProcess.pid)
-      expect(healthMonitor.getProcessHealthState(mockProcess.pid)).to.not.be.undefined
-      
+      expect(healthMonitor.getProcessHealthState(mockProcess.pid)).to.not.be
+        .undefined
+
       healthMonitor.cleanupProcess(mockProcess.pid)
-      expect(healthMonitor.getProcessHealthState(mockProcess.pid)).to.be.undefined
+      expect(healthMonitor.getProcessHealthState(mockProcess.pid)).to.be
+        .undefined
     })
   })
 
@@ -76,7 +78,7 @@ describe("ProcessHealthMonitor", function () {
 
     it("should detect ended process", function () {
       const endedProcess = { ...mockProcess, ended: true }
-      
+
       const healthReason = healthMonitor.assessHealth(endedProcess)
       expect(healthReason).to.eql("ended")
       expect(healthMonitor.isHealthy(endedProcess)).to.be.false
@@ -84,29 +86,29 @@ describe("ProcessHealthMonitor", function () {
 
     it("should detect ending process", function () {
       const endingProcess = { ...mockProcess, ending: true }
-      
+
       const healthReason = healthMonitor.assessHealth(endingProcess)
       expect(healthReason).to.eql("ending")
       expect(healthMonitor.isHealthy(endingProcess)).to.be.false
     })
 
     it("should detect closed stdin", function () {
-      const closedProcess = { 
-        ...mockProcess, 
-        proc: { stdin: { destroyed: true } }
+      const closedProcess = {
+        ...mockProcess,
+        proc: { stdin: { destroyed: true } },
       }
-      
+
       const healthReason = healthMonitor.assessHealth(closedProcess)
       expect(healthReason).to.eql("closed")
       expect(healthMonitor.isHealthy(closedProcess)).to.be.false
     })
 
     it("should detect null stdin", function () {
-      const nullStdinProcess = { 
-        ...mockProcess, 
-        proc: { stdin: null }
+      const nullStdinProcess = {
+        ...mockProcess,
+        proc: { stdin: null },
       }
-      
+
       const healthReason = healthMonitor.assessHealth(nullStdinProcess)
       expect(healthReason).to.eql("closed")
       expect(healthMonitor.isHealthy(nullStdinProcess)).to.be.false
@@ -114,7 +116,7 @@ describe("ProcessHealthMonitor", function () {
 
     it("should detect worn process (too many tasks)", function () {
       const wornProcess = { ...mockProcess, taskCount: 5 }
-      
+
       const healthReason = healthMonitor.assessHealth(wornProcess)
       expect(healthReason).to.eql("worn")
       expect(healthMonitor.isHealthy(wornProcess)).to.be.false
@@ -122,7 +124,7 @@ describe("ProcessHealthMonitor", function () {
 
     it("should detect idle process (idle too long)", function () {
       const idleProcess = { ...mockProcess, idleMs: 3000 }
-      
+
       const healthReason = healthMonitor.assessHealth(idleProcess)
       expect(healthReason).to.eql("idle")
       expect(healthMonitor.isHealthy(idleProcess)).to.be.false
@@ -130,18 +132,18 @@ describe("ProcessHealthMonitor", function () {
 
     it("should detect broken process (too many failed tasks)", function () {
       const brokenProcess = { ...mockProcess, failedTaskCount: 3 }
-      
+
       const healthReason = healthMonitor.assessHealth(brokenProcess)
       expect(healthReason).to.eql("broken")
       expect(healthMonitor.isHealthy(brokenProcess)).to.be.false
     })
 
     it("should detect old process", function () {
-      const oldProcess = { 
-        ...mockProcess, 
-        start: Date.now() - 25000 // 25 seconds ago (older than maxProcAgeMillis)
+      const oldProcess = {
+        ...mockProcess,
+        start: Date.now() - 25000, // 25 seconds ago (older than maxProcAgeMillis)
       }
-      
+
       const healthReason = healthMonitor.assessHealth(oldProcess)
       expect(healthReason).to.eql("old")
       expect(healthMonitor.isHealthy(oldProcess)).to.be.false
@@ -152,12 +154,12 @@ describe("ProcessHealthMonitor", function () {
       const mockTask = {
         runtimeMs: 1500, // longer than 1000ms timeout
       } as Task<unknown>
-      
-      const timedOutProcess = { 
-        ...mockProcess, 
-        currentTask: mockTask
+
+      const timedOutProcess = {
+        ...mockProcess,
+        currentTask: mockTask,
       }
-      
+
       const healthReason = healthMonitor.assessHealth(timedOutProcess)
       expect(healthReason).to.eql("timeout")
       expect(healthMonitor.isHealthy(timedOutProcess)).to.be.false
@@ -175,7 +177,7 @@ describe("ProcessHealthMonitor", function () {
       if (state != null) {
         state.healthCheckFailures = 1
       }
-      
+
       const healthReason = healthMonitor.assessHealth(mockProcess)
       expect(healthReason).to.eql("unhealthy")
       expect(healthMonitor.isHealthy(mockProcess)).to.be.false
@@ -195,7 +197,7 @@ describe("ProcessHealthMonitor", function () {
 
     it("should detect busy process", function () {
       const busyProcess = { ...mockProcess, idle: false }
-      
+
       const readinessReason = healthMonitor.assessReadiness(busyProcess)
       expect(readinessReason).to.eql("busy")
       expect(healthMonitor.isReady(busyProcess)).to.be.false
@@ -203,7 +205,7 @@ describe("ProcessHealthMonitor", function () {
 
     it("should detect unhealthy idle process", function () {
       const unhealthyProcess = { ...mockProcess, ended: true }
-      
+
       const readinessReason = healthMonitor.assessReadiness(unhealthyProcess)
       expect(readinessReason).to.eql("ended")
       expect(healthMonitor.isReady(unhealthyProcess)).to.be.false
@@ -217,7 +219,7 @@ describe("ProcessHealthMonitor", function () {
 
     it("should record job failures", function () {
       healthMonitor.recordJobFailure(mockProcess.pid)
-      
+
       const state = healthMonitor.getProcessHealthState(mockProcess.pid)
       expect(state?.lastJobFailed).to.be.true
     })
@@ -225,11 +227,15 @@ describe("ProcessHealthMonitor", function () {
     it("should record job successes", function () {
       // First record a failure
       healthMonitor.recordJobFailure(mockProcess.pid)
-      expect(healthMonitor.getProcessHealthState(mockProcess.pid)?.lastJobFailed).to.be.true
-      
+      expect(
+        healthMonitor.getProcessHealthState(mockProcess.pid)?.lastJobFailed,
+      ).to.be.true
+
       // Then record a success
       healthMonitor.recordJobSuccess(mockProcess.pid)
-      expect(healthMonitor.getProcessHealthState(mockProcess.pid)?.lastJobFailed).to.be.false
+      expect(
+        healthMonitor.getProcessHealthState(mockProcess.pid)?.lastJobFailed,
+      ).to.be.false
     })
 
     it("should handle recording for non-existent process gracefully", function () {
@@ -242,11 +248,13 @@ describe("ProcessHealthMonitor", function () {
   })
 
   describe("health check execution", function () {
-    let mockBatchProcess: HealthCheckable & { execTask: (task: Task<unknown>) => boolean }
+    let mockBatchProcess: HealthCheckable & {
+      execTask: (task: Task<unknown>) => boolean
+    }
 
     beforeEach(function () {
       healthMonitor.initializeProcess(mockProcess.pid)
-      
+
       mockBatchProcess = {
         ...mockProcess,
         execTask: () => true, // Mock successful task execution
@@ -262,21 +270,21 @@ describe("ProcessHealthMonitor", function () {
         healthCheckCommand: "",
       })
       const noHealthCheckMonitor = new ProcessHealthMonitor(options, emitter)
-      
+
       const result = noHealthCheckMonitor.maybeRunHealthcheck(mockBatchProcess)
       expect(result).to.be.undefined
     })
 
     it("should skip health check when process not ready", function () {
       const unreadyProcess = { ...mockBatchProcess, idle: false }
-      
+
       const result = healthMonitor.maybeRunHealthcheck(unreadyProcess)
       expect(result).to.be.undefined
     })
 
     it("should run health check after job failure", function () {
       healthMonitor.recordJobFailure(mockProcess.pid)
-      
+
       const result = healthMonitor.maybeRunHealthcheck(mockBatchProcess)
       expect(result).to.not.be.undefined
       expect(result?.command).to.eql("healthcheck")
@@ -288,7 +296,7 @@ describe("ProcessHealthMonitor", function () {
       if (state != null) {
         state.lastHealthCheck = Date.now() - 2000 // 2 seconds ago
       }
-      
+
       const result = healthMonitor.maybeRunHealthcheck(mockBatchProcess)
       expect(result).to.not.be.undefined
       expect(result?.command).to.eql("healthcheck")
@@ -300,7 +308,7 @@ describe("ProcessHealthMonitor", function () {
       if (state != null) {
         state.lastHealthCheck = Date.now()
       }
-      
+
       const result = healthMonitor.maybeRunHealthcheck(mockBatchProcess)
       expect(result).to.be.undefined
     })
@@ -310,9 +318,9 @@ describe("ProcessHealthMonitor", function () {
         ...mockBatchProcess,
         execTask: () => false, // Mock failed task execution
       }
-      
+
       healthMonitor.recordJobFailure(mockProcess.pid)
-      
+
       const result = healthMonitor.maybeRunHealthcheck(failingProcess)
       expect(result).to.be.undefined
     })
@@ -324,13 +332,13 @@ describe("ProcessHealthMonitor", function () {
       healthMonitor.initializeProcess(1)
       healthMonitor.initializeProcess(2)
       healthMonitor.initializeProcess(3)
-      
+
       // Add some failures
       const state1 = healthMonitor.getProcessHealthState(1)
       const state2 = healthMonitor.getProcessHealthState(2)
       if (state1 != null) state1.healthCheckFailures = 2
       if (state2 != null) state2.healthCheckFailures = 1
-      
+
       const stats = healthMonitor.getHealthStats()
       expect(stats.monitoredProcesses).to.eql(3)
       expect(stats.totalHealthCheckFailures).to.eql(3)
@@ -339,17 +347,17 @@ describe("ProcessHealthMonitor", function () {
 
     it("should reset health check failures", function () {
       healthMonitor.initializeProcess(mockProcess.pid)
-      
+
       // Add some failures
       const state = healthMonitor.getProcessHealthState(mockProcess.pid)
       if (state != null) {
         state.healthCheckFailures = 5
       }
-      
+
       expect(healthMonitor.getHealthStats().totalHealthCheckFailures).to.eql(5)
-      
+
       healthMonitor.resetHealthCheckFailures(mockProcess.pid)
-      
+
       expect(healthMonitor.getHealthStats().totalHealthCheckFailures).to.eql(0)
       expect(healthMonitor.isHealthy(mockProcess)).to.be.true
     })
@@ -367,7 +375,7 @@ describe("ProcessHealthMonitor", function () {
         ...mockProcess,
         execTask: () => true,
       }
-      
+
       // Don't initialize the process
       const result = healthMonitor.maybeRunHealthcheck(mockBatchProcess)
       expect(result).to.be.undefined

@@ -4,8 +4,8 @@ import { expect } from "./_chai.spec"
 import { BatchClusterEmitter } from "./BatchClusterEmitter"
 import { InternalBatchProcessOptions } from "./InternalBatchProcessOptions"
 import { logger } from "./Logger"
-import { ProcessTerminator } from "./ProcessTerminator"
 import { SimpleParser } from "./Parser"
+import { ProcessTerminator } from "./ProcessTerminator"
 import { Task } from "./Task"
 
 describe("ProcessTerminator", function () {
@@ -82,7 +82,7 @@ describe("ProcessTerminator", function () {
   beforeEach(function () {
     emitter = new events.EventEmitter() as BatchClusterEmitter
     childEndEvents = []
-    
+
     // Track childEnd events
     emitter.on("childEnd", (process: any, reason: string) => {
       childEndEvents.push({ process, reason })
@@ -120,7 +120,11 @@ describe("ProcessTerminator", function () {
     isRunningResult = true
   })
 
-  function createMockTask(taskId = 1, command = "test", pending = true): Task<unknown> {
+  function createMockTask(
+    taskId = 1,
+    command = "test",
+    pending = true,
+  ): Task<unknown> {
     const task = new Task(command, SimpleParser)
     if (!pending) {
       // Simulate task completion by calling onStdout with PASS token
@@ -150,12 +154,12 @@ describe("ProcessTerminator", function () {
 
       // Should send exit command
       expect(mockProcess.stdin.data).to.include("exit\n")
-      
+
       // Should destroy streams
       expect(mockProcess.stdin.destroyed).to.be.true
       expect(mockProcess.stdout.destroyed).to.be.true
       expect(mockProcess.stderr.destroyed).to.be.true
-      
+
       // Should disconnect
       expect(mockProcess.disconnected).to.be.true
     })
@@ -238,7 +242,9 @@ describe("ProcessTerminator", function () {
       )
 
       expect(taskRejected).to.be.true
-      expect(rejectionReason).to.include("Process terminated before task completed")
+      expect(rejectionReason).to.include(
+        "Process terminated before task completed",
+      )
     })
 
     it("should skip task completion wait for startup task", async function () {
@@ -425,7 +431,7 @@ describe("ProcessTerminator", function () {
     it("should skip graceful shutdown when cleanup disabled", async function () {
       const optionsNoCleanup = { ...options, cleanupChildProcs: false }
       const terminatorNoCleanup = new ProcessTerminator(optionsNoCleanup)
-      
+
       let killCalled = false
       mockProcess.kill = () => {
         killCalled = true
@@ -448,7 +454,7 @@ describe("ProcessTerminator", function () {
     it("should skip graceful shutdown when wait time is 0", async function () {
       const optionsNoWait = { ...options, endGracefulWaitTimeMillis: 0 }
       const terminatorNoWait = new ProcessTerminator(optionsNoWait)
-      
+
       let killCalled = false
       mockProcess.kill = () => {
         killCalled = true

@@ -2,9 +2,9 @@ import events from "node:events"
 import { expect, parser } from "./_chai.spec"
 import { BatchClusterEmitter } from "./BatchClusterEmitter"
 import { BatchProcess } from "./BatchProcess"
+import { logger } from "./Logger"
 import { Task } from "./Task"
 import { TaskQueueManager } from "./TaskQueueManager"
-import { logger } from "./Logger"
 
 describe("TaskQueueManager", function () {
   let queueManager: TaskQueueManager
@@ -125,7 +125,7 @@ describe("TaskQueueManager", function () {
     it("should handle empty queue gracefully", function () {
       // Clear the queue first
       queueManager.clearAllTasks()
-      
+
       const result = queueManager.tryAssignNextTask(mockProcess)
 
       expect(result).to.be.false
@@ -166,7 +166,7 @@ describe("TaskQueueManager", function () {
         callCount++
         return callCount <= 3 ? mockProcess : undefined
       }
-      
+
       const assignedCount = queueManager.processQueue(findReadyProcess)
 
       expect(assignedCount).to.eql(3)
@@ -198,9 +198,9 @@ describe("TaskQueueManager", function () {
 
     it("should clear all tasks", function () {
       expect(queueManager.pendingTaskCount).to.eql(3)
-      
+
       queueManager.clearAllTasks()
-      
+
       expect(queueManager.pendingTaskCount).to.eql(0)
       expect(queueManager.isEmpty).to.be.true
       expect(queueManager.pendingTasks).to.eql([])
@@ -208,7 +208,7 @@ describe("TaskQueueManager", function () {
 
     it("should provide accurate queue statistics", function () {
       const stats = queueManager.getQueueStats()
-      
+
       expect(stats.pendingTaskCount).to.eql(3)
       expect(stats.isEmpty).to.be.false
     })
@@ -219,11 +219,11 @@ describe("TaskQueueManager", function () {
       // Add a task
       const task = new Task("test", parser)
       queueManager.enqueueTask(task, false)
-      
+
       // First process gets the task
       const result1 = queueManager.tryAssignNextTask(mockProcess)
       expect(result1).to.be.true
-      
+
       // Second attempt on empty queue should return false
       const result2 = queueManager.tryAssignNextTask(mockProcess)
       expect(result2).to.be.false
