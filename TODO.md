@@ -9,7 +9,7 @@
 
 ## 5. **Extract Responsibilities from BatchProcess** 📦
 - [x] Create `StreamHandler` class for stdout/stderr processing
-- [ ] Extract process termination logic into separate utility
+- [x] Extract process termination logic into separate utility
 - [ ] Move health check logic to shared `ProcessHealthMonitor`
 
 ## 6. **Refactor Long Methods** 📏

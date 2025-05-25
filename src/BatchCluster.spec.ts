@@ -823,7 +823,7 @@ describe("BatchCluster", function () {
 
       expect(bc.isIdle).to.eql(true)
       expect((caught as Error)?.message).to.include(
-        "end() called before task completed",
+        "Process terminated before task completed",
       )
       expect(unhandledRejections).to.eql([])
     })

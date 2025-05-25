@@ -1,4 +1,5 @@
-import { BatchProcess, WhyNotHealthy } from "./BatchProcess"
+import { BatchProcess } from "./BatchProcess"
+import { WhyNotHealthy } from "./WhyNotHealthy"
 import { Task } from "./Task"
 
 type Args<T> = T extends (...args: infer A) => void ? A : never

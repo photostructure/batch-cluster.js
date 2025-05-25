@@ -1,40 +1,16 @@
 import child_process from "node:child_process"
 import timers from "node:timers"
-import { until } from "./Async"
 import { Deferred } from "./Deferred"
 import { cleanError } from "./Error"
 import { InternalBatchProcessOptions } from "./InternalBatchProcessOptions"
 import { Logger } from "./Logger"
 import { map } from "./Object"
 import { SimpleParser } from "./Parser"
-import { kill, pidExists } from "./Pids"
-import { destroy } from "./Stream"
+import { pidExists } from "./Pids"
+import { ProcessTerminator } from "./ProcessTerminator"
 import { blank, ensureSuffix } from "./String"
 import { Task } from "./Task"
-import { thenOrTimeout } from "./Timeout"
-
-export type WhyNotHealthy =
-  | "broken"
-  | "closed"
-  | "ending"
-  | "ended"
-  | "idle"
-  | "old"
-  | "proc.close"
-  | "proc.disconnect"
-  | "proc.error"
-  | "proc.exit"
-  | "stderr.error"
-  | "stderr"
-  | "stdin.error"
-  | "stdout.error"
-  | "timeout"
-  | "tooMany" // < only sent by BatchCluster when maxProcs is reduced
-  | "startError"
-  | "unhealthy"
-  | "worn"
-
-export type WhyNotReady = WhyNotHealthy | "busy"
+import { WhyNotHealthy, WhyNotReady } from "./WhyNotHealthy"
 
 /**
  * BatchProcess manages the care and feeding of a single child process.
@@ -48,6 +24,7 @@ export class BatchProcess {
 
   readonly startupTaskId: number
   readonly #logger: () => Logger
+  readonly #terminator: ProcessTerminator
   #lastJobFinshedAt = Date.now()
   #lastJobFailed = false
 
@@ -82,6 +59,7 @@ export class BatchProcess {
   ) {
     this.name = "BatchProcess(" + proc.pid + ")"
     this.#logger = opts.logger
+    this.#terminator = new ProcessTerminator(opts)
     // don't let node count the child processes as a reason to stay alive
     this.proc.unref()
 
@@ -413,97 +391,19 @@ export class BatchProcess {
     const lastTask = this.#currentTask
     this.#clearCurrentTask()
 
-    // NOTE: We wait on all tasks (even startup tasks) so we can assert that
-    // BatchCluster is idle (and this proc is idle) when the end promise is
-    // resolved.
-
-    // NOTE: holy crap there are a lot of notes here.
-
-    // We don't need to wait for the startup task to complete, and we certainly
-    // don't need to fuss about ending when we're just getting started.
-    if (lastTask != null && lastTask.taskId !== this.startupTaskId) {
-      try {
-        // Let's wait for the process to complete and the streams to flush, as
-        // that may actually allow the task to complete successfully. Let's not
-        // wait forever, though.
-        await thenOrTimeout(lastTask.promise, gracefully ? 2000 : 250)
-      } catch {
-        //
-      }
-      if (lastTask.pending) {
-        lastTask.reject(
-          new Error(
-            `end() called before task completed (${JSON.stringify({
-              gracefully,
-              lastTask,
-            })})`,
-          ),
-        )
-      }
-    }
-
-    // Ignore EPIPE on .end(): if the process immediately ends after the exit
-    // command, we'll get an EPIPE, so, shush error events *before* we tell the
-    // child process to exit. See https://github.com/nodejs/node/issues/26828
-    for (const ea of [
+    await this.#terminator.terminate(
       this.proc,
-      this.proc.stdin,
-      this.proc.stdout,
-      this.proc.stderr,
-    ]) {
-      ea?.removeAllListeners("error")
-    }
-
-    if (true === this.proc.stdin?.writable) {
-      const exitCmd =
-        this.opts.exitCommand == null
-          ? null
-          : ensureSuffix(this.opts.exitCommand, "\n")
-      try {
-        this.proc.stdin?.end(exitCmd)
-      } catch {
-        // don't care
-      }
-    }
-
-    // None of this *should* be necessary, but we're trying to be as hygienic as
-    // we can to avoid process zombification.
-    destroy(this.proc.stdin)
-    destroy(this.proc.stdout)
-    destroy(this.proc.stderr)
-
-    if (
-      this.opts.cleanupChildProcs &&
-      gracefully &&
-      this.opts.endGracefulWaitTimeMillis > 0 &&
-      !this.#exited
-    ) {
-      // Wait for the exit command to take effect:
-      await this.#awaitNotRunning(this.opts.endGracefulWaitTimeMillis / 2)
-      // If it's still running, send the pid a signal:
-      if (this.running() && this.proc.pid != null) this.proc.kill()
-      // Wait for the signal handler to work:
-      await this.#awaitNotRunning(this.opts.endGracefulWaitTimeMillis / 2)
-    }
-
-    if (
-      this.opts.cleanupChildProcs &&
-      this.proc.pid != null &&
-      this.running()
-    ) {
-      this.#logger().warn(
-        this.name + ".end(): force-killing still-running child.",
-      )
-      kill(this.proc.pid, true)
-    }
-    // disconnect may not be a function on proc!
-    this.proc.disconnect?.()
+      this.name,
+      lastTask,
+      this.startupTaskId,
+      gracefully,
+      this.#exited,
+      () => this.running(),
+    )
+    
     this.opts.observer.emit("childEnd", this, reason)
   }
 
-  #awaitNotRunning(timeout: number) {
-    return until(() => this.notRunning(), timeout)
-  }
 
   #onTimeout(task: Task<unknown>, timeoutMs: number): void {
     if (task.pending) {

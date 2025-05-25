@@ -1,5 +1,5 @@
 import { BatchClusterEmitter } from "./BatchClusterEmitter"
-import { WhyNotHealthy, WhyNotReady } from "./BatchProcess"
+import { WhyNotHealthy, WhyNotReady } from "./WhyNotHealthy"
 import { InternalBatchProcessOptions } from "./InternalBatchProcessOptions"
 import { SimpleParser } from "./Parser"
 import { blank } from "./String"
