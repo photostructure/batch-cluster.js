@@ -15,6 +15,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `npm run lint` - Run ESLint on TypeScript source files
 - `npm run fmt` - Format code with Prettier
 - `mocha dist/**/*.spec.js` - Run specific test files after compilation
+- `npx mocha --require ts-node/register src/Object.spec.ts` - Run individual tests like this
 
 ### Documentation
 - `npm run docs` - Generate and serve TypeDoc documentation
