@@ -14,13 +14,11 @@ import type { ChildProcessFactory } from "./ChildProcessFactory"
 import { CombinedBatchProcessOptions } from "./CombinedBatchProcessOptions"
 import { Deferred } from "./Deferred"
 import { Logger } from "./Logger"
-import { Mean } from "./Mean"
 import { verifyOptions } from "./OptionsVerifier"
 import { Parser } from "./Parser"
+import { BatchClusterEventCoordinator } from "./BatchClusterEventCoordinator"
 import { ProcessPoolManager } from "./ProcessPoolManager"
 import { validateProcpsAvailable } from "./ProcpsChecker"
-import { Rate } from "./Rate"
-import { toS } from "./String"
 import { Task } from "./Task"
 import { TaskQueueManager } from "./TaskQueueManager"
 import { WhyNotHealthy, WhyNotReady } from "./WhyNotHealthy"
@@ -58,17 +56,14 @@ export type {
  * child tasks can be verified and shut down.
  */
 export class BatchCluster {
-  readonly #tasksPerProc = new Mean()
   readonly #logger: () => Logger
   readonly options: CombinedBatchProcessOptions
   readonly #processPool: ProcessPoolManager
   readonly #taskQueue: TaskQueueManager
+  readonly #eventCoordinator: BatchClusterEventCoordinator
   #onIdleRequested = false
   #onIdleInterval: NodeJS.Timeout | undefined
-  readonly #startErrorRate = new Rate()
   #endPromise?: Deferred<void>
-  #internalErrorCount = 0
-  readonly #childEndCounts = new Map<ChildEndReason, number>()
   readonly emitter = new events.EventEmitter() as BatchClusterEmitter
 
   constructor(
@@ -87,53 +82,18 @@ export class BatchCluster {
       this.#onIdleLater(),
     )
     this.#taskQueue = new TaskQueueManager(this.#logger, this.emitter)
-
-    this.on("childEnd", (bp, why) => {
-      this.#tasksPerProc.push(bp.taskCount)
-      this.#childEndCounts.set(why, (this.#childEndCounts.get(why) ?? 0) + 1)
-      this.#onIdleLater()
-    })
-
-    this.on("internalError", (error) => {
-      this.#logger().error("BatchCluster: INTERNAL ERROR: " + String(error))
-      this.#internalErrorCount++
-    })
-
-    this.on("noTaskData", (stdout, stderr, proc) => {
-      this.#logger().warn(
-        "BatchCluster: child process emitted data with no current task. Consider setting streamFlushMillis to a higher value.",
-        {
-          streamFlushMillis: this.options.streamFlushMillis,
-          stdout: toS(stdout),
-          stderr: toS(stderr),
-          proc_pid: proc?.pid,
-        },
-      )
-      this.#internalErrorCount++
-    })
-
-    this.on("startError", (error) => {
-      this.#logger().warn("BatchCluster.onStartError(): " + String(error))
-      this.#startErrorRate.onEvent()
-      if (
-        this.options.maxReasonableProcessFailuresPerMinute > 0 &&
-        this.#startErrorRate.eventsPerMinute >
-          this.options.maxReasonableProcessFailuresPerMinute
-      ) {
-        this.emitter.emit(
-          "fatalError",
-          new Error(
-            String(error) +
-              "(start errors/min: " +
-              this.#startErrorRate.eventsPerMinute.toFixed(2) +
-              ")",
-          ),
-        )
-        this.end()
-      } else {
-        this.#onIdleLater()
-      }
-    })
+    
+    // Initialize event coordinator to handle all event processing
+    this.#eventCoordinator = new BatchClusterEventCoordinator(
+      this.emitter,
+      {
+        streamFlushMillis: this.options.streamFlushMillis,
+        maxReasonableProcessFailuresPerMinute: this.options.maxReasonableProcessFailuresPerMinute,
+        logger: this.#logger,
+      },
+      () => this.#onIdleLater(),
+      () => void this.end(),
+    )
 
     if (this.options.onIdleIntervalMillis > 0) {
       this.#onIdleInterval = timers.setInterval(
@@ -238,7 +198,7 @@ export class BatchCluster {
    * @returns {number} the mean number of tasks completed by child processes
    */
   get meanTasksPerProc(): number {
-    return this.#tasksPerProc.mean
+    return this.#eventCoordinator.meanTasksPerProc
   }
 
   /**
@@ -284,7 +244,7 @@ export class BatchCluster {
    * For integration tests:
    */
   get internalErrorCount(): number {
-    return this.#internalErrorCount
+    return this.#eventCoordinator.internalErrorCount
   }
 
   /**
@@ -305,8 +265,8 @@ export class BatchCluster {
       currentProcCount: this.procCount,
       readyProcCount: this.#processPool.readyProcCount,
       maxProcCount: this.options.maxProcs,
-      internalErrorCount: this.#internalErrorCount,
-      startErrorRatePerMinute: this.#startErrorRate.eventsPerMinute,
+      internalErrorCount: this.#eventCoordinator.internalErrorCount,
+      startErrorRatePerMinute: this.#eventCoordinator.startErrorRatePerMinute,
       msBeforeNextSpawn: this.#processPool.msBeforeNextSpawn,
       spawnedProcCount: this.spawnedProcCount,
       childEndCounts: this.childEndCounts,
@@ -319,14 +279,11 @@ export class BatchCluster {
    * Get ended process counts (used for tests)
    */
   countEndedChildProcs(why: ChildEndReason): number {
-    return this.#childEndCounts.get(why) ?? 0
+    return this.#eventCoordinator.countEndedChildProcs(why)
   }
 
   get childEndCounts(): Record<NonNullable<ChildEndReason>, number> {
-    return Object.fromEntries([...this.#childEndCounts.entries()]) as Record<
-      NonNullable<ChildEndReason>,
-      number
-    >
+    return this.#eventCoordinator.childEndCounts
   }
 
   /**
