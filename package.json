@@ -13,7 +13,7 @@
     "url": "https://github.com/photostructure/batch-cluster.js.git"
   },
   "engines": {
-    "node": ">=14"
+    "node": ">=20"
   },
   "scripts": {
     "ci": "npm ci",

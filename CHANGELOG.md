@@ -18,6 +18,18 @@ See [Semver](http://semver.org/).
 
 - 📦 Minor packaging changes
 
+## v14.0.0
+
+- 💔 Dropped official support for Node v14, v16, and v18. Minimum Node.js version is now v20.
+
+- ✨ Added startup validation for procps availability: `BatchCluster` now throws `ProcpsMissingError` during construction if the required `ps` command (or `tasklist` on Windows) is not available. This provides clear, actionable error messages instead of cryptic runtime failures. Resolves [#13](https://github.com/photostructure/batch-cluster.js/issues/13) and [#39](https://github.com/photostructure/batch-cluster.js/issues/39).
+
+- 📦 Significant internal refactoring to improve maintainability:
+  - Extracted process management logic into dedicated classes (`ProcessPoolManager`, `TaskQueueManager`, `ProcessHealthMonitor`, `StreamHandler`, `ProcessTerminator`)
+  - Implemented strategy pattern for health checking logic
+  - Improved type safety by replacing `any` with `unknown` throughout the codebase
+  - Enhanced error handling and process lifecycle management
+
 ## v13.0.0
 
 - 💔 Dropped official support for [Node v16, which is EOL](https://nodejs.org/en/blog/announcements/nodejs16-eol/).
