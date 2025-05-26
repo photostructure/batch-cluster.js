@@ -31,8 +31,8 @@ describe("StreamHandler", function () {
     // Create a mock context that simulates BatchProcess behavior
     mockContext = {
       name: "TestProcess(12345)",
-      ending: false,
-      currentTask: undefined,
+      isEnding: () => false,
+      getCurrentTask: () => undefined,
       onError: (reason: string, error: Error) => {
         onErrorCalls.push({ reason, error })
       },
@@ -129,7 +129,7 @@ describe("StreamHandler", function () {
     })
 
     it("should process stdout data with active task", function () {
-      mockContext.currentTask = mockTask
+      mockContext.getCurrentTask = () => mockTask
       const testData = "test output"
 
       streamHandler.processStdout(testData, mockContext)
@@ -142,8 +142,8 @@ describe("StreamHandler", function () {
     })
 
     it("should ignore stdout data when process is ending", function () {
-      mockContext.currentTask = undefined
-      mockContext.ending = true
+      mockContext.getCurrentTask = () => undefined
+      mockContext.isEnding = () => true
       const testData = "test output"
 
       streamHandler.processStdout(testData, mockContext)
@@ -154,8 +154,8 @@ describe("StreamHandler", function () {
     })
 
     it("should emit noTaskData and end process for stdout without task", function () {
-      mockContext.currentTask = undefined
-      mockContext.ending = false
+      mockContext.getCurrentTask = () => undefined
+      mockContext.isEnding = () => false
       const testData = "unexpected output"
 
       streamHandler.processStdout(testData, mockContext)
@@ -170,8 +170,8 @@ describe("StreamHandler", function () {
     })
 
     it("should ignore blank stdout data", function () {
-      mockContext.currentTask = undefined
-      mockContext.ending = false
+      mockContext.getCurrentTask = () => undefined
+      mockContext.isEnding = () => false
 
       streamHandler.processStdout("", mockContext)
       streamHandler.processStdout("   ", mockContext)
@@ -183,8 +183,8 @@ describe("StreamHandler", function () {
     })
 
     it("should handle null stdout data", function () {
-      mockContext.currentTask = undefined
-      mockContext.ending = false
+      mockContext.getCurrentTask = () => undefined
+      mockContext.isEnding = () => false
 
       streamHandler.processStdout(null as any, mockContext)
 
@@ -201,8 +201,8 @@ describe("StreamHandler", function () {
         },
       } as unknown as Task<unknown>
 
-      mockContext.currentTask = nonPendingTask
-      mockContext.ending = false
+      mockContext.getCurrentTask = () => nonPendingTask
+      mockContext.isEnding = () => false
       const testData = "test output"
 
       streamHandler.processStdout(testData, mockContext)
@@ -236,7 +236,7 @@ describe("StreamHandler", function () {
     })
 
     it("should process stderr data with active task", function () {
-      mockContext.currentTask = mockTask
+      mockContext.getCurrentTask = () => mockTask
       const testData = "error output"
 
       streamHandler.processStderr(testData, mockContext)
@@ -246,8 +246,8 @@ describe("StreamHandler", function () {
     })
 
     it("should ignore stderr data when process is ending", function () {
-      mockContext.currentTask = undefined
-      mockContext.ending = true
+      mockContext.getCurrentTask = () => undefined
+      mockContext.isEnding = () => true
       const testData = "error output"
 
       streamHandler.processStderr(testData, mockContext)
@@ -257,8 +257,8 @@ describe("StreamHandler", function () {
     })
 
     it("should emit noTaskData and end process for stderr without task", function () {
-      mockContext.currentTask = undefined
-      mockContext.ending = false
+      mockContext.getCurrentTask = () => undefined
+      mockContext.isEnding = () => false
       const testData = "unexpected error"
 
       streamHandler.processStderr(testData, mockContext)
@@ -272,8 +272,8 @@ describe("StreamHandler", function () {
     })
 
     it("should ignore blank stderr data", function () {
-      mockContext.currentTask = undefined
-      mockContext.ending = false
+      mockContext.getCurrentTask = () => undefined
+      mockContext.isEnding = () => false
 
       streamHandler.processStderr("", mockContext)
       streamHandler.processStderr("   ", mockContext)
@@ -291,8 +291,8 @@ describe("StreamHandler", function () {
         },
       } as unknown as Task<unknown>
 
-      mockContext.currentTask = nonPendingTask
-      mockContext.ending = false
+      mockContext.getCurrentTask = () => nonPendingTask
+      mockContext.isEnding = () => false
       const testData = "error output"
 
       streamHandler.processStderr(testData, mockContext)
@@ -350,7 +350,7 @@ describe("StreamHandler", function () {
     })
 
     it("should handle Buffer data in stdout", function () {
-      mockContext.currentTask = mockTask
+      mockContext.getCurrentTask = () => mockTask
       const bufferData = Buffer.from("test buffer data")
 
       streamHandler.processStdout(bufferData, mockContext)
@@ -360,7 +360,7 @@ describe("StreamHandler", function () {
     })
 
     it("should handle Buffer data in stderr", function () {
-      mockContext.currentTask = mockTask
+      mockContext.getCurrentTask = () => mockTask
       const bufferData = Buffer.from("error buffer data")
 
       // Should not throw and should process normally
@@ -399,7 +399,7 @@ describe("StreamHandler", function () {
     })
 
     it("should handle mixed stdout and stderr with active task", function () {
-      mockContext.currentTask = mockTask
+      mockContext.getCurrentTask = () => mockTask
 
       streamHandler.processStdout("stdout data", mockContext)
       streamHandler.processStderr("stderr data", mockContext)
@@ -412,13 +412,13 @@ describe("StreamHandler", function () {
 
     it("should handle task completion scenario", function () {
       // Start with active task
-      mockContext.currentTask = mockTask
+      mockContext.getCurrentTask = () => mockTask
       streamHandler.processStdout("initial output", mockContext)
 
       expect(taskDataEvents).to.have.length(1)
 
       // Task completes, no current task
-      mockContext.currentTask = undefined
+      mockContext.getCurrentTask = () => undefined
       streamHandler.processStdout("stray output", mockContext)
 
       expect(noTaskDataEvents).to.have.length(1)
@@ -427,8 +427,8 @@ describe("StreamHandler", function () {
     })
 
     it("should handle process ending scenario", function () {
-      mockContext.currentTask = undefined
-      mockContext.ending = true
+      mockContext.getCurrentTask = () => undefined
+      mockContext.isEnding = () => true
 
       streamHandler.processStdout("final output", mockContext)
       streamHandler.processStderr("final error", mockContext)

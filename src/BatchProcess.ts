@@ -9,7 +9,8 @@ import { SimpleParser } from "./Parser"
 import { pidExists } from "./Pids"
 import { ProcessHealthMonitor } from "./ProcessHealthMonitor"
 import { ProcessTerminator } from "./ProcessTerminator"
-import { blank, ensureSuffix } from "./String"
+import { StreamContext, StreamHandler } from "./StreamHandler"
+import { ensureSuffix } from "./String"
 import { Task } from "./Task"
 import { WhyNotHealthy, WhyNotReady } from "./WhyNotHealthy"
 
@@ -25,6 +26,7 @@ export class BatchProcess {
   readonly #logger: () => Logger
   readonly #terminator: ProcessTerminator
   readonly #healthMonitor: ProcessHealthMonitor
+  readonly #streamHandler: StreamHandler
   #lastJobFinshedAt = Date.now()
 
   // Only set to true when `proc.pid` is no longer in the process table.
@@ -43,6 +45,28 @@ export class BatchProcess {
    * Should be undefined if this instance is not currently processing a task.
    */
   #currentTask: Task<unknown> | undefined
+
+  /**
+   * Getter for current task (required by StreamContext interface)
+   */
+  get currentTask(): Task<unknown> | undefined {
+    return this.#currentTask
+  }
+
+  /**
+   * Create a StreamContext adapter for this BatchProcess
+   */
+  #createStreamContext = (): StreamContext => {
+    return {
+      name: this.name,
+      isEnding: () => this.ending,
+      getCurrentTask: () => this.#currentTask,
+      onError: (reason: string, error: Error) =>
+        this.#onError(reason as WhyNotHealthy, error),
+      end: (gracefully: boolean, reason: string) =>
+        void this.end(gracefully, reason as WhyNotHealthy),
+    }
+  }
   #currentTaskTimeout: NodeJS.Timeout | undefined
 
   #endPromise: undefined | Deferred<void>
@@ -62,6 +86,10 @@ export class BatchProcess {
     this.#terminator = new ProcessTerminator(opts)
     this.#healthMonitor =
       healthMonitor ?? new ProcessHealthMonitor(opts, opts.observer)
+    this.#streamHandler = new StreamHandler(
+      { logger: this.#logger },
+      opts.observer,
+    )
     // don't let node count the child processes as a reason to stay alive
     this.proc.unref()
 
@@ -82,19 +110,11 @@ export class BatchProcess {
       void this.end(false, "proc.disconnect")
     })
 
-    const stdin = this.proc.stdin
-    if (stdin == null) throw new Error("Given proc had no stdin")
-    stdin.on("error", (err) => this.#onError("stdin.error", err))
-
-    const stdout = this.proc.stdout
-    if (stdout == null) throw new Error("Given proc had no stdout")
-    stdout.on("error", (err) => this.#onError("stdout.error", err))
-    stdout.on("data", (d: string | Buffer) => this.#onStdout(d))
-
-    map(this.proc.stderr, (stderr) => {
-      stderr.on("error", (err) => this.#onError("stderr.error", err))
-      stderr.on("data", (err: string | Buffer) => this.#onStderr(err))
-    })
+    // Set up stream handlers using StreamHandler
+    this.#streamHandler.setupStreamListeners(
+      this.proc,
+      this.#createStreamContext(),
+    )
 
     const startupTask = new Task(opts.versionCommand, SimpleParser)
     this.startupTaskId = startupTask.taskId
@@ -112,10 +132,6 @@ export class BatchProcess {
     // this needs to be at the end of the constructor, to ensure everything is
     // set up on `this`
     this.opts.observer.emit("childStart", this)
-  }
-
-  get currentTask(): Task | undefined {
-    return this.#currentTask
   }
 
   get taskCount(): number {
@@ -396,33 +412,6 @@ export class BatchProcess {
           ),
         )
       }
-    }
-  }
-
-  #onStderr(data: string | Buffer) {
-    if (blank(data)) return
-    this.#logger().warn(this.name + ".onStderr(): " + String(data))
-    const task = this.#currentTask
-    if (task != null && task.pending) {
-      task.onStderr(data)
-    } else if (!this.ending) {
-      // If we're ending and there isn't a task, don't worry about it.
-      this.opts.observer.emit("noTaskData", null, data, this)
-      void this.end(false, "stderr")
-    }
-  }
-
-  #onStdout(data: string | Buffer) {
-    if (data == null) return
-    const task = this.#currentTask
-    if (task != null && task.pending) {
-      this.opts.observer.emit("taskData", data, task, this)
-      task.onStdout(data)
-    } else if (this.ending) {
-      // don't care if we're already being shut down.
-    } else if (!blank(data)) {
-      this.opts.observer.emit("noTaskData", data, null, this)
-      void this.end(false, "stdout.error")
     }
   }
 

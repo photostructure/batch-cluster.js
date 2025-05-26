@@ -12,8 +12,8 @@ export class TaskQueueManager {
   readonly #logger: () => Logger
 
   constructor(
-    private readonly emitter: BatchClusterEmitter,
     logger: () => Logger,
+    private readonly emitter?: BatchClusterEmitter,
   ) {
     this.#logger = logger
   }
@@ -30,6 +30,13 @@ export class TaskQueueManager {
       this.#tasks.push(task as Task<unknown>)
     }
     return task.promise
+  }
+
+  /**
+   * Simple enqueue method (alias for enqueueTask without ended check)
+   */
+  enqueue(task: Task<unknown>): void {
+    this.#tasks.push(task)
   }
 
   /**
@@ -72,7 +79,7 @@ export class TaskQueueManager {
 
     const task = this.#tasks.shift()
     if (task == null) {
-      this.emitter.emit("internalError", new Error("unexpected null task"))
+      this.emitter?.emit("internalError", new Error("unexpected null task"))
       return false
     }
 

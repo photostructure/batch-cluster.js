@@ -17,8 +17,8 @@ export interface StreamHandlerOptions {
  */
 export interface StreamContext {
   readonly name: string
-  ending: boolean
-  currentTask: Task<unknown> | undefined
+  isEnding(): boolean
+  getCurrentTask(): Task<unknown> | undefined
   onError: (reason: string, error: Error) => void
   end: (gracefully: boolean, reason: string) => void
 }
@@ -67,12 +67,12 @@ export class StreamHandler {
   #onStdout(data: string | Buffer, context: StreamContext): void {
     if (data == null) return
 
-    const task = context.currentTask
+    const task = context.getCurrentTask()
     if (task != null && task.pending) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
       this.emitter.emit("taskData", data, task, context as any)
       task.onStdout(data)
-    } else if (context.ending) {
+    } else if (context.isEnding()) {
       // don't care if we're already being shut down.
     } else if (!blank(data)) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
@@ -89,10 +89,10 @@ export class StreamHandler {
 
     this.#logger().warn(context.name + ".onStderr(): " + String(data))
 
-    const task = context.currentTask
+    const task = context.getCurrentTask()
     if (task != null && task.pending) {
       task.onStderr(data)
-    } else if (!context.ending) {
+    } else if (!context.isEnding()) {
       // If we're ending and there isn't a task, don't worry about it.
       // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
       this.emitter.emit("noTaskData", null, data, context as any)

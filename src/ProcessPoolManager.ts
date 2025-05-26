@@ -6,6 +6,7 @@ import { CombinedBatchProcessOptions } from "./CombinedBatchProcessOptions"
 import { asError } from "./Error"
 import { Logger } from "./Logger"
 import { ProcessHealthMonitor } from "./ProcessHealthMonitor"
+import { Task } from "./Task"
 import { Timeout, thenOrTimeout } from "./Timeout"
 
 /**
@@ -44,6 +45,13 @@ export class ProcessPoolManager {
   }
 
   /**
+   * Alias for procCount to match BatchCluster interface
+   */
+  get processCount(): number {
+    return this.procCount
+  }
+
+  /**
    * Get the current number of child processes currently servicing tasks
    */
   get busyProcCount(): number {
@@ -66,10 +74,37 @@ export class ProcessPoolManager {
   }
 
   /**
+   * Get the current number of ready processes
+   */
+  get readyProcCount(): number {
+    return count(this.#procs, (ea) => ea.ready)
+  }
+
+  /**
    * Get the total number of child processes created by this instance
    */
   get spawnedProcCount(): number {
     return this.#spawnedProcs
+  }
+
+  /**
+   * Get the milliseconds until the next spawn is allowed
+   */
+  get msBeforeNextSpawn(): number {
+    return Math.max(0, this.#nextSpawnTime - Date.now())
+  }
+
+  /**
+   * Get all currently running tasks from all processes
+   */
+  currentTasks(): Task<unknown>[] {
+    const tasks: Task<unknown>[] = []
+    for (const proc of this.#procs) {
+      if (proc.currentTask != null) {
+        tasks.push(proc.currentTask)
+      }
+    }
+    return tasks
   }
 
   /**

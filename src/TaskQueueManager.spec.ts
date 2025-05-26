@@ -13,7 +13,7 @@ describe("TaskQueueManager", function () {
 
   beforeEach(function () {
     emitter = new events.EventEmitter() as BatchClusterEmitter
-    queueManager = new TaskQueueManager(emitter, logger)
+    queueManager = new TaskQueueManager(logger, emitter)
 
     // Create a mock process that can execute tasks
     mockProcess = {
