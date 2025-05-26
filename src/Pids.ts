@@ -1,6 +1,7 @@
 import child_process from "node:child_process"
-import process from "node:process"
-import { map } from "./Object"
+import { existsSync } from "node:fs"
+import { readdir } from "node:fs/promises"
+import { asError } from "./Error"
 import { isWin } from "./Platform"
 
 /**
@@ -44,35 +45,44 @@ export function kill(pid: number | undefined, force = false): boolean {
   }
 }
 
-const winRe = /^".+?","(\d+)"/
-const posixRe = /^\s*(\d+)/
-
 /**
  * Only used by tests
  *
  * @returns {Promise<number[]>} all the Process IDs in the process table.
  */
-export function pids(): Promise<number[]> {
-  return new Promise((resolve, reject) => {
-    child_process.execFile(
-      isWin ? "tasklist" : "ps",
-      // NoHeader, FOrmat CSV
-      isWin ? ["/NH", "/FO", "CSV"] : ["-e"],
-      (error: Error | null, stdout: string, stderr: string) => {
-        if (error != null) {
-          reject(error)
-        } else if (("" + stderr).trim().length > 0) {
-          reject(new Error(stderr))
-        } else
-          resolve(
-            ("" + stdout)
-              .trim()
-              .split(/[\n\r]+/)
-              .map((ea) => ea.match(isWin ? winRe : posixRe))
-              .map((m) => map(m?.[0], parseInt))
-              .filter((ea) => ea != null),
-          )
-      },
-    )
+export async function pids(): Promise<number[]> {
+  // Linux‐style: read /proc
+  if (!isWin && existsSync("/proc")) {
+    const names = await readdir("/proc")
+    return names.filter((d) => /^\d+$/.test(d)).map((d) => parseInt(d, 10))
+  }
+
+  // fallback: ps or tasklist
+  const cmd = isWin ? "tasklist" : "ps"
+  const args = isWin ? ["/NH", "/FO", "CSV"] : ["-e", "-o", "pid="]
+
+  return new Promise<number[]>((resolve, reject) => {
+    child_process.execFile(cmd, args, (err, stdout, stderr) => {
+      if (err) return reject(asError(err))
+      if (stderr.trim()) return reject(new Error(stderr))
+
+      const pids = stdout
+        .trim()
+        .split(/[\r\n]+/)
+        .map((line) => {
+          if (isWin) {
+            // "Image","PID",…
+            // split on "," and strip outer quotes:
+            const cols = line.split('","')
+            const pidStr = cols[1]?.replace(/"/g, "")
+            return Number(pidStr)
+          }
+          // ps -o pid= gives you just the number
+          return Number(line.trim())
+        })
+        .filter((n) => Number.isFinite(n) && n > 0)
+
+      resolve(pids)
+    })
   })
 }

@@ -1,4 +1,5 @@
 import child_process from "node:child_process"
+import { existsSync, readdirSync } from "node:fs"
 import { isWin } from "./Platform"
 
 /**
@@ -26,16 +27,26 @@ export class ProcpsMissingError extends Error {
  * @throws {ProcpsMissingError} if the command is not available
  */
 export function validateProcpsAvailable(): void {
+  // on POSIX systems with a working /proc we can skip ps entirely
+  if (!isWin && existsSync("/proc")) {
+    const entries = readdirSync("/proc")
+    // if we see at least one numeric directory, assume /proc is usable
+    if (entries.some((d) => /^\d+$/.test(d))) {
+      return
+    }
+    // fall through to check `ps` if /proc is empty or unusable
+  }
+
   try {
     const command = isWin ? "tasklist" : "ps"
     const args = isWin ? ["/NH", "/FO", "CSV", "/FI", "PID eq 1"] : ["-p", "1"]
+    const timeout = isWin ? 15_000 : 5_000 // 15s for Windows, 5s elsewhere
 
-    // Synchronous check during startup - we want to fail fast
     child_process.execFileSync(command, args, {
       stdio: "pipe",
-      timeout: 5000, // 5 second timeout
+      timeout,
     })
-  } catch (error) {
-    throw new ProcpsMissingError(error instanceof Error ? error : undefined)
+  } catch (err) {
+    throw new ProcpsMissingError(err instanceof Error ? err : undefined)
   }
 }
