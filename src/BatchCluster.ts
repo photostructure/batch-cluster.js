@@ -58,8 +58,6 @@ export type {
   WithObserver,
 }
 
-export const a: HealthCheckable = {} as any
-
 /**
  * BatchCluster instances manage 0 or more homogeneous child processes, and
  * provide the main interface for enqueuing `Task`s via `enqueueTask`.
