@@ -29,7 +29,6 @@ export function pidExists(pid: number | undefined): boolean {
 /**
  * Send a signal to the given process id.
  *
- * @export
  * @param pid the process id. Required.
  * @param force if true, and the current user has
  * permissions to send the signal, the pid will be forced to shut down. Defaults to false.

@@ -2,17 +2,17 @@ import util from "node:util"
 import { map } from "./Object"
 import { notBlank } from "./String"
 
-type LogFunc = (message: string, ...optionalParams: unknown[]) => void
+export type LoggerFunction = (message: string, ...optionalParams: unknown[]) => void
 
 /**
  * Simple interface for logging.
  */
 export interface Logger {
-  trace: LogFunc
-  debug: LogFunc
-  info: LogFunc
-  warn: LogFunc
-  error: LogFunc
+  trace: LoggerFunction
+  debug: LoggerFunction
+  info: LoggerFunction
+  warn: LoggerFunction
+  error: LoggerFunction
 }
 
 export const LogLevels: (keyof Logger)[] = [
@@ -30,7 +30,7 @@ const noop = () => undefined
 /**
  * Default `Logger` implementation.
  *
- * - `debug` and `info` go to {@link util.debuglog}("batch-cluster")`.
+ * - `debug` and `info` go to `util.debuglog("batch-cluster")`.
  *
  * - `warn` and `error` go to `console.warn` and `console.error`.
  *

@@ -3,7 +3,7 @@ import { Deferred } from "./Deferred"
 import { InternalBatchProcessOptions } from "./InternalBatchProcessOptions"
 import { Parser } from "./Parser"
 
-type TaskOptions = Pick<
+export type TaskOptions = Pick<
   InternalBatchProcessOptions,
   "streamFlushMillis" | "observer" | "passRE" | "failRE" | "logger"
 >
