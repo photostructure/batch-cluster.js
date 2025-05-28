@@ -68,7 +68,7 @@
     "npm-check-updates": "^18.0.1",
     "prettier": "^3.5.3",
     "prettier-plugin-organize-imports": "^4.1.0",
-    "rimraf": "^5.0.10",
+    "rimraf": "^6.0.1",
     "seedrandom": "^3.0.5",
     "serve": "^14.2.4",
     "source-map-support": "^0.5.21",
