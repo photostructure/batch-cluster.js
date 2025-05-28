@@ -24,11 +24,9 @@
     "watch": "rimraf dist & tsc --watch",
     "pretest": "npm run clean && npm run lint && npm run compile",
     "test": "mocha dist/**/*.spec.js",
-    "docs:1": "typedoc --options .typedoc.js",
-    "docs:2": "cp .serve.json docs/serve.json",
-    "docs:3": "touch docs/.nojekyll",
-    "docs:4": "serve docs",
-    "docs": "bash -c 'for i in {1..4} ; do npm run docs:$i ; done'"
+    "docs:build": "typedoc --options .typedoc.js",
+    "docs:serve": "cp .serve.json docs/serve.json && touch docs/.nojekyll && serve docs",
+    "docs": "npm run docs:build && npm run docs:serve"
   },
   "release-it": {
     "src": {

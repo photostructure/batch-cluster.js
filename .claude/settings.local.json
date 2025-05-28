@@ -17,7 +17,10 @@
       "Bash(find:*)",
       "Bash(/usr/bin/rg -n \"onStdout|onStderr\" BatchProcess.ts)",
       "Bash(timeout 45s npm run test:compile)",
-      "Bash(timeout:*)"
+      "Bash(timeout:*)",
+      "Bash(gh run view:*)",
+      "Bash(mkdir:*)",
+      "Bash(npm run docs:build:*)"
     ],
     "deny": []
   }
