@@ -1,0 +1,26 @@
+{
+  "entryPoints": ["src/BatchCluster.ts"],
+  "out": "docs",
+  "includeVersion": false,
+  "excludePrivate": true,
+  "excludeInternal": true,
+  "readme": "README.md",
+  "githubPages": true,
+  "exclude": ["**/*.test.ts", "**/*.spec.ts", "**/test/**"],
+  "tsconfig": "tsconfig.json",
+  "navigationLinks": {
+    "GitHub": "https://github.com/photostructure/batch-cluster.js",
+    "NPM": "https://www.npmjs.com/package/batch-cluster"
+  },
+  "highlightLanguages": [
+    "typescript",
+    "javascript",
+    "c++",
+    "cpp",
+    "c",
+    "json",
+    "bash",
+    "shell",
+    "powershell"
+  ]
+}
