@@ -24,7 +24,14 @@
       "Bash(npm test:*)",
       "Bash(/usr/bin/rg -n \"TODO|FIXME|XXX|HACK\" src/)",
       "Bash(npx npm-check-updates)",
-      "Bash(gh repo view:*)"
+      "Bash(gh repo view:*)",
+      "Bash(gh issue list:*)",
+      "Bash(gh pr list:*)",
+      "Bash(gh run list:*)",
+      "Bash(for i in {1..5})",
+      "Bash(do echo \"Run $i:\")",
+      "Bash(break)",
+      "Bash(done)"
     ],
     "deny": []
   },

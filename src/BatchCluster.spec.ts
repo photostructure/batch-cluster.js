@@ -440,7 +440,9 @@ describe("BatchCluster", function () {
                     await bc.vacuumProcs()
 
                     // Expect no prior pids to remain, as long as there were before-pids:
-                    if (pids.length > 0)
+                    // NOTE: On Windows, PIDs can be reused quickly, so we only check this
+                    // on non-Windows platforms to avoid flakiness
+                    if (pids.length > 0 && !isWin)
                       expect(bc.pids()).to.not.include.members(pids)
 
                     expect(bc.meanTasksPerProc).to.be.within(
