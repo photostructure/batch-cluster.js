@@ -1,5 +1,7 @@
 # batch-cluster
 
+![PhotoStructure batch-cluster logo](https://raw.githubusercontent.com/photostructure/batch-cluster.js/main/doc/logo.svg)
+
 **Efficient, concurrent work via batch-mode command-line tools from within Node.js.**
 
 [![npm version](https://img.shields.io/npm/v/batch-cluster.svg)](https://www.npmjs.com/package/batch-cluster)
