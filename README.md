@@ -79,12 +79,4 @@ See
 for an example child process. Note that the script is _designed_ to be flaky on
 order to test BatchCluster's retry and error handling code.
 
-## Caution
-
-The default `BatchClusterOptions.cleanupChildProcs` value of `true` means that BatchCluster will try to use `ps` to ensure Node's view of process state are correct, and that errant
-processes are cleaned up.
-
-If you run this in a docker image based off Alpine or Debian Slim, **this won't work properly unless you install the `procps` package.**
-
-[See issue #13 for details.](https://github.com/photostructure/batch-cluster.js/issues/13)
 
