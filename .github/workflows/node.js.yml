@@ -53,48 +53,47 @@ jobs:
         with:
           # Fetch all history for proper versioning
           fetch-depth: 0
-          
+
       - name: Use Node.js 20
         uses: actions/setup-node@3235b876344d2a9aa001b8d1453c930bba69e610 # v3.9.1
         with:
           node-version: "20"
           registry-url: "https://registry.npmjs.org"
-          
+
       - name: Setup SSH Bot
         uses: photostructure/git-ssh-signing-action@7a06ef30090b6755c6c9a4295e8afd95bf264bc1 # v0.3.0
         with:
           ssh-signing-key: ${{ secrets.SSH_SIGNING_KEY }}
           git-user-name: ${{ secrets.GIT_USER_NAME }}
           git-user-email: ${{ secrets.GIT_USER_EMAIL }}
-          
+
       - name: Install dependencies
         run: npm ci
-        
+
       - name: Build and test
         run: npm test
-        
+
       - name: Create release
         run: |
           # Bump version and create signed commit and tag
           npm version patch -m "release: %s"
-          
+
           # Push the version commit and tag
           git push --follow-tags
-          
+
       - name: Publish to npm
         run: npm publish
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-          
+
       - name: Create GitHub release
         run: |
           # Get the version from package.json
           VERSION=$(node -p "require('./package.json').version")
-          
+
           # Create GitHub release
           gh release create "v${VERSION}" \
             --title "Release v${VERSION}" \
             --generate-notes
         env:
           GH_TOKEN: ${{ github.token }}
-          

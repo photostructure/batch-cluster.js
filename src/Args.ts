@@ -1,2 +1,1 @@
-
-export type Args<T> = T extends (...args: infer A) => void ? A : never;
+export type Args<T> = T extends (...args: infer A) => void ? A : never

@@ -5,12 +5,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Common Development Commands
 
 ### Build & Development
+
 - `npm install` - Install dependencies
 - `npm run compile` - Compile TypeScript to JavaScript (outputs to dist/)
 - `npm run watch` - Watch mode for TypeScript compilation
 - `npm run clean` - Clean build artifacts
 
 ### Testing & Quality
+
 - `npm test` - Run all tests (includes linting and compilation)
 - `npm run lint` - Run ESLint on TypeScript source files
 - `npm run fmt` - Format code with Prettier
@@ -18,6 +20,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `npx mocha --require ts-node/register src/Object.spec.ts` - Run individual tests like this
 
 ### Documentation
+
 - `npm run docs` - Generate and serve TypeDoc documentation
 
 ## Architecture Overview
@@ -51,6 +54,7 @@ This library manages clusters of child processes to efficiently handle batch ope
 ### Testing Approach
 
 The test suite uses a custom test script (`src/test.ts`) that simulates a batch-mode command-line tool with configurable failure rates. Tests can control:
+
 - `failrate` - Probability of task failure
 - `rngseed` - Seed for deterministic randomness
 - `ignoreExit` - Whether to ignore termination signals

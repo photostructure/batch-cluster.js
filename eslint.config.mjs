@@ -1,8 +1,8 @@
 // eslint.config.mjs
 import eslint from "@eslint/js";
+import importPlugin from "eslint-plugin-import";
 import globals from "globals";
 import tseslint from "typescript-eslint";
-import importPlugin from "eslint-plugin-import";
 
 export default tseslint.config(
   {
@@ -31,13 +31,13 @@ export default tseslint.config(
     },
     rules: {
       // Project-specific preferences that differ from defaults
-      "eqeqeq": ["error", "always", { null: "ignore" }], // Allow == null for defensive coding
+      eqeqeq: ["error", "always", { null: "ignore" }], // Allow == null for defensive coding
       "@typescript-eslint/no-unnecessary-condition": "off", // We want defensive null checks
       "@typescript-eslint/prefer-optional-chain": "off", // Prefer explicit null checks for clarity
-      
+
       // Import rules
       "import/no-cycle": "error", // TypeScript can't catch circular imports
-      
+
       // Stricter than defaults
       "no-console": "error",
     },
@@ -50,7 +50,7 @@ export default tseslint.config(
     rules: {
       // Relax rules that are problematic for test files
       "@typescript-eslint/explicit-function-return-type": "off",
-      "@typescript-eslint/explicit-module-boundary-types": "off", 
+      "@typescript-eslint/explicit-module-boundary-types": "off",
       "@typescript-eslint/no-explicit-any": "off",
       "@typescript-eslint/no-unused-expressions": "off",
       "@typescript-eslint/no-non-null-assertion": "off",
@@ -66,7 +66,7 @@ export default tseslint.config(
       "@typescript-eslint/restrict-plus-operands": "off",
       "no-console": "off",
       "@typescript-eslint/no-var-requires": "off",
-      
+
       // Re-enable one valuable rule that's safe for tests
       "import/no-cycle": "error", // Circular imports are bad even in tests
     },

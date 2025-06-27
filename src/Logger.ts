@@ -2,7 +2,10 @@ import util from "node:util"
 import { map } from "./Object"
 import { notBlank } from "./String"
 
-export type LoggerFunction = (message: string, ...optionalParams: unknown[]) => void
+export type LoggerFunction = (
+  message: string,
+  ...optionalParams: unknown[]
+) => void
 
 /**
  * Simple interface for logging.

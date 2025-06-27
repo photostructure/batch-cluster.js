@@ -37,7 +37,6 @@ See [Semver](http://semver.org/).
 - 💔 Several methods, including BatchCluster#pids() were changed from async to sync (as they were needlessly async).
 
 - 📦 A number of timeout options can now be validly 0 to disable timeouts:
-
   - `spawnTimeoutMillis`
   - `taskTimeoutMillis`
 
@@ -257,7 +256,6 @@ See [Semver](http://semver.org/).
 ## v7.0.0
 
 - 💔 Several fields were renamed to make things more consistent:
-
   - `BatchCluster.pendingTasks` was renamed to `BatchCluster.pendingTaskCount`.
   - A new `BatchCluster.pendingTasks` method now matches `BatchCluster.currentTasks`, which both return `Task[]`.
   - `BatchCluster.busyProcs` was renamed to `busyProcCount`.

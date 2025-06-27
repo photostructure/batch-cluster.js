@@ -51,7 +51,6 @@ BatchCluster will ensure a given process is only given one task at a time.
     Note the [constructor
     options](https://photostructure.github.io/batch-cluster.js/classes/BatchCluster.html#constructor)
     takes a union type of
-
     - [ChildProcessFactory](https://photostructure.github.io/batch-cluster.js/interfaces/ChildProcessFactory.html)
       and
     - [BatchProcessOptions](https://photostructure.github.io/batch-cluster.js/interfaces/BatchProcessOptions.html),
@@ -59,7 +58,7 @@ BatchCluster will ensure a given process is only given one task at a time.
     - [BatchClusterOptions](https://photostructure.github.io/batch-cluster.js/classes/BatchClusterOptions.html),
       which has defaults that may or may not be relevant to your application.
 
-1.  The [default logger](https://photostructure.github.io/batch-cluster.js/interfaces/Logger.html) 
+1.  The [default logger](https://photostructure.github.io/batch-cluster.js/interfaces/Logger.html)
     writes warning and error messages to `console.warn` and `console.error`. You
     can change this to your logger by using
     [setLogger](https://photostructure.github.io/batch-cluster.js/modules.html#setLogger) or by providing a logger to the `BatchCluster` constructor.
@@ -78,5 +77,3 @@ See
 [src/test.ts](https://github.com/photostructure/batch-cluster.js/blob/main/src/test.ts)
 for an example child process. Note that the script is _designed_ to be flaky on
 order to test BatchCluster's retry and error handling code.
-
-
