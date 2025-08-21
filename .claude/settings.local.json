@@ -31,7 +31,8 @@
       "Bash(for i in {1..5})",
       "Bash(do echo \"Run $i:\")",
       "Bash(break)",
-      "Bash(done)"
+      "Bash(done)",
+      "WebSearch"
     ],
     "deny": []
   },
