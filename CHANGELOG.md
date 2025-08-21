@@ -22,6 +22,8 @@ See [Semver](http://semver.org/).
 
 - 💔 Deleted the standalone `pids()` function and associated code (including the ProcpsChecker). This function was exported but only used internally by tests. This fixes the [issue #58](https://github.com/photostructure/batch-cluster.js/issues/58) (by deleting the unused code! _the best kind of bugfix_). Thanks for the report, [Zaczero](https://github.com/Zaczero)!
 
+- 💔 Dropped official support for [Node v23, which is EOL](https://nodejs.org/en/about/previous-releases).
+
 - 📦 Simplified `prettier` config to accept all defaults -- this added semicolons to every file.
 
 ## v14.0.0
