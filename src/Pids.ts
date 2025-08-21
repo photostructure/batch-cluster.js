@@ -1,9 +1,3 @@
-import child_process from "node:child_process"
-import { existsSync } from "node:fs"
-import { readdir } from "node:fs/promises"
-import { asError } from "./Error"
-import { isWin } from "./Platform"
-
 /**
  * @param {number} pid process id. Required.
  * @returns boolean true if the given process id is in the local process
@@ -42,46 +36,4 @@ export function kill(pid: number | undefined, force = false): boolean {
     return false
     // failed to get priority--assume the pid is gone.
   }
-}
-
-/**
- * Only used by tests
- *
- * @returns {Promise<number[]>} all the Process IDs in the process table.
- */
-export async function pids(): Promise<number[]> {
-  // Linux‐style: read /proc
-  if (!isWin && existsSync("/proc")) {
-    const names = await readdir("/proc")
-    return names.filter((d) => /^\d+$/.test(d)).map((d) => parseInt(d, 10))
-  }
-
-  // fallback: ps or tasklist
-  const cmd = isWin ? "tasklist" : "ps"
-  const args = isWin ? ["/NH", "/FO", "CSV"] : ["-e", "-o", "pid="]
-
-  return new Promise<number[]>((resolve, reject) => {
-    child_process.execFile(cmd, args, (err, stdout, stderr) => {
-      if (err) return reject(asError(err))
-      if (stderr.trim()) return reject(new Error(stderr))
-
-      const pids = stdout
-        .trim()
-        .split(/[\r\n]+/)
-        .map((line) => {
-          if (isWin) {
-            // "Image","PID",…
-            // split on "," and strip outer quotes:
-            const cols = line.split('","')
-            const pidStr = cols[1]?.replace(/"/g, "")
-            return Number(pidStr)
-          }
-          // ps -o pid= gives you just the number
-          return Number(line.trim())
-        })
-        .filter((n) => Number.isFinite(n) && n > 0)
-
-      resolve(pids)
-    })
-  })
 }

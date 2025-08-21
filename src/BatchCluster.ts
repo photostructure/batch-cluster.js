@@ -84,9 +84,6 @@ export class BatchCluster {
       BatchProcessOptions &
       ChildProcessFactory,
   ) {
-    // Validate that required process listing commands are available
-    validateProcpsAvailable()
-
     this.options = verifyOptions({ ...opts, observer: this.emitter })
     this.#logger = this.options.logger
 

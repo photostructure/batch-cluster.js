@@ -11,7 +11,7 @@ import path from "node:path"
 import process from "node:process"
 import { Log, logger, setLogger } from "./Logger"
 import { Parser } from "./Parser"
-import { pids } from "./Pids"
+import { pidExists } from "./Pids"
 import { notBlank } from "./String"
 
 use(require("chai-as-promised"))
@@ -102,15 +102,16 @@ declare namespace Chai {
   }
 }
 
-export const procs: child_process.ChildProcess[] = []
+export const childProcs: child_process.ChildProcess[] = []
 
 export function testPids(): number[] {
-  return procs.map((proc) => proc.pid).filter((ea) => ea != null) as number[]
+  return childProcs
+    .map((proc) => proc.pid)
+    .filter((ea) => ea != null) as number[]
 }
 
-export async function currentTestPids(): Promise<number[]> {
-  const alivePids = new Set(await pids())
-  return testPids().filter((ea) => alivePids.has(ea))
+export function currentTestPids(): number[] {
+  return testPids().filter(pidExists)
 }
 
 export function sortNumeric(arr: number[]): number[] {
@@ -198,6 +199,6 @@ export const processFactory = () => {
       },
     },
   )
-  procs.push(proc)
+  childProcs.push(proc)
   return proc
 }

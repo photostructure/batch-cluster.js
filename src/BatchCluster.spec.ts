@@ -1,13 +1,13 @@
 import FakeTimers from "@sinonjs/fake-timers"
 import process from "node:process"
 import {
+  childProcs,
   currentTestPids,
   expect,
   flatten,
   parser,
   parserErrors,
   processFactory,
-  procs,
   setFailratePct,
   setIgnoreExit,
   setNewline,
@@ -281,7 +281,7 @@ describe("BatchCluster", function () {
                   setNewline(newline as any)
                   setIgnoreExit(ignoreExit)
                   bc = listen(new BatchCluster({ ...opts, processFactory }))
-                  procs.length = 0
+                  childProcs.length = 0
                 })
 
                 afterEach(async () => {
@@ -424,7 +424,7 @@ describe("BatchCluster", function () {
                     // Expect a reasonable number of new pids. Worst case, we
                     // errored after every start, so there may be more then iters
                     // pids spawned.
-                    expect(procs.length).to.eql(bc.spawnedProcCount)
+                    expect(childProcs.length).to.eql(bc.spawnedProcCount)
 
                     expect(bc.spawnedProcCount).to.be.within(
                       results.length / opts.maxTasksPerProcess,
