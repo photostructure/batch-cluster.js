@@ -26,7 +26,7 @@
     "test": "mocha dist/**/*.spec.js",
     "docs": "run-s docs:*",
     "docs:build": "typedoc",
-    "docs:serve": "cp .serve.json docs/serve.json && touch docs/.nojekyll && serve docs",
+    "docs:serve": "cp .serve.json build/docs/serve.json && touch build/docs/.nojekyll && serve build/docs",
     "update": "run-p update:*",
     "update:deps": "ncu -u --install always",
     "install:pinact": "go install github.com/suzuki-shunsuke/pinact/cmd/pinact@latest",
