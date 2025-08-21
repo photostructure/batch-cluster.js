@@ -1,3 +1,5 @@
+import { isWin } from "./Platform";
+
 /**
  * @param {number} pid process id. Required.
  * @returns boolean true if the given process id is in the local process
@@ -14,6 +16,13 @@ export function pidExists(pid: number | undefined): boolean {
     // permission to send `pid` and message), or "ESRCH" if that pid doesn't
     // exist. EPERM means it _does_ exist!
     if ((err as NodeJS.ErrnoException)?.code === "EPERM") return true;
+
+    // On Windows, some error codes might indicate the process is terminating
+    // but hasn't fully exited yet. Treat these as "not existing" to avoid
+    // race conditions during shutdown.
+    if (isWin && (err as NodeJS.ErrnoException)?.code === "EINVAL") {
+      return false;
+    }
 
     // failed to get priority--assume the pid is gone.
     return false;
