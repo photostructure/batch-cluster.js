@@ -1,6 +1,6 @@
-import { BatchClusterOptions } from "./BatchClusterOptions"
+import { BatchClusterOptions } from "./BatchClusterOptions";
 
-const bco = new BatchClusterOptions()
+const bco = new BatchClusterOptions();
 
 export const DefaultTestOptions = {
   ...bco,
@@ -18,4 +18,4 @@ export const DefaultTestOptions = {
   // we shouldn't need these overrides...
   // ...(isCI ? { streamFlushMillis: bco.streamFlushMillis * 3 } : {}),
   // onIdleIntervalMillis: 1000,
-}
+};

@@ -1,8 +1,8 @@
-import { BatchClusterOptions, WithObserver } from "./BatchClusterOptions"
-import { BatchProcessOptions } from "./BatchProcessOptions"
-import { ChildProcessFactory } from "./ChildProcessFactory"
-import { CombinedBatchProcessOptions } from "./CombinedBatchProcessOptions"
-import { blank, toS } from "./String"
+import { BatchClusterOptions, WithObserver } from "./BatchClusterOptions";
+import { BatchProcessOptions } from "./BatchProcessOptions";
+import { ChildProcessFactory } from "./ChildProcessFactory";
+import { CombinedBatchProcessOptions } from "./CombinedBatchProcessOptions";
+import { blank, toS } from "./String";
 
 /**
  * Verifies and sanitizes the provided options for BatchCluster.
@@ -26,14 +26,14 @@ export function verifyOptions(
     ...opts,
     passRE: toRe(opts.pass),
     failRE: toRe(opts.fail),
-  } as CombinedBatchProcessOptions
+  } as CombinedBatchProcessOptions;
 
-  const errors: string[] = []
+  const errors: string[] = [];
 
   function notBlank(fieldName: keyof CombinedBatchProcessOptions) {
-    const v = toS(result[fieldName])
+    const v = toS(result[fieldName]);
     if (blank(v)) {
-      errors.push(fieldName + " must not be blank")
+      errors.push(fieldName + " must not be blank");
     }
   }
 
@@ -42,20 +42,20 @@ export function verifyOptions(
     value: number,
     why?: string,
   ) {
-    const v = result[fieldName] as number
+    const v = result[fieldName] as number;
     if (v < value) {
-      const msg = `${fieldName} must be greater than or equal to ${value}${blank(why) ? "" : ": " + why}`
-      errors.push(msg)
+      const msg = `${fieldName} must be greater than or equal to ${value}${blank(why) ? "" : ": " + why}`;
+      errors.push(msg);
     }
   }
 
-  notBlank("versionCommand")
-  notBlank("pass")
-  notBlank("fail")
+  notBlank("versionCommand");
+  notBlank("pass");
+  notBlank("fail");
 
-  gte("maxTasksPerProcess", 1)
+  gte("maxTasksPerProcess", 1);
 
-  gte("maxProcs", 1)
+  gte("maxProcs", 1);
 
   if (
     opts.maxProcAgeMillis != null &&
@@ -66,25 +66,25 @@ export function verifyOptions(
       "maxProcAgeMillis",
       Math.max(result.spawnTimeoutMillis, result.taskTimeoutMillis),
       `the max value of spawnTimeoutMillis (${result.spawnTimeoutMillis}) and taskTimeoutMillis (${result.taskTimeoutMillis})`,
-    )
+    );
   }
   // 0 disables:
-  gte("minDelayBetweenSpawnMillis", 0)
-  gte("onIdleIntervalMillis", 0)
-  gte("endGracefulWaitTimeMillis", 0)
-  gte("maxReasonableProcessFailuresPerMinute", 0)
-  gte("streamFlushMillis", 0)
+  gte("minDelayBetweenSpawnMillis", 0);
+  gte("onIdleIntervalMillis", 0);
+  gte("endGracefulWaitTimeMillis", 0);
+  gte("maxReasonableProcessFailuresPerMinute", 0);
+  gte("streamFlushMillis", 0);
 
   if (errors.length > 0) {
     throw new Error(
       "BatchCluster was given invalid options: " + errors.join("; "),
-    )
+    );
   }
 
-  return result
+  return result;
 }
 function escapeRegExp(s: string) {
-  return toS(s).replace(/[-.,\\^$*+?()|[\]{}]/g, "\\$&")
+  return toS(s).replace(/[-.,\\^$*+?()|[\]{}]/g, "\\$&");
 }
 function toRe(s: string | RegExp) {
   return s instanceof RegExp
@@ -98,5 +98,5 @@ function toRe(s: string | RegExp) {
               .map((ea) => escapeRegExp(ea))
               .join(".*"),
           )
-        : new RegExp(escapeRegExp(s))
+        : new RegExp(escapeRegExp(s));
 }

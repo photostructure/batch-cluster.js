@@ -1,4 +1,4 @@
-import { notBlank } from "./String"
+import { notBlank } from "./String";
 
 /**
  * Parser implementations convert stdout and stderr from the underlying child
@@ -24,14 +24,14 @@ export type Parser<T> = (
   stdout: string,
   stderr: string | undefined,
   passed: boolean,
-) => T | Promise<T>
+) => T | Promise<T>;
 
 export const SimpleParser: Parser<string> = (
   stdout: string,
   stderr: string | undefined,
   passed: boolean,
 ) => {
-  if (!passed) throw new Error("task failed")
-  if (notBlank(stderr)) throw new Error(stderr)
-  return stdout
-}
+  if (!passed) throw new Error("task failed");
+  if (notBlank(stderr)) throw new Error(stderr);
+  return stdout;
+};

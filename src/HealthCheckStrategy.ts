@@ -1,6 +1,6 @@
-import { InternalBatchProcessOptions } from "./InternalBatchProcessOptions"
-import { HealthCheckable } from "./ProcessHealthMonitor"
-import { WhyNotHealthy } from "./WhyNotHealthy"
+import { InternalBatchProcessOptions } from "./InternalBatchProcessOptions";
+import { HealthCheckable } from "./ProcessHealthMonitor";
+import { WhyNotHealthy } from "./WhyNotHealthy";
 
 /**
  * Strategy interface for different health check approaches
@@ -9,7 +9,7 @@ export interface HealthCheckStrategy {
   assess(
     process: HealthCheckable,
     options: InternalBatchProcessOptions,
-  ): WhyNotHealthy | null
+  ): WhyNotHealthy | null;
 }
 
 /**
@@ -18,11 +18,11 @@ export interface HealthCheckStrategy {
 export class LifecycleHealthCheck implements HealthCheckStrategy {
   assess(process: HealthCheckable): WhyNotHealthy | null {
     if (process.ended) {
-      return "ended"
+      return "ended";
     } else if (process.ending) {
-      return "ending"
+      return "ending";
     }
-    return null
+    return null;
   }
 }
 
@@ -32,9 +32,9 @@ export class LifecycleHealthCheck implements HealthCheckStrategy {
 export class StreamHealthCheck implements HealthCheckStrategy {
   assess(process: HealthCheckable): WhyNotHealthy | null {
     if (process.proc.stdin == null || process.proc.stdin.destroyed) {
-      return "closed"
+      return "closed";
     }
-    return null
+    return null;
   }
 }
 
@@ -50,9 +50,9 @@ export class TaskLimitHealthCheck implements HealthCheckStrategy {
       options.maxTasksPerProcess > 0 &&
       process.taskCount >= options.maxTasksPerProcess
     ) {
-      return "worn"
+      return "worn";
     }
-    return null
+    return null;
   }
 }
 
@@ -68,9 +68,9 @@ export class IdleTimeHealthCheck implements HealthCheckStrategy {
       options.maxIdleMsPerProcess > 0 &&
       process.idleMs > options.maxIdleMsPerProcess
     ) {
-      return "idle"
+      return "idle";
     }
-    return null
+    return null;
   }
 }
 
@@ -86,9 +86,9 @@ export class FailureCountHealthCheck implements HealthCheckStrategy {
       options.maxFailedTasksPerProcess > 0 &&
       process.failedTaskCount >= options.maxFailedTasksPerProcess
     ) {
-      return "broken"
+      return "broken";
     }
-    return null
+    return null;
   }
 }
 
@@ -104,9 +104,9 @@ export class AgeHealthCheck implements HealthCheckStrategy {
       options.maxProcAgeMillis > 0 &&
       process.start + options.maxProcAgeMillis < Date.now()
     ) {
-      return "old"
+      return "old";
     }
-    return null
+    return null;
   }
 }
 
@@ -122,9 +122,9 @@ export class TaskTimeoutHealthCheck implements HealthCheckStrategy {
       options.taskTimeoutMillis > 0 &&
       (process.currentTask?.runtimeMs ?? 0) > options.taskTimeoutMillis
     ) {
-      return "timeout"
+      return "timeout";
     }
-    return null
+    return null;
   }
 }
 
@@ -140,18 +140,18 @@ export class CompositeHealthCheckStrategy implements HealthCheckStrategy {
     new FailureCountHealthCheck(),
     new AgeHealthCheck(),
     new TaskTimeoutHealthCheck(),
-  ]
+  ];
 
   assess(
     process: HealthCheckable,
     options: InternalBatchProcessOptions,
   ): WhyNotHealthy | null {
     for (const strategy of this.strategies) {
-      const result = strategy.assess(process, options)
+      const result = strategy.assess(process, options);
       if (result != null) {
-        return result
+        return result;
       }
     }
-    return null
+    return null;
   }
 }

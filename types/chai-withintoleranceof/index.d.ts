@@ -6,7 +6,7 @@
 /// <reference types="chai" />
 
 interface WithinTolerance {
-  (expected: number, tol: number | number[], message?: string): Chai.Assertion
+  (expected: number, tol: number | number[], message?: string): Chai.Assertion;
 }
 
 declare namespace Chai {
@@ -14,7 +14,7 @@ declare namespace Chai {
     extends LanguageChains,
       NumericComparison,
       TypeComparison {
-    withinToleranceOf: WithinTolerance
-    withinTolOf: WithinTolerance
+    withinToleranceOf: WithinTolerance;
+    withinTolOf: WithinTolerance;
   }
 }

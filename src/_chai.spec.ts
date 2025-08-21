@@ -1,25 +1,25 @@
 /* eslint-disable @typescript-eslint/no-require-imports */
 try {
-  require("source-map-support").install()
+  require("source-map-support").install();
 } catch {
   //
 }
 
-import { expect, use } from "chai"
-import child_process from "node:child_process"
-import path from "node:path"
-import process from "node:process"
-import { Log, logger, setLogger } from "./Logger"
-import { Parser } from "./Parser"
-import { pidExists } from "./Pids"
-import { notBlank } from "./String"
+import { expect, use } from "chai";
+import child_process from "node:child_process";
+import path from "node:path";
+import process from "node:process";
+import { Log, logger, setLogger } from "./Logger";
+import { Parser } from "./Parser";
+import { pidExists } from "./Pids";
+import { notBlank } from "./String";
 
-use(require("chai-as-promised"))
-use(require("chai-string"))
-use(require("chai-subset"))
-use(require("chai-withintoleranceof"))
+use(require("chai-as-promised"));
+use(require("chai-string"));
+use(require("chai-subset"));
+use(require("chai-withintoleranceof"));
 
-export { expect } from "chai"
+export { expect } from "chai";
 
 // Tests should be quiet unless LOG is set to "trace" or "debug" or "info" or...
 setLogger(
@@ -37,20 +37,20 @@ setLogger(
       ),
     ),
   ),
-)
+);
 
-export const parserErrors: string[] = []
+export const parserErrors: string[] = [];
 
-export const unhandledRejections: Error[] = []
+export const unhandledRejections: Error[] = [];
 
-beforeEach(() => (parserErrors.length = 0))
+beforeEach(() => (parserErrors.length = 0));
 
 process.on("unhandledRejection", (reason: any) => {
-  console.error("unhandledRejection:", reason.stack ?? reason)
-  unhandledRejections.push(reason)
-})
+  console.error("unhandledRejection:", reason.stack ?? reason);
+  unhandledRejections.push(reason);
+});
 
-afterEach(() => expect(unhandledRejections).to.eql([]))
+afterEach(() => expect(unhandledRejections).to.eql([]));
 
 export const parser: Parser<string> = (
   stdout: string,
@@ -58,32 +58,32 @@ export const parser: Parser<string> = (
   passed: boolean,
 ) => {
   if (stderr != null) {
-    parserErrors.push(stderr)
+    parserErrors.push(stderr);
   }
   if (!passed || notBlank(stderr)) {
     logger().debug("test parser: rejecting task", {
       stdout,
       stderr,
       passed,
-    })
+    });
     // process.stdout.write("!")
-    throw new Error(stderr)
+    throw new Error(stderr);
   } else {
     const str = stdout
       .split(/(\r?\n)+/)
       .filter((ea) => notBlank(ea) && !ea.startsWith("# "))
       .join("\n")
-      .trim()
-    logger().debug("test parser: resolving task", str)
+      .trim();
+    logger().debug("test parser: resolving task", str);
     // process.stdout.write(".")
-    return str
+    return str;
   }
-}
+};
 
 export function times<T>(n: number, f: (idx: number) => T): T[] {
   return Array(n)
     .fill(undefined)
-    .map((_, i) => f(i))
+    .map((_, i) => f(i));
 }
 
 // because @types/chai-withintoleranceof isn't a thing (yet)
@@ -92,37 +92,37 @@ type WithinTolerance = (
   expected: number,
   tol: number | number[],
   message?: string,
-) => Chai.Assertion
+) => Chai.Assertion;
 
 // eslint-disable-next-line @typescript-eslint/no-namespace
 declare namespace Chai {
   interface Assertion {
-    withinToleranceOf: WithinTolerance
-    withinTolOf: WithinTolerance
+    withinToleranceOf: WithinTolerance;
+    withinTolOf: WithinTolerance;
   }
 }
 
-export const childProcs: child_process.ChildProcess[] = []
+export const childProcs: child_process.ChildProcess[] = [];
 
 export function testPids(): number[] {
   return childProcs
     .map((proc) => proc.pid)
-    .filter((ea) => ea != null) as number[]
+    .filter((ea) => ea != null) as number[];
 }
 
 export function currentTestPids(): number[] {
-  return testPids().filter(pidExists)
+  return testPids().filter(pidExists);
 }
 
 export function sortNumeric(arr: number[]): number[] {
-  return arr.sort((a, b) => a - b)
+  return arr.sort((a, b) => a - b);
 }
 
 export function flatten<T>(arr: (T | T[])[], result: T[] = []): T[] {
   arr.forEach((ea) =>
     Array.isArray(ea) ? result.push(...ea) : result.push(ea),
-  )
-  return result
+  );
+  return result;
 }
 
 // Seeding the RNG deterministically _should_ give us repeatable
@@ -132,27 +132,27 @@ export function flatten<T>(arr: (T | T[])[], result: T[] = []): T[] {
 // to make sure different error pathways are exercised. YYYY-MM-$callcount
 // should do it.
 
-const rngseedPrefix = new Date().toISOString().slice(0, 7) + "."
-let rngseedCounter = 0
-let rngseedOverride: string | undefined
+const rngseedPrefix = new Date().toISOString().slice(0, 7) + ".";
+let rngseedCounter = 0;
+let rngseedOverride: string | undefined;
 
 export function setRngseed(seed?: string) {
-  rngseedOverride = seed
+  rngseedOverride = seed;
 }
 
 function rngseed() {
   // We need a new rngseed for every execution, or all runs will either pass or
   // fail:
-  return rngseedOverride ?? rngseedPrefix + rngseedCounter++
+  return rngseedOverride ?? rngseedPrefix + rngseedCounter++;
 }
 
-let failrate: string
+let failrate: string;
 
 export function setFailratePct(percent: number) {
-  failrate = (percent / 100).toFixed(2)
+  failrate = (percent / 100).toFixed(2);
 }
 
-let unluckyfail: "1" | "0"
+let unluckyfail: "1" | "0";
 
 /**
  * Should EUNLUCKY be handled properly by the test script, and emit a "FAIL", or
@@ -162,28 +162,28 @@ let unluckyfail: "1" | "0"
  * where all flaky errors require a timeout to recover.
  */
 export function setUnluckyFail(b: boolean) {
-  unluckyfail = b ? "1" : "0"
+  unluckyfail = b ? "1" : "0";
 }
 
-let newline: "lf" | "crlf"
+let newline: "lf" | "crlf";
 
 export function setNewline(eol: "lf" | "crlf") {
-  newline = eol
+  newline = eol;
 }
 
-let ignoreExit: "1" | "0"
+let ignoreExit: "1" | "0";
 
 export function setIgnoreExit(ignore: boolean) {
-  ignoreExit = ignore ? "1" : "0"
+  ignoreExit = ignore ? "1" : "0";
 }
 
 beforeEach(() => {
-  setFailratePct(10)
-  setUnluckyFail(true)
-  setNewline("lf")
-  setIgnoreExit(false)
-  setRngseed()
-})
+  setFailratePct(10);
+  setUnluckyFail(true);
+  setNewline("lf");
+  setIgnoreExit(false);
+  setRngseed();
+});
 
 export const processFactory = () => {
   const proc = child_process.spawn(
@@ -198,7 +198,7 @@ export const processFactory = () => {
         unluckyfail,
       },
     },
-  )
-  childProcs.push(proc)
-  return proc
-}
+  );
+  childProcs.push(proc);
+  return proc;
+};

@@ -1,5 +1,5 @@
-import timers from "node:timers"
-export const Timeout = Symbol("timeout")
+import timers from "node:timers";
+export const Timeout = Symbol("timeout");
 
 export async function thenOrTimeout<T>(
   p: Promise<T>,
@@ -10,29 +10,29 @@ export async function thenOrTimeout<T>(
   return timeoutMs <= 1
     ? p
     : new Promise<T | typeof Timeout>((resolve, reject) => {
-        let pending = true
+        let pending = true;
         const t = timers.setTimeout(() => {
           if (pending) {
-            pending = false
-            resolve(Timeout)
+            pending = false;
+            resolve(Timeout);
           }
-        }, timeoutMs)
+        }, timeoutMs);
 
         p.then(
           (result) => {
             if (pending) {
-              pending = false
-              clearTimeout(t)
-              resolve(result)
+              pending = false;
+              clearTimeout(t);
+              resolve(result);
             }
           },
           (err: unknown) => {
             if (pending) {
-              pending = false
-              clearTimeout(t)
-              reject(err instanceof Error ? err : new Error(String(err)))
+              pending = false;
+              clearTimeout(t);
+              reject(err instanceof Error ? err : new Error(String(err)));
             }
           },
-        )
-      })
+        );
+      });
 }

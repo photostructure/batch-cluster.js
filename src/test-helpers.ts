@@ -1,1 +1,1 @@
-export const ErrorPrefix = "ERROR: "
+export const ErrorPrefix = "ERROR: ";

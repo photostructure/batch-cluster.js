@@ -1,4 +1,4 @@
-import { toNotBlank } from "./String"
+import { toNotBlank } from "./String";
 
 /**
  * When we wrap errors, an Error always prefixes the toString() and stack with
@@ -7,7 +7,7 @@ import { toNotBlank } from "./String"
 export function tryEach(arr: (() => void)[]): void {
   for (const f of arr) {
     try {
-      f()
+      f();
     } catch {
       //
     }
@@ -17,7 +17,7 @@ export function tryEach(arr: (() => void)[]): void {
 export function cleanError(s: unknown): string {
   return String(s)
     .trim()
-    .replace(/^error: /i, "")
+    .replace(/^error: /i, "");
 }
 
 export function asError(err: unknown): Error {
@@ -31,5 +31,5 @@ export function asError(err: unknown): Error {
         ) ??
           toNotBlank(err) ??
           "(unknown)",
-      )
+      );
 }

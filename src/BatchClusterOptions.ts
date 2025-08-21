@@ -1,9 +1,9 @@
-import { BatchClusterEmitter } from "./BatchClusterEmitter"
-import { logger, Logger } from "./Logger"
-import { isMac, isWin } from "./Platform"
+import { BatchClusterEmitter } from "./BatchClusterEmitter";
+import { logger, Logger } from "./Logger";
+import { isMac, isWin } from "./Platform";
 
-export const secondMs = 1000
-export const minuteMs = 60 * secondMs
+export const secondMs = 1000;
+export const minuteMs = 60 * secondMs;
 
 /**
  * These parameter values have somewhat sensible defaults, but can be
@@ -16,7 +16,7 @@ export class BatchClusterOptions {
    *
    * Defaults to 1.
    */
-  maxProcs = 1
+  maxProcs = 1;
 
   /**
    * Child processes will be recycled when they reach this age.
@@ -26,7 +26,7 @@ export class BatchClusterOptions {
    *
    * Defaults to 5 minutes. Set to 0 to disable.
    */
-  maxProcAgeMillis = 5 * minuteMs
+  maxProcAgeMillis = 5 * minuteMs;
 
   /**
    * This is the minimum interval between calls to BatchCluster's #onIdle
@@ -35,7 +35,7 @@ export class BatchClusterOptions {
    *
    * Must be &gt; 0. Defaults to 10 seconds.
    */
-  onIdleIntervalMillis = 10 * secondMs
+  onIdleIntervalMillis = 10 * secondMs;
 
   /**
    * If the initial `versionCommand` fails for new spawned processes more
@@ -47,7 +47,7 @@ export class BatchClusterOptions {
    *
    * Defaults to 10. Set to 0 to disable.
    */
-  maxReasonableProcessFailuresPerMinute = 10
+  maxReasonableProcessFailuresPerMinute = 10;
 
   /**
    * Spawning new child processes and servicing a "version" task must not take
@@ -57,7 +57,7 @@ export class BatchClusterOptions {
    *
    * Defaults to 15 seconds. Set to 0 to disable.
    */
-  spawnTimeoutMillis = 15 * secondMs
+  spawnTimeoutMillis = 15 * secondMs;
 
   /**
    * If maxProcs &gt; 1, spawning new child processes to process tasks can slow
@@ -65,7 +65,7 @@ export class BatchClusterOptions {
    *
    * Must be &gt;= 0ms. Defaults to 1.5 seconds.
    */
-  minDelayBetweenSpawnMillis = 1.5 * secondMs
+  minDelayBetweenSpawnMillis = 1.5 * secondMs;
 
   /**
    * If commands take longer than this, presume the underlying process is dead
@@ -75,7 +75,7 @@ export class BatchClusterOptions {
    *
    * Defaults to 10 seconds. Set to 0 to disable.
    */
-  taskTimeoutMillis = 10 * secondMs
+  taskTimeoutMillis = 10 * secondMs;
 
   /**
    * Processes will be recycled after processing `maxTasksPerProcess` tasks.
@@ -88,7 +88,7 @@ export class BatchClusterOptions {
    *
    * Must be &gt;= 0. Defaults to 500
    */
-  maxTasksPerProcess = 500
+  maxTasksPerProcess = 500;
 
   /**
    * When `this.end()` is called, or Node broadcasts the `beforeExit` event,
@@ -99,7 +99,7 @@ export class BatchClusterOptions {
    * kill signal to shut down. Any pending requests may be interrupted. Must be
    * &gt;= 0. Defaults to 500ms.
    */
-  endGracefulWaitTimeMillis = 500
+  endGracefulWaitTimeMillis = 500;
 
   /**
    * When a task sees a "pass" or "fail" from either stdout or stderr, it needs
@@ -123,7 +123,7 @@ export class BatchClusterOptions {
    */
   // These values were found by trial and error using GitHub CI boxes, which
   // should be the bottom of the barrel, performance-wise, of any computer.
-  streamFlushMillis = isMac ? 100 : isWin ? 200 : 30
+  streamFlushMillis = isMac ? 100 : isWin ? 200 : 30;
 
   /**
    * Should batch-cluster try to clean up after spawned processes that don't
@@ -133,7 +133,7 @@ export class BatchClusterOptions {
    *
    * Defaults to `true`.
    */
-  cleanupChildProcs = true
+  cleanupChildProcs = true;
 
   /**
    * If a child process is idle for more than this value (in milliseconds), shut
@@ -142,7 +142,7 @@ export class BatchClusterOptions {
    * A value of ~10 seconds to a couple minutes would be reasonable. Set this to
    * 0 to disable this feature.
    */
-  maxIdleMsPerProcess = 0
+  maxIdleMsPerProcess = 0;
 
   /**
    * How many failed tasks should a process be allowed to process before it is
@@ -150,7 +150,7 @@ export class BatchClusterOptions {
    *
    * Set this to 0 to disable this feature.
    */
-  maxFailedTasksPerProcess = 2
+  maxFailedTasksPerProcess = 2;
 
   /**
    * If `healthCheckCommand` is set, how frequently should we check for
@@ -158,22 +158,22 @@ export class BatchClusterOptions {
    *
    * Set this to 0 to disable this feature.
    */
-  healthCheckIntervalMillis = 0
+  healthCheckIntervalMillis = 0;
 
   /**
    * Verify child processes are still running by checking the OS process table.
    *
    * Set this to 0 to disable this feature.
    */
-  pidCheckIntervalMillis = 2 * minuteMs
+  pidCheckIntervalMillis = 2 * minuteMs;
 
   /**
    * A BatchCluster instance and associated BatchProcess instances will share
    * this `Logger`. Defaults to the `Logger` instance provided to `setLogger()`.
    */
-  logger: () => Logger = logger
+  logger: () => Logger = logger;
 }
 
 export interface WithObserver {
-  observer: BatchClusterEmitter
+  observer: BatchClusterEmitter;
 }

@@ -1,21 +1,21 @@
-import util from "node:util"
-import { map } from "./Object"
-import { notBlank } from "./String"
+import util from "node:util";
+import { map } from "./Object";
+import { notBlank } from "./String";
 
 export type LoggerFunction = (
   message: string,
   ...optionalParams: unknown[]
-) => void
+) => void;
 
 /**
  * Simple interface for logging.
  */
 export interface Logger {
-  trace: LoggerFunction
-  debug: LoggerFunction
-  info: LoggerFunction
-  warn: LoggerFunction
-  error: LoggerFunction
+  trace: LoggerFunction;
+  debug: LoggerFunction;
+  info: LoggerFunction;
+  warn: LoggerFunction;
+  error: LoggerFunction;
 }
 
 export const LogLevels: (keyof Logger)[] = [
@@ -24,11 +24,11 @@ export const LogLevels: (keyof Logger)[] = [
   "info",
   "warn",
   "error",
-]
+];
 
-const _debuglog = util.debuglog("batch-cluster")
+const _debuglog = util.debuglog("batch-cluster");
 
-const noop = () => undefined
+const noop = () => undefined;
 
 /**
  * Default `Logger` implementation.
@@ -61,16 +61,16 @@ export const ConsoleLogger: Logger = Object.freeze({
    */
   warn: (...args: unknown[]) => {
     // eslint-disable-next-line no-console
-    console.warn(...args)
+    console.warn(...args);
   },
   /**
    * Delegates to `console.error`
    */
   error: (...args: unknown[]) => {
     // eslint-disable-next-line no-console
-    console.error(...args)
+    console.error(...args);
   },
-})
+});
 
 /**
  * `Logger` that disables all logging.
@@ -81,37 +81,37 @@ export const NoLogger: Logger = Object.freeze({
   info: noop,
   warn: noop,
   error: noop,
-})
+});
 
-let _logger: Logger = _debuglog.enabled ? ConsoleLogger : NoLogger
+let _logger: Logger = _debuglog.enabled ? ConsoleLogger : NoLogger;
 
 export function setLogger(l: Logger): void {
   if (LogLevels.some((ea) => typeof l[ea] !== "function")) {
-    throw new Error("invalid logger, must implement " + LogLevels.join(", "))
+    throw new Error("invalid logger, must implement " + LogLevels.join(", "));
   }
-  _logger = l
+  _logger = l;
 }
 
 export function logger(): Logger {
-  return _logger
+  return _logger;
 }
 
 export const Log = {
   withLevels: (delegate: Logger): Logger => {
-    const timestamped: Logger = {} as Logger
+    const timestamped: Logger = {} as Logger;
     LogLevels.forEach((ea) => {
-      const prefix = (ea + " ").substring(0, 5) + " | "
+      const prefix = (ea + " ").substring(0, 5) + " | ";
       timestamped[ea] = (message?: unknown, ...optionalParams: unknown[]) => {
         if (notBlank(String(message))) {
-          delegate[ea](prefix + String(message), ...optionalParams)
+          delegate[ea](prefix + String(message), ...optionalParams);
         }
-      }
-    })
-    return timestamped
+      };
+    });
+    return timestamped;
   },
 
   withTimestamps: (delegate: Logger) => {
-    const timestamped: Logger = {} as Logger
+    const timestamped: Logger = {} as Logger;
     LogLevels.forEach(
       (level) =>
         (timestamped[level] = (
@@ -124,17 +124,17 @@ export const Log = {
               ...optionalParams,
             ),
           )),
-    )
-    return timestamped
+    );
+    return timestamped;
   },
 
   filterLevels: (l: Logger, minLogLevel: keyof Logger) => {
-    const minLogLevelIndex = LogLevels.indexOf(minLogLevel)
-    const filtered: Logger = {} as Logger
+    const minLogLevelIndex = LogLevels.indexOf(minLogLevel);
+    const filtered: Logger = {} as Logger;
     LogLevels.forEach(
       (ea, idx) =>
         (filtered[ea] = idx < minLogLevelIndex ? noop : l[ea].bind(l)),
-    )
-    return filtered
+    );
+    return filtered;
   },
-}
+};

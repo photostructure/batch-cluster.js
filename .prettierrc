@@ -1,11 +1,3 @@
 {
-  "overrides": [
-    {
-      "files": "*.ts",
-      "options": {
-        "semi": false
-      }
-    }
-  ],
   "plugins": ["prettier-plugin-organize-imports"]
 }

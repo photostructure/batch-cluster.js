@@ -20,6 +20,6 @@ export type WhyNotHealthy =
   | "tooMany" // < only sent by BatchCluster when maxProcs is reduced
   | "startError"
   | "unhealthy"
-  | "worn"
+  | "worn";
 
-export type WhyNotReady = WhyNotHealthy | "busy"
+export type WhyNotReady = WhyNotHealthy | "busy";

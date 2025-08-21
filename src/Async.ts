@@ -1,10 +1,10 @@
-import timers from "node:timers"
+import timers from "node:timers";
 
 export function delay(millis: number, unref = false): Promise<void> {
   return new Promise<void>((resolve) => {
-    const t = timers.setTimeout(() => resolve(), millis)
-    if (unref) t.unref()
-  })
+    const t = timers.setTimeout(() => resolve(), millis);
+    if (unref) t.unref();
+  });
 }
 
 /**
@@ -16,15 +16,15 @@ export async function until(
   timeoutMs: number,
   delayMs = 50,
 ): Promise<boolean> {
-  const timeoutAt = Date.now() + timeoutMs
-  let count = 0
+  const timeoutAt = Date.now() + timeoutMs;
+  let count = 0;
   while (Date.now() < timeoutAt) {
     if (await f(count)) {
-      return true
+      return true;
     } else {
-      count++
-      await delay(delayMs)
+      count++;
+      await delay(delayMs);
     }
   }
-  return false
+  return false;
 }

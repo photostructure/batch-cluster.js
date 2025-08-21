@@ -10,7 +10,7 @@ export interface BatchProcessOptions {
    * be invoked immediately after spawn. This command must return before any
    * tasks will be given to a given process.
    */
-  versionCommand: string
+  versionCommand: string;
 
   /**
    * If provided, and healthCheckIntervalMillis is greater than 0, or the
@@ -19,19 +19,19 @@ export interface BatchProcessOptions {
    * If the command outputs to stderr or returns a fail string, the process will
    * be considered unhealthy and recycled.
    */
-  healthCheckCommand?: string | undefined
+  healthCheckCommand?: string | undefined;
 
   /**
    * Expected text to print if a command passes. Cannot be blank. Strings will
    * be interpreted as a regular expression fragment.
    */
-  pass: string | RegExp
+  pass: string | RegExp;
 
   /**
    * Expected text to print if a command fails. Cannot be blank. Strings will
    * be interpreted as a regular expression fragment.
    */
-  fail: string | RegExp
+  fail: string | RegExp;
 
   /**
    * Command to end the child batch process. If not provided (or undefined),
@@ -39,5 +39,5 @@ export interface BatchProcessOptions {
    * and if it does not shut down within `endGracefulWaitTimeMillis`, it will be
    * SIGHUP'ed.
    */
-  exitCommand?: string | undefined
+  exitCommand?: string | undefined;
 }

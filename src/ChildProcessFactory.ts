@@ -1,4 +1,4 @@
-import child_process from "node:child_process"
+import child_process from "node:child_process";
 
 /**
  * These are required parameters for a given BatchCluster.
@@ -16,5 +16,5 @@ export interface ChildProcessFactory {
    */
   readonly processFactory: () =>
     | child_process.ChildProcess
-    | Promise<child_process.ChildProcess>
+    | Promise<child_process.ChildProcess>;
 }

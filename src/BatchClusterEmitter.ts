@@ -1,9 +1,9 @@
-import { Args } from "./Args"
-import { BatchProcess } from "./BatchProcess"
-import { Task } from "./Task"
-import { WhyNotHealthy } from "./WhyNotHealthy"
+import { Args } from "./Args";
+import { BatchProcess } from "./BatchProcess";
+import { Task } from "./Task";
+import { WhyNotHealthy } from "./WhyNotHealthy";
 
-export type ChildEndReason = WhyNotHealthy | "tooMany"
+export type ChildEndReason = WhyNotHealthy | "tooMany";
 
 // Type-safe EventEmitter! Note that this interface is not comprehensive:
 // EventEmitter has a bunch of other methods, but batch-cluster doesn't use
@@ -12,21 +12,21 @@ export interface TypedEventEmitter<T> {
   once<E extends keyof T>(
     eventName: E,
     listener: (...args: Args<T[E]>) => void,
-  ): this
+  ): this;
   on<E extends keyof T>(
     eventName: E,
     listener: (...args: Args<T[E]>) => void,
-  ): this
+  ): this;
   off<E extends keyof T>(
     eventName: E,
     listener: (...args: Args<T[E]>) => void,
-  ): this
-  emit<E extends keyof T>(eventName: E, ...args: Args<T[E]>): boolean
+  ): this;
+  emit<E extends keyof T>(eventName: E, ...args: Args<T[E]>): boolean;
 
   // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
-  listeners<E extends keyof T>(event: E): Function[]
+  listeners<E extends keyof T>(event: E): Function[];
 
-  removeAllListeners(eventName?: keyof T): this
+  removeAllListeners(eventName?: keyof T): this;
 }
 
 /**
@@ -39,30 +39,30 @@ export interface BatchClusterEvents {
   /**
    * Emitted when a child process has started
    */
-  childStart: (childProcess: BatchProcess) => void
+  childStart: (childProcess: BatchProcess) => void;
 
   /**
    * Emitted when a child process has ended
    */
-  childEnd: (childProcess: BatchProcess, reason: ChildEndReason) => void
+  childEnd: (childProcess: BatchProcess, reason: ChildEndReason) => void;
 
   /**
    * Emitted when a child process fails to spin up and run the {@link BatchProcessOptions.versionCommand} successfully within {@link BatchClusterOptions.spawnTimeoutMillis}.
    *
    * @param childProcess will be undefined if the error is from {@link ChildProcessFactory.processFactory}
    */
-  startError: (error: Error, childProcess?: BatchProcess) => void
+  startError: (error: Error, childProcess?: BatchProcess) => void;
 
   /**
    * Emitted when an internal consistency check fails
    */
-  internalError: (error: Error) => void
+  internalError: (error: Error) => void;
 
   /**
    * Emitted when `.end()` is called because the error rate has exceeded
    * {@link BatchClusterOptions.maxReasonableProcessFailuresPerMinute}
    */
-  fatalError: (error: Error) => void
+  fatalError: (error: Error) => void;
 
   /**
    * Emitted when tasks receive data, which may be partial chunks from the task
@@ -72,12 +72,12 @@ export interface BatchClusterEvents {
     data: Buffer | string,
     task: Task<unknown> | undefined,
     proc: BatchProcess,
-  ) => void
+  ) => void;
 
   /**
    * Emitted when a task has been resolved
    */
-  taskResolved: (task: Task<unknown>, proc: BatchProcess) => void
+  taskResolved: (task: Task<unknown>, proc: BatchProcess) => void;
 
   /**
    * Emitted when a task times out. Note that a `taskError` event always succeeds these events.
@@ -86,12 +86,12 @@ export interface BatchClusterEvents {
     timeoutMs: number,
     task: Task<unknown>,
     proc: BatchProcess,
-  ) => void
+  ) => void;
 
   /**
    * Emitted when a task has an error
    */
-  taskError: (error: Error, task: Task<unknown>, proc: BatchProcess) => void
+  taskError: (error: Error, task: Task<unknown>, proc: BatchProcess) => void;
 
   /**
    * Emitted when child processes write to stdout or stderr without a current
@@ -101,28 +101,28 @@ export interface BatchClusterEvents {
     stdoutData: string | Buffer | null,
     stderrData: string | Buffer | null,
     proc: BatchProcess,
-  ) => void
+  ) => void;
 
   /**
    * Emitted when a process fails health checks
    */
-  healthCheckError: (error: Error, proc: BatchProcess) => void
+  healthCheckError: (error: Error, proc: BatchProcess) => void;
 
   /**
    * Emitted when a child process has an error during shutdown
    */
-  endError: (error: Error, proc?: BatchProcess) => void
+  endError: (error: Error, proc?: BatchProcess) => void;
 
   /**
    * Emitted when this instance is in the process of ending.
    */
-  beforeEnd: () => void
+  beforeEnd: () => void;
 
   /**
    * Emitted when this instance has ended. No child processes should remain at
    * this point.
    */
-  end: () => void
+  end: () => void;
 }
 
 /**
@@ -145,4 +145,4 @@ export interface BatchClusterEvents {
  * See {@link BatchClusterEvents} for a the list of events and their payload
  * signatures
  */
-export type BatchClusterEmitter = TypedEventEmitter<BatchClusterEvents>
+export type BatchClusterEmitter = TypedEventEmitter<BatchClusterEvents>;

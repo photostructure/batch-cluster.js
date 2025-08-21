@@ -1,4 +1,4 @@
-import { minuteMs, secondMs } from "./BatchClusterOptions"
+import { minuteMs, secondMs } from "./BatchClusterOptions";
 
 // Implementation notes:
 
@@ -12,10 +12,10 @@ import { minuteMs, secondMs } from "./BatchClusterOptions"
 // a large periodMs.
 
 export class Rate {
-  #start = Date.now()
-  readonly #priorEventTimestamps: number[] = []
-  #lastEventTs: number | null = null
-  #eventCount = 0
+  #start = Date.now();
+  readonly #priorEventTimestamps: number[] = [];
+  #lastEventTs: number | null = null;
+  #eventCount = 0;
 
   /**
    * @param periodMs the length of time to retain event timestamps for computing
@@ -29,57 +29,57 @@ export class Rate {
   ) {}
 
   onEvent(): void {
-    this.#eventCount++
-    const now = Date.now()
-    this.#priorEventTimestamps.push(now)
-    this.#lastEventTs = now
+    this.#eventCount++;
+    const now = Date.now();
+    this.#priorEventTimestamps.push(now);
+    this.#lastEventTs = now;
   }
 
   #vacuum() {
-    const expired = Date.now() - this.periodMs
+    const expired = Date.now() - this.periodMs;
     const firstValidIndex = this.#priorEventTimestamps.findIndex(
       (ea) => ea > expired,
-    )
-    if (firstValidIndex === -1) this.#priorEventTimestamps.length = 0
+    );
+    if (firstValidIndex === -1) this.#priorEventTimestamps.length = 0;
     else if (firstValidIndex > 0) {
-      this.#priorEventTimestamps.splice(0, firstValidIndex)
+      this.#priorEventTimestamps.splice(0, firstValidIndex);
     }
   }
 
   get eventCount(): number {
-    return this.#eventCount
+    return this.#eventCount;
   }
 
   get msSinceLastEvent(): number | null {
-    return this.#lastEventTs == null ? null : Date.now() - this.#lastEventTs
+    return this.#lastEventTs == null ? null : Date.now() - this.#lastEventTs;
   }
 
   get msPerEvent(): number | null {
-    const msSinceStart = Date.now() - this.#start
-    if (this.#lastEventTs == null || msSinceStart < this.warmupMs) return null
-    this.#vacuum()
-    const events = this.#priorEventTimestamps.length
-    return events === 0 ? null : Math.min(this.periodMs, msSinceStart) / events
+    const msSinceStart = Date.now() - this.#start;
+    if (this.#lastEventTs == null || msSinceStart < this.warmupMs) return null;
+    this.#vacuum();
+    const events = this.#priorEventTimestamps.length;
+    return events === 0 ? null : Math.min(this.periodMs, msSinceStart) / events;
   }
 
   get eventsPerMs(): number {
-    const mpe = this.msPerEvent
-    return mpe == null ? 0 : mpe < 1 ? 1 : 1 / mpe
+    const mpe = this.msPerEvent;
+    return mpe == null ? 0 : mpe < 1 ? 1 : 1 / mpe;
   }
 
   get eventsPerSecond(): number {
-    return this.eventsPerMs * secondMs
+    return this.eventsPerMs * secondMs;
   }
 
   get eventsPerMinute(): number {
-    return this.eventsPerMs * minuteMs
+    return this.eventsPerMs * minuteMs;
   }
 
   clear(): this {
-    this.#start = Date.now()
-    this.#priorEventTimestamps.length = 0
-    this.#lastEventTs = null
-    this.#eventCount = 0
-    return this
+    this.#start = Date.now();
+    this.#priorEventTimestamps.length = 0;
+    this.#lastEventTs = null;
+    this.#eventCount = 0;
+    return this;
   }
 }

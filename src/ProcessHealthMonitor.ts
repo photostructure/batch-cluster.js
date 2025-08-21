@@ -1,30 +1,30 @@
-import { BatchClusterEmitter } from "./BatchClusterEmitter"
+import { BatchClusterEmitter } from "./BatchClusterEmitter";
 import {
   CompositeHealthCheckStrategy,
   HealthCheckStrategy,
-} from "./HealthCheckStrategy"
-import { InternalBatchProcessOptions } from "./InternalBatchProcessOptions"
-import { SimpleParser } from "./Parser"
-import { blank } from "./String"
-import { Task } from "./Task"
-import { WhyNotHealthy, WhyNotReady } from "./WhyNotHealthy"
+} from "./HealthCheckStrategy";
+import { InternalBatchProcessOptions } from "./InternalBatchProcessOptions";
+import { SimpleParser } from "./Parser";
+import { blank } from "./String";
+import { Task } from "./Task";
+import { WhyNotHealthy, WhyNotReady } from "./WhyNotHealthy";
 
 /**
  * Interface for objects that can be health checked
  */
 export interface HealthCheckable {
-  readonly pid: number
-  readonly start: number
-  readonly taskCount: number
-  readonly failedTaskCount: number
-  readonly idleMs: number
-  readonly idle: boolean
-  readonly ending: boolean
-  readonly ended: boolean
+  readonly pid: number;
+  readonly start: number;
+  readonly taskCount: number;
+  readonly failedTaskCount: number;
+  readonly idleMs: number;
+  readonly idle: boolean;
+  readonly ending: boolean;
+  readonly ended: boolean;
   readonly proc: {
-    stdin?: { destroyed?: boolean } | null
-  }
-  readonly currentTask?: Task<unknown> | null | undefined
+    stdin?: { destroyed?: boolean } | null;
+  };
+  readonly currentTask?: Task<unknown> | null | undefined;
 }
 
 /**
@@ -35,20 +35,20 @@ export class ProcessHealthMonitor {
   readonly #healthCheckStates = new Map<
     number,
     {
-      lastHealthCheck: number
-      healthCheckFailures: number
-      lastJobFailed: boolean
+      lastHealthCheck: number;
+      healthCheckFailures: number;
+      lastJobFailed: boolean;
     }
-  >()
+  >();
 
-  private readonly healthStrategy: HealthCheckStrategy
+  private readonly healthStrategy: HealthCheckStrategy;
 
   constructor(
     private readonly options: InternalBatchProcessOptions,
     private readonly emitter: BatchClusterEmitter,
     healthStrategy?: HealthCheckStrategy,
   ) {
-    this.healthStrategy = healthStrategy ?? new CompositeHealthCheckStrategy()
+    this.healthStrategy = healthStrategy ?? new CompositeHealthCheckStrategy();
   }
 
   /**
@@ -59,23 +59,23 @@ export class ProcessHealthMonitor {
       lastHealthCheck: Date.now(),
       healthCheckFailures: 0,
       lastJobFailed: false,
-    })
+    });
   }
 
   /**
    * Clean up health monitoring for a process
    */
   cleanupProcess(pid: number): void {
-    this.#healthCheckStates.delete(pid)
+    this.#healthCheckStates.delete(pid);
   }
 
   /**
    * Record that a job failed for a process
    */
   recordJobFailure(pid: number): void {
-    const state = this.#healthCheckStates.get(pid)
+    const state = this.#healthCheckStates.get(pid);
     if (state != null) {
-      state.lastJobFailed = true
+      state.lastJobFailed = true;
     }
   }
 
@@ -83,9 +83,9 @@ export class ProcessHealthMonitor {
    * Record that a job succeeded for a process
    */
   recordJobSuccess(pid: number): void {
-    const state = this.#healthCheckStates.get(pid)
+    const state = this.#healthCheckStates.get(pid);
     if (state != null) {
-      state.lastJobFailed = false
+      state.lastJobFailed = false;
     }
   }
 
@@ -96,21 +96,21 @@ export class ProcessHealthMonitor {
     process: HealthCheckable,
     overrideReason?: WhyNotHealthy,
   ): WhyNotHealthy | null {
-    if (overrideReason != null) return overrideReason
+    if (overrideReason != null) return overrideReason;
 
-    const state = this.#healthCheckStates.get(process.pid)
+    const state = this.#healthCheckStates.get(process.pid);
     if (state != null && state.healthCheckFailures > 0) {
-      return "unhealthy"
+      return "unhealthy";
     }
 
-    return this.healthStrategy.assess(process, this.options)
+    return this.healthStrategy.assess(process, this.options);
   }
 
   /**
    * Check if a process is healthy
    */
   isHealthy(process: HealthCheckable, overrideReason?: WhyNotHealthy): boolean {
-    return this.assessHealth(process, overrideReason) == null
+    return this.assessHealth(process, overrideReason) == null;
   }
 
   /**
@@ -120,14 +120,14 @@ export class ProcessHealthMonitor {
     process: HealthCheckable,
     overrideReason?: WhyNotHealthy,
   ): WhyNotReady | null {
-    return !process.idle ? "busy" : this.assessHealth(process, overrideReason)
+    return !process.idle ? "busy" : this.assessHealth(process, overrideReason);
   }
 
   /**
    * Check if a process is ready to handle tasks
    */
   isReady(process: HealthCheckable, overrideReason?: WhyNotHealthy): boolean {
-    return this.assessReadiness(process, overrideReason) == null
+    return this.assessReadiness(process, overrideReason) == null;
   }
 
   /**
@@ -136,15 +136,15 @@ export class ProcessHealthMonitor {
   maybeRunHealthcheck(
     process: HealthCheckable & { execTask: (task: Task<unknown>) => boolean },
   ): Task<unknown> | undefined {
-    const hcc = this.options.healthCheckCommand
+    const hcc = this.options.healthCheckCommand;
     // if there's no health check command, no-op.
-    if (hcc == null || blank(hcc)) return
+    if (hcc == null || blank(hcc)) return;
 
     // if the prior health check failed, .ready will be false
-    if (!this.isReady(process)) return
+    if (!this.isReady(process)) return;
 
-    const state = this.#healthCheckStates.get(process.pid)
-    if (state == null) return
+    const state = this.#healthCheckStates.get(process.pid);
+    if (state == null) return;
 
     if (
       state.lastJobFailed ||
@@ -152,8 +152,8 @@ export class ProcessHealthMonitor {
         Date.now() - state.lastHealthCheck >
           this.options.healthCheckIntervalMillis)
     ) {
-      state.lastHealthCheck = Date.now()
-      const t = new Task(hcc, SimpleParser)
+      state.lastHealthCheck = Date.now();
+      const t = new Task(hcc, SimpleParser);
       t.promise
         .catch((err) => {
           this.emitter.emit(
@@ -161,37 +161,37 @@ export class ProcessHealthMonitor {
             err instanceof Error ? err : new Error(String(err)),
             // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
             process as any, // Type assertion for event emission
-          )
-          state.healthCheckFailures++
+          );
+          state.healthCheckFailures++;
           // BatchCluster will see we're unhealthy and reap us later
         })
         .finally(() => {
-          state.lastHealthCheck = Date.now()
-        })
+          state.lastHealthCheck = Date.now();
+        });
 
       // Execute the health check task on the process
       if (process.execTask(t as Task<unknown>)) {
-        return t as Task<unknown>
+        return t as Task<unknown>;
       }
     }
-    return
+    return;
   }
 
   /**
    * Get health statistics for monitoring
    */
   getHealthStats(): {
-    monitoredProcesses: number
-    totalHealthCheckFailures: number
-    processesWithFailures: number
+    monitoredProcesses: number;
+    totalHealthCheckFailures: number;
+    processesWithFailures: number;
   } {
-    let totalFailures = 0
-    let processesWithFailures = 0
+    let totalFailures = 0;
+    let processesWithFailures = 0;
 
     for (const state of this.#healthCheckStates.values()) {
-      totalFailures += state.healthCheckFailures
+      totalFailures += state.healthCheckFailures;
       if (state.healthCheckFailures > 0) {
-        processesWithFailures++
+        processesWithFailures++;
       }
     }
 
@@ -199,16 +199,16 @@ export class ProcessHealthMonitor {
       monitoredProcesses: this.#healthCheckStates.size,
       totalHealthCheckFailures: totalFailures,
       processesWithFailures,
-    }
+    };
   }
 
   /**
    * Reset health check failures for a process (useful for recovery scenarios)
    */
   resetHealthCheckFailures(pid: number): void {
-    const state = this.#healthCheckStates.get(pid)
+    const state = this.#healthCheckStates.get(pid);
     if (state != null) {
-      state.healthCheckFailures = 0
+      state.healthCheckFailures = 0;
     }
   }
 
@@ -216,6 +216,6 @@ export class ProcessHealthMonitor {
    * Get health check state for a specific process
    */
   getProcessHealthState(pid: number) {
-    return this.#healthCheckStates.get(pid)
+    return this.#healthCheckStates.get(pid);
   }
 }
