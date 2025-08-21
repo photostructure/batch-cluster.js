@@ -1,62 +1,51 @@
 import events from "node:events"
 import process from "node:process"
 import timers from "node:timers"
-import type { Args } from "./Args"
-import {
-  BatchClusterEmitter,
-  BatchClusterEvents,
-  ChildEndReason,
-  TypedEventEmitter,
-} from "./BatchClusterEmitter"
+import { BatchClusterEmitter, ChildEndReason } from "./BatchClusterEmitter"
 import { BatchClusterEventCoordinator } from "./BatchClusterEventCoordinator"
-import type { BatchClusterOptions, WithObserver } from "./BatchClusterOptions"
+import type { BatchClusterOptions } from "./BatchClusterOptions"
 import type { BatchClusterStats } from "./BatchClusterStats"
 import type { BatchProcessOptions } from "./BatchProcessOptions"
 import type { ChildProcessFactory } from "./ChildProcessFactory"
 import type { CombinedBatchProcessOptions } from "./CombinedBatchProcessOptions"
 import { Deferred } from "./Deferred"
-import { HealthCheckStrategy } from "./HealthCheckStrategy"
-import type { InternalBatchProcessOptions } from "./InternalBatchProcessOptions"
-import { Logger, LoggerFunction } from "./Logger"
+import { Logger } from "./Logger"
 import { verifyOptions } from "./OptionsVerifier"
-import { Parser } from "./Parser"
-import { HealthCheckable, ProcessHealthMonitor } from "./ProcessHealthMonitor"
 import { ProcessPoolManager } from "./ProcessPoolManager"
-import { validateProcpsAvailable } from "./ProcpsChecker"
-import { Task, TaskOptions } from "./Task"
+import { Task } from "./Task"
 import { TaskQueueManager } from "./TaskQueueManager"
-import { WhyNotHealthy, WhyNotReady } from "./WhyNotHealthy"
 
 export { BatchClusterOptions } from "./BatchClusterOptions"
 export { BatchProcess } from "./BatchProcess"
 export { Deferred } from "./Deferred"
 export * from "./Logger"
 export { SimpleParser } from "./Parser"
-export { kill, pidExists, pids } from "./Pids"
-export { ProcpsMissingError } from "./ProcpsChecker"
+export { kill, pidExists } from "./Pids"
 export { Rate } from "./Rate"
 export { Task } from "./Task"
+// Type exports organized by source module
+export type { Args } from "./Args"
 export type {
-  Args,
   BatchClusterEmitter,
   BatchClusterEvents,
-  BatchClusterStats,
-  BatchProcessOptions,
   ChildEndReason,
-  ChildProcessFactory,
-  CombinedBatchProcessOptions,
-  HealthCheckable,
-  HealthCheckStrategy,
-  InternalBatchProcessOptions,
-  LoggerFunction,
-  Parser,
-  ProcessHealthMonitor,
-  TaskOptions,
   TypedEventEmitter,
-  WhyNotHealthy,
-  WhyNotReady,
-  WithObserver,
-}
+} from "./BatchClusterEmitter"
+export type { WithObserver } from "./BatchClusterOptions"
+export type { BatchClusterStats } from "./BatchClusterStats"
+export type { BatchProcessOptions } from "./BatchProcessOptions"
+export type { ChildProcessFactory } from "./ChildProcessFactory"
+export type { CombinedBatchProcessOptions } from "./CombinedBatchProcessOptions"
+export type { HealthCheckStrategy } from "./HealthCheckStrategy"
+export type { InternalBatchProcessOptions } from "./InternalBatchProcessOptions"
+export type { LoggerFunction } from "./Logger"
+export type { Parser } from "./Parser"
+export type {
+  HealthCheckable,
+  ProcessHealthMonitor,
+} from "./ProcessHealthMonitor"
+export type { TaskOptions } from "./Task"
+export type { WhyNotHealthy, WhyNotReady } from "./WhyNotHealthy"
 
 /**
  * BatchCluster instances manage 0 or more homogeneous child processes, and
@@ -240,7 +229,7 @@ export class BatchCluster {
   /**
    * @return the current pending Tasks (mostly for testing)
    */
-  get pendingTasks() {
+  get pendingTasks(): readonly Task[] {
     return this.#taskQueue.pendingTasks
   }
 
