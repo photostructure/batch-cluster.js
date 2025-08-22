@@ -2,29 +2,38 @@ import { isWin } from "./Platform";
 
 /**
  * @param {number} pid process id. Required.
+ * @param {Function} killFn optional kill function, defaults to process.kill
  * @returns boolean true if the given process id is in the local process
  * table. The PID may be paused or a zombie, though.
  */
-export function pidExists(pid: number | undefined): boolean {
+export function pidExists(
+  pid: number | undefined,
+  killFn?: (pid: number, signal?: string | number) => boolean,
+): boolean {
   if (pid == null || !isFinite(pid) || pid <= 0) return false;
   try {
     // signal 0 can be used to test for the existence of a process
     // see https://nodejs.org/dist/latest-v18.x/docs/api/process.html#processkillpid-signal
-    return process.kill(pid, 0);
+    return (killFn ?? process.kill)(pid, 0);
   } catch (err: unknown) {
-    // We're expecting err.code to be either "EPERM" (if we don't have
-    // permission to send `pid` and message), or "ESRCH" if that pid doesn't
-    // exist. EPERM means it _does_ exist!
-    if ((err as NodeJS.ErrnoException)?.code === "EPERM") return true;
+    const errorCode = (err as NodeJS.ErrnoException)?.code;
 
-    // On Windows, some error codes might indicate the process is terminating
-    // but hasn't fully exited yet. Treat these as "not existing" to avoid
-    // race conditions during shutdown.
-    if (isWin && (err as NodeJS.ErrnoException)?.code === "EINVAL") {
-      return false;
+    // EPERM means we don't have permission to signal the process, but it exists
+    if (errorCode === "EPERM") return true;
+
+    // ESRCH means "no such process" - the process doesn't exist or has terminated
+    if (errorCode === "ESRCH") return false;
+
+    // On Windows, additional error codes can indicate process termination issues
+    if (isWin) {
+      // EINVAL: Invalid signal argument (process may be terminating)
+      // EACCES: Access denied (process may be in terminating state)
+      if (errorCode === "EINVAL" || errorCode === "EACCES") {
+        return false;
+      }
     }
 
-    // failed to get priority--assume the pid is gone.
+    // For any other error, assume the pid is gone
     return false;
   }
 }

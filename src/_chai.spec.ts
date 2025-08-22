@@ -111,7 +111,7 @@ export function testPids(): number[] {
 }
 
 export function currentTestPids(): number[] {
-  return testPids().filter(pidExists);
+  return testPids().filter((pid) => pidExists(pid));
 }
 
 export function sortNumeric(arr: number[]): number[] {
