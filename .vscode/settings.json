@@ -7,5 +7,12 @@
     "debouncing",
     "rngseed"
   ],
-  "cSpell.words": ["Pids", "Procs", "sinonjs", "zombification"]
+  "cSpell.words": [
+    "Millis",
+    "photostructure",
+    "Pids",
+    "Procs",
+    "sinonjs",
+    "zombification"
+  ]
 }
