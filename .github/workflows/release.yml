@@ -13,6 +13,9 @@ on:
           - minor
           - major
 
+permissions:
+  id-token: write # Required for OIDC
+
 jobs:
   release:
     runs-on: ubuntu-latest
