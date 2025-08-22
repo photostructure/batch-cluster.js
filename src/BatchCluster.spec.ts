@@ -122,14 +122,14 @@ describe("BatchCluster", function () {
     // processes to exit:
     expect(bc.ended).to.eql(true);
 
-    async function checkShutdown() {
+    function checkShutdown() {
       // const isIdle = bc.isIdle
       // If bc has been told to shut down, it won't ever finish any pending commands.
       // const pendingCommands = bc.pendingTasks.map((ea) => ea.command)
       const runningCommands = bc.currentTasks.map((ea) => ea.command);
       const busyProcCount = bc.busyProcCount;
       const pids = bc.pids();
-      const livingPids = await currentTestPids();
+      const livingPids = currentTestPids();
 
       const done =
         runningCommands.length === 0 &&
