@@ -3,7 +3,6 @@ import { until } from "./Async";
 import { InternalBatchProcessOptions } from "./InternalBatchProcessOptions";
 import { Logger } from "./Logger";
 import { kill } from "./Pids";
-import { isWin } from "./Platform";
 import { destroy } from "./Stream";
 import { ensureSuffix } from "./String";
 import { Task } from "./Task";
@@ -181,8 +180,6 @@ export class ProcessTerminator {
     timeout: number,
     isRunning: () => boolean,
   ): Promise<void> {
-    // Windows processes can take longer to clean up after being killed
-    const effectiveTimeout = isWin ? timeout * 3 : timeout;
-    await until(() => !isRunning(), effectiveTimeout);
+    await until(() => !isRunning(), timeout);
   }
 }
