@@ -48,6 +48,9 @@
     },
     "github": {
       "release": true
+    },
+    "npm": {
+      "publish": true
     }
   },
   "author": "Matthew McEachen <matthew-batchcluster@photostructure.com>",
