@@ -15,13 +15,12 @@ on:
 
 permissions:
   id-token: write # Required for OIDC
+  contents: write
+  packages: write
 
 jobs:
   release:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
-      packages: write
 
     steps:
       - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
@@ -42,6 +41,15 @@ jobs:
           ssh-signing-key: ${{ secrets.SSH_SIGNING_KEY }}
           git-user-name: ${{ secrets.GIT_USER_NAME }}
           git-user-email: ${{ secrets.GIT_USER_EMAIL }}
+
+      - name: Update npm to latest version  
+        run: npm install -g npm@latest
+
+      - name: Check npm configuration
+        run: |
+          npm version
+          npm config list
+          npm whoami 2>/dev/null || echo "Not logged in (expected with OIDC)"
 
       - name: Install dependencies
         run: npm ci
