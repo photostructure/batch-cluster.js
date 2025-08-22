@@ -133,7 +133,7 @@ export class ProcessHealthMonitor {
   /**
    * Run a health check on a process if needed
    */
-  maybeRunHealthcheck(
+  maybeRunHealthCheck(
     process: HealthCheckable & { execTask: (task: Task<unknown>) => boolean },
   ): Task<unknown> | undefined {
     const hcc = this.options.healthCheckCommand;

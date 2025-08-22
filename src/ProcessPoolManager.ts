@@ -167,7 +167,7 @@ export class ProcessPoolManager {
           endPromises.push(proc.end(true, why));
           return false;
         }
-        proc.maybeRunHealthcheck();
+        proc.maybeRunHealthCheck();
       }
       return true;
     });

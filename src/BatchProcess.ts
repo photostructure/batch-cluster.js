@@ -236,6 +236,8 @@ export class BatchProcess {
 
   maybeRunHealthcheck(): Task<unknown> | undefined {
     return this.#healthMonitor.maybeRunHealthcheck(this);
+  maybeRunHealthCheck(): Task<unknown> | undefined {
+    return this.#healthMonitor.maybeRunHealthCheck(this);
   }
 
   // This must not be async, or new instances aren't started as busy (until the

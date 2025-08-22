@@ -274,21 +274,21 @@ describe("ProcessHealthMonitor", function () {
       });
       const noHealthCheckMonitor = new ProcessHealthMonitor(options, emitter);
 
-      const result = noHealthCheckMonitor.maybeRunHealthcheck(mockBatchProcess);
+      const result = noHealthCheckMonitor.maybeRunHealthCheck(mockBatchProcess);
       expect(result).to.be.undefined;
     });
 
     it("should skip health check when process not ready", function () {
       const unreadyProcess = { ...mockBatchProcess, idle: false };
 
-      const result = healthMonitor.maybeRunHealthcheck(unreadyProcess);
+      const result = healthMonitor.maybeRunHealthCheck(unreadyProcess);
       expect(result).to.be.undefined;
     });
 
     it("should run health check after job failure", function () {
       healthMonitor.recordJobFailure(mockProcess.pid);
 
-      const result = healthMonitor.maybeRunHealthcheck(mockBatchProcess);
+      const result = healthMonitor.maybeRunHealthCheck(mockBatchProcess);
       expect(result).to.not.be.undefined;
       expect(result?.command).to.eql("healthcheck");
     });
@@ -300,7 +300,7 @@ describe("ProcessHealthMonitor", function () {
         state.lastHealthCheck = Date.now() - 2000; // 2 seconds ago
       }
 
-      const result = healthMonitor.maybeRunHealthcheck(mockBatchProcess);
+      const result = healthMonitor.maybeRunHealthCheck(mockBatchProcess);
       expect(result).to.not.be.undefined;
       expect(result?.command).to.eql("healthcheck");
     });
@@ -312,7 +312,7 @@ describe("ProcessHealthMonitor", function () {
         state.lastHealthCheck = Date.now();
       }
 
-      const result = healthMonitor.maybeRunHealthcheck(mockBatchProcess);
+      const result = healthMonitor.maybeRunHealthCheck(mockBatchProcess);
       expect(result).to.be.undefined;
     });
 
@@ -324,7 +324,7 @@ describe("ProcessHealthMonitor", function () {
 
       healthMonitor.recordJobFailure(mockProcess.pid);
 
-      const result = healthMonitor.maybeRunHealthcheck(failingProcess);
+      const result = healthMonitor.maybeRunHealthCheck(failingProcess);
       expect(result).to.be.undefined;
     });
   });
@@ -380,7 +380,7 @@ describe("ProcessHealthMonitor", function () {
       };
 
       // Don't initialize the process
-      const result = healthMonitor.maybeRunHealthcheck(mockBatchProcess);
+      const result = healthMonitor.maybeRunHealthCheck(mockBatchProcess);
       expect(result).to.be.undefined;
     });
   });
