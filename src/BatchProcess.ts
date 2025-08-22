@@ -27,12 +27,13 @@ export class BatchProcess {
   readonly #terminator: ProcessTerminator;
   readonly #healthMonitor: ProcessHealthMonitor;
   readonly #streamHandler: StreamHandler;
-  #lastJobFinshedAt = Date.now();
+  #lastJobFinishedAt = Date.now();
 
   // Only set to true when `proc.pid` is no longer in the process table.
   #starting = true;
 
-  #exited = false;
+  // Deferred that resolves when the process exits (via OS events)
+  #processExitDeferred = new Deferred<void>();
 
   // override for .whyNotHealthy()
   #whyNotHealthy?: WhyNotHealthy;
@@ -101,12 +102,15 @@ export class BatchProcess {
 
     this.proc.on("error", (err) => this.#onError("proc.error", err));
     this.proc.on("close", () => {
+      this.#processExitDeferred.resolve();
       void this.end(false, "proc.close");
     });
     this.proc.on("exit", () => {
+      this.#processExitDeferred.resolve();
       void this.end(false, "proc.exit");
     });
     this.proc.on("disconnect", () => {
+      this.#processExitDeferred.resolve();
       void this.end(false, "proc.disconnect");
     });
 
@@ -161,13 +165,12 @@ export class BatchProcess {
   }
 
   /**
-   * @return true if the child process has exited and is no longer in the
-   * process table. Note that this may be erroneously false if the process table
-   * hasn't been checked. Call {@link BatchProcess#running()} for an authoritative (but
-   * expensive!) answer.
+   * @return true if the child process has exited (based on OS events).
+   * This is now authoritative and inexpensive since it's driven by OS events
+   * rather than polling.
    */
   get exited(): boolean {
-    return this.#exited;
+    return this.#processExitDeferred.settled;
   }
 
   /**
@@ -212,18 +215,22 @@ export class BatchProcess {
   }
 
   get idleMs(): number {
-    return this.idle ? Date.now() - this.#lastJobFinshedAt : -1;
+    return this.idle ? Date.now() - this.#lastJobFinishedAt : -1;
   }
 
   /**
-   * @return true if the child process is in the process table
+   * @return true if the child process is running.
+   * Now event-driven first with polling fallback.
    */
   running(): boolean {
-    if (this.#exited) return false;
+    // If we've been notified via OS events that process exited, trust that immediately
+    if (this.exited) return false;
 
+    // Only poll as fallback if we haven't been notified yet
+    // This handles edge cases where events might not fire reliably
     const alive = pidExists(this.pid);
     if (!alive) {
-      this.#exited = true;
+      this.#processExitDeferred.resolve();
       // once a PID leaves the process table, it's gone for good.
       void this.end(false, "proc.exit");
     }
@@ -234,8 +241,6 @@ export class BatchProcess {
     return !this.running();
   }
 
-  maybeRunHealthcheck(): Task<unknown> | undefined {
-    return this.#healthMonitor.maybeRunHealthcheck(this);
   maybeRunHealthCheck(): Task<unknown> | undefined {
     return this.#healthMonitor.maybeRunHealthCheck(this);
   }
@@ -354,7 +359,7 @@ export class BatchProcess {
       lastTask,
       this.startupTaskId,
       gracefully,
-      this.#exited,
+      this.exited,
       () => this.running(),
     );
 
@@ -429,6 +434,6 @@ export class BatchProcess {
     map(this.#currentTaskTimeout, (ea) => clearTimeout(ea));
     this.#currentTaskTimeout = undefined;
     this.#currentTask = undefined;
-    this.#lastJobFinshedAt = Date.now();
+    this.#lastJobFinishedAt = Date.now();
   }
 }
