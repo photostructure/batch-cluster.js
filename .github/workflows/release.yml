@@ -27,14 +27,14 @@ jobs:
           fetch-depth: 0 # Need full history for release-it
 
       # setup-node with registry-url is required for OIDC trusted publishing
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+      - uses: actions/setup-node@3235b876344d2a9aa001b8d1453c930bba69e610 # v3.9.1
         with:
           node-version: 20
           cache: "npm"
           registry-url: "https://registry.npmjs.org"
 
       - name: Set up SSH signing
-        uses: photostructure/git-ssh-signing-action@7a06ef30090b6755c6c9a4295e8afd95bf264bc1 # v1.0.0
+        uses: photostructure/git-ssh-signing-action@a770c2ff3aea31d9df9f2974ac9d672f2bfe62f3 # v1.1.0
         with:
           ssh-signing-key: ${{ secrets.SSH_SIGNING_KEY }}
           git-user-name: ${{ secrets.GIT_USER_NAME }}

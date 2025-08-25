@@ -61,7 +61,7 @@ jobs:
           registry-url: "https://registry.npmjs.org"
 
       - name: Setup SSH Bot
-        uses: photostructure/git-ssh-signing-action@7a06ef30090b6755c6c9a4295e8afd95bf264bc1 # v1.0.0
+        uses: photostructure/git-ssh-signing-action@a770c2ff3aea31d9df9f2974ac9d672f2bfe62f3 # v1.1.0
         with:
           ssh-signing-key: ${{ secrets.SSH_SIGNING_KEY }}
           git-user-name: ${{ secrets.GIT_USER_NAME }}
