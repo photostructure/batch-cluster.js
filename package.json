@@ -12,6 +12,10 @@
     "type": "git",
     "url": "git+https://github.com/photostructure/batch-cluster.js.git"
   },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
   "engines": {
     "node": ">=20"
   },
