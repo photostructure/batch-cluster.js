@@ -40,25 +40,13 @@ jobs:
           git-user-name: ${{ secrets.GIT_USER_NAME }}
           git-user-email: ${{ secrets.GIT_USER_EMAIL }}
 
-      - name: Update npm to latest version  
-        run: npm install -g npm@latest
-
-      - name: Check npm configuration
-        run: |
-          npm version
-          npm config list
-          npm whoami 2>/dev/null || echo "Not logged in (expected with OIDC)"
-          echo "NODE_AUTH_TOKEN set: ${NODE_AUTH_TOKEN:+yes}"
-          echo "NPM_CONFIG_USERCONFIG: $NPM_CONFIG_USERCONFIG"
-
       - name: Install dependencies
         run: npm ci
 
-      - name: Test npm publish (dry run)
-        run: npm publish --dry-run
-        continue-on-error: true
+      - name: Run tests
+        run: npm test
 
-      - name: Release
+      - name: Release with release-it
         run: npm run release -- --ci ${{ github.event.inputs.version }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
