@@ -48,7 +48,8 @@ function arrayEqualish<T>(a: T[], b: T[], maxAcceptableDiffs: number) {
 describe("BatchCluster", function () {
   const ErrorPrefix = "ERROR: ";
 
-  const ShutdownTimeoutMs = 12 * secondMs;
+  // Windows CI can be extremely slow to shut down processes, so we need a longer timeout
+  const ShutdownTimeoutMs = (isWin && isCI ? 30 : 12) * secondMs;
 
   function runTasks(
     bc: BatchCluster,
@@ -117,6 +118,7 @@ describe("BatchCluster", function () {
 
   async function shutdown(bc: BatchCluster) {
     if (bc == null) return; // we skipped the spec
+    const shutdownStartTime = Date.now();
     const endPromise = bc.end(true);
     // "ended" should be true immediately, but it may still be waiting for child
     // processes to exit:
@@ -137,17 +139,21 @@ describe("BatchCluster", function () {
         pids.length === 0 &&
         livingPids.length === 0;
 
-      if (!done)
-        console.log("shutdown(): waiting for end", {
+      if (!done) {
+        const elapsed = Date.now() - shutdownStartTime;
+        console.log(`shutdown(): waiting for end (${elapsed}ms elapsed)`, {
           runningCommands,
           busyProcCount,
           pids,
           livingPids,
+          platform: process.platform,
+          isCI,
         });
+      }
       return done;
     }
 
-    // Mac CI can be extremely slow to shut down:
+    // CI environments (especially Windows and Mac) can be extremely slow to shut down:
     const endOrTimeout = await thenOrTimeout(
       endPromise.promise.then(() => true),
       ShutdownTimeoutMs,
@@ -156,6 +162,16 @@ describe("BatchCluster", function () {
       until(checkShutdown, ShutdownTimeoutMs, 1000),
       ShutdownTimeoutMs,
     );
+    
+    if (isCI && (endOrTimeout !== true || shutdownOrTimeout !== true)) {
+      console.log(`Shutdown timeout on CI after ${Date.now() - shutdownStartTime}ms`, {
+        endOrTimeout,
+        shutdownOrTimeout,
+        platform: process.platform,
+        ShutdownTimeoutMs,
+      });
+    }
+    
     expect(endOrTimeout).to.eql(true, ".end() failed");
     expect(shutdownOrTimeout).to.eql(true, ".checkShutdown() failed");
 
