@@ -3,7 +3,7 @@
 **Efficient, concurrent work via batch-mode command-line tools from within Node.js.**
 
 [![npm version](https://img.shields.io/npm/v/batch-cluster.svg)](https://www.npmjs.com/package/batch-cluster)
-[![Build status](https://github.com/photostructure/batch-cluster.js/actions/workflows/node.js.yml/badge.svg?branch=main)](https://github.com/photostructure/batch-cluster.js/actions/workflows/node.js.yml)
+[![Build status](https://github.com/photostructure/batch-cluster.js/actions/workflows/build.yml/badge.svg?branch=main)](https://github.com/photostructure/batch-cluster.js/actions/workflows/build.yml)
 [![GitHub issues](https://img.shields.io/github/issues/photostructure/batch-cluster.js.svg)](https://github.com/photostructure/batch-cluster.js/issues)
 [![CodeQL](https://github.com/photostructure/batch-cluster.js/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/photostructure/batch-cluster.js/actions/workflows/codeql-analysis.yml)
 [![Known Vulnerabilities](https://snyk.io/test/github/photostructure/batch-cluster.js/badge.svg?targetFile=package.json)](https://snyk.io/test/github/photostructure/batch-cluster.js?targetFile=package.json)

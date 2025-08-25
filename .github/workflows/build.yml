@@ -1,5 +1,5 @@
 # This is used by the build badge:
-name: CI tests
+name: Build & Release
 env:
   CI: 1
 
