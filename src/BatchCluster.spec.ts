@@ -162,16 +162,19 @@ describe("BatchCluster", function () {
       until(checkShutdown, ShutdownTimeoutMs, 1000),
       ShutdownTimeoutMs,
     );
-    
+
     if (isCI && (endOrTimeout !== true || shutdownOrTimeout !== true)) {
-      console.log(`Shutdown timeout on CI after ${Date.now() - shutdownStartTime}ms`, {
-        endOrTimeout,
-        shutdownOrTimeout,
-        platform: process.platform,
-        ShutdownTimeoutMs,
-      });
+      console.log(
+        `Shutdown timeout on CI after ${Date.now() - shutdownStartTime}ms`,
+        {
+          endOrTimeout,
+          shutdownOrTimeout,
+          platform: process.platform,
+          ShutdownTimeoutMs,
+        },
+      );
     }
-    
+
     expect(endOrTimeout).to.eql(true, ".end() failed");
     expect(shutdownOrTimeout).to.eql(true, ".checkShutdown() failed");
 
