@@ -9,6 +9,16 @@ on:
   pull_request:
     branches: [main]
   workflow_dispatch:
+    inputs:
+      version:
+        description: "Version type (auto-detects from package.json if not specified)"
+        required: false
+        type: choice
+        options:
+          - ""
+          - patch
+          - minor
+          - major
 
 jobs:
   lint:
@@ -46,21 +56,21 @@ jobs:
     needs: [lint, build]
     if: ${{ github.event_name == 'workflow_dispatch' }}
     permissions:
-      contents: write
-      packages: write
+      id-token: write # Required for OIDC
+      contents: write # Required for release-it to create tags/commits
     steps:
       - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
         with:
-          # Fetch all history for proper versioning
-          fetch-depth: 0
+          fetch-depth: 0 # Need full history for release-it
 
-      - name: Use Node.js 20
-        uses: actions/setup-node@3235b876344d2a9aa001b8d1453c930bba69e610 # v3.9.1
+      # setup-node with registry-url is required for OIDC trusted publishing
+      - uses: actions/setup-node@3235b876344d2a9aa001b8d1453c930bba69e610 # v3.9.1
         with:
-          node-version: "20"
+          node-version: 20
+          cache: "npm"
           registry-url: "https://registry.npmjs.org"
 
-      - name: Setup SSH Bot
+      - name: Set up SSH signing
         uses: photostructure/git-ssh-signing-action@a770c2ff3aea31d9df9f2974ac9d672f2bfe62f3 # v1.1.0
         with:
           ssh-signing-key: ${{ secrets.SSH_SIGNING_KEY }}
@@ -70,30 +80,10 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Build and test
-        run: npm test
-
-      - name: Create release
-        run: |
-          # Bump version and create signed commit and tag
-          npm version patch -m "release: %s"
-
-          # Push the version commit and tag
-          git push --follow-tags
-
-      - name: Publish to npm
-        run: npm publish
+      # Note: Tests are run by release-it's before:init hook via npm run lint -> pretest
+      # This avoids running the full test matrix (9+ OS/Node combinations) in the release workflow
+      # The pretest script (clean + lint + compile) is sufficient for release validation
+      - name: Release with release-it
+        run: npm run release -- --ci ${{ github.event.inputs.version }}
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-
-      - name: Create GitHub release
-        run: |
-          # Get the version from package.json
-          VERSION=$(node -p "require('./package.json').version")
-
-          # Create GitHub release
-          gh release create "v${VERSION}" \
-            --title "Release v${VERSION}" \
-            --generate-notes
-        env:
-          GH_TOKEN: ${{ github.token }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
