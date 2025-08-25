@@ -10,7 +10,7 @@
   "types": "dist/BatchCluster.d.ts",
   "repository": {
     "type": "git",
-    "url": "https://github.com/photostructure/batch-cluster.js.git"
+    "url": "git+https://github.com/photostructure/batch-cluster.js.git"
   },
   "engines": {
     "node": ">=20"
@@ -18,7 +18,9 @@
   "scripts": {
     "ci": "npm ci",
     "clean": "rimraf dist",
-    "fmt": "prettier --write .",
+    "fmt": "run-p fmt:*",
+    "fmt:pkg": "npm pkg fix",
+    "fmt:prettier": "prettier --write .",
     "lint": "eslint src",
     "compile": "tsc",
     "watch": "rimraf dist & tsc --watch",
