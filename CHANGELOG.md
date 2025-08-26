@@ -17,6 +17,12 @@ See [Semver](http://semver.org/).
 - 🐞 Backwards-compatible bug fixes
 
 - 📦 Minor packaging changes
+- 
+## v15.0.1
+
+"This time, with feeling"
+
+- 📦 v15.0.0 automated the release to use OIDC 👍, but the `compile` prerequisite was missed 🤦, so v15.0.0 has _no code in it_ 🪹.
 
 ## v15.0.0
 
