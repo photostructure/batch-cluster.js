@@ -48,8 +48,9 @@
     },
     "hooks": {
       "before:init": [
-        "npm install",
-        "npm run lint"
+        "npm ci",
+        "npm run clean",
+        "npm run compile"
       ]
     },
     "github": {
