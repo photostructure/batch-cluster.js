@@ -98,7 +98,6 @@ export class BatchCluster {
       );
       this.#onIdleInterval.unref(); // < don't prevent node from exiting
     }
-    this.#logger = this.options.logger;
 
     process.once("beforeExit", this.#beforeExitListener);
     process.once("exit", this.#exitListener);
