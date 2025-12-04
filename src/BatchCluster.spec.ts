@@ -456,11 +456,11 @@ describe("BatchCluster", function () {
                     opts.maxTasksPerProcess +
                     " before recycling",
                   async function () {
-                    // Set timeout based on spawn time measurement to handle slow hosts
+                    // Windows CI is consistently 2-10x slower due to process spawn overhead
                     // This test does extensive work with 60% failure rate and process recycling
-                    const baselineSpawnMs = await measureSpawnTime();
-                    const timeoutMs = Math.max(30000, baselineSpawnMs * 500);
-                    this.timeout(timeoutMs);
+                    if (isWin && isCI) {
+                      this.timeout(60000); // Observed: can take 45s+, give 60s headroom
+                    }
                     // make sure we hit an EUNLUCKY:
                     setFailRatePct(60);
                     let expectedResultCount = 0;
