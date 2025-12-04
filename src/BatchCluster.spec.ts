@@ -1132,8 +1132,18 @@ describe("BatchCluster", function () {
       });
 
       // Enqueue a task - first spawn will reject, second will succeed
-      const task = new Task("upcase hello", parser);
-      const result = await bc.enqueueTask(task);
+      // Retry if EUNLUCKY occurs (10% default fail rate)
+      let result: string | undefined;
+      for (let i = 0; i < 5; i++) {
+        const task = new Task("upcase hello", parser);
+        try {
+          result = await bc.enqueueTask(task);
+          break;
+        } catch (err) {
+          if (!String(err).includes("EUNLUCKY")) throw err;
+          // Retry on EUNLUCKY
+        }
+      }
       expect(result).to.eql("HELLO");
 
       // Verify factory cleaned up before rejecting
