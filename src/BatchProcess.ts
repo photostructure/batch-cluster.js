@@ -327,6 +327,7 @@ export class BatchProcess {
         stdin.write(cmd, (err) => {
           if (err != null) {
             task.reject(err);
+            void this.end(false, "stdin.error");
           }
         });
         return true;

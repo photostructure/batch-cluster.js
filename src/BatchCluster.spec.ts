@@ -1247,6 +1247,53 @@ describe("BatchCluster", function () {
     });
   });
 
+  describe("stdin.write error handling", function () {
+    let bc: BatchCluster;
+
+    afterEach(() => shutdown(bc));
+
+    it("should end process when stdin.write fails", async function () {
+      setFailRatePct(0);
+      bc = listen(
+        new BatchCluster({
+          ...DefaultTestOptions,
+          maxProcs: 1,
+          processFactory,
+        }),
+      );
+
+      // Run a task to spin up a process
+      const result1 = await bc.enqueueTask(new Task("upcase hello", parser));
+      expect(result1).to.eql("HELLO");
+      const pids = bc.pids();
+      expect(pids.length).to.eql(1);
+      const pid = pids[0];
+      if (pid == null) throw new Error("Expected pid to be defined");
+
+      // Kill the process externally (simulates crash)
+      process.kill(pid, "SIGKILL");
+
+      // Wait briefly for kill to take effect
+      await delay(50);
+
+      // Try to enqueue another task - the dead process should be detected
+      // and the process should be ended (not just the task rejected)
+      try {
+        await bc.enqueueTask(new Task("upcase world", parser));
+      } catch {
+        // Task failure is expected (but not guaranteed - cluster may spawn new proc first)
+      }
+
+      // Key assertion: the original dead process should have been removed from pool
+      // A new process may have been spawned, so we check that the original PID is gone
+      await until(() => !bc.pids().includes(pid), 2000, 50);
+      expect(bc.pids()).to.not.include(
+        pid,
+        "dead process should have been removed from pool",
+      );
+    });
+  });
+
   describe("maxProcAgeMillis (recycling procs)", () => {
     let bc: BatchCluster;
     let clock: FakeTimers.InstalledClock;

@@ -41,6 +41,8 @@ See [Semver](http://semver.org/).
 
 - 📦 Added Node.js v25 to the test matrix
 
+- 🐞 Fixed: `stdin.write()` errors now properly end the process instead of leaving a broken process in the pool
+
 ## v15.0.1
 
 "This time, with feeling"
