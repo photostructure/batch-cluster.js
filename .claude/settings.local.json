@@ -32,7 +32,8 @@
       "Bash(do echo \"Run $i:\")",
       "Bash(break)",
       "Bash(done)",
-      "WebSearch"
+      "WebSearch",
+      "Bash(gh api:*)"
     ],
     "deny": []
   },
