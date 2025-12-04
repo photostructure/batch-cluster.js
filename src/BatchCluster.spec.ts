@@ -93,7 +93,8 @@ describe("BatchCluster", function () {
   const ErrorPrefix = "ERROR: ";
 
   // Windows CI can be extremely slow to shut down processes, so we need a longer timeout
-  const ShutdownTimeoutMs = (isWin && isCI ? 30 : 12) * secondMs;
+  // Increased from 30s to 45s due to tests with high process churn (60% failure rate, recycling)
+  const ShutdownTimeoutMs = (isWin && isCI ? 45 : 12) * secondMs;
 
   function runTasks(
     bc: BatchCluster,
