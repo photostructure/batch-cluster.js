@@ -139,18 +139,6 @@ describe("BatchCluster", function () {
         pids.length === 0 &&
         livingPids.length === 0;
 
-      if (!done) {
-        const elapsed = Date.now() - shutdownStartTime;
-        if (1 > 2)
-          console.log(`shutdown(): waiting for end (${elapsed}ms elapsed)`, {
-            runningCommands,
-            busyProcCount,
-            pids,
-            livingPids,
-            platform: process.platform,
-            isCI,
-          });
-      }
       return done;
     }
 
@@ -393,7 +381,6 @@ describe("BatchCluster", function () {
                   const tasks = await Promise.all(runTasks(bc, iterations));
                   assertExpectedResults(tasks);
                   await shutdown(bc);
-                  if (1 > 2) console.log(bc.stats());
                   expect(bc.spawnedProcCount).to.be.within(
                     maxProcs,
                     (iterations + maxProcs) * 3, // because flaky
@@ -428,7 +415,6 @@ describe("BatchCluster", function () {
                         runTasks(bc, iters, expectedResultCount),
                       )),
                     );
-                    if (1 > 2) console.log(bc.stats());
 
                     expectedResultCount += iters;
                     assertExpectedResults(results);
@@ -686,15 +672,6 @@ describe("BatchCluster", function () {
           pid2count.set(pid, count + 1);
         });
         expect(bc.isIdle).to.eql(true);
-        if (1 > 2)
-          console.log({
-            expectTaskMin,
-            expectedTaskMax,
-            maxProcs,
-            uniqPids: pid2count.size,
-            pid2count,
-            bcPids: bc.pids(),
-          });
         for (const [, count] of pid2count.entries()) {
           expect(count).to.be.within(expectTaskMin, expectedTaskMax);
         }
@@ -879,12 +856,6 @@ describe("BatchCluster", function () {
       expect(bc.pids().length).to.be.within(0, opts.maxProcs);
       await delay(opts.maxProcAgeMillis + 100);
       await bc.vacuumProcs();
-      if (1 > 2)
-        console.log({
-          childEndCounts: bc.childEndCounts,
-          procCount: bc.procCount,
-          maxProcs: opts.maxProcs,
-        });
       expect(bc.countEndedChildProcs("idle")).to.eql(0);
       expect(bc.countEndedChildProcs("old")).to.be.gte(2);
       // Calling .pids calls .procs(), which culls old procs
@@ -924,12 +895,6 @@ describe("BatchCluster", function () {
       // wait long enough for at least 1 process to be idle and get reaped:
       await delay(opts.maxIdleMsPerProcess + 100);
       await bc.vacuumProcs();
-      if (1 > 2)
-        console.log({
-          childEndCounts: bc.childEndCounts,
-          procCount: bc.procCount,
-          maxProcs: opts.maxProcs,
-        });
       expect(bc.countEndedChildProcs("idle")).to.be.gte(1);
       expect(bc.countEndedChildProcs("old")).to.be.lte(1);
       expect(bc.countEndedChildProcs("worn")).to.be.lte(2);
@@ -1349,7 +1314,6 @@ describe("BatchCluster", function () {
         clock.tick(7000);
         assertExpectedResults(await Promise.all(runTasks(bc, 2)));
         const pidsAfter = bc.pids();
-        if (1 > 2) console.dir({ maxProcAgeMillis, pidsBefore, pidsAfter });
         exp(pidsBefore, pidsAfter);
         postAssertions();
         return;

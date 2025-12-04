@@ -85,10 +85,13 @@ export class TaskQueueManager {
 
     // Process became unavailable (ending or busy). Requeue for next onIdle.
     this.#tasks.push(task);
-    this.#logger().debug("tryAssignNextTask(): process unavailable, task requeued", {
-      pid: readyProcess.pid,
-      taskId: task.taskId,
-    });
+    this.#logger().debug(
+      "tryAssignNextTask(): process unavailable, task requeued",
+      {
+        pid: readyProcess.pid,
+        taskId: task.taskId,
+      },
+    );
     return false;
   }
 
