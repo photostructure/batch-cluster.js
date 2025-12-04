@@ -442,6 +442,7 @@ export class BatchProcess {
       this.#healthMonitor.recordJobSuccess(this.pid);
     }
 
+    // Skip if asked to clear a specific task that isn't the current one
     if (task != null && task.taskId !== this.#currentTask?.taskId) return;
     map(this.#currentTaskTimeout, (ea) => clearTimeout(ea));
     this.#currentTaskTimeout = undefined;
