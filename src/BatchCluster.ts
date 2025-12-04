@@ -21,7 +21,6 @@ export { Deferred } from "./Deferred";
 export * from "./Logger";
 export { SimpleParser } from "./Parser";
 export { kill, pidExists } from "./Pids";
-export { Rate } from "./Rate";
 export { Task } from "./Task";
 // Type exports organized by source module
 export type { Args } from "./Args";

@@ -33,7 +33,9 @@ See [Semver](http://semver.org/).
 
   If you rely on task timeouts, explicitly set `taskTimeoutMillis` to a value appropriate for your use case (2-10x longer than expected task duration under typical load).
 
-- 💔 TypeScript compilation now targets ES2022 with ESNext.Disposable. This _shouldn't_ impact anyone, as we already require Node.js v20+
+- 💔 **BREAKING**: Removed unused `Rate` class
+
+- 💔 TypeScript compilation now targets ES2022 with ESNext.Disposable. This _shouldn't_ impact anyone, as we already require Node.js v20+.
 
 - 📦 Added Node.js v25 to the test matrix
 
