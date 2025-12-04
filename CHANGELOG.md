@@ -17,7 +17,8 @@ See [Semver](http://semver.org/).
 - 🐞 Backwards-compatible bug fixes
 
 - 📦 Minor packaging changes
-- 
+-
+
 ## v15.0.1
 
 "This time, with feeling"
