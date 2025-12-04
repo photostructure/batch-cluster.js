@@ -70,7 +70,6 @@ describe("BatchCluster", function () {
     readonly exitedPids: number[] = [];
     readonly startErrors: Error[] = [];
     readonly endErrors: Error[] = [];
-    readonly fatalErrors: Error[] = [];
     readonly taskErrors: Error[] = [];
     readonly noTaskData: any[] = [];
     readonly healthCheckErrors: Error[] = [];
@@ -205,7 +204,6 @@ describe("BatchCluster", function () {
     bc.on("childEnd", (cp) => map(cp.pid, (ea) => events.exitedPids.push(ea)));
     bc.on("startError", (err) => events.startErrors.push(err));
     bc.on("endError", (err) => events.endErrors.push(err));
-    bc.on("fatalError", (err) => events.fatalErrors.push(err));
     bc.on("noTaskData", (stdout, stderr, proc) => {
       events.noTaskData.push({
         stdout: toS(stdout),
@@ -1089,7 +1087,6 @@ describe("BatchCluster", function () {
         processFactory: failingThenSucceedingFactory,
       });
 
-      bc.on("fatalError", (err) => fatalErrors.push(err));
       bc.on("startError", (err) => startErrors.push(err));
 
       // Enqueue a task - it should eventually complete after spawning recovers

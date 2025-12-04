@@ -59,12 +59,6 @@ export interface BatchClusterEvents {
   internalError: (error: Error) => void;
 
   /**
-   * Emitted when a fatal, unrecoverable error occurs.
-   * Note: Spawn failures do NOT emit this event; they only log warnings.
-   */
-  fatalError: (error: Error) => void;
-
-  /**
    * Emitted when tasks receive data, which may be partial chunks from the task
    * stream.
    */

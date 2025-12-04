@@ -138,24 +138,6 @@ describe("BatchClusterEventCoordinator", function () {
       // Should call onIdleLater to trigger spawning replacement process
       expect(onIdleCalledCount).to.eql(1);
     });
-
-    it("should NOT trigger fatal shutdown on spawn failures", function () {
-      // This is the key behavior change: spawn failures never shut down the cluster.
-      // The minDelayBetweenSpawnMillis setting prevents fork bombs.
-      let fatalErrorEmitted = false;
-      emitter.on("fatalError", () => {
-        fatalErrorEmitted = true;
-      });
-
-      // Emit many start errors - should never trigger fatalError
-      for (let i = 0; i < 100; i++) {
-        emitter.emit("startError", new Error(`Start error ${i}`));
-      }
-
-      expect(fatalErrorEmitted).to.be.false;
-      // Each error should trigger onIdleLater
-      expect(onIdleCalledCount).to.eql(100);
-    });
   });
 
   describe("event access", function () {

@@ -27,6 +27,8 @@ See [Semver](http://semver.org/).
 
   Also removed: `startErrorRatePerMinute` from stats, `endCluster` callback from `BatchClusterEventCoordinator`.
 
+- 💔 **BREAKING**: `fatalError` event was removed (as it is never broadcast anymore--see above!)
+
 - 💔 **BREAKING**: Changed the default value of `taskTimeoutMillis` from 10 seconds to 0 (disabled).
 
   There is no universally safe default for task timeouts--the appropriate value depends entirely on your application's workload. A 10-second default could cause legitimate long-running tasks (like, hypothetically, extraction of embedded metadata in videos) to fail unnecessarily.
