@@ -29,6 +29,49 @@ import { thenOrTimeout } from "./Timeout";
 
 const isCI = process.env.CI === "1";
 
+/**
+ * Measure how long it takes to spawn a process on this host.
+ * This provides a baseline for setting realistic timeout values.
+ * Cached after first measurement to avoid overhead.
+ */
+let _cachedSpawnTimeMs: number | undefined;
+
+async function measureSpawnTime(): Promise<number> {
+  if (_cachedSpawnTimeMs != null) {
+    return _cachedSpawnTimeMs;
+  }
+
+  // Take average of 3 measurements for better accuracy
+  const measurements: number[] = [];
+  for (let i = 0; i < 3; i++) {
+    measurements.push(await _measureSpawnTime());
+    // Small delay between measurements
+    await delay(10);
+  }
+
+  // Use average of measurements, rounding up
+  const result = (_cachedSpawnTimeMs = Math.ceil(
+    measurements.reduce((a, b) => a + b, 0) / measurements.length,
+  ));
+  console.log("measureSpawnTime()", { result, measurements });
+  return _cachedSpawnTimeMs;
+}
+
+async function _measureSpawnTime() {
+  const start = Date.now();
+  const proc = processFactory();
+  const elapsed = await new Promise<number>((resolve) => {
+    proc.stdout?.once("data", () => {
+      const elapsed = Date.now() - start;
+      proc.kill();
+      resolve(elapsed);
+    });
+    // Send a quick command to measure time to first output
+    proc.stdin?.write("version\n");
+  });
+  return elapsed;
+}
+
 function arrayEqualish<T>(a: T[], b: T[], maxAcceptableDiffs: number) {
   const common = a.filter((ea) => b.includes(ea));
   const minLength = Math.min(a.length, b.length);
@@ -299,10 +342,20 @@ describe("BatchCluster", function () {
 
                 if (maxProcs > 1) {
                   it("completes work on multiple child processes", async function () {
-                    if (isCI) {
-                      // don't fight timeouts on GitHub's slower-than-molasses CI boxes:
-                      bc.options.taskTimeoutMillis = 1500;
-                    }
+                    // Measure spawn time to set appropriate timeouts
+                    const baselineSpawnMs = await measureSpawnTime();
+                    // Task timeout should be much longer than the sleep to avoid timing out
+                    const taskTimeoutMillis = Math.max(
+                      500,
+                      baselineSpawnMs * 10,
+                    );
+                    // Sleep should be short but long enough to measure multiple processes
+                    const sleepMs = Math.max(
+                      25,
+                      Math.floor(taskTimeoutMillis / 10),
+                    );
+
+                    bc.options.taskTimeoutMillis = taskTimeoutMillis;
                     this.slow(1); // always show timing
 
                     const pidSet = new Set<number>();
@@ -313,10 +366,8 @@ describe("BatchCluster", function () {
                       for (const p of times(maxProcs, () =>
                         bc.enqueueTask(
                           new Task(
-                            // this needs to be much less than the
-                            // DefaultTestOptions.taskTimeoutMillis (250), because we don't
-                            // want timeouts. CI failed when this was 100.
-                            "sleep 25",
+                            // Sleep needs to be much less than taskTimeoutMillis to avoid timeouts
+                            `sleep ${sleepMs}`,
                             parser,
                           ),
                         ),
@@ -400,7 +451,11 @@ describe("BatchCluster", function () {
                     opts.maxTasksPerProcess +
                     " before recycling",
                   async function () {
-                    if (isWin && isCI) this.timeout(45 * secondMs);
+                    // Set timeout based on spawn time measurement to handle slow hosts
+                    // This test does extensive work with 60% failure rate and process recycling
+                    const baselineSpawnMs = await measureSpawnTime();
+                    const timeoutMs = Math.max(30000, baselineSpawnMs * 500);
+                    this.timeout(timeoutMs);
                     // make sure we hit an EUNLUCKY:
                     setFailRatePct(60);
                     let expectedResultCount = 0;
@@ -549,10 +604,12 @@ describe("BatchCluster", function () {
 
                 it("accepts single and multi-line responses", async () => {
                   setFailRatePct(0);
-                  if (isCI) {
-                    // don't fight timeouts on GitHub's slower-than-molasses CI boxes:
-                    bc.options.taskTimeoutMillis = 1500;
-                  }
+                  // Measure spawn time to set appropriate timeouts
+                  const baselineSpawnMs = await measureSpawnTime();
+                  bc.options.taskTimeoutMillis = Math.max(
+                    500,
+                    baselineSpawnMs * 10,
+                  );
 
                   const expected: string[] = [];
                   const results = await Promise.all(
@@ -642,9 +699,13 @@ describe("BatchCluster", function () {
     ]) {
       it(JSON.stringify({ minDelayBetweenSpawnMillis }), async () => {
         setFailRatePct(0);
+        // Measure spawn time to set appropriate timeout (Windows GHA can take 10+ seconds)
+        const baselineSpawnMs = await measureSpawnTime();
+        const taskTimeoutMillis = Math.max(5000, baselineSpawnMs * 50);
+
         const opts = {
           ...DefaultTestOptions,
-          taskTimeoutMillis: 5_000, // < don't test timeouts here
+          taskTimeoutMillis, // < don't test timeouts here
           maxProcs,
           maxTasksPerProcess: expectedTaskMax + 5, // < don't recycle procs for this test
           minDelayBetweenSpawnMillis,
@@ -689,21 +750,27 @@ describe("BatchCluster", function () {
     it("supports reducing maxProcs", async () => {
       // don't fight with flakiness here!
       setFailRatePct(0);
+      // Measure spawn time to set appropriate timeout (Windows GHA can take 10+ seconds)
+      const baselineSpawnMs = await measureSpawnTime();
+      const taskTimeoutMillis = Math.max(5000, baselineSpawnMs * 50);
+
       const opts = {
         ...DefaultTestOptions,
         minDelayBetweenSpawnMillis: 0,
-        taskTimeoutMillis: 5_000, // < don't test timeouts here
+        taskTimeoutMillis, // < don't test timeouts here
         maxProcs,
         maxTasksPerProcess: 100, // < don't recycle procs for this test
         processFactory,
       };
       bc = new BatchCluster(opts);
       const firstBatchPromises: Promise<string>[] = [];
+      // Delay proportional to spawn time to allow processes to start
+      const spawnDelay = Math.max(10, Math.ceil(baselineSpawnMs / 2));
       while (bc.busyProcCount < maxProcs) {
         firstBatchPromises.push(
           bc.enqueueTask(new Task("sleep " + sleepTimeMs, parser)),
         );
-        await delay(25);
+        await delay(spawnDelay);
       }
       expect(bc.currentTasks.length).to.be.closeTo(maxProcs, 2);
       expect(bc.busyProcCount).to.be.closeTo(maxProcs, 2);
@@ -738,8 +805,15 @@ describe("BatchCluster", function () {
   });
 
   describe(".end() cleanup", () => {
-    const sleepTimeMs = 1000; // must be longer than non-graceful timeout (currently 250)
+    let sleepTimeMs: number;
     let bc: BatchCluster;
+
+    before(async () => {
+      // Make sleep time proportional to spawn time but ensure it's long enough
+      const baselineSpawnMs = await measureSpawnTime();
+      sleepTimeMs = Math.max(250, baselineSpawnMs * 5);
+    });
+
     afterEach(() => shutdown(bc));
 
     function stats() {
@@ -825,26 +899,31 @@ describe("BatchCluster", function () {
   });
 
   describe("maxProcAgeMillis (cull old children)", function () {
-    const opts = {
-      ...DefaultTestOptions,
-      maxProcs: 4,
-      maxTasksPerProcess: 100,
-      spawnTimeoutMillis: 2000, // maxProcAge must be >= this
-      maxProcAgeMillis: 3000,
-      minDelayBetweenSpawnMillis: 0,
-    };
-
     let bc: BatchCluster;
+    let opts: any;
 
-    beforeEach(
-      () =>
-        (bc = listen(
-          new BatchCluster({
-            ...opts,
-            processFactory,
-          }),
-        )),
-    );
+    beforeEach(async () => {
+      // Measure spawn time to set appropriate timeouts
+      const baselineSpawnMs = await measureSpawnTime();
+      const spawnTimeoutMillis = Math.max(500, baselineSpawnMs * 2);
+      const maxProcAgeMillis = Math.max(1000, spawnTimeoutMillis * 2);
+
+      opts = {
+        ...DefaultTestOptions,
+        maxProcs: 4,
+        maxTasksPerProcess: 100,
+        spawnTimeoutMillis, // maxProcAge must be >= this
+        maxProcAgeMillis,
+        minDelayBetweenSpawnMillis: 0,
+      };
+
+      bc = listen(
+        new BatchCluster({
+          ...opts,
+          processFactory,
+        }),
+      );
+    });
 
     afterEach(() => shutdown(bc));
 
@@ -865,24 +944,29 @@ describe("BatchCluster", function () {
   });
 
   describe("maxIdleMsPerProcess", function () {
-    const opts = {
-      ...DefaultTestOptions,
-      maxProcs: 4,
-      maxIdleMsPerProcess: 1000,
-      maxProcAgeMillis: 30_000,
-    };
-
+    let opts: any;
     let bc: BatchCluster;
 
-    beforeEach(
-      () =>
-        (bc = listen(
-          new BatchCluster({
-            ...opts,
-            processFactory,
-          }),
-        )),
-    );
+    beforeEach(async () => {
+      // Make idle timeout proportional to spawn time
+      // Need to be longer than task execution time to allow processes to become idle
+      const baselineSpawnMs = await measureSpawnTime();
+      const maxIdleMsPerProcess = Math.max(500, baselineSpawnMs * 10);
+
+      opts = {
+        ...DefaultTestOptions,
+        maxProcs: 4,
+        maxIdleMsPerProcess,
+        maxProcAgeMillis: 30_000,
+      };
+
+      bc = listen(
+        new BatchCluster({
+          ...opts,
+          processFactory,
+        }),
+      );
+    });
 
     afterEach(() => shutdown(bc));
 
@@ -900,7 +984,7 @@ describe("BatchCluster", function () {
       expect(bc.countEndedChildProcs("worn")).to.be.lte(2);
       // Calling .pids calls .procs(), which culls old procs
       if (bc.pids().length > 0) {
-        await delay(1000);
+        await delay(opts.maxIdleMsPerProcess);
       }
       expect(bc.pids().length).to.eql(0);
       postAssertions();
@@ -920,13 +1004,19 @@ describe("BatchCluster", function () {
       const startErrors: Error[] = [];
       const taskErrors: Error[] = [];
 
+      // Measure spawn time to set appropriate timeouts
+      const baselineSpawnMs = await measureSpawnTime();
+      const taskTimeoutMillis = Math.max(50, baselineSpawnMs);
+      const sleepDuration = taskTimeoutMillis * 4;
+      const spawnTimeoutMillis = Math.max(1000, baselineSpawnMs * 10);
+
       bc = new BatchCluster({
         ...DefaultTestOptions,
         maxProcs: 1,
-        // Short timeout so we can trigger timeouts quickly
-        taskTimeoutMillis: 50,
+        // Short timeout so user task times out quickly
+        taskTimeoutMillis,
         // Longer spawn timeout so startup task succeeds
-        spawnTimeoutMillis: 5000,
+        spawnTimeoutMillis,
         processFactory,
       });
 
@@ -935,7 +1025,7 @@ describe("BatchCluster", function () {
 
       // Submit a task that will take longer than taskTimeoutMillis
       // This is the FIRST USER TASK after the startup task
-      const task = new Task("sleep 200", parser);
+      const task = new Task(`sleep ${sleepDuration}`, parser);
       try {
         await bc.enqueueTask(task);
         expect.fail("Task should have timed out");
@@ -959,17 +1049,24 @@ describe("BatchCluster", function () {
     });
 
     it("should emit startError when startup task times out", async function () {
-      this.timeout(5000);
+      this.timeout(10000);
       setFailRatePct(0);
       const startErrors: Error[] = [];
+
+      // Measure actual spawn time on this host to set realistic timeouts
+      const baselineSpawnMs = await measureSpawnTime();
+      // spawnTimeout should be long enough for the process to spawn and be ready,
+      // but shorter than the sleep command to trigger the timeout
+      const spawnTimeoutMillis = Math.max(200, baselineSpawnMs * 2);
+      const sleepDuration = spawnTimeoutMillis * 4;
+      const waitTime = spawnTimeoutMillis + 500;
 
       bc = new BatchCluster({
         ...DefaultTestOptions,
         maxProcs: 1,
-        // Short spawn timeout (but not too short for the process to spawn)
-        spawnTimeoutMillis: 150,
+        spawnTimeoutMillis,
         // Make the version command slow to trigger startup timeout
-        versionCommand: "sleep 500",
+        versionCommand: `sleep ${sleepDuration}`,
         processFactory,
       });
 
@@ -981,8 +1078,8 @@ describe("BatchCluster", function () {
         /* expected to fail */
       });
 
-      // Wait for the startup task timeout (150ms) plus some buffer
-      await delay(300);
+      // Wait for the startup task timeout plus buffer
+      await delay(waitTime);
 
       // The startup task should have timed out, emitting startError
       expect(startErrors.length).to.be.gte(
