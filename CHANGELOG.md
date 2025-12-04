@@ -21,6 +21,12 @@ See [Semver](http://semver.org/).
 
 ## v16.0.0 (unreleased)
 
+- 💔 **BREAKING**: Removed `maxReasonableProcessFailuresPerMinute` option and fatal shutdown on spawn failures.
+
+  Spawn failures now log warnings and retry (rate-limited by `minDelayBetweenSpawnMillis`) instead of calling `endCluster()`. This fixes [exiftool-vendored#312](https://github.com/photostructure/exiftool-vendored.js/issues/312) where task timeouts were incorrectly triggering cluster shutdown.
+
+  Also removed: `startErrorRatePerMinute` from stats, `endCluster` callback from `BatchClusterEventCoordinator`.
+
 - 💔 **BREAKING**: Changed the default value of `taskTimeoutMillis` from 10 seconds to 0 (disabled).
 
   There is no universally safe default for task timeouts--the appropriate value depends entirely on your application's workload. A 10-second default could cause legitimate long-running tasks (like, hypothetically, extraction of embedded metadata in videos) to fail unnecessarily.

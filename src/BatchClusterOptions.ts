@@ -21,7 +21,7 @@ export class BatchClusterOptions {
   /**
    * Child processes will be recycled when they reach this age.
    *
-   * This value must not be less than `spawnTimeoutMillis` or
+   * If non-zero, this value must not be less than `spawnTimeoutMillis` or
    * `taskTimeoutMillis`.
    *
    * Defaults to 5 minutes. Set to 0 to disable.
@@ -36,18 +36,6 @@ export class BatchClusterOptions {
    * Must be &gt; 0. Defaults to 10 seconds.
    */
   onIdleIntervalMillis = 10 * secondMs;
-
-  /**
-   * If the initial `versionCommand` fails for new spawned processes more
-   * than this rate, end this BatchCluster and throw an error, because
-   * something is terribly wrong.
-   *
-   * If this backstop didn't exist, new (failing) child processes would be
-   * created indefinitely.
-   *
-   * Defaults to 10. Set to 0 to disable.
-   */
-  maxReasonableProcessFailuresPerMinute = 10;
 
   /**
    * Spawning new child processes and servicing a "version" task must not take
@@ -72,7 +60,7 @@ export class BatchClusterOptions {
    * and we should fail the task.
    *
    * This should be set to something on the order of seconds to a minute, but at
-   * least 2-10 times longer than the expected task duration under typical load. 
+   * least 2-10 times longer than the expected task duration under typical load.
    *
    * You don't want this set too low, or tasks may be marked as failed
    * unnecessarily!

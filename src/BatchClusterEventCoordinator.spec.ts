@@ -13,20 +13,14 @@ describe("BatchClusterEventCoordinator", function () {
   let eventCoordinator: BatchClusterEventCoordinator;
   let emitter: BatchClusterEmitter;
   let onIdleCalledCount = 0;
-  let endClusterCalledCount = 0;
 
   const options: EventCoordinatorOptions = {
     streamFlushMillis: 100,
-    maxReasonableProcessFailuresPerMinute: 5,
     logger,
   };
 
   const onIdleLater = () => {
     onIdleCalledCount++;
-  };
-
-  const endCluster = () => {
-    endClusterCalledCount++;
   };
 
   beforeEach(function () {
@@ -35,17 +29,14 @@ describe("BatchClusterEventCoordinator", function () {
       emitter,
       options,
       onIdleLater,
-      endCluster,
     );
     onIdleCalledCount = 0;
-    endClusterCalledCount = 0;
   });
 
   describe("initial state", function () {
     it("should start with clean statistics", function () {
       expect(eventCoordinator.meanTasksPerProc).to.eql(0);
       expect(eventCoordinator.internalErrorCount).to.eql(0);
-      expect(eventCoordinator.startErrorRatePerMinute).to.eql(0);
       expect(eventCoordinator.countEndedChildProcs("ended")).to.eql(0);
       expect(eventCoordinator.childEndCounts).to.eql({});
     });
@@ -54,7 +45,6 @@ describe("BatchClusterEventCoordinator", function () {
       const stats = eventCoordinator.getEventStats();
       expect(stats.meanTasksPerProc).to.eql(0);
       expect(stats.internalErrorCount).to.eql(0);
-      expect(stats.startErrorRatePerMinute).to.eql(0);
       expect(stats.totalChildEndEvents).to.eql(0);
       expect(stats.childEndReasons).to.eql([]);
     });
@@ -140,70 +130,31 @@ describe("BatchClusterEventCoordinator", function () {
   });
 
   describe("startError event handling", function () {
-    it("should handle startError events without triggering fatal error", function () {
+    it("should handle startError events and call onIdleLater", function () {
       const error = new Error("Start error");
 
       emitter.emit("startError", error);
 
-      // Rate might be 0 initially due to warmup period
-      expect(eventCoordinator.startErrorRatePerMinute).to.be.greaterThanOrEqual(
-        0,
-      );
-      expect(endClusterCalledCount).to.eql(0);
+      // Should call onIdleLater to trigger spawning replacement process
       expect(onIdleCalledCount).to.eql(1);
     });
 
-    it("should have logic to trigger fatal error based on rate", function () {
-      // This test verifies the logic exists, but doesn't test timing-dependent rate calculation
-      // which depends on the Rate class's warmup period
-
-      const testOptions: EventCoordinatorOptions = {
-        ...options,
-        maxReasonableProcessFailuresPerMinute: 5,
-      };
-
-      const testCoordinator = new BatchClusterEventCoordinator(
-        emitter,
-        testOptions,
-        onIdleLater,
-        endCluster,
-      );
-
-      // Verify that start error rate tracking is working
-      emitter.emit("startError", new Error("Test error"));
-      expect(testCoordinator.startErrorRatePerMinute).to.be.greaterThanOrEqual(
-        0,
-      );
-
-      // The actual fatal error triggering depends on Rate class timing
-      // which is tested in the Rate class's own tests
-    });
-
-    it("should not trigger fatal error when rate limit is disabled", function () {
-      const noLimitOptions: EventCoordinatorOptions = {
-        ...options,
-        maxReasonableProcessFailuresPerMinute: 0, // Disabled
-      };
-
-      new BatchClusterEventCoordinator(
-        emitter,
-        noLimitOptions,
-        onIdleLater,
-        endCluster,
-      );
-
+    it("should NOT trigger fatal shutdown on spawn failures", function () {
+      // This is the key behavior change: spawn failures never shut down the cluster.
+      // The minDelayBetweenSpawnMillis setting prevents fork bombs.
       let fatalErrorEmitted = false;
       emitter.on("fatalError", () => {
         fatalErrorEmitted = true;
       });
 
-      // Emit many start errors
-      for (let i = 0; i < 20; i++) {
+      // Emit many start errors - should never trigger fatalError
+      for (let i = 0; i < 100; i++) {
         emitter.emit("startError", new Error(`Start error ${i}`));
       }
 
       expect(fatalErrorEmitted).to.be.false;
-      expect(endClusterCalledCount).to.eql(0);
+      // Each error should trigger onIdleLater
+      expect(onIdleCalledCount).to.eql(100);
     });
   });
 
@@ -274,7 +225,6 @@ describe("BatchClusterEventCoordinator", function () {
 
       expect(stats.meanTasksPerProc).to.eql(15); // (10+20)/2
       expect(stats.internalErrorCount).to.eql(1);
-      expect(stats.startErrorRatePerMinute).to.be.greaterThanOrEqual(0); // Rate might be 0 due to warmup
       expect(stats.totalChildEndEvents).to.eql(2);
       expect(stats.childEndReasons).to.include("worn");
       expect(stats.childEndReasons).to.include("old");
@@ -290,7 +240,6 @@ describe("BatchClusterEventCoordinator", function () {
       // Verify everything is reset
       expect(eventCoordinator.meanTasksPerProc).to.eql(0);
       expect(eventCoordinator.internalErrorCount).to.eql(0);
-      expect(eventCoordinator.startErrorRatePerMinute).to.eql(0);
       expect(eventCoordinator.childEndCounts).to.eql({});
 
       const stats = eventCoordinator.getEventStats();
@@ -327,35 +276,6 @@ describe("BatchClusterEventCoordinator", function () {
       emitter.emit("startError", new Error("Start error"));
 
       expect(onIdleCalledCount).to.eql(initialCount + 2);
-    });
-
-    it("should have callback integration for endCluster", function () {
-      // This test verifies that the endCluster callback is properly integrated
-      // The actual triggering depends on Rate class timing which is complex to test
-
-      const testCoordinator = new BatchClusterEventCoordinator(
-        emitter,
-        options,
-        onIdleLater,
-        endCluster,
-      );
-
-      // Verify the coordinator is set up and callbacks are connected
-      expect(testCoordinator.events).to.equal(emitter);
-
-      // The endCluster callback integration is verified through the logic
-      // The actual rate-based triggering is tested in integration scenarios
-    });
-
-    it("should not call endCluster for non-fatal events", function () {
-      const initialCount = endClusterCalledCount;
-
-      // Events that should not trigger endCluster
-      emitter.emit("childEnd", { taskCount: 5 } as BatchProcess, "worn");
-      emitter.emit("internalError", new Error("Internal error"));
-      emitter.emit("noTaskData", "data", null, {} as BatchProcess);
-
-      expect(endClusterCalledCount).to.eql(initialCount);
     });
   });
 });

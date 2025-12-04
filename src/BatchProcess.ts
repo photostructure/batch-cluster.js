@@ -258,7 +258,6 @@ export class BatchProcess {
   #execTask<T>(task: Task<T>): boolean {
     if (this.ending) return false;
 
-    this.#taskCount++;
     this.#currentTask = task as Task<unknown>;
     const cmd = ensureSuffix(task.command, "\n");
     const isStartupTask = task.taskId === this.startupTaskId;

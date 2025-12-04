@@ -2,7 +2,6 @@ import { BatchClusterEmitter, ChildEndReason } from "./BatchClusterEmitter";
 import { BatchProcess } from "./BatchProcess";
 import { Logger } from "./Logger";
 import { Mean } from "./Mean";
-import { Rate } from "./Rate";
 import { toS } from "./String";
 
 /**
@@ -10,7 +9,6 @@ import { toS } from "./String";
  */
 export interface EventCoordinatorOptions {
   readonly streamFlushMillis: number;
-  readonly maxReasonableProcessFailuresPerMinute: number;
   readonly logger: () => Logger;
 }
 
@@ -21,7 +19,6 @@ export interface EventCoordinatorOptions {
 export class BatchClusterEventCoordinator {
   readonly #logger: () => Logger;
   #tasksPerProc = new Mean();
-  #startErrorRate = new Rate();
   readonly #childEndCounts = new Map<ChildEndReason, number>();
   #internalErrorCount = 0;
 
@@ -29,7 +26,6 @@ export class BatchClusterEventCoordinator {
     private readonly emitter: BatchClusterEmitter,
     private readonly options: EventCoordinatorOptions,
     private readonly onIdleLater: () => void,
-    private readonly endCluster: () => void,
   ) {
     this.#logger = options.logger;
     this.#setupEventHandlers();
@@ -90,30 +86,14 @@ export class BatchClusterEventCoordinator {
   }
 
   /**
-   * Handle start error events
+   * Handle start error events.
+   * Logs a warning and triggers idle processing to spawn replacement processes.
+   * Note: We intentionally do NOT shut down the cluster on spawn failures.
+   * The minDelayBetweenSpawnMillis setting already prevents fork bombs.
    */
   #handleStartError(error: Error): void {
     this.#logger().warn("BatchCluster.onStartError(): " + String(error));
-    this.#startErrorRate.onEvent();
-
-    if (
-      this.options.maxReasonableProcessFailuresPerMinute > 0 &&
-      this.#startErrorRate.eventsPerMinute >
-        this.options.maxReasonableProcessFailuresPerMinute
-    ) {
-      this.emitter.emit(
-        "fatalError",
-        new Error(
-          String(error) +
-            "(start errors/min: " +
-            this.#startErrorRate.eventsPerMinute.toFixed(2) +
-            ")",
-        ),
-      );
-      this.endCluster();
-    } else {
-      this.onIdleLater();
-    }
+    this.onIdleLater();
   }
 
   /**
@@ -129,13 +109,6 @@ export class BatchClusterEventCoordinator {
    */
   get internalErrorCount(): number {
     return this.#internalErrorCount;
-  }
-
-  /**
-   * Get start error rate per minute
-   */
-  get startErrorRatePerMinute(): number {
-    return this.#startErrorRate.eventsPerMinute;
   }
 
   /**
@@ -162,7 +135,6 @@ export class BatchClusterEventCoordinator {
     return {
       meanTasksPerProc: this.meanTasksPerProc,
       internalErrorCount: this.internalErrorCount,
-      startErrorRatePerMinute: this.startErrorRatePerMinute,
       totalChildEndEvents: [...this.#childEndCounts.values()].reduce(
         (sum, count) => sum + count,
         0,
@@ -176,7 +148,6 @@ export class BatchClusterEventCoordinator {
    */
   resetStats(): void {
     this.#tasksPerProc = new Mean();
-    this.#startErrorRate = new Rate();
     this.#childEndCounts.clear();
     this.#internalErrorCount = 0;
   }

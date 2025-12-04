@@ -59,8 +59,8 @@ export interface BatchClusterEvents {
   internalError: (error: Error) => void;
 
   /**
-   * Emitted when `.end()` is called because the error rate has exceeded
-   * {@link BatchClusterOptions.maxReasonableProcessFailuresPerMinute}
+   * Emitted when a fatal, unrecoverable error occurs.
+   * Note: Spawn failures do NOT emit this event; they only log warnings.
    */
   fatalError: (error: Error) => void;
 

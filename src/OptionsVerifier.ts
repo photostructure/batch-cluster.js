@@ -72,7 +72,6 @@ export function verifyOptions(
   gte("minDelayBetweenSpawnMillis", 0);
   gte("onIdleIntervalMillis", 0);
   gte("endGracefulWaitTimeMillis", 0);
-  gte("maxReasonableProcessFailuresPerMinute", 0);
   gte("streamFlushMillis", 0);
 
   if (errors.length > 0) {

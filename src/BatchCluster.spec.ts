@@ -141,7 +141,7 @@ describe("BatchCluster", function () {
 
       if (!done) {
         const elapsed = Date.now() - shutdownStartTime;
-        console.log(`shutdown(): waiting for end (${elapsed}ms elapsed)`, {
+        if (1 > 2) console.log(`shutdown(): waiting for end (${elapsed}ms elapsed)`, {
           runningCommands,
           busyProcCount,
           pids,
@@ -788,7 +788,6 @@ describe("BatchCluster", function () {
         readyProcCount: 1,
         maxProcCount: 4,
         internalErrorCount: 0,
-        startErrorRatePerMinute: 0,
         spawnedProcCount: 1,
         childEndCounts: {},
         ending: false,
@@ -803,7 +802,6 @@ describe("BatchCluster", function () {
         readyProcCount: 1,
         maxProcCount: 4,
         internalErrorCount: 0,
-        startErrorRatePerMinute: 0,
         spawnedProcCount: 1,
         childEndCounts: {},
         ending: false,
@@ -819,7 +817,6 @@ describe("BatchCluster", function () {
         readyProcCount: 0,
         maxProcCount: 4,
         internalErrorCount: 0,
-        startErrorRatePerMinute: 0,
         spawnedProcCount: 1,
         childEndCounts: {},
         ending: false,
@@ -836,7 +833,6 @@ describe("BatchCluster", function () {
         readyProcCount: 0,
         maxProcCount: 4,
         internalErrorCount: 0,
-        startErrorRatePerMinute: 0,
         spawnedProcCount: 1,
         childEndCounts: { ending: 1 },
         ending: true,
@@ -1031,6 +1027,101 @@ describe("BatchCluster", function () {
     });
   });
 
+  describe("enqueueTask after end() should not add to queue", function () {
+    it("rejected task should not be added to pending queue", async function () {
+      const bc = new BatchCluster({
+        ...DefaultTestOptions,
+        processFactory,
+      });
+
+      // End the cluster immediately
+      await bc.end();
+      expect(bc.ended).to.eql(true);
+
+      // Try to enqueue a task - it should be rejected
+      const task = new Task("upcase hello", parser);
+      const promise = bc.enqueueTask(task);
+
+      // The task should be rejected
+      await expect(promise).to.eventually.be.rejectedWith(
+        /BatchCluster has ended/,
+      );
+
+      // BUG: The task should NOT be in the pending queue after rejection
+      // Currently, the task IS added to the queue because there's no early return
+      expect(bc.pendingTaskCount).to.eql(
+        0,
+        "rejected task should not be in pending queue",
+      );
+    });
+  });
+
+  describe("cluster survives spawn failures", function () {
+    let bc: BatchCluster;
+
+    afterEach(() => shutdown(bc));
+
+    it("should not shut down when spawn failures exceed rate threshold", async function () {
+      this.timeout(10000);
+      setFailRatePct(0);
+
+      let spawnAttempts = 0;
+      const failuresBeforeSuccess = 5;
+      const fatalErrors: Error[] = [];
+      const startErrors: Error[] = [];
+
+      // Create a processFactory that fails N times before succeeding
+      const failingThenSucceedingFactory = () => {
+        spawnAttempts++;
+        if (spawnAttempts <= failuresBeforeSuccess) {
+          // Simulate spawn failure by throwing
+          throw new Error(`Simulated spawn failure #${spawnAttempts}`);
+        }
+        // After N failures, use the real factory
+        return processFactory();
+      };
+
+      bc = new BatchCluster({
+        ...DefaultTestOptions,
+        maxProcs: 1,
+        // Fast spawn attempts so test completes quickly
+        minDelayBetweenSpawnMillis: 50,
+        processFactory: failingThenSucceedingFactory,
+      });
+
+      bc.on("fatalError", (err) => fatalErrors.push(err));
+      bc.on("startError", (err) => startErrors.push(err));
+
+      // Enqueue a task - it should eventually complete after spawning recovers
+      const task = new Task("upcase hello", parser);
+      const result = await bc.enqueueTask(task);
+
+      // Key assertions:
+      // 1. Cluster should NOT have ended
+      expect(bc.ended).to.eql(false, "cluster should not have ended");
+
+      // 2. No fatalError should have been emitted
+      expect(fatalErrors).to.have.length(
+        0,
+        "fatalError should not be emitted for spawn failures",
+      );
+
+      // 3. startError events SHOULD have been emitted (for observability)
+      expect(startErrors.length).to.be.gte(
+        failuresBeforeSuccess,
+        "startError events should be emitted for spawn failures",
+      );
+
+      // 4. Task should have completed successfully
+      expect(result).to.eql("HELLO");
+
+      // 5. Verify spawn attempts occurred as expected
+      expect(spawnAttempts).to.be.gte(
+        failuresBeforeSuccess + 1,
+        "should have attempted spawning multiple times",
+      );
+    });
+  });
 
   describe("maxProcAgeMillis (recycling procs)", () => {
     let bc: BatchCluster;

@@ -110,7 +110,6 @@ describe("ProcessTerminator", function () {
       failRE: /FAIL/,
       maxProcs: 4,
       onIdleIntervalMillis: 10,
-      maxReasonableProcessFailuresPerMinute: 10,
       minDelayBetweenSpawnMillis: 100,
       pidCheckIntervalMillis: 150,
     };

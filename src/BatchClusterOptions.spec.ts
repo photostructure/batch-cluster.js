@@ -88,7 +88,6 @@ describe("BatchClusterOptions", () => {
 
           maxProcs: -1,
           maxProcAgeMillis: 10,
-          maxReasonableProcessFailuresPerMinute: -1,
           onIdleIntervalMillis: -1,
           endGracefulWaitTimeMillis: -1,
           streamFlushMillis: -1,
@@ -109,7 +108,6 @@ describe("BatchClusterOptions", () => {
           "minDelayBetweenSpawnMillis must be greater than or equal to 0",
           "onIdleIntervalMillis must be greater than or equal to 0",
           "endGracefulWaitTimeMillis must be greater than or equal to 0",
-          "maxReasonableProcessFailuresPerMinute must be greater than or equal to 0",
           "streamFlushMillis must be greater than or equal to 0",
         ]);
       }

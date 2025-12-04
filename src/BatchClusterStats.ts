@@ -6,7 +6,6 @@ export interface BatchClusterStats {
   readyProcCount: number;
   maxProcCount: number;
   internalErrorCount: number;
-  startErrorRatePerMinute: number;
   msBeforeNextSpawn: number;
   spawnedProcCount: number;
   childEndCounts: Record<NonNullable<ChildEndReason>, number>;

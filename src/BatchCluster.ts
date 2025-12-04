@@ -87,12 +87,9 @@ export class BatchCluster {
       this.emitter,
       {
         streamFlushMillis: this.options.streamFlushMillis,
-        maxReasonableProcessFailuresPerMinute:
-          this.options.maxReasonableProcessFailuresPerMinute,
         logger: this.#logger,
       },
       () => this.#onIdleLater(),
-      () => void this.end(),
     );
 
     if (this.options.onIdleIntervalMillis > 0) {
@@ -267,7 +264,6 @@ export class BatchCluster {
       readyProcCount: this.#processPool.readyProcCount,
       maxProcCount: this.options.maxProcs,
       internalErrorCount: this.#eventCoordinator.internalErrorCount,
-      startErrorRatePerMinute: this.#eventCoordinator.startErrorRatePerMinute,
       msBeforeNextSpawn: this.#processPool.msBeforeNextSpawn,
       spawnedProcCount: this.spawnedProcCount,
       childEndCounts: this.childEndCounts,
