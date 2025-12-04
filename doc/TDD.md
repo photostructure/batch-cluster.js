@@ -44,7 +44,7 @@ Confirm the fix works:
 
 When fixing bugs:
 
-1. **Avoid mocks and stubs**: [test.ts](../src/test.ts) simulates a batch-mode CLI tool with configurable failure rates and behaviors. See [_chai.spec.ts](../src/_chai.spec.ts) for test helpers.
+1. **Avoid mocks and stubs**: [test.ts](../src/test.ts) simulates a batch-mode CLI tool with configurable failure rates and behaviors. See [\_chai.spec.ts](../src/_chai.spec.ts) for test helpers.
 2. **Account for timing**: CI environments may be slower. See existing tests for timeout and `isCI` patterns.
 3. **Test process lifecycle**: Verify behavior across spawn, execution, and termination phases
 4. **Check stream handling**: Ensure stdout/stderr coordination works with various `streamFlushMillis` values

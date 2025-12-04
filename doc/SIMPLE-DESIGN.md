@@ -87,4 +87,4 @@ When they do conflict (mainly in test code), Beck says "empathy wins over some s
 
 ---
 
-*Based on [Martin Fowler's summary](https://martinfowler.com/bliki/BeckDesignRules.html) of Kent Beck's rules from Extreme Programming.*
+_Based on [Martin Fowler's summary](https://martinfowler.com/bliki/BeckDesignRules.html) of Kent Beck's rules from Extreme Programming._
