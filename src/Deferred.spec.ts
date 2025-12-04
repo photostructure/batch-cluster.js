@@ -38,17 +38,23 @@ describe("Deferred", () => {
     return expect(d).to.become(123);
   });
 
-  it("resolved respects subsequent rejections", () => {
+  it("resolved ignores subsequent rejections", async () => {
     const d = new Deferred<number>();
+    expect(d.pending).to.eql(true);
     expect(d.resolve(123)).to.eql(true);
-    expect(d.reject("boom")).to.eql(false);
     expect(d.pending).to.eql(false);
-    // CAUTION: THIS IS WEIRD. The promise is resolved, but something later
-    // wanted to reject, so we assume the rejected state, even though we can't
-    // reach back in the promise chain and un-resolve the promise.
-    expect(d.fulfilled).to.eql(false);
-    expect(d.rejected).to.eql(true);
-    return expect(d).to.become(123);
+    expect(d.fulfilled).to.eql(true);
+    expect(d.rejected).to.eql(false);
+
+    // Calling reject on resolved Deferred should return false AND not change state
+    expect(d.reject("boom")).to.eql(false);
+
+    // State should not change after rejection of resolved promise
+    expect(d.rejected).to.eql(false);
+    expect(d.fulfilled).to.eql(true);
+
+    // Promise should still resolve to original value
+    expect(await d).to.eql(123);
   });
 
   it("rejected ignores subsequent resolutions", () => {

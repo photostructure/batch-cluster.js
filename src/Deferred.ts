@@ -78,17 +78,12 @@ export class Deferred<T> implements PromiseLike<T> {
   }
 
   reject(reason?: Error | string): boolean {
-    const wasSettled = this.settled;
-    // This isn't great: the wrapped Promise may be in a different state than
-    // #state: but the caller wanted to reject, so even if it already was
-    // resolved, let's try to respect that.
-    this.#state = State.rejected;
-    if (wasSettled) {
+    if (this.settled) {
       return false;
-    } else {
-      this.#reject(reason);
-      return true;
     }
+    this.#state = State.rejected;
+    this.#reject(reason);
+    return true;
   }
 
   observe(p: Promise<T>): this {
