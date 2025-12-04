@@ -71,11 +71,15 @@ export class BatchClusterOptions {
    * If commands take longer than this, presume the underlying process is dead
    * and we should fail the task.
    *
-   * This should be set to something on the order of seconds.
+   * This should be set to something on the order of seconds to a minute, but at
+   * least 2-10 times longer than the expected task duration under typical load. 
    *
-   * Defaults to 10 seconds. Set to 0 to disable.
+   * You don't want this set too low, or tasks may be marked as failed
+   * unnecessarily!
+   *
+   * Defaults to 0 (disabled).
    */
-  taskTimeoutMillis = 10 * secondMs;
+  taskTimeoutMillis = 0;
 
   /**
    * Processes will be recycled after processing `maxTasksPerProcess` tasks.

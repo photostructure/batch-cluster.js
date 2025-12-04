@@ -83,6 +83,8 @@ describe("BatchClusterOptions", () => {
 
           maxTasksPerProcess: 0,
           minDelayBetweenSpawnMillis: -1,
+          // must be non-zero to trigger maxProcAgeMillis validation
+          taskTimeoutMillis: 10000,
 
           maxProcs: -1,
           maxProcAgeMillis: 10,

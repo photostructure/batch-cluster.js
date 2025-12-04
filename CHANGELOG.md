@@ -19,11 +19,23 @@ See [Semver](http://semver.org/).
 - 📦 Minor packaging changes
 -
 
+## v16.0.0 (unreleased)
+
+- 💔 **BREAKING**: Changed the default value of `taskTimeoutMillis` from 10 seconds to 0 (disabled).
+
+  There is no universally safe default for task timeouts--the appropriate value depends entirely on your application's workload. A 10-second default could cause legitimate long-running tasks (like, hypothetically, extraction of embedded metadata in videos) to fail unnecessarily.
+
+  If you rely on task timeouts, explicitly set `taskTimeoutMillis` to a value appropriate for your use case (2-10x longer than expected task duration under typical load).
+
+- 💔 TypeScript compilation now targets ES2022 with ESNext.Disposable. This _shouldn't_ impact anyone, as we already require Node.js v20+
+
+- 📦 Added Node.js v25 to the test matrix
+
 ## v15.0.1
 
 "This time, with feeling"
 
-- 📦 v15.0.0 automated the release to use OIDC 👍, but the `compile` prerequisite was missed 🤦, so v15.0.0 has _no code in it_ 🪹.
+- 📦 v15.0.0 automated the release to use OIDC 👍, but the `compile` prerequisite was missed 🤦, so v15.0.0 has _no code in it_ 🪹. v15.0.1 is _better_! It _has code_!
 
 ## v15.0.0
 
