@@ -64,16 +64,8 @@ export class TaskQueueManager {
    * Attempt to assign the next task to a ready process.
    * Returns true if a task was successfully assigned.
    */
-  tryAssignNextTask(
-    readyProcess: BatchProcess | undefined,
-    retries = 1,
-  ): boolean {
-    if (this.#tasks.length === 0 || retries < 0) {
-      return false;
-    }
-
-    // no procs are idle and healthy :(
-    if (readyProcess == null) {
+  tryAssignNextTask(readyProcess: BatchProcess | undefined): boolean {
+    if (this.#tasks.length === 0 || readyProcess == null) {
       return false;
     }
 
@@ -83,25 +75,21 @@ export class TaskQueueManager {
       return false;
     }
 
-    const submitted = readyProcess.execTask(task);
-    if (!submitted) {
-      // This isn't an internal error: the proc may have needed to run a health
-      // check. Let's reschedule the task and try again:
-      this.#tasks.push(task);
-      // We don't want to return false here (it'll stop the assignment loop) unless
-      // we actually can't submit the task:
-      return this.tryAssignNextTask(readyProcess, retries - 1);
+    if (readyProcess.execTask(task)) {
+      this.#logger().trace("tryAssignNextTask(): task submitted", {
+        pid: readyProcess.pid,
+        taskId: task.taskId,
+      });
+      return true;
     }
 
-    this.#logger().trace(
-      "TaskQueueManager.tryAssignNextTask(): submitted task",
-      {
-        child_pid: readyProcess.pid,
-        task,
-      },
-    );
-
-    return submitted;
+    // Process became unavailable (ending or busy). Requeue for next onIdle.
+    this.#tasks.push(task);
+    this.#logger().debug("tryAssignNextTask(): process unavailable, task requeued", {
+      pid: readyProcess.pid,
+      taskId: task.taskId,
+    });
+    return false;
   }
 
   /**

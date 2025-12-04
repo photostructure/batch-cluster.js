@@ -98,7 +98,7 @@ describe("TaskQueueManager", function () {
       expect(queueManager.isEmpty).to.be.false;
     });
 
-    it("should retry when process cannot execute task", function () {
+    it("should requeue task when process cannot execute it", function () {
       const failingProcess = {
         ...mockProcess,
         execTask: () => false, // Always fail
@@ -108,18 +108,6 @@ describe("TaskQueueManager", function () {
 
       expect(result).to.be.false;
       expect(queueManager.pendingTaskCount).to.eql(1); // Task should be re-queued
-    });
-
-    it("should stop retrying after max retries", function () {
-      const failingProcess = {
-        ...mockProcess,
-        execTask: () => false,
-      } as unknown as BatchProcess;
-
-      const result = queueManager.tryAssignNextTask(failingProcess, 0);
-
-      expect(result).to.be.false;
-      expect(queueManager.pendingTaskCount).to.eql(1); // Task remains when retries exhausted
     });
 
     it("should handle empty queue gracefully", function () {

@@ -332,10 +332,10 @@ export class BatchCluster {
    * NOT ASYNC: updates internal state.
    * @return true iff a task was submitted to a child process
    */
-  #execNextTask(retries = 1): boolean {
+  #execNextTask(): boolean {
     if (this.ended) return false;
     const readyProc = this.#processPool.findReadyProcess();
-    return this.#taskQueue.tryAssignNextTask(readyProc, retries);
+    return this.#taskQueue.tryAssignNextTask(readyProc);
   }
 
   async #maybeSpawnProcs() {
