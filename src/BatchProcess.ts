@@ -40,7 +40,11 @@ export class BatchProcess {
 
   failedTaskCount = 0;
 
-  #taskCount = -1; // don't count the startupTask
+  /**
+   * Number of user tasks (not including the startup/version task) that have
+   * been started on this process. Used for maxTasksPerProcess recycling.
+   */
+  #taskCount = 0;
 
   /**
    * Should be undefined if this instance is not currently processing a task.
@@ -258,6 +262,11 @@ export class BatchProcess {
     this.#currentTask = task as Task<unknown>;
     const cmd = ensureSuffix(task.command, "\n");
     const isStartupTask = task.taskId === this.startupTaskId;
+
+    // Only count user tasks, not the startup task (for maxTasksPerProcess)
+    if (!isStartupTask) {
+      this.#taskCount++;
+    }
     const taskTimeoutMs = isStartupTask
       ? this.opts.spawnTimeoutMillis
       : this.opts.taskTimeoutMillis;
@@ -401,7 +410,10 @@ export class BatchProcess {
     this.#clearCurrentTask();
     void this.end(false, reason);
 
-    if (task != null && this.taskCount === 1) {
+    // Only emit startError for actual startup task (version command) failures,
+    // not for regular task failures.
+    // See: https://github.com/photostructure/exiftool-vendored.js/issues/312
+    if (task != null && task.taskId === this.startupTaskId) {
       this.#logger().warn(
         this.name + ".onError(): startup task failed: " + String(cleanedError),
       );

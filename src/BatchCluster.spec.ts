@@ -943,6 +943,92 @@ describe("BatchCluster", function () {
     });
   });
 
+  // Regression test for https://github.com/photostructure/exiftool-vendored.js/issues/312
+  // The original bug used `taskCount === 1` to detect startup task failures, but this
+  // incorrectly matched the first user task. Now we use `task.taskId === startupTaskId`.
+  describe("startError should only emit for startup task failures (#312)", function () {
+    let bc: BatchCluster;
+
+    afterEach(() => shutdown(bc));
+
+    it("should NOT emit startError when first user task times out", async function () {
+      setFailRatePct(0);
+      const startErrors: Error[] = [];
+      const taskErrors: Error[] = [];
+
+      bc = new BatchCluster({
+        ...DefaultTestOptions,
+        maxProcs: 1,
+        // Short timeout so we can trigger timeouts quickly
+        taskTimeoutMillis: 50,
+        // Longer spawn timeout so startup task succeeds
+        spawnTimeoutMillis: 5000,
+        processFactory,
+      });
+
+      bc.on("startError", (err) => startErrors.push(err));
+      bc.on("taskError", (err) => taskErrors.push(err));
+
+      // Submit a task that will take longer than taskTimeoutMillis
+      // This is the FIRST USER TASK after the startup task
+      const task = new Task("sleep 200", parser);
+      try {
+        await bc.enqueueTask(task);
+        expect.fail("Task should have timed out");
+      } catch (err) {
+        // Task timed out as expected
+        expect(String(err)).to.include("timeout");
+      }
+
+      // Wait a bit for events to propagate
+      await delay(100);
+
+      // The key assertion: startError should NOT have been emitted
+      // because the timeout was on a user task, not the startup task
+      expect(startErrors).to.have.length(
+        0,
+        "startError should not be emitted for user task timeouts",
+      );
+
+      // taskError should have been emitted
+      expect(taskErrors).to.have.length.gte(1, "taskError should be emitted");
+    });
+
+    it("should emit startError when startup task times out", async function () {
+      this.timeout(5000);
+      setFailRatePct(0);
+      const startErrors: Error[] = [];
+
+      bc = new BatchCluster({
+        ...DefaultTestOptions,
+        maxProcs: 1,
+        // Short spawn timeout (but not too short for the process to spawn)
+        spawnTimeoutMillis: 150,
+        // Make the version command slow to trigger startup timeout
+        versionCommand: "sleep 500",
+        processFactory,
+      });
+
+      bc.on("startError", (err) => startErrors.push(err));
+
+      // Enqueue a task to trigger process spawn
+      const task = new Task("upcase hello", parser);
+      bc.enqueueTask(task).catch(() => {
+        /* expected to fail */
+      });
+
+      // Wait for the startup task timeout (150ms) plus some buffer
+      await delay(300);
+
+      // The startup task should have timed out, emitting startError
+      expect(startErrors.length).to.be.gte(
+        1,
+        "startError should be emitted for startup task timeout",
+      );
+    });
+  });
+
+
   describe("maxProcAgeMillis (recycling procs)", () => {
     let bc: BatchCluster;
     let clock: FakeTimers.InstalledClock;
