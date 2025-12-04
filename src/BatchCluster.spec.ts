@@ -1,4 +1,5 @@
 import FakeTimers from "@sinonjs/fake-timers";
+import child_process from "node:child_process";
 import process from "node:process";
 import {
   childProcs,
@@ -140,14 +141,15 @@ describe("BatchCluster", function () {
 
       if (!done) {
         const elapsed = Date.now() - shutdownStartTime;
-        if (1 > 2) console.log(`shutdown(): waiting for end (${elapsed}ms elapsed)`, {
-          runningCommands,
-          busyProcCount,
-          pids,
-          livingPids,
-          platform: process.platform,
-          isCI,
-        });
+        if (1 > 2)
+          console.log(`shutdown(): waiting for end (${elapsed}ms elapsed)`, {
+            runningCommands,
+            busyProcCount,
+            pids,
+            livingPids,
+            platform: process.platform,
+            isCI,
+          });
       }
       return done;
     }
@@ -391,7 +393,7 @@ describe("BatchCluster", function () {
                   const tasks = await Promise.all(runTasks(bc, iterations));
                   assertExpectedResults(tasks);
                   await shutdown(bc);
-                 if (1 > 2) console.log(bc.stats());
+                  if (1 > 2) console.log(bc.stats());
                   expect(bc.spawnedProcCount).to.be.within(
                     maxProcs,
                     (iterations + maxProcs) * 3, // because flaky
@@ -1117,6 +1119,131 @@ describe("BatchCluster", function () {
         failuresBeforeSuccess + 1,
         "should have attempted spawning multiple times",
       );
+    });
+  });
+
+  describe("factory rejection cleanup", function () {
+    let bc: BatchCluster;
+
+    afterEach(() => shutdown(bc));
+
+    it("factory should kill spawned process before rejecting", async function () {
+      let spawnedPid: number | undefined;
+      let processKilled = false;
+      let factoryCallCount = 0;
+
+      // A well-behaved factory that cleans up on rejection (first time),
+      // then succeeds on retry
+      const cleaningFactory = async () => {
+        factoryCallCount++;
+
+        if (factoryCallCount === 1) {
+          const proc = child_process.spawn(process.execPath, [
+            "-e",
+            "setTimeout(() => {}, 30000)",
+          ]);
+          spawnedPid = proc.pid;
+          childProcs.push(proc); // Track for test cleanup
+
+          // Simulate some async validation that fails
+          await delay(10);
+
+          // Proper cleanup: kill before rejecting
+          proc.kill();
+          processKilled = true;
+
+          throw new Error("Factory validation failed");
+        }
+
+        // Subsequent calls succeed
+        return processFactory();
+      };
+
+      bc = new BatchCluster({
+        ...DefaultTestOptions,
+        maxProcs: 1,
+        minDelayBetweenSpawnMillis: 10,
+        processFactory: cleaningFactory,
+      });
+
+      // Enqueue a task - first spawn will reject, second will succeed
+      const task = new Task("upcase hello", parser);
+      const result = await bc.enqueueTask(task);
+      expect(result).to.eql("HELLO");
+
+      // Verify factory cleaned up before rejecting
+      expect(processKilled).to.eql(
+        true,
+        "factory should kill process before rejecting",
+      );
+
+      // Verify no orphaned process from the first (failed) spawn
+      if (spawnedPid != null) {
+        const { pidExists } = await import("./Pids");
+        expect(pidExists(spawnedPid)).to.eql(
+          false,
+          "spawned process should not be running",
+        );
+      }
+    });
+
+    it("leaky factory leaves orphaned process (demonstrates the problem)", async function () {
+      let spawnedPid: number | undefined;
+      let leakedProc: child_process.ChildProcess | undefined;
+      let factoryCallCount = 0;
+
+      // A BAD factory that does NOT clean up on first rejection,
+      // then succeeds on retry
+      const leakyFactory = async () => {
+        factoryCallCount++;
+
+        if (factoryCallCount === 1) {
+          leakedProc = child_process.spawn(process.execPath, [
+            "-e",
+            "setTimeout(() => {}, 30000)",
+          ]);
+          spawnedPid = leakedProc.pid;
+          childProcs.push(leakedProc); // Track for test cleanup
+
+          // Simulate some async validation that fails
+          await delay(10);
+
+          // BUG: No cleanup before rejecting!
+          throw new Error("Factory validation failed (leaky)");
+        }
+
+        // Subsequent calls succeed
+        return processFactory();
+      };
+
+      bc = new BatchCluster({
+        ...DefaultTestOptions,
+        maxProcs: 1,
+        minDelayBetweenSpawnMillis: 10,
+        processFactory: leakyFactory,
+      });
+
+      // Enqueue a task - first spawn will reject (leaving orphan), second succeeds
+      const task = new Task("upcase hello", parser);
+      const result = await bc.enqueueTask(task);
+      expect(result).to.eql("HELLO");
+
+      // The process from the first failed spawn is STILL running - this demonstrates the leak
+      if (spawnedPid != null) {
+        const { pidExists } = await import("./Pids");
+        const stillRunning = pidExists(spawnedPid);
+
+        // Clean up the leaked process so we don't leave orphans
+        if (stillRunning && leakedProc != null) {
+          leakedProc.kill();
+        }
+
+        // This test documents that leaky factories DO leave orphaned processes
+        expect(stillRunning).to.eql(
+          true,
+          "leaky factory leaves orphaned process - this documents the problem",
+        );
+      }
     });
   });
 

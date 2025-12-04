@@ -6,13 +6,34 @@ import child_process from "node:child_process";
 
 export interface ChildProcessFactory {
   /**
-   * Expected to be a simple call to execFile. Platform-specific code is the
-   * responsibility of this thunk. Error handlers will be registered as
-   * appropriate.
+   * Factory function to spawn child processes.
    *
-   * If this function throws an error or rejects the promise _after_ you've
-   * spawned a child process, **the child process may continue to run** and leak
-   * system resources.
+   * **CRITICAL**: If you spawn a child process and then reject the promise,
+   * **YOU** are responsible for killing the spawned process. BatchCluster
+   * cannot track processes that were never returned.
+   *
+   * Safe pattern:
+   * ```typescript
+   * async function myFactory(): Promise<ChildProcess> {
+   *   const proc = spawn("my-command", args);
+   *   try {
+   *     await someValidation(proc);
+   *     return proc;
+   *   } catch (error) {
+   *     proc.kill();  // REQUIRED: Clean up before rejecting!
+   *     throw error;
+   *   }
+   * }
+   * ```
+   *
+   * Unsafe pattern (LEAKS PROCESSES):
+   * ```typescript
+   * async function leakyFactory(): Promise<ChildProcess> {
+   *   const proc = spawn("my-command", args);
+   *   await someValidation(proc);  // If this throws, proc is orphaned!
+   *   return proc;
+   * }
+   * ```
    */
   readonly processFactory: () =>
     | child_process.ChildProcess
