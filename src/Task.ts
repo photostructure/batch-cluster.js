@@ -145,14 +145,9 @@ export class Task<T = unknown> {
 
     try {
       const parseResult = await this.parser(this.#stdout, this.#stderr, passed);
-      if (this.#d.resolve(parseResult)) {
-        // success
-      } else {
-        this.#opts?.observer.emit(
-          "internalError",
-          new Error(this.toString() + " ._resolved() more than once"),
-        );
-      }
+      // Deferred.resolve() returns false if already settled (e.g., external
+      // reject during parsing). This is expected behavior, not an error.
+      this.#d.resolve(parseResult);
     } catch (error: unknown) {
       this.reject(error instanceof Error ? error : new Error(String(error)));
     }
