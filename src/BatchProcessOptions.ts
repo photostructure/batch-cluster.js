@@ -6,9 +6,16 @@
  */
 export interface BatchProcessOptions {
   /**
-   * Low-overhead command to verify the child batch process has started. Will
-   * be invoked immediately after spawn. This command must return before any
-   * tasks will be given to a given process.
+   * Low-overhead command to verify the child batch process has started
+   * correctly. This "startup command" is invoked immediately after spawn, and
+   * must complete successfully before any user tasks are assigned to the
+   * process.
+   *
+   * Typically this runs a version check (like `-ver` for ExifTool), hence the
+   * name. The command should be fast and reliable.
+   *
+   * If this command fails or times out (per {@link BatchClusterOptions.spawnTimeoutMillis}),
+   * the process is considered broken and will be terminated.
    */
   versionCommand: string;
 
