@@ -1093,6 +1093,7 @@ describe("BatchCluster", function () {
     afterEach(() => shutdown(bc));
 
     it("factory should kill spawned process before rejecting", async function () {
+      setFailRatePct(0); // disable random failures for this test
       let spawnedPid: number | undefined;
       let processKilled = false;
       let factoryCallCount = 0;
@@ -1132,18 +1133,8 @@ describe("BatchCluster", function () {
       });
 
       // Enqueue a task - first spawn will reject, second will succeed
-      // Retry if EUNLUCKY occurs (10% default fail rate)
-      let result: string | undefined;
-      for (let i = 0; i < 5; i++) {
-        const task = new Task("upcase hello", parser);
-        try {
-          result = await bc.enqueueTask(task);
-          break;
-        } catch (err) {
-          if (!String(err).includes("EUNLUCKY")) throw err;
-          // Retry on EUNLUCKY
-        }
-      }
+      const task = new Task("upcase hello", parser);
+      const result = await bc.enqueueTask(task);
       expect(result).to.eql("HELLO");
 
       // Verify factory cleaned up before rejecting
