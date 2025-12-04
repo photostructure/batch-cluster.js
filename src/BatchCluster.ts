@@ -167,6 +167,7 @@ export class BatchCluster {
       task.reject(
         new Error("BatchCluster has ended, cannot enqueue " + task.command),
       );
+      return task.promise;
     }
     this.#taskQueue.enqueue(task as Task<unknown>);
 
