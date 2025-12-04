@@ -13,6 +13,7 @@ import { Log, logger, setLogger } from "./Logger";
 import { Parser } from "./Parser";
 import { pidExists } from "./Pids";
 import { notBlank } from "./String";
+import { TestEnv } from "./TestEnv";
 
 use(require("chai-as-promised"));
 use(require("chai-string"));
@@ -132,27 +133,27 @@ export function flatten<T>(arr: (T | T[])[], result: T[] = []): T[] {
 // to make sure different error pathways are exercised. YYYY-MM-$callcount
 // should do it.
 
-const rngseedPrefix = new Date().toISOString().slice(0, 7) + ".";
-let rngseedCounter = 0;
-let rngseedOverride: string | undefined;
+const rngSeedPrefix = new Date().toISOString().slice(0, 7) + ".";
+let rngSeedCounter = 0;
+let rngSeedOverride: string | undefined;
 
-export function setRngseed(seed?: string) {
-  rngseedOverride = seed;
+export function setRngSeed(seed?: string) {
+  rngSeedOverride = seed;
 }
 
-function rngseed() {
+function rngSeed() {
   // We need a new rngseed for every execution, or all runs will either pass or
   // fail:
-  return rngseedOverride ?? rngseedPrefix + rngseedCounter++;
+  return rngSeedOverride ?? rngSeedPrefix + rngSeedCounter++;
 }
 
-let failrate: string;
+let failRate: string;
 
-export function setFailratePct(percent: number) {
-  failrate = (percent / 100).toFixed(2);
+export function setFailRatePct(percent: number) {
+  failRate = (percent / 100).toFixed(2);
 }
 
-let unluckyfail: "1" | "0";
+let unluckyFail: "1" | "0";
 
 /**
  * Should EUNLUCKY be handled properly by the test script, and emit a "FAIL", or
@@ -162,7 +163,7 @@ let unluckyfail: "1" | "0";
  * where all flaky errors require a timeout to recover.
  */
 export function setUnluckyFail(b: boolean) {
-  unluckyfail = b ? "1" : "0";
+  unluckyFail = b ? "1" : "0";
 }
 
 let newline: "lf" | "crlf";
@@ -178,26 +179,25 @@ export function setIgnoreExit(ignore: boolean) {
 }
 
 beforeEach(() => {
-  setFailratePct(10);
+  setFailRatePct(10);
   setUnluckyFail(true);
   setNewline("lf");
   setIgnoreExit(false);
-  setRngseed();
+  setRngSeed();
 });
 
 export const processFactory = () => {
+  const e: Required<TestEnv> = {
+    RNG_SEED: rngSeed(),
+    FAIL_RATE: failRate,
+    NEWLINE: newline,
+    IGNORE_EXIT: ignoreExit,
+    UNLUCKY_FAIL: unluckyFail,
+  };
   const proc = child_process.spawn(
     process.execPath,
     [path.join(__dirname, "test.js")],
-    {
-      env: {
-        rngseed: rngseed(),
-        failrate,
-        newline,
-        ignoreExit,
-        unluckyfail,
-      },
-    },
+    { env: e },
   );
   childProcs.push(proc);
   return proc;

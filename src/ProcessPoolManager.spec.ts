@@ -3,7 +3,7 @@ import {
   currentTestPids,
   expect,
   processFactory,
-  setFailratePct,
+  setFailRatePct,
   setIgnoreExit,
 } from "./_chai.spec";
 import { delay, until } from "./Async";
@@ -21,7 +21,7 @@ describe("ProcessPoolManager", function () {
   };
 
   beforeEach(function () {
-    setFailratePct(0); // no failures for pool manager tests
+    setFailRatePct(0); // no failures for pool manager tests
     setIgnoreExit(false);
     emitter = new events.EventEmitter() as BatchClusterEmitter;
 

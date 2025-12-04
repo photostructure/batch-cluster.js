@@ -5,9 +5,9 @@ import { kill, pidExists } from "./Pids";
 import {
   expect,
   processFactory,
-  setFailratePct,
+  setFailRatePct,
   setIgnoreExit,
-  setRngseed,
+  setRngSeed,
 } from "./_chai.spec";
 
 describe("test.js", () => {
@@ -15,7 +15,7 @@ describe("test.js", () => {
     readonly child: child_process.ChildProcess;
     public output = "";
     constructor() {
-      setFailratePct(0);
+      setFailRatePct(0);
       this.child = processFactory();
       this.child.on("error", (err: any) => {
         throw err;
@@ -109,7 +109,7 @@ describe("test.js", () => {
     const h = new Harness();
     h.child.stdin!.write("upcase Boink\nexit\n");
     await h.untilOutput("BOINK\nPASS\nignore".length);
-    expect(h.output).to.eql("BOINK\nPASS\nignoreExit is set\n");
+    expect(h.output).to.eql("BOINK\nPASS\nIGNORE_EXIT is set\n");
     expect(await h.running()).to.eql(true);
     await h.end();
     expect(await h.running()).to.eql(false);
@@ -151,10 +151,10 @@ describe("test.js", () => {
   });
 
   it("flakes out the first N responses", () => {
-    setFailratePct(0);
-    setRngseed("hello");
+    setFailRatePct(0);
+    setRngSeed("hello");
     const h = new Harness();
-    // These random numbers are consistent because we have a consistent rngseed:
+    // These random numbers are consistent because we have a consistent rngSeed:
     const a = h.assertStdout((ea) =>
       expect(ea).to.eql(
         [

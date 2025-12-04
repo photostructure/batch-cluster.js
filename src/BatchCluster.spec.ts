@@ -8,7 +8,7 @@ import {
   parser,
   parserErrors,
   processFactory,
-  setFailratePct,
+  setFailRatePct,
   setIgnoreExit,
   setNewline,
   testPids,
@@ -388,7 +388,7 @@ describe("BatchCluster", function () {
                     maxProcs * (bc.options.maxTasksPerProcess + 1);
                   // we're making exact pid assertions below: don't fight
                   // flakiness.
-                  setFailratePct(0);
+                  setFailRatePct(0);
 
                   const tasks = await Promise.all(runTasks(bc, iterations));
                   assertExpectedResults(tasks);
@@ -415,7 +415,7 @@ describe("BatchCluster", function () {
                   async function () {
                     if (isWin && isCI) this.timeout(45 * secondMs);
                     // make sure we hit an EUNLUCKY:
-                    setFailratePct(60);
+                    setFailRatePct(60);
                     let expectedResultCount = 0;
                     const results = await Promise.all(runTasks(bc, maxProcs));
                     expectedResultCount += maxProcs;
@@ -562,7 +562,7 @@ describe("BatchCluster", function () {
                 });
 
                 it("accepts single and multi-line responses", async () => {
-                  setFailratePct(0);
+                  setFailRatePct(0);
                   if (isCI) {
                     // don't fight timeouts on GitHub's slower-than-molasses CI boxes:
                     bc.options.taskTimeoutMillis = 1500;
@@ -655,7 +655,7 @@ describe("BatchCluster", function () {
       },
     ]) {
       it(JSON.stringify({ minDelayBetweenSpawnMillis }), async () => {
-        setFailratePct(0);
+        setFailRatePct(0);
         const opts = {
           ...DefaultTestOptions,
           taskTimeoutMillis: 5_000, // < don't test timeouts here
@@ -710,7 +710,7 @@ describe("BatchCluster", function () {
 
     it("supports reducing maxProcs", async () => {
       // don't fight with flakiness here!
-      setFailratePct(0);
+      setFailRatePct(0);
       const opts = {
         ...DefaultTestOptions,
         minDelayBetweenSpawnMillis: 0,
@@ -771,7 +771,7 @@ describe("BatchCluster", function () {
     }
 
     it("shut down rejects long-running pending tasks", async () => {
-      setFailratePct(0);
+      setFailRatePct(0);
       const opts = {
         ...DefaultTestOptions,
         taskTimeoutMillis: sleepTimeMs * 4, // < don't test timeouts here
@@ -982,7 +982,7 @@ describe("BatchCluster", function () {
       it("(" + maxProcAgeMillis + "): " + ctx, async function () {
         // TODO: look into why this fails in CI on windows
         if (isWin && isCI) return this.skip();
-        setFailratePct(0);
+        setFailRatePct(0);
 
         bc = listen(
           new BatchCluster({
