@@ -38,7 +38,7 @@
     "install:pinact": "go install github.com/suzuki-shunsuke/pinact/cmd/pinact@latest",
     "update:actions": "pinact run -u",
     "release": "release-it",
-    "precommit": "npm i && run-s update docs:build test"
+    "precommit": "npm i && run-s update clean fmt lint docs:build compile test"
   },
   "release-it": {
     "src": {
