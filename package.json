@@ -1,6 +1,6 @@
 {
   "name": "batch-cluster",
-  "version": "15.0.1",
+  "version": "16.0.0",
   "description": "Manage a cluster of child processes",
   "main": "dist/BatchCluster.js",
   "homepage": "https://photostructure.github.io/batch-cluster.js/",
