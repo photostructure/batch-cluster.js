@@ -1263,6 +1263,7 @@ describe("BatchCluster", function () {
     });
 
     it("leaky factory leaves orphaned process (demonstrates the problem)", async function () {
+      setFailRatePct(0); // disable random failures for this test
       let spawnedPid: number | undefined;
       let leakedProc: child_process.ChildProcess | undefined;
       let factoryCallCount = 0;
