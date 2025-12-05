@@ -19,7 +19,7 @@ See [Semver](http://semver.org/).
 - 📦 Minor packaging changes
 -
 
-## v16.0.0 (unreleased)
+## [v16.0.0](https://github.com/photostructure/batch-cluster.js/releases/tag/v16.0.0)
 
 - 💔 **BREAKING**: Removed `maxReasonableProcessFailuresPerMinute` option and fatal shutdown on spawn failures.
 
@@ -43,13 +43,13 @@ See [Semver](http://semver.org/).
 
 - 🐞 Fixed: `stdin.write()` errors now properly end the process instead of leaving a broken process in the pool
 
-## v15.0.1
+## [v15.0.1](https://github.com/photostructure/batch-cluster.js/releases/tag/v15.0.1)
 
 "This time, with feeling"
 
 - 📦 v15.0.0 automated the release to use OIDC 👍, but the `compile` prerequisite was missed 🤦, so v15.0.0 has _no code in it_ 🪹. v15.0.1 is _better_! It _has code_!
 
-## v15.0.0
+## [v15.0.0](https://github.com/photostructure/batch-cluster.js/releases/tag/v15.0.0)
 
 - 💔 Deleted the standalone `pids()` function and associated code (including the ProcpsChecker). This function was exported but only used internally by tests. This fixes the [issue #58](https://github.com/photostructure/batch-cluster.js/issues/58) (by deleting the unused code! _the best kind of bugfix_). Thanks for the report, [Zaczero](https://github.com/Zaczero)!
 
@@ -57,7 +57,7 @@ See [Semver](http://semver.org/).
 
 - 📦 Simplified `prettier` config to accept all defaults -- this added semicolons to every file.
 
-## v14.0.0
+## [v14.0.0](https://github.com/photostructure/batch-cluster.js/releases/tag/v14.0.0)
 
 - 💔 Dropped official support for Node v14, v16, and v18. Minimum Node.js version is now v20.
 
@@ -69,7 +69,7 @@ See [Semver](http://semver.org/).
   - Improved type safety by replacing `any` with `unknown` throughout the codebase
   - Enhanced error handling and process lifecycle management
 
-## v13.0.0
+## [v13.0.0](https://github.com/photostructure/batch-cluster.js/releases/tag/v13.0.0)
 
 - 💔 Dropped official support for [Node v16, which is EOL](https://nodejs.org/en/blog/announcements/nodejs16-eol/).
 
@@ -83,48 +83,48 @@ See [Semver](http://semver.org/).
 
 - 📦 Updated development dependencies and rebuilt docs
 
-## v12.1.0
+## [v12.1.0](https://github.com/photostructure/batch-cluster.js/releases/tag/v12.1.0)
 
 - 🐞 `pidExists` now handles `EPERM` properly (previous implementation would
   mischaracterize pids as being dead due to insufficient permissions)
 
 - 📦 Updated development dependencies and rebuilt docs
 
-## v12.0.0
+## [v12.0.0](https://github.com/photostructure/batch-cluster.js/releases/tag/v12.0.0)
 
 - 💔/✨ `pidExists` and `killPid` are no longer `async`, as process management
   is now performed via `node:process.kill()`, instead of forking `ps` or `tasklist`.
 
 - 📦 Updated development dependencies and rebuilt docs
 
-## v11.0.0
+## [v11.0.0](https://github.com/photostructure/batch-cluster.js/releases/tag/v11.0.0)
 
 - 💔 Drop official support for Node 12: [EOL was 2022-04-30](https://github.com/nodejs/release#end-of-life-releases)
 
-## v10.4.3
+## [v10.4.3](https://github.com/photostructure/batch-cluster.js/releases/tag/v10.4.3)
 
 - 🐞 Fix support for zero value of `maxProcAgeMillis`
 
 - 📦 Updated development dependencies and rebuilt docs
 
-## v10.4.2
+## [v10.4.2](https://github.com/photostructure/batch-cluster.js/releases/tag/v10.4.2)
 
 - 🐞 Fix [`unref` is not a function](https://github.com/photostructure/batch-cluster.js/issues/16)
 
 - 📦 Updated development dependencies and rebuilt docs
 
-## v10.4.1
+## [v10.4.1](https://github.com/photostructure/batch-cluster.js/releases/tag/v10.4.1)
 
 - 📦 Improved concurrent event `Rate` measurement.
 
-## v10.4.0
+## [v10.4.0](https://github.com/photostructure/batch-cluster.js/releases/tag/v10.4.0)
 
 - ✨ If `healthCheckCommand` is set and any task fails, that child process will
   have a health check run before being put back into rotation.
 
 - 📦 Updated development dependencies and rebuilt docs
 
-## v10.3.2
+## [v10.3.2](https://github.com/photostructure/batch-cluster.js/releases/tag/v10.3.2)
 
 - 🐞 `BatchCluster#maybeSpawnProcs` in prior versions could spawn too many
   processes, especially if process startup was slow. Heuristics for when to
@@ -144,13 +144,13 @@ See [Semver](http://semver.org/).
 
 - 📦 Updated development dependencies and rebuilt docs
 
-## v10.3.1
+## [v10.3.1](https://github.com/photostructure/batch-cluster.js/releases/tag/v10.3.1)
 
 - 📦 Add `Rate.msSinceLastEvent`
 
 - 📦 Adjusted `streamFlushMillis` to remove `onTaskData` errors in CI.
 
-## v10.3.0
+## [v10.3.0](https://github.com/photostructure/batch-cluster.js/releases/tag/v10.3.0)
 
 - ✨ Exported `Rate`. You might like it.
 
