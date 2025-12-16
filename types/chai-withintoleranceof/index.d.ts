@@ -11,9 +11,7 @@ interface WithinTolerance {
 
 declare namespace Chai {
   interface Assertion
-    extends LanguageChains,
-      NumericComparison,
-      TypeComparison {
+    extends LanguageChains, NumericComparison, TypeComparison {
     withinToleranceOf: WithinTolerance;
     withinTolOf: WithinTolerance;
   }
