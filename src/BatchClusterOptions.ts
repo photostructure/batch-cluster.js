@@ -160,6 +160,23 @@ export class BatchClusterOptions {
   pidCheckIntervalMillis = 2 * minuteMs;
 
   /**
+   * When true, child process streams (stdin, stdout, stderr) are unreferenced
+   * so they don't prevent the parent Node.js process from exiting naturally.
+   *
+   * This allows scripts to exit without explicitly calling `.end()` on the
+   * BatchCluster instance. The child processes will be cleaned up automatically
+   * when the parent process exits.
+   *
+   * Set to `false` if you need the parent process to stay alive as long as
+   * child processes are running (legacy behavior prior to v17).
+   *
+   * Defaults to `true`.
+   *
+   * @since 17.0.0
+   */
+  unrefStreams = true;
+
+  /**
    * A BatchCluster instance and associated BatchProcess instances will share
    * this `Logger`. Defaults to the `Logger` instance provided to `setLogger()`.
    */

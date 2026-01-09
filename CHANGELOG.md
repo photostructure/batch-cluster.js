@@ -19,6 +19,22 @@ See [Semver](http://semver.org/).
 - 📦 Minor packaging changes
 -
 
+## [v17.0.0](https://github.com/photostructure/batch-cluster.js/releases/tag/v17.0.0)
+
+- 💔 **BREAKING**: Added `unrefStreams` option (defaults to `true`) that unreferences child process stdio streams.
+
+  Previously, even though `proc.unref()` was called on child processes, the stdio streams (stdin, stdout, stderr) kept the parent Node.js process alive, requiring explicit `.end()` calls.
+
+  With `unrefStreams: true` (the new default), scripts can now exit naturally without calling `.end()`. Child processes are cleaned up automatically when the parent exits.
+
+  To restore the previous behavior where the parent process stays alive until `.end()` is called:
+
+  ```typescript
+  new BatchCluster({ unrefStreams: false, ... });
+  ```
+
+  Fixes [exiftool-vendored#319](https://github.com/photostructure/exiftool-vendored.js/discussions/319).
+
 ## [v16.0.0](https://github.com/photostructure/batch-cluster.js/releases/tag/v16.0.0)
 
 - 💔 **BREAKING**: Removed `maxReasonableProcessFailuresPerMinute` option and fatal shutdown on spawn failures.

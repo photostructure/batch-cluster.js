@@ -97,6 +97,15 @@ export class BatchProcess {
     );
     // don't let node count the child processes as a reason to stay alive
     this.proc.unref();
+    if (opts.unrefStreams) {
+      // Also unref the streams so they don't prevent the parent from exiting.
+      // The streams are net.Socket instances when using 'pipe' stdio, which have
+      // unref(), but the TypeScript types don't expose it on Readable/Writable.
+      /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access */
+      (this.proc.stdin as any)?.unref?.();
+      (this.proc.stdout as any)?.unref?.();
+      (this.proc.stderr as any)?.unref?.();
+    }
 
     if (proc.pid == null) {
       throw new Error("BatchProcess.constructor: child process pid is null");
