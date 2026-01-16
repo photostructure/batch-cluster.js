@@ -470,8 +470,12 @@ describe("BatchCluster", function () {
                     const results = await Promise.all(runTasks(bc, maxProcs));
                     expectedResultCount += maxProcs;
                     const pids = bc.pids();
-                    const iters = Math.floor(
-                      maxProcs * opts.maxTasksPerProcess * 1.5,
+                    // Ensure enough iterations for statistical reliability:
+                    // With 60% fail rate, probability of zero failures = 0.4^N.
+                    // 15 tasks gives 0.4^15 ≈ 0.00001% chance of zero failures.
+                    const iters = Math.max(
+                      15,
+                      Math.floor(maxProcs * opts.maxTasksPerProcess * 1.5),
                     );
                     results.push(
                       ...(await Promise.all(
