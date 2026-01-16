@@ -181,6 +181,24 @@ export class BatchClusterOptions {
    * this `Logger`. Defaults to the `Logger` instance provided to `setLogger()`.
    */
   logger: () => Logger = logger;
+
+  /**
+   * When true, BatchCluster registers `process.on("beforeExit")` and
+   * `process.on("exit")` handlers to clean up child processes when the Node.js
+   * process exits.
+   *
+   * The `beforeExit` handler calls `end(true)` for graceful shutdown.
+   * The `exit` handler synchronously kills any remaining child processes.
+   *
+   * Set to `false` if you want to manage process cleanup yourself, or if you're
+   * experiencing issues with these handlers interfering with your application's
+   * exit behavior.
+   *
+   * Defaults to `true`.
+   *
+   * @since 17.1.0
+   */
+  cleanupChildProcsOnExit = true;
 }
 
 export interface WithObserver {

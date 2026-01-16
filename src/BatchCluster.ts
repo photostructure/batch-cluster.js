@@ -11,6 +11,7 @@ import type { CombinedBatchProcessOptions } from "./CombinedBatchProcessOptions"
 import { Deferred } from "./Deferred";
 import { Logger } from "./Logger";
 import { verifyOptions } from "./OptionsVerifier";
+import { kill } from "./Pids";
 import { ProcessPoolManager } from "./ProcessPoolManager";
 import { Task } from "./Task";
 import { TaskQueueManager } from "./TaskQueueManager";
@@ -99,8 +100,10 @@ export class BatchCluster {
       this.#onIdleInterval.unref(); // < don't prevent node from exiting
     }
 
-    process.once("beforeExit", this.#beforeExitListener);
-    process.once("exit", this.#exitListener);
+    if (this.options.cleanupChildProcsOnExit) {
+      process.once("beforeExit", this.#beforeExitListener);
+      process.once("exit", this.#exitListener);
+    }
   }
 
   /**
@@ -114,11 +117,23 @@ export class BatchCluster {
    */
   readonly off = this.emitter.off.bind(this.emitter);
 
+  // void (not return) because event listeners ignore returned promises.
+  // The async work keeps the process alive until complete regardless.
   readonly #beforeExitListener = () => {
     void this.end(true);
   };
+
+  /**
+   * Synchronously kill all child processes on exit.
+   *
+   * The `exit` event only allows synchronous operations - the event loop is
+   * about to terminate, so any async work (like `this.end()`) would be
+   * discarded and never execute. We must force-kill immediately.
+   */
   readonly #exitListener = () => {
-    void this.end(false);
+    for (const pid of this.#processPool.pids()) {
+      kill(pid, true);
+    }
   };
 
   get ended(): boolean {
@@ -139,8 +154,10 @@ export class BatchCluster {
       if (this.#onIdleInterval != null)
         timers.clearInterval(this.#onIdleInterval);
       this.#onIdleInterval = undefined;
-      process.removeListener("beforeExit", this.#beforeExitListener);
-      process.removeListener("exit", this.#exitListener);
+      if (this.options.cleanupChildProcsOnExit) {
+        process.removeListener("beforeExit", this.#beforeExitListener);
+        process.removeListener("exit", this.#exitListener);
+      }
       this.#endPromise = new Deferred<void>().observe(
         this.closeChildProcesses(gracefully).then(() => {
           this.emitter.emit("end");

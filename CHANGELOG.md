@@ -19,6 +19,14 @@ See [Semver](http://semver.org/).
 - 📦 Minor packaging changes
 -
 
+## [v17.1.0](https://github.com/photostructure/batch-cluster.js/releases/tag/v17.1.0)
+
+- ✨ Added `cleanupChildProcsOnExit` option (defaults to `true`) to control whether BatchCluster registers `beforeExit` and `exit` handlers for automatic child process cleanup.
+
+  Set to `false` if you want to manage process cleanup yourself, or if these handlers interfere with your application's exit behavior.
+
+- 🐞 Fixed the `exit` handler to synchronously kill child processes. The previous implementation called an async method, which doesn't work in `exit` handlers (only synchronous operations are allowed).
+
 ## [v17.0.0](https://github.com/photostructure/batch-cluster.js/releases/tag/v17.0.0)
 
 - 💔 **BREAKING**: Added `unrefStreams` option (defaults to `true`) that unreferences child process stdio streams.

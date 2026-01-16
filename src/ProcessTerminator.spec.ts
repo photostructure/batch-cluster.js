@@ -113,6 +113,7 @@ describe("ProcessTerminator", function () {
       minDelayBetweenSpawnMillis: 100,
       pidCheckIntervalMillis: 150,
       unrefStreams: true,
+      cleanupChildProcsOnExit: true,
     };
 
     terminator = new ProcessTerminator(options);
