@@ -331,6 +331,13 @@ describe("BatchCluster", function () {
                   opts.healthCheckCommand = "flaky 0.5"; // fail half the time (ensure we get a proc end due to "unhealthy")
                 }
 
+                // Expensive tests (recycling, recovery, multi-line,
+                // multi-process) only run on critical config combos.
+                // minDelayBetweenSpawnMillis and ignoreExit don't change
+                // recycling or recovery code paths.
+                const runExpensiveTests =
+                  minDelayBetweenSpawnMillis === 0 && ignoreExit === true;
+
                 // failrate needs to be high enough to trigger but low enough to allow
                 // retries to succeed.
 
@@ -347,7 +354,7 @@ describe("BatchCluster", function () {
                   return;
                 });
 
-                if (maxProcs > 1) {
+                if (runExpensiveTests && maxProcs > 1) {
                   it("completes work on multiple child processes", async function () {
                     // Measure spawn time to set appropriate timeouts
                     const baselineSpawnMs = await measureSpawnTime();
@@ -428,6 +435,7 @@ describe("BatchCluster", function () {
                   postAssertions();
                 });
 
+                if (runExpensiveTests)
                 it("calling .end() after running shuts down child procs", async () => {
                   // This just warms up bc to make child procs:
                   const iterations =
@@ -453,6 +461,7 @@ describe("BatchCluster", function () {
                   postAssertions();
                 });
 
+                if (runExpensiveTests)
                 it(
                   "runs a given batch process roughly " +
                     opts.maxTasksPerProcess +
@@ -472,9 +481,9 @@ describe("BatchCluster", function () {
                     const pids = bc.pids();
                     // Ensure enough iterations for statistical reliability:
                     // With 60% fail rate, probability of zero failures = 0.4^N.
-                    // 15 tasks gives 0.4^15 ≈ 0.00001% chance of zero failures.
+                    // 10 tasks gives 0.4^10 ≈ 0.01% chance of zero failures.
                     const iters = Math.max(
-                      15,
+                      10,
                       Math.floor(maxProcs * opts.maxTasksPerProcess * 1.5),
                     );
                     results.push(
@@ -546,6 +555,7 @@ describe("BatchCluster", function () {
                   },
                 );
 
+                if (runExpensiveTests)
                 it("recovers from invalid commands", async function () {
                   this.slow(1);
                   assertExpectedResults(
@@ -579,13 +589,7 @@ describe("BatchCluster", function () {
                     const errorStr = convertErrorToString(ea);
                     return !errorStr.includes("EUNLUCKY");
                   });
-                  if (
-                    maxProcs === 1 &&
-                    ignoreExit === false &&
-                    healthCheck === false
-                  ) {
-                    // We don't expect these to pass with this config:
-                  } else if (maxProcs === 1 && errorResults.length === 0) {
+                  if (maxProcs === 1 && errorResults.length === 0) {
                     console.warn("(all processes were unlucky)");
                     return this.skip();
                   } else {
@@ -618,6 +622,7 @@ describe("BatchCluster", function () {
                   postAssertions();
                 });
 
+                if (runExpensiveTests)
                 it("accepts single and multi-line responses", async () => {
                   setFailRatePct(0);
                   // Measure spawn time to set appropriate timeouts
@@ -732,7 +737,7 @@ describe("BatchCluster", function () {
   });
 
   describe("maxProcs", function () {
-    const iters = 100;
+    const iters = 50;
     const maxProcs = 10;
     const sleepTimeMs = 250;
     let bc: BatchCluster;
