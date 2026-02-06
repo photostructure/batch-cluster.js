@@ -1483,10 +1483,22 @@ describe("BatchCluster", function () {
         (evt) => evt.reason === "proc.exit",
       );
 
-      expect(procExitEvent, "should have a childEnd event with reason 'proc.exit'").to.exist;
-      expect(procExitEvent?.exitCode, "exitCode should be captured from the exit event").to.eql(42);
-      expect(procExitEvent?.exitSignal, "exitSignal should be null for normal exit").to.eql(null);
-      expect(procExitEvent?.unexpectedExit, "unexpectedExit should be true for proc.exit").to.eql(true);
+      expect(
+        procExitEvent,
+        "should have a childEnd event with reason 'proc.exit'",
+      ).to.exist;
+      expect(
+        procExitEvent?.exitCode,
+        "exitCode should be captured from the exit event",
+      ).to.eql(42);
+      expect(
+        procExitEvent?.exitSignal,
+        "exitSignal should be null for normal exit",
+      ).to.eql(null);
+      expect(
+        procExitEvent?.unexpectedExit,
+        "unexpectedExit should be true for proc.exit",
+      ).to.eql(true);
 
       await bc.end(true);
       postAssertions();
@@ -1531,11 +1543,18 @@ describe("BatchCluster", function () {
       // The first childEnd should be a proactive termination (worn)
       const wornEvent = childEndEvents.find((evt) => evt.reason === "worn");
 
-      expect(wornEvent, "should have a childEnd event with reason 'worn'").to.exist;
+      expect(wornEvent, "should have a childEnd event with reason 'worn'").to
+        .exist;
       // exitCode/exitSignal are now always captured, even for proactive terminations
-      expect(wornEvent?.exitCode, "exitCode should be captured for proactive termination (worn)").to.not.eql(null);
+      expect(
+        wornEvent?.exitCode,
+        "exitCode should be captured for proactive termination (worn)",
+      ).to.not.eql(null);
       // unexpectedExit should be false for proactive terminations
-      expect(wornEvent?.unexpectedExit, "unexpectedExit should be false for worn reason").to.eql(false);
+      expect(
+        wornEvent?.unexpectedExit,
+        "unexpectedExit should be false for worn reason",
+      ).to.eql(false);
 
       await bc.end(true);
       postAssertions();
@@ -1586,19 +1605,37 @@ describe("BatchCluster", function () {
         (evt) => evt.reason === "proc.exit",
       );
 
-      expect(procExitEvent, "should have a childEnd event with reason 'proc.exit'").to.exist;
+      expect(
+        procExitEvent,
+        "should have a childEnd event with reason 'proc.exit'",
+      ).to.exist;
 
       // On Unix systems, signals work properly and we get the signal name
       // On Windows, process.kill() just terminates the process and we get an exit code instead
       if (isWin) {
-        expect(procExitEvent?.exitCode, "exitCode should be non-null on Windows").to.not.eql(null);
-        expect(procExitEvent?.exitSignal, "exitSignal should be null on Windows").to.eql(null);
+        expect(
+          procExitEvent?.exitCode,
+          "exitCode should be non-null on Windows",
+        ).to.not.eql(null);
+        expect(
+          procExitEvent?.exitSignal,
+          "exitSignal should be null on Windows",
+        ).to.eql(null);
       } else {
-        expect(procExitEvent?.exitSignal, "exitSignal should be SIGTERM on Unix").to.eql("SIGTERM");
-        expect(procExitEvent?.exitCode, "exitCode should be null when killed by signal on Unix").to.eql(null);
+        expect(
+          procExitEvent?.exitSignal,
+          "exitSignal should be SIGTERM on Unix",
+        ).to.eql("SIGTERM");
+        expect(
+          procExitEvent?.exitCode,
+          "exitCode should be null when killed by signal on Unix",
+        ).to.eql(null);
       }
       // Regardless of platform, this should be an unexpected exit
-      expect(procExitEvent?.unexpectedExit, "unexpectedExit should be true for signal termination").to.eql(true);
+      expect(
+        procExitEvent?.unexpectedExit,
+        "unexpectedExit should be true for signal termination",
+      ).to.eql(true);
 
       await bc.end(true);
       postAssertions();

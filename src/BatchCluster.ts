@@ -45,8 +45,8 @@ export type {
   ProcessHealthMonitor,
 } from "./ProcessHealthMonitor";
 export type { TaskOptions } from "./Task";
-export type { WhyNotHealthy, WhyNotReady } from "./WhyNotHealthy";
 export { ExpectedTerminationReasons } from "./WhyNotHealthy";
+export type { WhyNotHealthy, WhyNotReady } from "./WhyNotHealthy";
 
 /**
  * BatchCluster instances manage 0 or more homogeneous child processes, and

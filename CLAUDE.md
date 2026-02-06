@@ -82,6 +82,7 @@ The test suite uses a custom test script (`src/test.ts`) that simulates a batch-
 4. **Question existing content**: Don't blindly preserve URLs or references from existing files - verify they are correct before keeping them
 
 This applies to:
+
 - GitHub issue URLs and references
 - API documentation links
 - Feature names and capabilities
