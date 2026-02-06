@@ -685,6 +685,52 @@ describe("BatchCluster", function () {
     }
   }
 
+  describe("waitForStderrMillis", function () {
+    let bc: BatchCluster;
+    afterEach(() => shutdown(bc));
+
+    it("captures stderr with a low waitForStderrMillis", async function () {
+      setFailRatePct(0);
+      bc = listen(
+        new BatchCluster({
+          ...DefaultTestOptions,
+          processFactory,
+          maxProcs: 1,
+          waitForStderrMillis: 5,
+        }),
+      );
+
+      // "stderr <msg>" command writes PASS to stdout, then stderr after ~1ms.
+      // With waitForStderrMillis=5, the parser should still see the stderr.
+      const task = new Task("stderr omg this should fail", parser);
+      let error: Error | undefined;
+      let result = "";
+      try {
+        result = await bc.enqueueTask(task);
+      } catch (err: any) {
+        error = err;
+      }
+      expect(String(error)).to.match(/omg this should fail|UNLUCKY/, result);
+      postAssertions();
+    });
+
+    it("handles mixed pass/fail tasks with low waitForStderrMillis", async function () {
+      setFailRatePct(10);
+      bc = listen(
+        new BatchCluster({
+          ...DefaultTestOptions,
+          processFactory,
+          maxProcs: 2,
+          waitForStderrMillis: 5,
+        }),
+      );
+
+      const results = await Promise.all(runTasks(bc, 20));
+      assertExpectedResults(results);
+      postAssertions();
+    });
+  });
+
   describe("maxProcs", function () {
     const iters = 100;
     const maxProcs = 10;

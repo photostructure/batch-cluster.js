@@ -18,6 +18,10 @@ See [Semver](http://semver.org/).
 
 - 📦 Minor packaging changes
 
+## [v17.3.0](https://github.com/photostructure/batch-cluster.js/releases/tag/v17.3.0)
+
+- ✨ Added `waitForStderrMillis` option for directional stream flush delays. When a pass/fail token is detected on stdout, this controls how long to wait for stderr to flush before running the parser. Since stderr is typically unbuffered by the OS, this can be much smaller than `streamFlushMillis` (which governs the stderr-to-stdout direction). Defaults to `streamFlushMillis` for backward compatibility; setting it to 5-10ms can reduce per-task latency by 80-97%.
+
 ## [v17.2.0](https://github.com/photostructure/batch-cluster.js/releases/tag/v17.2.0)
 
 - ✨ Added `exitCode` and `exitSignal` properties to `BatchProcess` that are always populated when a child process exits. Access these in `childEnd` event handlers for complete diagnostic information about how processes terminated.

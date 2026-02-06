@@ -12,7 +12,11 @@ import { ProcessTerminator } from "./ProcessTerminator";
 import { StreamContext, StreamHandler } from "./StreamHandler";
 import { ensureSuffix } from "./String";
 import { Task } from "./Task";
-import { ExpectedTerminationReasons, WhyNotHealthy, WhyNotReady } from "./WhyNotHealthy";
+import {
+  ExpectedTerminationReasons,
+  WhyNotHealthy,
+  WhyNotReady,
+} from "./WhyNotHealthy";
 
 /**
  * BatchProcess manages the care and feeding of a single child process.
@@ -51,7 +55,10 @@ export class BatchProcess {
    * @see {@link ExpectedTerminationReasons} for the list of expected termination reasons.
    */
   get unexpectedExit(): boolean {
-    return this.#whyNotHealthy != null && !ExpectedTerminationReasons.includes(this.#whyNotHealthy);
+    return (
+      this.#whyNotHealthy != null &&
+      !ExpectedTerminationReasons.includes(this.#whyNotHealthy)
+    );
   }
 
   readonly startupTaskId: number;
@@ -316,10 +323,15 @@ export class BatchProcess {
       : this.opts.taskTimeoutMillis;
     if (taskTimeoutMs > 0) {
       // add the stream flush millis to the taskTimeoutMs, because that time
-      // should not be counted against the task.
+      // should not be counted against the task. Use the max of both possible
+      // flush delays since we don't know which stream will see the token.
       this.#currentTaskTimeout = timers.setTimeout(
         () => this.#onTimeout(task as Task<unknown>, taskTimeoutMs),
-        taskTimeoutMs + this.opts.streamFlushMillis,
+        taskTimeoutMs +
+          Math.max(
+            this.opts.streamFlushMillis,
+            this.opts.waitForStderrMillis ?? this.opts.streamFlushMillis,
+          ),
       );
     }
     // CAREFUL! If you add a .catch or .finally, the pipeline can emit unhandled

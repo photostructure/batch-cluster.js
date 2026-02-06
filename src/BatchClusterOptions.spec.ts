@@ -112,5 +112,37 @@ describe("BatchClusterOptions", () => {
         ]);
       }
     });
+
+    it("rejects negative waitForStderrMillis", () => {
+      try {
+        bc = new BatchCluster({
+          processFactory,
+          ...DefaultTestOptions,
+          waitForStderrMillis: -1,
+        });
+        throw new Error("expected an error due to invalid opts");
+      } catch (err) {
+        expect(String(err)).to.include(
+          "waitForStderrMillis must be greater than or equal to 0",
+        );
+      }
+    });
+
+    it("allows undefined waitForStderrMillis (defaults to streamFlushMillis)", () => {
+      bc = new BatchCluster({
+        processFactory,
+        ...DefaultTestOptions,
+      });
+      expect(bc.options.waitForStderrMillis).to.equal(undefined);
+    });
+
+    it("allows explicit waitForStderrMillis", () => {
+      bc = new BatchCluster({
+        processFactory,
+        ...DefaultTestOptions,
+        waitForStderrMillis: 5,
+      });
+      expect(bc.options.waitForStderrMillis).to.equal(5);
+    });
   });
 });

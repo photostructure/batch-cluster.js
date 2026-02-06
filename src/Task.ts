@@ -5,7 +5,12 @@ import { Parser } from "./Parser";
 
 export type TaskOptions = Pick<
   InternalBatchProcessOptions,
-  "streamFlushMillis" | "observer" | "passRE" | "failRE" | "logger"
+  | "streamFlushMillis"
+  | "waitForStderrMillis"
+  | "observer"
+  | "passRE"
+  | "failRE"
+  | "logger"
 >;
 
 let _taskId = 1;
@@ -89,13 +94,13 @@ export class Task<T = unknown> {
     if (passRE != null && passRE.exec(this.#stdout) != null) {
       // remove the pass token from stdout:
       this.#stdout = this.#stdout.replace(passRE, "");
-      void this.#resolve(true);
+      void this.#resolve(true, "stdout");
     } else {
       const failRE = this.#opts?.failRE;
       if (failRE != null && failRE.exec(this.#stdout) != null) {
         // remove the fail token from stdout:
         this.#stdout = this.#stdout.replace(failRE, "");
-        void this.#resolve(false);
+        void this.#resolve(false, "stdout");
       }
     }
   }
@@ -106,7 +111,7 @@ export class Task<T = unknown> {
     if (failRE != null && failRE.exec(this.#stderr) != null) {
       // remove the fail token from stderr:
       this.#stderr = this.#stderr.replace(failRE, "");
-      void this.#resolve(false);
+      void this.#resolve(false, "stderr");
     }
   }
 
@@ -121,12 +126,18 @@ export class Task<T = unknown> {
     return this.#d.reject(error);
   }
 
-  async #resolve(passed: boolean) {
+  async #resolve(passed: boolean, tokenSource: "stdout" | "stderr") {
     // fail always wins.
     passed = !this.#d.rejected && passed;
 
-    // wait for stderr and stdout to flush:
-    const flushMs = this.#opts?.streamFlushMillis ?? 0;
+    // Wait for the *other* stream to flush. When the token was found on
+    // stdout we're waiting for stderr (typically unbuffered → fast). When
+    // the token was found on stderr we're waiting for stdout (buffered).
+    const opts = this.#opts;
+    const flushMs =
+      tokenSource === "stdout"
+        ? (opts?.waitForStderrMillis ?? opts?.streamFlushMillis ?? 0)
+        : (opts?.streamFlushMillis ?? 0);
     if (flushMs > 0) {
       await delay(flushMs);
     }
