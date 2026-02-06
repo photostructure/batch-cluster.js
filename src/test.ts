@@ -133,7 +133,28 @@ async function onLine(line: string): Promise<void> {
         if (ignoreExit) {
           write("IGNORE_EXIT is set");
         } else {
-          process.exit(0);
+          const exitCode = parseInt(tokens[0] ?? "0");
+          if (isNaN(exitCode) || exitCode < 0 || exitCode > 255) {
+            write(`Invalid exit code: ${tokens[0]}`);
+            break;
+          }
+          process.exit(exitCode);
+        }
+        break;
+      }
+      case "kill": {
+        // Send a signal to ourselves for testing signal capture
+        if (ignoreExit) {
+          write("IGNORE_EXIT is set");
+        } else {
+          const signal = (tokens[0] ?? "SIGTERM") as NodeJS.Signals;
+          // Validate signal name
+          const validSignals = ["SIGTERM", "SIGKILL", "SIGINT", "SIGHUP"];
+          if (!validSignals.includes(signal)) {
+            write(`Invalid signal: ${signal}`);
+            break;
+          }
+          process.kill(process.pid, signal);
         }
         break;
       }

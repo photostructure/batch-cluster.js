@@ -17,7 +17,10 @@ See [Semver](http://semver.org/).
 - 🐞 Backwards-compatible bug fixes
 
 - 📦 Minor packaging changes
--
+
+## [v17.2.0](https://github.com/photostructure/batch-cluster.js/releases/tag/v17.2.0)
+
+- ✨ Added `exitCode` and `exitSignal` properties to `BatchProcess` to distinguish between child process crashes (populated with exit code/signal) and managed shutdowns (remain `null`)
 
 ## [v17.1.0](https://github.com/photostructure/batch-cluster.js/releases/tag/v17.1.0)
 

@@ -1435,4 +1435,160 @@ describe("BatchCluster", function () {
       });
     }
   });
+
+  describe("exitCode and exitSignal capture", function () {
+    it("should capture exitCode when child process exits with non-zero code", async function () {
+      setFailRatePct(0);
+      setIgnoreExit(false);
+
+      const bc = new BatchCluster({
+        ...DefaultTestOptions,
+        maxProcs: 1,
+        processFactory,
+      });
+
+      const childEndEvents: {
+        proc: any;
+        reason: string;
+        exitCode: number | null;
+        exitSignal: NodeJS.Signals | null;
+      }[] = [];
+
+      bc.on("childEnd", (proc, reason) => {
+        childEndEvents.push({
+          proc,
+          reason,
+          exitCode: proc.exitCode,
+          exitSignal: proc.exitSignal,
+        });
+      });
+
+      // Send a command that causes the process to exit with code 42
+      const task = new Task("exit 42", parser);
+      const taskPromise = bc.enqueueTask(task);
+
+      // The task will fail because the process exited
+      await taskPromise.catch(() => {
+        // Expected to fail
+      });
+
+      // Wait for child to end and be cleaned up
+      await until(() => childEndEvents.length > 0, 5000);
+
+      // Find the childEnd event with reason "proc.exit"
+      const procExitEvent = childEndEvents.find(
+        (evt) => evt.reason === "proc.exit",
+      );
+
+      expect(procExitEvent, "should have a childEnd event with reason 'proc.exit'").to.exist;
+      expect(procExitEvent?.exitCode, "exitCode should be captured from the exit event").to.eql(42);
+      expect(procExitEvent?.exitSignal, "exitSignal should be null for normal exit").to.eql(null);
+
+      await bc.end(true);
+      postAssertions();
+    });
+
+    it("should have null exitCode for proactive terminations", async function () {
+      setFailRatePct(0);
+      setIgnoreExit(false);
+
+      const bc = new BatchCluster({
+        ...DefaultTestOptions,
+        maxProcs: 1,
+        maxTasksPerProcess: 1, // Force recycling after 1 task
+        processFactory,
+      });
+
+      const childEndEvents: {
+        proc: any;
+        reason: string;
+        exitCode: number | null;
+        exitSignal: NodeJS.Signals | null;
+      }[] = [];
+
+      bc.on("childEnd", (proc, reason) => {
+        childEndEvents.push({
+          proc,
+          reason,
+          exitCode: proc.exitCode,
+          exitSignal: proc.exitSignal,
+        });
+      });
+
+      // Run a task to trigger recycling
+      const task = new Task("version", parser);
+      await bc.enqueueTask(task);
+
+      // Wait for the process to be recycled
+      await until(() => childEndEvents.length > 0, 5000);
+
+      // The first childEnd should be a proactive termination (worn)
+      const wornEvent = childEndEvents.find((evt) => evt.reason === "worn");
+
+      if (wornEvent != null) {
+        expect(wornEvent.exitCode).to.eql(
+          null,
+          "exitCode should be null for proactive termination (worn)",
+        );
+        expect(wornEvent.exitSignal).to.eql(
+          null,
+          "exitSignal should be null for proactive termination (worn)",
+        );
+      }
+
+      await bc.end(true);
+      postAssertions();
+    });
+
+    it("should capture exitSignal when child process is killed by signal", async function () {
+      setFailRatePct(0);
+      setIgnoreExit(false);
+
+      const bc = new BatchCluster({
+        ...DefaultTestOptions,
+        maxProcs: 1,
+        processFactory,
+      });
+
+      const childEndEvents: {
+        proc: any;
+        reason: string;
+        exitCode: number | null;
+        exitSignal: NodeJS.Signals | null;
+      }[] = [];
+
+      bc.on("childEnd", (proc, reason) => {
+        childEndEvents.push({
+          proc,
+          reason,
+          exitCode: proc.exitCode,
+          exitSignal: proc.exitSignal,
+        });
+      });
+
+      // Send a command that causes the process to kill itself with SIGTERM
+      const task = new Task("kill SIGTERM", parser);
+      const taskPromise = bc.enqueueTask(task);
+
+      // The task will fail because the process was killed
+      await taskPromise.catch(() => {
+        // Expected to fail
+      });
+
+      // Wait for child to end and be cleaned up
+      await until(() => childEndEvents.length > 0, 5000);
+
+      // Find the childEnd event with reason "proc.exit"
+      const procExitEvent = childEndEvents.find(
+        (evt) => evt.reason === "proc.exit",
+      );
+
+      expect(procExitEvent, "should have a childEnd event with reason 'proc.exit'").to.exist;
+      expect(procExitEvent?.exitSignal, "exitSignal should be SIGTERM").to.eql("SIGTERM");
+      expect(procExitEvent?.exitCode, "exitCode should be null when killed by signal").to.eql(null);
+
+      await bc.end(true);
+      postAssertions();
+    });
+  });
 });

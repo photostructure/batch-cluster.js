@@ -22,6 +22,27 @@ export class BatchProcess {
   readonly pid: number;
   readonly start = Date.now();
 
+  #exitCode: number | null = null;
+  #exitSignal: NodeJS.Signals | null = null;
+
+  /**
+   * Exit code from the child process, or null if not yet exited.
+   * Will be null for proactive terminations (ending, idle, old, worn, tooMany)
+   * where the parent kills the process before OS exit events fire.
+   */
+  get exitCode(): number | null {
+    return this.#exitCode;
+  }
+
+  /**
+   * Exit signal from the child process, or null if not terminated by signal.
+   * Will be null for proactive terminations (ending, idle, old, worn, tooMany)
+   * where the parent kills the process before OS exit events fire.
+   */
+  get exitSignal(): NodeJS.Signals | null {
+    return this.#exitSignal;
+  }
+
   readonly startupTaskId: number;
   readonly #logger: () => Logger;
   readonly #terminator: ProcessTerminator;
@@ -118,7 +139,13 @@ export class BatchProcess {
       this.#processExitDeferred.resolve();
       void this.end(false, "proc.close");
     });
-    this.proc.on("exit", () => {
+    this.proc.on("exit", (code, signal) => {
+      // Only capture exit code/signal for reactive terminations (process exited on its own).
+      // For proactive terminations (we initiated .end()), leave them null.
+      if (!this.ending) {
+        this.#exitCode = code;
+        this.#exitSignal = signal;
+      }
       this.#processExitDeferred.resolve();
       void this.end(false, "proc.exit");
     });
