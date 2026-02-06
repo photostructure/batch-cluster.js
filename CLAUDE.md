@@ -71,3 +71,19 @@ The test suite uses a custom test script (`src/test.ts`) that simulates a batch-
 - **Null checks**: Always use explicit `x == null` or `x != null` checks. Do not use falsy/truthy checks for nullish values.
   - Good: `if (value != null)`, `if (value == null)`
   - Bad: `if (value)`, `if (!value)`
+
+## Verification Requirements
+
+**CRITICAL**: Never reference URLs, APIs, features, libraries, or external resources without verification. Always:
+
+1. **Verify before including**: Use web search and authoritative documentation to confirm that URLs, API endpoints, issue references, and feature names actually exist
+2. **Check the codebase**: Read relevant source files to verify that features, methods, or properties are actually implemented
+3. **When in doubt, omit**: If you cannot verify a reference, leave it out rather than including potentially incorrect information
+4. **Question existing content**: Don't blindly preserve URLs or references from existing files - verify they are correct before keeping them
+
+This applies to:
+- GitHub issue URLs and references
+- API documentation links
+- Feature names and capabilities
+- Library versions and compatibility claims
+- External service endpoints
