@@ -12,7 +12,7 @@ import { ProcessTerminator } from "./ProcessTerminator";
 import { StreamContext, StreamHandler } from "./StreamHandler";
 import { ensureSuffix } from "./String";
 import { Task } from "./Task";
-import { WhyNotHealthy, WhyNotReady } from "./WhyNotHealthy";
+import { ExpectedTerminationReasons, WhyNotHealthy, WhyNotReady } from "./WhyNotHealthy";
 
 /**
  * BatchProcess manages the care and feeding of a single child process.
@@ -27,8 +27,9 @@ export class BatchProcess {
 
   /**
    * Exit code from the child process, or null if not yet exited.
-   * Will be null for proactive terminations (ending, idle, old, worn, tooMany)
-   * where the parent kills the process before OS exit events fire.
+   * Populated for both expected terminations (idle, old, worn) and
+   * unexpected exits (crashes, errors).
+   * Use {@link unexpectedExit} to determine if the exit was unexpected.
    */
   get exitCode(): number | null {
     return this.#exitCode;
@@ -36,11 +37,21 @@ export class BatchProcess {
 
   /**
    * Exit signal from the child process, or null if not terminated by signal.
-   * Will be null for proactive terminations (ending, idle, old, worn, tooMany)
-   * where the parent kills the process before OS exit events fire.
+   * Populated for both expected terminations and unexpected exits.
+   * Use {@link unexpectedExit} to determine if the exit was unexpected.
    */
   get exitSignal(): NodeJS.Signals | null {
     return this.#exitSignal;
+  }
+
+  /**
+   * Returns true if the process exited unexpectedly (crash, error, timeout, etc.)
+   * rather than through proactive cluster management (worn, old, idle, etc.).
+   * Useful for determining if a non-zero exit code indicates a problem.
+   * @see {@link ExpectedTerminationReasons} for the list of expected termination reasons.
+   */
+  get unexpectedExit(): boolean {
+    return this.#whyNotHealthy != null && !ExpectedTerminationReasons.includes(this.#whyNotHealthy);
   }
 
   readonly startupTaskId: number;
@@ -140,12 +151,10 @@ export class BatchProcess {
       void this.end(false, "proc.close");
     });
     this.proc.on("exit", (code, signal) => {
-      // Only capture exit code/signal for reactive terminations (process exited on its own).
-      // For proactive terminations (we initiated .end()), leave them null.
-      if (!this.ending) {
-        this.#exitCode = code;
-        this.#exitSignal = signal;
-      }
+      // Always capture exit code/signal for diagnostic purposes.
+      // Use unexpectedExit to determine if this was a managed shutdown vs unexpected exit.
+      this.#exitCode = code;
+      this.#exitSignal = signal;
       this.#processExitDeferred.resolve();
       void this.end(false, "proc.exit");
     });

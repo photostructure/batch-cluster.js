@@ -20,7 +20,11 @@ See [Semver](http://semver.org/).
 
 ## [v17.2.0](https://github.com/photostructure/batch-cluster.js/releases/tag/v17.2.0)
 
-- ✨ Added `exitCode` and `exitSignal` properties to `BatchProcess` to distinguish between child process crashes (populated with exit code/signal) and managed shutdowns (remain `null`)
+- ✨ Added `exitCode` and `exitSignal` properties to `BatchProcess` that are always populated when a child process exits. Access these in `childEnd` event handlers for complete diagnostic information about how processes terminated.
+
+- ✨ Added `unexpectedExit` getter to `BatchProcess` that returns `true` if the process exited due to a crash, error, or timeout (rather than proactive management like recycling). Use this to distinguish between expected non-zero exit codes and actual problems.
+
+- ✨ Exported `ExpectedTerminationReasons` constant listing reasons that indicate managed shutdowns (`"worn"`, `"old"`, `"idle"`, etc.) vs unexpected exits.
 
 ## [v17.1.0](https://github.com/photostructure/batch-cluster.js/releases/tag/v17.1.0)
 

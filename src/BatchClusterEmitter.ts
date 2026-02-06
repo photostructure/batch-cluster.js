@@ -43,6 +43,19 @@ export interface BatchClusterEvents {
 
   /**
    * Emitted when a child process has ended
+   *
+   * @example
+   * ```typescript
+   * bc.on("childEnd", (proc, reason) => {
+   *   // Check if this was an unexpected exit (crash, error, timeout)
+   *   if (proc.unexpectedExit && proc.exitCode !== 0) {
+   *     logger.error(`Process crashed: ${reason}`, {
+   *       exitCode: proc.exitCode,
+   *       exitSignal: proc.exitSignal
+   *     });
+   *   }
+   * });
+   * ```
    */
   childEnd: (childProcess: BatchProcess, reason: ChildEndReason) => void;
 
