@@ -1584,8 +1584,16 @@ describe("BatchCluster", function () {
       );
 
       expect(procExitEvent, "should have a childEnd event with reason 'proc.exit'").to.exist;
-      expect(procExitEvent?.exitSignal, "exitSignal should be SIGTERM").to.eql("SIGTERM");
-      expect(procExitEvent?.exitCode, "exitCode should be null when killed by signal").to.eql(null);
+
+      // On Unix systems, signals work properly and we get the signal name
+      // On Windows, process.kill() just terminates the process and we get an exit code instead
+      if (isWin) {
+        expect(procExitEvent?.exitCode, "exitCode should be non-null on Windows").to.not.eql(null);
+        expect(procExitEvent?.exitSignal, "exitSignal should be null on Windows").to.eql(null);
+      } else {
+        expect(procExitEvent?.exitSignal, "exitSignal should be SIGTERM on Unix").to.eql("SIGTERM");
+        expect(procExitEvent?.exitCode, "exitCode should be null when killed by signal on Unix").to.eql(null);
+      }
 
       await bc.end(true);
       postAssertions();
