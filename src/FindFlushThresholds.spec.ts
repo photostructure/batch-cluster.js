@@ -1,8 +1,7 @@
 import { expect } from "./_chai.spec";
-import { findStreamFlushMillis, findWaitForStderrMillis } from "./BatchCluster";
+import { findStreamFlushMillis } from "./BatchCluster";
 import {
   expectFailParser,
-  expectPassParser,
   testProcessFactory,
 } from "./FlushThresholdTestHelpers";
 import { Task } from "./Task";
@@ -18,7 +17,6 @@ const fastTuning = {
   validationRadius: 1,
   confirmationTrials: 2,
   confirmationTasks: 3,
-  safetyMargin: 2,
 };
 
 const commonOpts = {
@@ -35,24 +33,17 @@ describe("FindFlushThresholds", function () {
   this.timeout(60_000);
   this.slow(10_000);
 
-  it("findWaitForStderrMillis returns a positive number", async () => {
-    const result = await findWaitForStderrMillis({
-      ...commonOpts,
-      taskFactory: (i) => new Task("stderr test-data " + i, expectPassParser),
-    });
-    expect(result).to.be.a("number");
-    expect(result).to.be.greaterThan(0);
-    expect(result).to.be.at.most(fastTuning.hi * fastTuning.safetyMargin);
-  });
-
-  it("findStreamFlushMillis returns a positive number", async () => {
+  it("findStreamFlushMillis returns a non-negative number", async () => {
+    // With ExifTool-like stream ordering (stderr before stdout token),
+    // the minimum reliable value is typically 0 — stderr is already
+    // buffered when the completion token arrives on stdout.
     const result = await findStreamFlushMillis({
       ...commonOpts,
       taskFactory: (i) =>
         new Task("stderrfail test-data " + i, expectFailParser),
     });
     expect(result).to.be.a("number");
-    expect(result).to.be.greaterThan(0);
-    expect(result).to.be.at.most(fastTuning.hi * fastTuning.safetyMargin);
+    expect(result).to.be.greaterThanOrEqual(0);
+    expect(result).to.be.at.most(fastTuning.hi);
   });
 });

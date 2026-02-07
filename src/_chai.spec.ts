@@ -10,15 +10,10 @@ import child_process from "node:child_process";
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import process from "node:process";
-import { BatchClusterOptions } from "./BatchCluster";
 import { DefaultTestOptions } from "./DefaultTestOptions.spec";
-import {
-  findStreamFlushMillis,
-  findWaitForStderrMillis,
-} from "./FindFlushThresholds";
+import { findStreamFlushMillis } from "./FindFlushThresholds";
 import {
   expectFailParser,
-  expectPassParser,
   testProcessFactory,
 } from "./FlushThresholdTestHelpers";
 import { Log, logger, setLogger } from "./Logger";
@@ -222,7 +217,6 @@ export const processFactory = () => {
 
 interface FlushThresholdCache {
   streamFlushMillis: number;
-  waitForStderrMillis: number;
   nodeVersion: string;
   timestamp: string;
 }
@@ -237,9 +231,7 @@ function readCache(): FlushThresholdCache | undefined {
     if (
       data.nodeVersion === process.version &&
       typeof data.streamFlushMillis === "number" &&
-      typeof data.waitForStderrMillis === "number" &&
-      data.streamFlushMillis > 0 &&
-      data.waitForStderrMillis > 0
+      data.streamFlushMillis >= 0
     ) {
       return data;
     }
@@ -249,12 +241,9 @@ function readCache(): FlushThresholdCache | undefined {
   return undefined;
 }
 
-function writeCache(result: {
-  streamFlushMillis: number;
-  waitForStderrMillis: number;
-}): void {
+function writeCache(streamFlushMillis: number): void {
   const data: FlushThresholdCache = {
-    ...result,
+    streamFlushMillis,
     nodeVersion: process.version,
     timestamp: new Date().toISOString(),
   };
@@ -277,56 +266,33 @@ const quickTuning = {
   validationRadius: 2,
   confirmationTrials: 4,
   confirmationTasks: 7,
-  safetyMargin: 2,
 };
 
 /**
- * Discover (or read from cache) the optimal flush threshold values for the
- * current machine. Returns `{ streamFlushMillis, waitForStderrMillis }`.
+ * Discover (or read from cache) the optimal streamFlushMillis value for the
+ * current machine.
  */
 export async function batchClusterTestOptions(): Promise<{
   streamFlushMillis: number;
-  waitForStderrMillis: number;
 }> {
   const cached = readCache();
   if (cached != null) {
-    return {
-      streamFlushMillis: cached.streamFlushMillis,
-      waitForStderrMillis: cached.waitForStderrMillis,
-    };
+    return { streamFlushMillis: cached.streamFlushMillis };
   }
 
-  const commonOpts = {
+  const streamFlushMillis = await findStreamFlushMillis({
     processFactory: testProcessFactory,
     versionCommand: "version",
     pass: "PASS",
     fail: "FAIL",
     exitCommand: "exit",
+    taskFactory: (i: number) =>
+      new Task("stderrfail test-data " + i, expectFailParser),
     ...quickTuning,
-  };
+  });
 
-  const [waitForStderrMillis, streamFlushMillis] = await Promise.all([
-    findWaitForStderrMillis({
-      ...commonOpts,
-      taskFactory: (i: number) =>
-        new Task("stderr test-data " + i, expectPassParser),
-    }),
-    findStreamFlushMillis({
-      ...commonOpts,
-      taskFactory: (i: number) =>
-        new Task("stderrfail test-data " + i, expectFailParser),
-    }),
-  ]);
-
-  const result = {
-    streamFlushMillis,
-    waitForStderrMillis,
-  } satisfies Pick<
-    BatchClusterOptions,
-    "streamFlushMillis" | "waitForStderrMillis"
-  >;
-  writeCache(result);
-  return result;
+  writeCache(streamFlushMillis);
+  return { streamFlushMillis };
 }
 
 // Root-level before() hook: runs once before all test suites.

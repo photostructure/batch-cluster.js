@@ -1,6 +1,5 @@
 /**
- * Three-phase search for optimal streamFlushMillis / waitForStderrMillis
- * values.
+ * Three-phase search for optimal streamFlushMillis values.
  *
  * Phase 1 (Coarse): Binary search with few tasks per step to quickly find the
  * approximate threshold where noTaskData events start appearing.
@@ -11,8 +10,8 @@
  * Phase 3 (Confirm): Hammer the found minimum with many more trials to ensure
  * stability.
  *
- * The exported functions apply a configurable safety margin (default 2x) and
- * return the recommended value as a plain number.
+ * The exported function returns the minimum reliable value; callers should
+ * apply their own safety margin.
  *
  * @module
  */
@@ -28,8 +27,7 @@ import type { Task } from "./Task";
 // ---------------------------------------------------------------------------
 
 /**
- * Options for {@link findWaitForStderrMillis} and
- * {@link findStreamFlushMillis}.
+ * Options for {@link findStreamFlushMillis}.
  *
  * @typeParam T - The resolved type of the tasks produced by
  *   {@link taskFactory}. The search ignores task results (only
@@ -123,13 +121,6 @@ export interface FindFlushMillisOptions<T = unknown> {
    */
   confirmationTasks?: number;
 
-  /**
-   * Multiplier applied to the minimum reliable value to produce the
-   * recommended result.
-   * @default 2
-   */
-  safetyMargin?: number;
-
   // --- Logging ---
 
   /**
@@ -142,8 +133,6 @@ export interface FindFlushMillisOptions<T = unknown> {
 // ---------------------------------------------------------------------------
 // Internal types & defaults
 // ---------------------------------------------------------------------------
-
-export type SearchParameter = "waitForStderrMillis" | "streamFlushMillis";
 
 interface TrialResult {
   noTaskDataEvents: number;
@@ -160,14 +149,12 @@ const DEFAULT_VALIDATION_TRIALS = 5;
 const DEFAULT_VALIDATION_RADIUS = 3;
 const DEFAULT_CONFIRMATION_TRIALS = 20;
 const DEFAULT_CONFIRMATION_TASKS = 50;
-const DEFAULT_SAFETY_MARGIN = 2;
 
 // ---------------------------------------------------------------------------
 // Trial runner
 // ---------------------------------------------------------------------------
 
 async function runTrial<T>(
-  parameter: SearchParameter,
   opts: FindFlushMillisOptions<T>,
   candidateMs: number,
   taskCount: number,
@@ -175,17 +162,10 @@ async function runTrial<T>(
 ): Promise<TrialResult> {
   let noTaskDataCount = 0;
 
-  // Pin the *other* parameter to a known-good value so we only measure one
-  // dimension at a time.
-  const clusterOpts =
-    parameter === "waitForStderrMillis"
-      ? { streamFlushMillis: 500, waitForStderrMillis: candidateMs }
-      : { streamFlushMillis: candidateMs };
-
   const maxProcs = opts.maxProcs ?? DEFAULT_MAX_PROCS;
 
   const bc = new BatchCluster({
-    ...clusterOpts,
+    streamFlushMillis: candidateMs,
     maxProcs,
     minDelayBetweenSpawnMillis: 0,
     versionCommand: opts.versionCommand,
@@ -266,7 +246,6 @@ async function runTrial<T>(
 // ---------------------------------------------------------------------------
 
 async function coarseSearch<T>(
-  parameter: SearchParameter,
   opts: FindFlushMillisOptions<T>,
   lo: number,
   hi: number,
@@ -276,13 +255,13 @@ async function coarseSearch<T>(
   const maxProcs = opts.maxProcs ?? DEFAULT_MAX_PROCS;
 
   log.info(
-    `Phase 1: Coarse binary search for ${parameter} in [${lo}, ${hi}]` +
+    `Phase 1: Coarse binary search for streamFlushMillis in [${lo}, ${hi}]` +
       ` (${coarseTasks} tasks/step, ${maxProcs} procs)`,
   );
 
   while (lo < hi) {
     const mid = Math.floor((lo + hi) / 2);
-    const result = await runTrial(parameter, opts, mid, coarseTasks, 15_000);
+    const result = await runTrial(opts, mid, coarseTasks, 15_000);
     const label = `${mid}ms`.padEnd(6);
     const range = `[${lo}, ${hi}]`;
 
@@ -312,7 +291,6 @@ async function coarseSearch<T>(
 // ---------------------------------------------------------------------------
 
 async function validateThreshold<T>(
-  parameter: SearchParameter,
   opts: FindFlushMillisOptions<T>,
   coarseThreshold: number,
   searchHi: number,
@@ -326,7 +304,7 @@ async function validateThreshold<T>(
   const to = Math.min(searchHi, coarseThreshold + validationRadius);
 
   log.info(
-    `Phase 2: Validating ${parameter} in [${from}, ${to}]` +
+    `Phase 2: Validating streamFlushMillis in [${from}, ${to}]` +
       ` (${validationTrials} trials x ${validationTasks} tasks)`,
   );
 
@@ -336,13 +314,7 @@ async function validateThreshold<T>(
     let passedAll = true;
 
     for (let t = 0; t < validationTrials; t++) {
-      const result = await runTrial(
-        parameter,
-        opts,
-        ms,
-        validationTasks,
-        30_000,
-      );
+      const result = await runTrial(opts, ms, validationTasks, 30_000);
 
       if (result.noTaskDataEvents > 0 || result.timedOut) {
         const reason = result.timedOut ? "timeout" : "noTaskData";
@@ -378,7 +350,6 @@ async function validateThreshold<T>(
 // ---------------------------------------------------------------------------
 
 async function confirmMinimum<T>(
-  parameter: SearchParameter,
   opts: FindFlushMillisOptions<T>,
   startMs: number,
   searchHi: number,
@@ -390,7 +361,7 @@ async function confirmMinimum<T>(
     opts.confirmationTasks ?? DEFAULT_CONFIRMATION_TASKS;
 
   log.info(
-    `Phase 3: Confirming ${parameter} minimum` +
+    `Phase 3: Confirming streamFlushMillis minimum` +
       ` (${confirmationTrials} trials x ${confirmationTasks} tasks)`,
   );
 
@@ -398,13 +369,7 @@ async function confirmMinimum<T>(
     let failed = false;
 
     for (let t = 0; t < confirmationTrials; t++) {
-      const result = await runTrial(
-        parameter,
-        opts,
-        ms,
-        confirmationTasks,
-        30_000,
-      );
+      const result = await runTrial(opts, ms, confirmationTasks, 30_000);
 
       if (result.noTaskDataEvents > 0 || result.timedOut) {
         const reason = result.timedOut ? "timeout" : "noTaskData";
@@ -430,45 +395,28 @@ async function confirmMinimum<T>(
 }
 
 // ---------------------------------------------------------------------------
-// Shared implementation
-// ---------------------------------------------------------------------------
-
-async function findThreshold<T>(
-  parameter: SearchParameter,
-  opts: FindFlushMillisOptions<T>,
-): Promise<number> {
-  const lo = opts.lo ?? 0;
-  const hi = opts.hi ?? 500;
-  const safetyMargin = opts.safetyMargin ?? DEFAULT_SAFETY_MARGIN;
-
-  const coarse = await coarseSearch(parameter, opts, lo, hi);
-  const validated = await validateThreshold(parameter, opts, coarse, hi);
-  const min = await confirmMinimum(parameter, opts, validated, hi);
-
-  return Math.max(1, min * safetyMargin);
-}
-
-// ---------------------------------------------------------------------------
 // Public API
 // ---------------------------------------------------------------------------
 
 /**
- * Find the minimum reliable `waitForStderrMillis` value for the given child
+ * Find the minimum reliable `streamFlushMillis` value for the given child
  * process on the current hardware.
  *
- * `waitForStderrMillis` controls how long to wait for stderr to flush after a
- * pass/fail token is detected on stdout. The returned value includes a safety
- * margin (default 2x).
- *
- * The search detects `noTaskData` events (orphaned stream data arriving after
- * a task has already resolved) as the signal that the flush timing is too
- * short.
+ * Returns the minimum `streamFlushMillis` value that produced zero
+ * `noTaskData` events across all confirmation trials. Because the
+ * confirmation phase already tests the worst case observed during
+ * discovery, the returned value is a near-ceiling, not a mean — similar in
+ * spirit to how TCP's RTO (RFC 6298) is `SRTT + 4*RTTVAR` rather than a
+ * flat multiplier. Callers needing additional headroom for transient load
+ * spikes should add a small additive constant (e.g. `result + 5`), since
+ * OS scheduling jitter is an additive phenomenon independent of the
+ * baseline value.
  *
  * @example
  * ```typescript
- * import { findWaitForStderrMillis, Task } from "batch-cluster";
+ * import { findStreamFlushMillis, Task } from "batch-cluster";
  *
- * const waitForStderrMillis = await findWaitForStderrMillis({
+ * const minReliable = await findStreamFlushMillis({
  *   processFactory: () => spawn("perl", [exiftoolPath, "-stay_open", "True", "-@", "-"]),
  *   versionCommand: "-ver\n-execute\n",
  *   pass: "{ready}",
@@ -479,28 +427,16 @@ async function findThreshold<T>(
  *     return new Task(cmds[i % cmds.length], (stdout) => stdout);
  *   },
  * });
+ * const streamFlushMillis = minReliable + 5; // additive headroom for load spikes
  * ```
  */
-export function findWaitForStderrMillis<T>(
+export async function findStreamFlushMillis<T>(
   options: FindFlushMillisOptions<T>,
 ): Promise<number> {
-  return findThreshold("waitForStderrMillis", options);
-}
+  const lo = options.lo ?? 0;
+  const hi = options.hi ?? 500;
 
-/**
- * Find the minimum reliable `streamFlushMillis` value for the given child
- * process on the current hardware.
- *
- * `streamFlushMillis` controls how long to wait for stdout to flush after a
- * pass/fail token is detected on stderr. The returned value includes a safety
- * margin (default 2x).
- *
- * This is only relevant for child processes whose pass/fail token appears on
- * stderr. If your process always emits the token on stdout, use
- * {@link findWaitForStderrMillis} instead.
- */
-export function findStreamFlushMillis<T>(
-  options: FindFlushMillisOptions<T>,
-): Promise<number> {
-  return findThreshold("streamFlushMillis", options);
+  const coarse = await coarseSearch(options, lo, hi);
+  const validated = await validateThreshold(options, coarse, hi);
+  return confirmMinimum(options, validated, hi);
 }

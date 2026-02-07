@@ -26,7 +26,7 @@
     "fmt:pkg": "npm pkg fix",
     "fmt:prettier": "prettier --write .",
     "lint": "eslint src",
-    "compile": "tsc",
+    "compile": "tsc && node -e \"require('fs').copyFileSync('src/test.js','dist/test.js')\"",
     "watch": "rimraf dist && tsc --watch",
     "test": "run-s clean lint compile test:mocha",
     "test:mocha": "mocha dist/**/*.spec.js",

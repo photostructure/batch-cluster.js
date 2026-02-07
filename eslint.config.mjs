@@ -6,7 +6,14 @@ import tseslint from "typescript-eslint";
 
 export default tseslint.config(
   {
-    ignores: ["dist/", "node_modules/", "**/*.d.ts", "coverage/", "docs/"],
+    ignores: [
+      "dist/",
+      "node_modules/",
+      "**/*.d.ts",
+      "coverage/",
+      "docs/",
+      "src/test.js",
+    ],
   },
   {
     files: ["src/**/*.ts"],
@@ -25,7 +32,7 @@ export default tseslint.config(
   ...tseslint.configs.stylistic,
   {
     files: ["src/**/*.ts"],
-    ignores: ["src/**/*.spec.ts", "src/test.ts"], // Exclude test files from strict rules
+    ignores: ["src/**/*.spec.ts"], // Exclude test files from strict rules
     plugins: {
       import: importPlugin,
     },
@@ -43,7 +50,7 @@ export default tseslint.config(
     },
   },
   {
-    files: ["src/**/*.spec.ts", "src/test.ts", "src/_chai.spec.ts"],
+    files: ["src/**/*.spec.ts"],
     plugins: {
       import: importPlugin,
     },

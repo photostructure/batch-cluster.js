@@ -323,15 +323,10 @@ export class BatchProcess {
       : this.opts.taskTimeoutMillis;
     if (taskTimeoutMs > 0) {
       // add the stream flush millis to the taskTimeoutMs, because that time
-      // should not be counted against the task. Use the max of both possible
-      // flush delays since we don't know which stream will see the token.
+      // should not be counted against the task.
       this.#currentTaskTimeout = timers.setTimeout(
         () => this.#onTimeout(task as Task<unknown>, taskTimeoutMs),
-        taskTimeoutMs +
-          Math.max(
-            this.opts.streamFlushMillis,
-            this.opts.waitForStderrMillis ?? this.opts.streamFlushMillis,
-          ),
+        taskTimeoutMs + this.opts.streamFlushMillis,
       );
     }
     // CAREFUL! If you add a .catch or .finally, the pipeline can emit unhandled

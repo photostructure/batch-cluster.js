@@ -1,18 +1,28 @@
 #!/usr/bin/env node
-import { randomInt } from "node:crypto";
-import process from "node:process";
-import { delay } from "./Async";
-import { Mutex } from "./Mutex";
-import { TestEnv } from "./TestEnv";
+// @ts-check
+"use strict";
+
+const { randomInt } = require("node:crypto");
+const process = require("node:process");
+const timers = require("node:timers");
 
 /**
- * This is a script written to behave similarly to ExifTool or
- * GraphicsMagick's batch-command modes. It is used for integration tests.
+ * This is a script written to behave similarly to ExifTool's stay_open
+ * batch-command mode. It is used for integration tests.
  *
  * The complexity comes from introducing predictable flakiness.
+ *
+ * Plain JavaScript so `node test.js` works without tsx or compilation.
  */
 
-const env: TestEnv = {
+/** @param {number} ms */
+function delay(ms) {
+  return ms === 0
+    ? Promise.resolve()
+    : new Promise((resolve) => timers.setTimeout(resolve, ms));
+}
+
+const env = {
   RNG_SEED: process.env.RNG_SEED,
   FAIL_RATE: process.env.FAIL_RATE,
   NEWLINE: process.env.NEWLINE,
@@ -22,11 +32,14 @@ const env: TestEnv = {
 
 const newline = env.NEWLINE === "crlf" ? "\r\n" : "\n";
 
-async function write(s: string) {
-  return new Promise<void>((res, rej) =>
-    process.stdout.write(s + newline, (err) =>
-      err == null ? res() : rej(err),
-    ),
+/** @param {string} s */
+async function write(s) {
+  return /** @type {Promise<void>} */ (
+    new Promise((res, rej) =>
+      process.stdout.write(s + newline, (err) =>
+        err == null ? res() : rej(err),
+      ),
+    )
   );
 }
 
@@ -41,7 +54,8 @@ if (ignoreExit) {
   });
 }
 
-function toF(s: string | undefined) {
+/** @param {string | undefined} s */
+function toF(s) {
   if (s == null) return;
   const f = parseFloat(s);
   return isNaN(f) ? undefined : f;
@@ -49,13 +63,10 @@ function toF(s: string | undefined) {
 
 const failRate = toF(env.FAIL_RATE) ?? 0;
 const rng =
-  env.RNG_SEED != null
-    ? // eslint-disable-next-line @typescript-eslint/no-require-imports
-      require("seedrandom")(env.RNG_SEED)
-    : Math.random;
+  env.RNG_SEED != null ? require("seedrandom")(env.RNG_SEED) : Math.random;
 
-async function onLine(line: string): Promise<void> {
-  // write(`# ${_p.pid} onLine(${line.trim()}) (newline = ${env.NEWLINE})`);
+/** @param {string} line */
+async function onLine(line) {
   const r = rng();
   if (r < failRate) {
     // stderr isn't buffered, so this should be flushed immediately:
@@ -117,7 +128,7 @@ async function onLine(line: string): Promise<void> {
       }
       case "sleep": {
         const millis = parseInt(tokens[0] ?? "100");
-        await delay(millis);
+        if (millis > 0) await delay(millis);
         write(JSON.stringify({ slept: millis, pid: process.pid }));
         write("PASS");
         break;
@@ -147,7 +158,7 @@ async function onLine(line: string): Promise<void> {
         if (ignoreExit) {
           write("IGNORE_EXIT is set");
         } else {
-          const signal = (tokens[0] ?? "SIGTERM") as NodeJS.Signals;
+          const signal = tokens[0] ?? "SIGTERM";
           // Validate signal name
           const validSignals = ["SIGTERM", "SIGKILL", "SIGINT", "SIGHUP"];
           if (!validSignals.includes(signal)) {
@@ -159,20 +170,20 @@ async function onLine(line: string): Promise<void> {
         break;
       }
       case "stderr": {
-        // force stdout to be emitted before stderr, and exercise stream
-        // debouncing:
-        write("PASS");
-        await delay(1);
+        // Emit stderr before the pass token on stdout, like ExifTool
+        // (which always flushes stderr before emitting {ready}):
         console.error("Error: " + postToken);
+        // note that we're not flushing or waiting here -- the test is that the
+        // stderr content should be emitted before the PASS token, but that OS
+        // buffering doesn't cause them to be emitted in the wrong order.
+        write("PASS");
         break;
       }
       case "stderrfail": {
-        // Write FAIL to stderr first, then stdout data after a delay.
-        // Exercises streamFlushMillis (token found on stderr, waiting for
-        // stdout to flush).
-        console.error("FAIL");
-        await delay(1);
-        write("stdout data: " + postToken);
+        // Emit stderr error content before the fail token on stdout, like
+        // ExifTool (which always emits {ready} on stdout, never stderr):
+        console.error("Error: " + postToken);
+        write("FAIL");
         break;
       }
       default: {
@@ -187,9 +198,8 @@ async function onLine(line: string): Promise<void> {
   return;
 }
 
-const m = new Mutex();
-
-process.stdin
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  .pipe(require("split2")())
-  .on("data", (ea: string) => m.serial(() => onLine(ea)));
+// Simple serial queue: process lines one at a time.
+let pending = Promise.resolve();
+process.stdin.pipe(require("split2")()).on("data", (line) => {
+  pending = pending.then(() => onLine(line));
+});

@@ -691,23 +691,22 @@ describe("BatchCluster", function () {
     }
   }
 
-  describe("waitForStderrMillis", function () {
+  describe("stderr capture", function () {
     let bc: BatchCluster;
     afterEach(() => shutdown(bc));
 
-    it("captures stderr with a low waitForStderrMillis", async function () {
+    it("captures stderr with streamFlushMillis", async function () {
       setFailRatePct(0);
       bc = listen(
         new BatchCluster({
           ...DefaultTestOptions,
           processFactory,
           maxProcs: 1,
-          waitForStderrMillis: 5,
         }),
       );
 
-      // "stderr <msg>" command writes PASS to stdout, then stderr after ~1ms.
-      // With waitForStderrMillis=5, the parser should still see the stderr.
+      // "stderr <msg>" emits stderr first, then PASS on stdout (like ExifTool).
+      // Parser sees non-blank stderr and rejects the task.
       const task = new Task("stderr omg this should fail", parser);
       let error: Error | undefined;
       let result = "";
@@ -720,14 +719,13 @@ describe("BatchCluster", function () {
       postAssertions();
     });
 
-    it("handles mixed pass/fail tasks with low waitForStderrMillis", async function () {
+    it("handles mixed pass/fail tasks", async function () {
       setFailRatePct(10);
       bc = listen(
         new BatchCluster({
           ...DefaultTestOptions,
           processFactory,
           maxProcs: 2,
-          waitForStderrMillis: 5,
         }),
       );
 

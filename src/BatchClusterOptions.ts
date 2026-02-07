@@ -94,9 +94,9 @@ export class BatchClusterOptions {
   endGracefulWaitTimeMillis = 500;
 
   /**
-   * When a task's pass/fail token is detected on stderr, this is how long to
-   * wait for stdout to flush before running the parser. Also used as the
-   * fallback when {@link waitForStderrMillis} is not set.
+   * When a task's pass/fail token is detected on one stream (stdout or
+   * stderr), this is how long to wait for the *other* stream to flush before
+   * running the parser.
    *
    * Since stdout is typically line-buffered, it may arrive after stderr, so
    * this value needs to be large enough for the OS to flush stdout.
@@ -107,26 +107,10 @@ export class BatchClusterOptions {
    *
    * Setting this to 0 will most likely result in internal errors (due to
    * stream buffers not being associated to tasks that were just settled).
-   *
-   * @see {@link waitForStderrMillis} for the stdout-to-stderr direction
    */
   // These values were found by trial and error using GitHub CI boxes, which
   // should be the bottom of the barrel, performance-wise, of any computer.
   streamFlushMillis = isMac ? 100 : isWin ? 200 : 30;
-
-  /**
-   * When a task's pass/fail token is detected on stdout, this is how long to
-   * wait for stderr to flush before running the parser.
-   *
-   * Since stderr is typically unbuffered by the OS, it usually arrives before
-   * or concurrently with stdout, so this can be much smaller than
-   * {@link streamFlushMillis}.
-   *
-   * Defaults to {@link streamFlushMillis} for backward compatibility. Try
-   * setting this to 5-10ms for a substantial latency improvement on passing
-   * tasks.
-   */
-  waitForStderrMillis?: number;
 
   /**
    * Should batch-cluster try to clean up after spawned processes that don't

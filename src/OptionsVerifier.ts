@@ -73,9 +73,6 @@ export function verifyOptions(
   gte("onIdleIntervalMillis", 0);
   gte("endGracefulWaitTimeMillis", 0);
   gte("streamFlushMillis", 0);
-  if (result.waitForStderrMillis != null) {
-    gte("waitForStderrMillis", 0);
-  }
 
   if (errors.length > 0) {
     throw new Error(

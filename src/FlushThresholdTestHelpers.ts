@@ -1,8 +1,8 @@
 /**
  * Shared helpers for flush-threshold discovery tests and the CLI tool.
  *
- * Provides a zero-failure-rate test process factory and parsers for the
- * "stderr" and "stderrfail" commands in test.ts.
+ * Provides a zero-failure-rate test process factory and a parser for the
+ * "stderrfail" command in test.ts.
  *
  * @module
  */
@@ -33,27 +33,14 @@ export function testProcessFactory(): child_process.ChildProcess {
 }
 
 /**
- * Parser for the "stderr" test command.
- *
- * Flow: PASS token arrives on stdout first, then stderr data follows after a
- * short delay. The task is expected to pass (`passed=true`).
- *
- * Used with {@link findWaitForStderrMillis} to find how long to wait for
- * stderr after the PASS token is seen on stdout.
- */
-export const expectPassParser: Parser<string> = (stdout, _stderr, passed) => {
-  if (!passed) throw new Error("task unexpectedly failed");
-  return stdout.trim();
-};
-
-/**
  * Parser for the "stderrfail" test command.
  *
- * Flow: FAIL token arrives on stderr first, then stdout data follows after a
- * short delay. The task is expected to fail (`passed=false`).
+ * Flow: stderr error content arrives first, then FAIL token on stdout after a
+ * short delay (mirroring ExifTool's stream ordering). The task is expected to
+ * fail (`passed=false`).
  *
  * Used with {@link findStreamFlushMillis} to find how long to wait for
- * stdout after the FAIL token is seen on stderr.
+ * stderr data that was sent before the stdout completion token.
  */
 export const expectFailParser: Parser<string> = (stdout, _stderr, passed) => {
   if (passed) throw new Error("task unexpectedly passed");

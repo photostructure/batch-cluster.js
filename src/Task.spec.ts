@@ -16,39 +16,8 @@ function mkOpts(overrides: Partial<TaskOptions> = {}): TaskOptions {
 }
 
 describe("Task", () => {
-  describe("directional stream flush delays", () => {
-    it("uses waitForStderrMillis when token detected on stdout", async () => {
-      const task = new Task("test", (stdout) => stdout);
-      task.onStart(mkOpts({ streamFlushMillis: 200, waitForStderrMillis: 5 }));
-
-      const start = Date.now();
-      task.onStdout("hello\nPASS\n");
-      await task.promise;
-      const elapsed = Date.now() - start;
-
-      // Should use the short waitForStderrMillis (5ms), not the long
-      // streamFlushMillis (200ms)
-      expect(elapsed).to.be.lessThan(100);
-    });
-
-    it("uses streamFlushMillis when token detected on stderr", async () => {
-      const task = new Task("test", (_stdout, _stderr, passed) => {
-        if (!passed) throw new Error("failed");
-        return "ok";
-      });
-      task.onStart(mkOpts({ streamFlushMillis: 100, waitForStderrMillis: 5 }));
-
-      const start = Date.now();
-      task.onStderr("error\nFAIL\n");
-      await expect(task.promise).to.be.rejected;
-      const elapsed = Date.now() - start;
-
-      // Should use the longer streamFlushMillis (100ms), not
-      // waitForStderrMillis (5ms)
-      expect(elapsed).to.be.greaterThanOrEqual(90);
-    });
-
-    it("falls back to streamFlushMillis when waitForStderrMillis is undefined", async () => {
+  describe("stream flush delays", () => {
+    it("uses streamFlushMillis when token detected on stdout", async () => {
       const task = new Task("test", (stdout) => stdout);
       task.onStart(mkOpts({ streamFlushMillis: 100 }));
 
@@ -57,13 +26,29 @@ describe("Task", () => {
       await task.promise;
       const elapsed = Date.now() - start;
 
-      // Without waitForStderrMillis, should use streamFlushMillis (100ms)
+      // Should use streamFlushMillis (100ms)
       expect(elapsed).to.be.greaterThanOrEqual(90);
     });
 
-    it("uses 0 delay when both flush values are 0", async () => {
+    it("uses streamFlushMillis when token detected on stderr", async () => {
+      const task = new Task("test", (_stdout, _stderr, passed) => {
+        if (!passed) throw new Error("failed");
+        return "ok";
+      });
+      task.onStart(mkOpts({ streamFlushMillis: 100 }));
+
+      const start = Date.now();
+      task.onStderr("error\nFAIL\n");
+      await expect(task.promise).to.be.rejected;
+      const elapsed = Date.now() - start;
+
+      // Should use the same streamFlushMillis (100ms) for both directions
+      expect(elapsed).to.be.greaterThanOrEqual(90);
+    });
+
+    it("uses 0 delay when streamFlushMillis is 0", async () => {
       const task = new Task("test", (stdout) => stdout);
-      task.onStart(mkOpts({ streamFlushMillis: 0, waitForStderrMillis: 0 }));
+      task.onStart(mkOpts({ streamFlushMillis: 0 }));
 
       const start = Date.now();
       task.onStdout("hello\nPASS\n");
@@ -73,20 +58,20 @@ describe("Task", () => {
       expect(elapsed).to.be.lessThan(50);
     });
 
-    it("fail token on stdout uses waitForStderrMillis", async () => {
+    it("fail token on stdout uses streamFlushMillis", async () => {
       const task = new Task("test", (_stdout, _stderr, passed) => {
         if (!passed) throw new Error("failed");
         return "ok";
       });
-      task.onStart(mkOpts({ streamFlushMillis: 200, waitForStderrMillis: 5 }));
+      task.onStart(mkOpts({ streamFlushMillis: 100 }));
 
       const start = Date.now();
       task.onStdout("error output\nFAIL\n");
       await expect(task.promise).to.be.rejected;
       const elapsed = Date.now() - start;
 
-      // Fail token on stdout → waiting for stderr → uses waitForStderrMillis
-      expect(elapsed).to.be.lessThan(100);
+      // Fail token on stdout → same streamFlushMillis
+      expect(elapsed).to.be.greaterThanOrEqual(90);
     });
   });
 });

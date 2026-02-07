@@ -1,6 +1,5 @@
 import { BatchCluster } from "./BatchCluster";
 import { DefaultTestOptions } from "./DefaultTestOptions.spec";
-import { omit } from "./Object";
 import { verifyOptions } from "./OptionsVerifier";
 import { expect, processFactory } from "./_chai.spec";
 
@@ -112,38 +111,6 @@ describe("BatchClusterOptions", () => {
           "streamFlushMillis must be greater than or equal to 0",
         ]);
       }
-    });
-
-    it("rejects negative waitForStderrMillis", () => {
-      try {
-        bc = new BatchCluster({
-          processFactory,
-          ...DefaultTestOptions,
-          waitForStderrMillis: -1,
-        });
-        throw new Error("expected an error due to invalid opts");
-      } catch (err) {
-        expect(String(err)).to.include(
-          "waitForStderrMillis must be greater than or equal to 0",
-        );
-      }
-    });
-
-    it("allows undefined waitForStderrMillis (defaults to streamFlushMillis)", () => {
-      bc = new BatchCluster({
-        processFactory,
-        ...omit(DefaultTestOptions, "waitForStderrMillis"),
-      });
-      expect(bc.options.waitForStderrMillis).to.equal(undefined);
-    });
-
-    it("allows explicit waitForStderrMillis", () => {
-      bc = new BatchCluster({
-        processFactory,
-        ...DefaultTestOptions,
-        waitForStderrMillis: 5,
-      });
-      expect(bc.options.waitForStderrMillis).to.equal(5);
     });
   });
 });

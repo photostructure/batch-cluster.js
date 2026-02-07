@@ -1,11 +1,6 @@
-import {
-  SearchParameter,
-  findStreamFlushMillis,
-  findWaitForStderrMillis,
-} from "./FindFlushThresholds";
+import { findStreamFlushMillis } from "./FindFlushThresholds";
 import {
   expectFailParser,
-  expectPassParser,
   testProcessFactory,
 } from "./FlushThresholdTestHelpers";
 import { isMac, isWin } from "./Platform";
@@ -28,21 +23,14 @@ const cliLogger = {
 };
 
 interface CliConfig {
-  parameters: SearchParameter[];
   lo: number;
   hi: number;
 }
 
-const allParameters: SearchParameter[] = [
-  "waitForStderrMillis",
-  "streamFlushMillis",
-];
-
 function printUsage() {
-  console.log(`Usage: node FindFlushThresholds.js [options]
+  console.log(`Usage: node find-flush-thresholds.js [options]
 
 Options:
-  --parameter <name>   waitForStderrMillis or streamFlushMillis (default: both)
   --lo <ms>            Lower bound (default: 0)
   --hi <ms>            Upper bound (default: 500)
   --help               Show this help`);
@@ -50,7 +38,7 @@ Options:
 
 function parseArgs(): CliConfig {
   const args = process.argv.slice(2);
-  const config: CliConfig = { parameters: [], lo: 0, hi: 500 };
+  const config: CliConfig = { lo: 0, hi: 500 };
 
   for (let i = 0; i < args.length; i++) {
     const arg = args[i];
@@ -64,17 +52,6 @@ function parseArgs(): CliConfig {
     };
 
     switch (arg) {
-      case "--parameter": {
-        const p = next();
-        if (p !== "waitForStderrMillis" && p !== "streamFlushMillis") {
-          console.error(
-            `Invalid parameter: ${p} (must be waitForStderrMillis or streamFlushMillis)`,
-          );
-          process.exit(1);
-        }
-        config.parameters.push(p);
-        break;
-      }
       case "--lo":
         config.lo = parseInt(next(), 10);
         break;
@@ -92,10 +69,6 @@ function parseArgs(): CliConfig {
     }
   }
 
-  if (config.parameters.length === 0) {
-    config.parameters = allParameters;
-  }
-
   return config;
 }
 
@@ -103,63 +76,26 @@ async function main() {
   const config = parseArgs();
 
   console.log(
-    `Finding flush thresholds on ${platformName} (node ${process.version})`,
+    `Finding streamFlushMillis threshold on ${platformName} (node ${process.version})`,
   );
 
-  const results: { parameter: string; min: number; recommended: number }[] = [];
+  const recommended = await findStreamFlushMillis({
+    processFactory: testProcessFactory,
+    versionCommand: "version",
+    pass: "PASS",
+    fail: "FAIL",
+    exitCommand: "exit",
+    taskFactory: (i: number) =>
+      new Task("stderrfail test-data " + i, expectFailParser),
+    lo: config.lo,
+    hi: config.hi,
+    logger: () => cliLogger,
+  });
 
-  for (const parameter of config.parameters) {
-    const taskFactory =
-      parameter === "waitForStderrMillis"
-        ? (i: number) => new Task("stderr test-data " + i, expectPassParser)
-        : (i: number) =>
-            new Task("stderrfail test-data " + i, expectFailParser);
-
-    const recommended =
-      parameter === "waitForStderrMillis"
-        ? await findWaitForStderrMillis({
-            processFactory: testProcessFactory,
-            versionCommand: "version",
-            pass: "PASS",
-            fail: "FAIL",
-            exitCommand: "exit",
-            taskFactory,
-            lo: config.lo,
-            hi: config.hi,
-            logger: () => cliLogger,
-          })
-        : await findStreamFlushMillis({
-            processFactory: testProcessFactory,
-            versionCommand: "version",
-            pass: "PASS",
-            fail: "FAIL",
-            exitCommand: "exit",
-            taskFactory,
-            lo: config.lo,
-            hi: config.hi,
-            logger: () => cliLogger,
-          });
-
-    const min = Math.ceil(recommended / 2); // reverse the 2x safety margin
-    results.push({ parameter, min, recommended });
-
-    console.log("\n" + "=".repeat(60));
-    console.log(`${parameter} on ${platformName} (${process.version}):`);
-    console.log(`  Minimum reliable: ${min}ms`);
-    console.log(`  Recommended (2x): ${recommended}ms`);
-    console.log("=".repeat(60));
-  }
-
-  if (results.length > 1) {
-    console.log("\n" + "=".repeat(60));
-    console.log("Summary:");
-    for (const r of results) {
-      console.log(
-        `  ${r.parameter}: min=${r.min}ms, recommended=${r.recommended}ms`,
-      );
-    }
-    console.log("=".repeat(60));
-  }
+  console.log("\n" + "=".repeat(60));
+  console.log(`streamFlushMillis on ${platformName} (${process.version}):`);
+  console.log(`  Minimum reliable: ${recommended}ms`);
+  console.log("=".repeat(60));
 }
 
 main().catch((err) => {

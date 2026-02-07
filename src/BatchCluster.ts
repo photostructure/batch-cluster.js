@@ -19,10 +19,7 @@ import { TaskQueueManager } from "./TaskQueueManager";
 export { BatchClusterOptions } from "./BatchClusterOptions";
 export { BatchProcess } from "./BatchProcess";
 export { Deferred } from "./Deferred";
-export {
-  findStreamFlushMillis,
-  findWaitForStderrMillis,
-} from "./FindFlushThresholds";
+export { findStreamFlushMillis } from "./FindFlushThresholds";
 export * from "./Logger";
 export { SimpleParser } from "./Parser";
 export { kill, pidExists } from "./Pids";
