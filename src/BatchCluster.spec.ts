@@ -809,16 +809,28 @@ describe("BatchCluster", function () {
 
   describe("setMaxProcs", function () {
     const maxProcs = 10;
-    const sleepTimeMs = 250;
     let bc: BatchCluster;
     afterEach(() => shutdown(bc));
 
-    it("supports reducing maxProcs", async () => {
+    it("supports reducing maxProcs", async function () {
       // don't fight with flakiness here!
       setFailRatePct(0);
       // Measure spawn time to set appropriate timeout (Windows GHA can take 10+ seconds)
       const baselineSpawnMs = await measureSpawnTime();
       const taskTimeoutMillis = Math.max(5000, baselineSpawnMs * 50);
+
+      // Delay proportional to spawn time to allow processes to start
+      const spawnDelay = Math.max(10, Math.ceil(baselineSpawnMs / 2));
+
+      // Sleep must be long enough that tasks remain active while all
+      // processes spawn sequentially. On slow CI (e.g. Windows GHA),
+      // spawnDelay can exceed 250ms, causing tasks to complete before
+      // the next loop iteration — making busyProcCount never reach
+      // maxProcs (an effective infinite loop).
+      const sleepTimeMs = Math.max(250, spawnDelay * maxProcs * 2);
+
+      // Scale test timeout for slow CI environments
+      this.timeout(Math.max(30000, sleepTimeMs * 6));
 
       const opts = {
         ...DefaultTestOptions,
@@ -830,8 +842,6 @@ describe("BatchCluster", function () {
       };
       bc = new BatchCluster(opts);
       const firstBatchPromises: Promise<string>[] = [];
-      // Delay proportional to spawn time to allow processes to start
-      const spawnDelay = Math.max(10, Math.ceil(baselineSpawnMs / 2));
       while (bc.busyProcCount < maxProcs) {
         firstBatchPromises.push(
           bc.enqueueTask(new Task("sleep " + sleepTimeMs, parser)),
