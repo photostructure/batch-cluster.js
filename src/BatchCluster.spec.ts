@@ -436,180 +436,180 @@ describe("BatchCluster", function () {
                 });
 
                 if (runExpensiveTests)
-                it("calling .end() after running shuts down child procs", async () => {
-                  // This just warms up bc to make child procs:
-                  const iterations =
-                    maxProcs * (bc.options.maxTasksPerProcess + 1);
-                  // we're making exact pid assertions below: don't fight
-                  // flakiness.
-                  setFailRatePct(0);
+                  it("calling .end() after running shuts down child procs", async () => {
+                    // This just warms up bc to make child procs:
+                    const iterations =
+                      maxProcs * (bc.options.maxTasksPerProcess + 1);
+                    // we're making exact pid assertions below: don't fight
+                    // flakiness.
+                    setFailRatePct(0);
 
-                  const tasks = await Promise.all(runTasks(bc, iterations));
-                  assertExpectedResults(tasks);
-                  await shutdown(bc);
-                  expect(bc.spawnedProcCount).to.be.within(
-                    maxProcs,
-                    (iterations + maxProcs) * 3, // because flaky
-                  );
-                  const pids = testPids();
-                  expect(pids.length).to.be.gte(maxProcs);
-                  // it's ok to miss a pid due to startup flakiness or cancelled
-                  // end tasks.
-                  arrayEqualish(events.startedPids, pids, 1);
-                  arrayEqualish(events.exitedPids, pids, 1);
-                  expect(events.events).to.eql(expectedEndEvents);
-                  postAssertions();
-                });
-
-                if (runExpensiveTests)
-                it(
-                  "runs a given batch process roughly " +
-                    opts.maxTasksPerProcess +
-                    " before recycling",
-                  async function () {
-                    // Windows CI is consistently 2-10x slower due to process spawn overhead
-                    // This test does extensive work with 60% failure rate and process recycling
-                    // With healthCheck enabled, the overhead is even higher due to constant health checks
-                    if (isWin && isCI) {
-                      this.timeout(healthCheck ? 90000 : 60000); // Extra time for health check overhead
-                    }
-                    // make sure we hit an EUNLUCKY:
-                    setFailRatePct(60);
-                    let expectedResultCount = 0;
-                    const results = await Promise.all(runTasks(bc, maxProcs));
-                    expectedResultCount += maxProcs;
-                    const pids = bc.pids();
-                    // Ensure enough iterations for statistical reliability:
-                    // With 60% fail rate, probability of zero failures = 0.4^N.
-                    // 10 tasks gives 0.4^10 ≈ 0.01% chance of zero failures.
-                    const iters = Math.max(
-                      10,
-                      Math.floor(maxProcs * opts.maxTasksPerProcess * 1.5),
-                    );
-                    results.push(
-                      ...(await Promise.all(
-                        runTasks(bc, iters, expectedResultCount),
-                      )),
-                    );
-
-                    expectedResultCount += iters;
-                    assertExpectedResults(results);
-                    expect(results.length).to.eql(expectedResultCount);
-
-                    // expect some errors:
-                    const errorResults = results.filter((ea) =>
-                      ea.startsWith(ErrorPrefix),
-                    );
-                    expect(errorResults).to.not.eql([]);
-
-                    // Expect a reasonable number of new pids. Worst case, we
-                    // errored after every start, so there may be more then iters
-                    // pids spawned.
-                    // Allow some tolerance for measurement processes spawned by measureSpawnTime()
-                    expect(childProcs.length).to.be.closeTo(
-                      bc.spawnedProcCount,
-                      5,
-                    );
-
-                    expect(bc.spawnedProcCount).to.be.within(
-                      results.length / opts.maxTasksPerProcess,
-                      results.length * (isWin ? 10 : 5), // because flaky
-                    );
-
-                    // So, at this point, we should have at least _asked_ the
-                    // initial child processes to end because they're "worn".
-
-                    // Running vacuumProcs will return a promise that will only
-                    // resolve when those procs have shut down.
-
-                    await bc.vacuumProcs();
-
-                    // Expect no prior pids to remain, as long as there were before-pids:
-                    // NOTE: On Windows, PIDs can be reused quickly, so we only check this
-                    // on non-Windows platforms to avoid flakiness
-                    if (pids.length > 0 && !isWin)
-                      expect(bc.pids()).to.not.include.members(pids);
-
-                    expect(bc.meanTasksPerProc).to.be.within(
-                      0.15, // because flaky (macOS on GHA resulted in 0.21)
-                      opts.maxTasksPerProcess,
-                    );
-                    expect(bc.pids().length).to.be.lte(maxProcs);
-                    expect(currentTestPids().length).to.be.lte(
-                      bc.spawnedProcCount,
-                    ); // because flaky
-
-                    const unhealthy = bc.countEndedChildProcs("unhealthy");
-                    // If it's a short spec and we don't have any worn procs, we
-                    // probably don't have any unhealthy procs:
-                    if (healthCheck && bc.countEndedChildProcs("worn") > 2) {
-                      expect(unhealthy).to.be.gte(0);
-                    }
-
-                    if (!healthCheck) {
-                      expect(unhealthy).to.eql(0);
-                    }
-
+                    const tasks = await Promise.all(runTasks(bc, iterations));
+                    assertExpectedResults(tasks);
                     await shutdown(bc);
-                    // (no run count assertions)
-                  },
-                );
+                    expect(bc.spawnedProcCount).to.be.within(
+                      maxProcs,
+                      (iterations + maxProcs) * 3, // because flaky
+                    );
+                    const pids = testPids();
+                    expect(pids.length).to.be.gte(maxProcs);
+                    // it's ok to miss a pid due to startup flakiness or cancelled
+                    // end tasks.
+                    arrayEqualish(events.startedPids, pids, 1);
+                    arrayEqualish(events.exitedPids, pids, 1);
+                    expect(events.events).to.eql(expectedEndEvents);
+                    postAssertions();
+                  });
 
                 if (runExpensiveTests)
-                it("recovers from invalid commands", async function () {
-                  this.slow(1);
-                  assertExpectedResults(
-                    await Promise.all(runTasks(bc, maxProcs * 4)),
-                  );
-                  const errorResults = await Promise.all(
-                    times(maxProcs * 2, () =>
-                      bc
-                        .enqueueTask(new Task("nonsense", parser))
-                        .catch((err: unknown) => err),
-                    ),
-                  );
-                  function convertErrorToString(ea: unknown): string {
-                    if (ea == null) return "[unknown]";
-                    if (ea instanceof Error) return ea.message;
-                    if (typeof ea === "string") return ea;
-                    if (typeof ea === "object") {
-                      try {
-                        return JSON.stringify(ea);
-                      } catch {
-                        return "[object Object]";
+                  it(
+                    "runs a given batch process roughly " +
+                      opts.maxTasksPerProcess +
+                      " before recycling",
+                    async function () {
+                      // Windows CI is consistently 2-10x slower due to process spawn overhead
+                      // This test does extensive work with 60% failure rate and process recycling
+                      // With healthCheck enabled, the overhead is even higher due to constant health checks
+                      if (isWin && isCI) {
+                        this.timeout(healthCheck ? 90000 : 60000); // Extra time for health check overhead
                       }
-                    }
-                    if (typeof ea === "number" || typeof ea === "boolean") {
-                      return String(ea);
-                    }
-                    return "[unknown]";
-                  }
+                      // make sure we hit an EUNLUCKY:
+                      setFailRatePct(60);
+                      let expectedResultCount = 0;
+                      const results = await Promise.all(runTasks(bc, maxProcs));
+                      expectedResultCount += maxProcs;
+                      const pids = bc.pids();
+                      // Ensure enough iterations for statistical reliability:
+                      // With 60% fail rate, probability of zero failures = 0.4^N.
+                      // 10 tasks gives 0.4^10 ≈ 0.01% chance of zero failures.
+                      const iters = Math.max(
+                        10,
+                        Math.floor(maxProcs * opts.maxTasksPerProcess * 1.5),
+                      );
+                      results.push(
+                        ...(await Promise.all(
+                          runTasks(bc, iters, expectedResultCount),
+                        )),
+                      );
 
-                  filterInPlace(errorResults, (ea) => {
-                    const errorStr = convertErrorToString(ea);
-                    return !errorStr.includes("EUNLUCKY");
-                  });
-                  if (maxProcs === 1 && errorResults.length === 0) {
-                    console.warn("(all processes were unlucky)");
-                    return this.skip();
-                  } else {
-                    expect(
-                      errorResults.some((ea) =>
-                        String(ea).includes("nonsense"),
-                      ),
-                    ).to.eql(true, JSON.stringify(errorResults));
-                    expect(
-                      parserErrors.some((ea) => ea.includes("nonsense")),
-                    ).to.eql(true, JSON.stringify(parserErrors));
-                  }
-                  parserErrors.length = 0;
-                  // BC should recover:
-                  assertExpectedResults(
-                    await Promise.all(runTasks(bc, maxProcs * 4)),
+                      expectedResultCount += iters;
+                      assertExpectedResults(results);
+                      expect(results.length).to.eql(expectedResultCount);
+
+                      // expect some errors:
+                      const errorResults = results.filter((ea) =>
+                        ea.startsWith(ErrorPrefix),
+                      );
+                      expect(errorResults).to.not.eql([]);
+
+                      // Expect a reasonable number of new pids. Worst case, we
+                      // errored after every start, so there may be more then iters
+                      // pids spawned.
+                      // Allow some tolerance for measurement processes spawned by measureSpawnTime()
+                      expect(childProcs.length).to.be.closeTo(
+                        bc.spawnedProcCount,
+                        5,
+                      );
+
+                      expect(bc.spawnedProcCount).to.be.within(
+                        results.length / opts.maxTasksPerProcess,
+                        results.length * (isWin ? 10 : 5), // because flaky
+                      );
+
+                      // So, at this point, we should have at least _asked_ the
+                      // initial child processes to end because they're "worn".
+
+                      // Running vacuumProcs will return a promise that will only
+                      // resolve when those procs have shut down.
+
+                      await bc.vacuumProcs();
+
+                      // Expect no prior pids to remain, as long as there were before-pids:
+                      // NOTE: On Windows, PIDs can be reused quickly, so we only check this
+                      // on non-Windows platforms to avoid flakiness
+                      if (pids.length > 0 && !isWin)
+                        expect(bc.pids()).to.not.include.members(pids);
+
+                      expect(bc.meanTasksPerProc).to.be.within(
+                        0.15, // because flaky (macOS on GHA resulted in 0.21)
+                        opts.maxTasksPerProcess,
+                      );
+                      expect(bc.pids().length).to.be.lte(maxProcs);
+                      expect(currentTestPids().length).to.be.lte(
+                        bc.spawnedProcCount,
+                      ); // because flaky
+
+                      const unhealthy = bc.countEndedChildProcs("unhealthy");
+                      // If it's a short spec and we don't have any worn procs, we
+                      // probably don't have any unhealthy procs:
+                      if (healthCheck && bc.countEndedChildProcs("worn") > 2) {
+                        expect(unhealthy).to.be.gte(0);
+                      }
+
+                      if (!healthCheck) {
+                        expect(unhealthy).to.eql(0);
+                      }
+
+                      await shutdown(bc);
+                      // (no run count assertions)
+                    },
                   );
-                  // (no run count assertions)
-                  return;
-                });
+
+                if (runExpensiveTests)
+                  it("recovers from invalid commands", async function () {
+                    this.slow(1);
+                    assertExpectedResults(
+                      await Promise.all(runTasks(bc, maxProcs * 4)),
+                    );
+                    const errorResults = await Promise.all(
+                      times(maxProcs * 2, () =>
+                        bc
+                          .enqueueTask(new Task("nonsense", parser))
+                          .catch((err: unknown) => err),
+                      ),
+                    );
+                    function convertErrorToString(ea: unknown): string {
+                      if (ea == null) return "[unknown]";
+                      if (ea instanceof Error) return ea.message;
+                      if (typeof ea === "string") return ea;
+                      if (typeof ea === "object") {
+                        try {
+                          return JSON.stringify(ea);
+                        } catch {
+                          return "[object Object]";
+                        }
+                      }
+                      if (typeof ea === "number" || typeof ea === "boolean") {
+                        return String(ea);
+                      }
+                      return "[unknown]";
+                    }
+
+                    filterInPlace(errorResults, (ea) => {
+                      const errorStr = convertErrorToString(ea);
+                      return !errorStr.includes("EUNLUCKY");
+                    });
+                    if (maxProcs === 1 && errorResults.length === 0) {
+                      console.warn("(all processes were unlucky)");
+                      return this.skip();
+                    } else {
+                      expect(
+                        errorResults.some((ea) =>
+                          String(ea).includes("nonsense"),
+                        ),
+                      ).to.eql(true, JSON.stringify(errorResults));
+                      expect(
+                        parserErrors.some((ea) => ea.includes("nonsense")),
+                      ).to.eql(true, JSON.stringify(parserErrors));
+                    }
+                    parserErrors.length = 0;
+                    // BC should recover:
+                    assertExpectedResults(
+                      await Promise.all(runTasks(bc, maxProcs * 4)),
+                    );
+                    // (no run count assertions)
+                    return;
+                  });
 
                 it("times out slow requests", async () => {
                   const task = new Task(
@@ -623,33 +623,34 @@ describe("BatchCluster", function () {
                 });
 
                 if (runExpensiveTests)
-                it("accepts single and multi-line responses", async () => {
-                  setFailRatePct(0);
-                  // Measure spawn time to set appropriate timeouts
-                  const baselineSpawnMs = await measureSpawnTime();
-                  bc.options.taskTimeoutMillis = Math.max(
-                    500,
-                    baselineSpawnMs * 10,
-                  );
+                  it("accepts single and multi-line responses", async () => {
+                    setFailRatePct(0);
+                    // Measure spawn time to set appropriate timeouts
+                    const baselineSpawnMs = await measureSpawnTime();
+                    bc.options.taskTimeoutMillis = Math.max(
+                      500,
+                      baselineSpawnMs * 10,
+                    );
 
-                  const expected: string[] = [];
-                  const results = await Promise.all(
-                    times(15, (idx) => {
-                      // Make a distribution of single, double, and triple line outputs:
-                      const worlds = times(idx % 3, (ea) => "world " + ea);
-                      expected.push(
-                        [idx + " HELLO", ...worlds].join("\n").toUpperCase(),
-                      );
-                      const cmd = ["upcase " + idx + " hello", ...worlds].join(
-                        "<br>",
-                      );
-                      return bc.enqueueTask(new Task(cmd, parser));
-                    }),
-                  );
-                  expect(results).to.eql(expected);
+                    const expected: string[] = [];
+                    const results = await Promise.all(
+                      times(15, (idx) => {
+                        // Make a distribution of single, double, and triple line outputs:
+                        const worlds = times(idx % 3, (ea) => "world " + ea);
+                        expected.push(
+                          [idx + " HELLO", ...worlds].join("\n").toUpperCase(),
+                        );
+                        const cmd = [
+                          "upcase " + idx + " hello",
+                          ...worlds,
+                        ].join("<br>");
+                        return bc.enqueueTask(new Task(cmd, parser));
+                      }),
+                    );
+                    expect(results).to.eql(expected);
 
-                  postAssertions();
-                });
+                    postAssertions();
+                  });
 
                 it("rejects a command that results in FAIL", async function () {
                   const task = new Task("invalid command", parser);

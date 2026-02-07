@@ -1,5 +1,6 @@
 import { BatchCluster } from "./BatchCluster";
 import { DefaultTestOptions } from "./DefaultTestOptions.spec";
+import { omit } from "./Object";
 import { verifyOptions } from "./OptionsVerifier";
 import { expect, processFactory } from "./_chai.spec";
 
@@ -131,7 +132,7 @@ describe("BatchClusterOptions", () => {
     it("allows undefined waitForStderrMillis (defaults to streamFlushMillis)", () => {
       bc = new BatchCluster({
         processFactory,
-        ...DefaultTestOptions,
+        ...omit(DefaultTestOptions, "waitForStderrMillis"),
       });
       expect(bc.options.waitForStderrMillis).to.equal(undefined);
     });

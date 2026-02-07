@@ -19,6 +19,10 @@ import { TaskQueueManager } from "./TaskQueueManager";
 export { BatchClusterOptions } from "./BatchClusterOptions";
 export { BatchProcess } from "./BatchProcess";
 export { Deferred } from "./Deferred";
+export {
+  findStreamFlushMillis,
+  findWaitForStderrMillis,
+} from "./FindFlushThresholds";
 export * from "./Logger";
 export { SimpleParser } from "./Parser";
 export { kill, pidExists } from "./Pids";
@@ -36,6 +40,7 @@ export type { BatchClusterStats } from "./BatchClusterStats";
 export type { BatchProcessOptions } from "./BatchProcessOptions";
 export type { ChildProcessFactory } from "./ChildProcessFactory";
 export type { CombinedBatchProcessOptions } from "./CombinedBatchProcessOptions";
+export type { FindFlushMillisOptions } from "./FindFlushThresholds";
 export type { HealthCheckStrategy } from "./HealthCheckStrategy";
 export type { InternalBatchProcessOptions } from "./InternalBatchProcessOptions";
 export type { LoggerFunction } from "./Logger";

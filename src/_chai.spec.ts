@@ -7,12 +7,25 @@ try {
 
 import { expect, use } from "chai";
 import child_process from "node:child_process";
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import process from "node:process";
+import { BatchClusterOptions } from "./BatchCluster";
+import { DefaultTestOptions } from "./DefaultTestOptions.spec";
+import {
+  findStreamFlushMillis,
+  findWaitForStderrMillis,
+} from "./FindFlushThresholds";
+import {
+  expectFailParser,
+  expectPassParser,
+  testProcessFactory,
+} from "./FlushThresholdTestHelpers";
 import { Log, logger, setLogger } from "./Logger";
-import { Parser } from "./Parser";
+import type { Parser } from "./Parser";
 import { pidExists } from "./Pids";
 import { notBlank } from "./String";
+import { Task } from "./Task";
 import { TestEnv } from "./TestEnv";
 
 use(require("chai-as-promised"));
@@ -202,3 +215,125 @@ export const processFactory = () => {
   childProcs.push(proc);
   return proc;
 };
+
+// ---------------------------------------------------------------------------
+// Flush threshold discovery & caching
+// ---------------------------------------------------------------------------
+
+interface FlushThresholdCache {
+  streamFlushMillis: number;
+  waitForStderrMillis: number;
+  nodeVersion: string;
+  timestamp: string;
+}
+
+const CACHE_DIR = path.join(__dirname, "..", ".cache");
+const CACHE_FILE = path.join(CACHE_DIR, process.platform + ".json");
+
+function readCache(): FlushThresholdCache | undefined {
+  try {
+    const raw = readFileSync(CACHE_FILE, "utf-8");
+    const data = JSON.parse(raw) as FlushThresholdCache;
+    if (
+      data.nodeVersion === process.version &&
+      typeof data.streamFlushMillis === "number" &&
+      typeof data.waitForStderrMillis === "number" &&
+      data.streamFlushMillis > 0 &&
+      data.waitForStderrMillis > 0
+    ) {
+      return data;
+    }
+  } catch {
+    // Cache missing or corrupt — will re-discover
+  }
+  return undefined;
+}
+
+function writeCache(result: {
+  streamFlushMillis: number;
+  waitForStderrMillis: number;
+}): void {
+  const data: FlushThresholdCache = {
+    ...result,
+    nodeVersion: process.version,
+    timestamp: new Date().toISOString(),
+  };
+  try {
+    mkdirSync(CACHE_DIR, { recursive: true });
+    writeFileSync(CACHE_FILE, JSON.stringify(data, null, 2) + "\n");
+  } catch {
+    // Non-fatal: discovery still works, just won't be cached
+  }
+}
+
+// Quick but slightly more robust than FindFlushThresholds.spec.ts's fastTuning
+const quickTuning = {
+  lo: 0,
+  hi: 20,
+  maxProcs: 2,
+  coarseTasks: 5,
+  validationTasks: 5,
+  validationTrials: 2,
+  validationRadius: 2,
+  confirmationTrials: 4,
+  confirmationTasks: 7,
+  safetyMargin: 2,
+};
+
+/**
+ * Discover (or read from cache) the optimal flush threshold values for the
+ * current machine. Returns `{ streamFlushMillis, waitForStderrMillis }`.
+ */
+export async function batchClusterTestOptions(): Promise<{
+  streamFlushMillis: number;
+  waitForStderrMillis: number;
+}> {
+  const cached = readCache();
+  if (cached != null) {
+    return {
+      streamFlushMillis: cached.streamFlushMillis,
+      waitForStderrMillis: cached.waitForStderrMillis,
+    };
+  }
+
+  const commonOpts = {
+    processFactory: testProcessFactory,
+    versionCommand: "version",
+    pass: "PASS",
+    fail: "FAIL",
+    exitCommand: "exit",
+    ...quickTuning,
+  };
+
+  const [waitForStderrMillis, streamFlushMillis] = await Promise.all([
+    findWaitForStderrMillis({
+      ...commonOpts,
+      taskFactory: (i: number) =>
+        new Task("stderr test-data " + i, expectPassParser),
+    }),
+    findStreamFlushMillis({
+      ...commonOpts,
+      taskFactory: (i: number) =>
+        new Task("stderrfail test-data " + i, expectFailParser),
+    }),
+  ]);
+
+  const result = {
+    streamFlushMillis,
+    waitForStderrMillis,
+  } satisfies Pick<
+    BatchClusterOptions,
+    "streamFlushMillis" | "waitForStderrMillis"
+  >;
+  writeCache(result);
+  return result;
+}
+
+// Root-level before() hook: runs once before all test suites.
+// Discovers flush thresholds and injects them into DefaultTestOptions.
+before(async function () {
+  this.timeout(60_000);
+  const thresholds = await batchClusterTestOptions();
+  Object.assign(DefaultTestOptions, thresholds);
+  console.log("Flush thresholds:", thresholds);
+});

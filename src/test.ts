@@ -166,6 +166,15 @@ async function onLine(line: string): Promise<void> {
         console.error("Error: " + postToken);
         break;
       }
+      case "stderrfail": {
+        // Write FAIL to stderr first, then stdout data after a delay.
+        // Exercises streamFlushMillis (token found on stderr, waiting for
+        // stdout to flush).
+        console.error("FAIL");
+        await delay(1);
+        write("stdout data: " + postToken);
+        break;
+      }
       default: {
         console.error("invalid or missing command for input", line);
         write("FAIL");

@@ -6,7 +6,7 @@ import {
   setFailRatePct,
   setIgnoreExit,
 } from "./_chai.spec";
-import { delay, until } from "./Async";
+import { until } from "./Async";
 import { BatchClusterEmitter } from "./BatchClusterEmitter";
 import { DefaultTestOptions } from "./DefaultTestOptions.spec";
 import { verifyOptions } from "./OptionsVerifier";
@@ -200,13 +200,14 @@ describe("ProcessPoolManager", function () {
       // Start spawning processes but don't wait for completion
       const spawnPromise = poolManager.maybeSpawnProcs(2, false);
 
-      // Should show starting processes initially
-      await delay(50); // Give it a moment to start
-      const totalProcs = poolManager.procCount;
-      const startingProcs = poolManager.startingProcCount;
-
-      expect(totalProcs).to.be.greaterThan(0);
-      expect(startingProcs).to.be.greaterThan(0);
+      // Poll for the "starting" state — with fast flush thresholds the
+      // window can be very short, so we poll every 1ms to catch it.
+      const sawStarting = await until(
+        () => poolManager.startingProcCount > 0,
+        2000,
+        1,
+      );
+      expect(sawStarting).to.eql(true, "should observe startingProcCount > 0");
 
       await spawnPromise;
 
