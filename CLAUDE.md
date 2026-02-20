@@ -72,6 +72,21 @@ The test suite uses a custom test script (`src/test.ts`) that simulates a batch-
   - Good: `if (value != null)`, `if (value == null)`
   - Bad: `if (value)`, `if (!value)`
 
+## Technical Project Plans (TPP)
+
+Use TPPs for non-trivial work. Before starting any TPP, read:
+
+- **[doc/TPP-GUIDE.md](doc/TPP-GUIDE.md)** — How to write and execute TPPs
+- **[doc/SIMPLE-DESIGN.md](doc/SIMPLE-DESIGN.md)** — Kent Beck's Four Rules of Simple Design
+- **[doc/TDD.md](doc/TDD.md)** — Bug fixes must start with a failing test
+
+TPP workflow:
+
+- Active TPPs live in `doc/todo/` (e.g., `P01-fix-task-timeout.md`)
+- Completed TPPs move to `doc/done/` with date prefix (e.g., `20260208-P01-fix-timeout.md`)
+- Use `/tpp <path>` to resume work on a TPP
+- Use `/handoff [path]` to save progress before ending a session
+
 ## Verification Requirements
 
 **CRITICAL**: Never reference URLs, APIs, features, libraries, or external resources without verification. Always:
