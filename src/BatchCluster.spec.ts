@@ -1,5 +1,6 @@
 import FakeTimers from "@sinonjs/fake-timers";
 import child_process from "node:child_process";
+import path from "node:path";
 import process from "node:process";
 import {
   childProcs,
@@ -22,6 +23,7 @@ import { BatchCluster } from "./BatchCluster";
 import { secondMs } from "./BatchClusterOptions";
 import { DefaultTestOptions } from "./DefaultTestOptions.spec";
 import { map, omit } from "./Object";
+import { pidExists } from "./Pids";
 import { isWin } from "./Platform";
 import { toS } from "./String";
 import { Task } from "./Task";
@@ -1700,5 +1702,65 @@ describe("BatchCluster", function () {
       await bc.end(true);
       postAssertions();
     });
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Exit-backstop tests
+// ---------------------------------------------------------------------------
+
+describe("exit backstop", function () {
+  it("pids() returns [] immediately after end() (pool cleared synchronously)", async function () {
+    setFailRatePct(0);
+    const bc = new BatchCluster({
+      ...DefaultTestOptions,
+      processFactory,
+      maxProcs: 2,
+    });
+    await Promise.all(
+      times(2, (i) => bc.enqueueTask(new Task("upcase abc " + i, parser))),
+    );
+    expect(bc.pids().length).to.be.greaterThan(0, "should have live processes");
+
+    const endDeferred = bc.end(true); // fire-and-forget
+    // #procs is cleared synchronously in closeChildProcesses — precondition for the fix
+    expect(bc.pids()).to.eql([], "pool is empty immediately after end()");
+
+    await endDeferred.promise;
+  });
+
+  it("kills child processes when process exits before async cleanup completes", async function () {
+    this.timeout(30_000);
+
+    const helperPath = path.join(__dirname, "exit-backstop-helper.js");
+    let stdout = "";
+    let stderr = "";
+    const helper = child_process.spawn(process.execPath, [helperPath]);
+    helper.stdout.on("data", (chunk: Buffer) => (stdout += chunk.toString()));
+    helper.stderr.on("data", (chunk: Buffer) => (stderr += chunk.toString()));
+
+    const exitCode = await new Promise<number | null>((resolve) => {
+      helper.on("exit", resolve);
+    });
+    expect(exitCode).to.eql(
+      0,
+      `helper should exit cleanly (stderr: ${stderr})`,
+    );
+
+    const pids = stdout
+      .split("\n")
+      .filter((line) => /^\d+$/.test(line))
+      .map(Number)
+      .filter((n) => n > 0);
+    expect(pids.length).to.be.greaterThan(
+      0,
+      `helper must emit at least one PID (stdout: ${stdout})`,
+    );
+
+    // Before fix: PIDs are alive (orphaned). After fix: backstop killed them.
+    for (const pid of pids) {
+      await until(() => !pidExists(pid), 5_000, 50);
+      expect(pidExists(pid)).to.eql(false, `PID ${pid} should be dead`);
+    }
   });
 });

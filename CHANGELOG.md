@@ -18,6 +18,10 @@ See [Semver](http://semver.org/).
 
 - 📦 Minor packaging changes
 
+## [v17.3.1](https://github.com/photostructure/batch-cluster.js/releases/tag/v17.3.1)
+
+- 🐞 Fixed orphaned child processes after `end()`. When `end()` was called (either explicitly or via the `beforeExit` handler), the synchronous `process.on("exit")` SIGKILL backstop was removed before async cleanup completed. If the parent process exited before graceful termination finished, child processes survived as orphans. The fix snapshots live PIDs before cleanup begins and keeps the backstop registered until async teardown succeeds.
+
 ## [v17.3.0](https://github.com/photostructure/batch-cluster.js/releases/tag/v17.3.0)
 
 - ✨ Added `findStreamFlushMillis()` to auto-discover the minimum reliable `streamFlushMillis` value for a given child process on the current operating system and hardware. Uses a three-phase search (coarse binary search, validation, confirmation); callers should apply their own additive headroom for load spikes.

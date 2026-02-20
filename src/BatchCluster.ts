@@ -157,12 +157,28 @@ export class BatchCluster {
       if (this.#onIdleInterval != null)
         timers.clearInterval(this.#onIdleInterval);
       this.#onIdleInterval = undefined;
+      let removeBackstop: (() => void) | undefined;
+
       if (this.options.cleanupChildProcsOnExit) {
+        // Remove only beforeExit to prevent re-calling end().
         process.removeListener("beforeExit", this.#beforeExitListener);
+
+        // Snapshot live PIDs BEFORE closeChildProcesses empties #procs.
+        const livePids = this.#processPool.pids();
+
+        // Swap the pool-based listener for a snapshot-based backstop.
         process.removeListener("exit", this.#exitListener);
+        const backstop = () => {
+          for (const pid of livePids) kill(pid, true);
+        };
+        process.once("exit", backstop);
+        removeBackstop = () => process.removeListener("exit", backstop);
       }
+
       this.#endPromise = new Deferred<void>().observe(
         this.closeChildProcesses(gracefully).then(() => {
+          // Async cleanup done — backstop is no longer needed.
+          removeBackstop?.();
           this.emitter.emit("end");
         }),
       );

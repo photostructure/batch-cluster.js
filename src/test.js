@@ -134,6 +134,17 @@ async function onLine(line) {
         break;
       }
 
+      case "keepalive": {
+        // Start a ref'd timer to keep the event loop alive, then respond
+        // immediately with PASS so the caller knows the timer is running.
+        // Used by the exit-backstop-helper to ensure this process survives
+        // after stdin closes (i.e. after the parent process exits).
+        const ms = parseInt(tokens[0] ?? "60000");
+        if (ms > 0) timers.setTimeout(() => {}, ms);
+        write("PASS");
+        break;
+      }
+
       case "version": {
         write("v1.2.3");
         write("PASS");
