@@ -8,6 +8,7 @@
     "chai-as-promised why: v8 went to ESM",
     "chai",
     "eslint",
+    "@eslint/js",
     "rimraf",
     "rimraf why: https://github.com/isaacs/rimraf/issues/316 (!!)"
   ]
