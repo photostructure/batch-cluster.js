@@ -26,7 +26,7 @@ export function verifyOptions(
     ...opts,
     passRE: toRe(opts.pass),
     failRE: toRe(opts.fail),
-  } as CombinedBatchProcessOptions;
+  };
 
   const errors: string[] = [];
 

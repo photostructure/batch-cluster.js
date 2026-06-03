@@ -1439,7 +1439,7 @@ describe("BatchCluster", function () {
 
   describe("maxProcAgeMillis (recycling procs)", () => {
     let bc: BatchCluster;
-    let clock: FakeTimers.InstalledClock;
+    let clock: FakeTimers.Clock;
 
     beforeEach(() => {
       clock = FakeTimers.install({
