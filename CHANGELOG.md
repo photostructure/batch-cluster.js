@@ -18,6 +18,14 @@ See [Semver](http://semver.org/).
 
 - 📦 Minor packaging changes
 
+## [v18.0.0](https://github.com/photostructure/batch-cluster.js/releases/tag/v18.0.0)
+
+- 💔 **BREAKING**: Raised the minimum supported Node.js version to `>=22`. Node 20 reached end-of-life, so it is no longer supported or tested. Stay on v17 if you must run on Node 20.
+
+- 📦 Upgraded the build to TypeScript 6.0 and refreshed the dev toolchain. Adapted to three TS 6.0 behavior changes: `moduleResolution` switched from the deprecated `"node"` to `"bundler"` (the recommended path for `module: commonjs`), `@types` packages are now listed explicitly in `compilerOptions.types` since they are no longer auto-discovered, and `@sinonjs/fake-timers` now ships its own types (dropping the redundant `@types/sinonjs__fake-timers`). The published JavaScript and type declarations are unchanged.
+
+- 📦 Updated GitHub Actions workflow pins and the `pinact` installation step.
+
 ## [v17.3.1](https://github.com/photostructure/batch-cluster.js/releases/tag/v17.3.1)
 
 - 🐞 Fixed orphaned child processes after `end()`. When `end()` was called (either explicitly or via the `beforeExit` handler), the synchronous `process.on("exit")` SIGKILL backstop was removed before async cleanup completed. If the parent process exited before graceful termination finished, child processes survived as orphans. The fix snapshots live PIDs before cleanup begins and keeps the backstop registered until async teardown succeeds.
