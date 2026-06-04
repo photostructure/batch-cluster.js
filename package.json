@@ -39,7 +39,7 @@
     "update:actions": "command -v pinact > /dev/null 2>&1 && pinact run -u || echo 'Skipping pinact (not installed)'",
     "find-flush-thresholds": "npm run compile && node dist/find-flush-thresholds.js",
     "release": "release-it",
-    "precommit": "npm install && run-s update fmt docs:build test"
+    "all": "npm install && run-s update fmt docs:build test"
   },
   "release-it": {
     "src": {
