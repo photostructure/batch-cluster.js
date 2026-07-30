@@ -6,6 +6,13 @@
 *test*
 appveyor.yml
 
+# subprocess fixtures for the spec suite. These require dist/test.js, which is
+# excluded above, so they are broken weight in the published package. Matched
+# by suffix so FlushThresholdTestHelpers (used by find-flush-thresholds) stays.
+*-helper.js
+*-helper.js.map
+*-helper.d.ts
+
 # no src
 src/
 
