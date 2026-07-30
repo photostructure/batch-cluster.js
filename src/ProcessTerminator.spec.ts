@@ -15,6 +15,10 @@ describe("ProcessTerminator", function () {
   let options: InternalBatchProcessOptions;
   let isRunningResult: boolean;
   let childEndEvents: { process: any; reason: string }[];
+  // Signals that terminate() would have sent to the OS. MockChildProcess.pid
+  // is fabricated: these tests must never hand it to process.kill(), or we'd
+  // be signalling whatever unrelated process currently owns that pid.
+  let killedPids: { pid: number | undefined; force: boolean | undefined }[];
 
   // Mock child process class
   class MockChildProcess extends events.EventEmitter {
@@ -79,9 +83,19 @@ describe("ProcessTerminator", function () {
     }
   }
 
+  function makeTerminator(
+    opts: InternalBatchProcessOptions = options,
+  ): ProcessTerminator {
+    return new ProcessTerminator(opts, (pid, force) => {
+      killedPids.push({ pid, force });
+      return true;
+    });
+  }
+
   beforeEach(function () {
     emitter = new events.EventEmitter() as BatchClusterEmitter;
     childEndEvents = [];
+    killedPids = [];
 
     // Track childEnd events
     emitter.on("childEnd", (process: any, reason: string) => {
@@ -116,7 +130,7 @@ describe("ProcessTerminator", function () {
       cleanupChildProcsOnExit: true,
     };
 
-    terminator = new ProcessTerminator(options);
+    terminator = makeTerminator();
     mockProcess = new MockChildProcess();
     isRunningResult = true;
   });
@@ -343,7 +357,7 @@ describe("ProcessTerminator", function () {
 
     it("should handle missing exit command gracefully", async function () {
       const optionsNoExit = { ...options, exitCommand: undefined };
-      const terminatorNoExit = new ProcessTerminator(optionsNoExit);
+      const terminatorNoExit = makeTerminator(optionsNoExit);
 
       await terminatorNoExit.terminate(
         mockProcess as any,
@@ -431,7 +445,7 @@ describe("ProcessTerminator", function () {
 
     it("should skip graceful shutdown when cleanup disabled", async function () {
       const optionsNoCleanup = { ...options, cleanupChildProcs: false };
-      const terminatorNoCleanup = new ProcessTerminator(optionsNoCleanup);
+      const terminatorNoCleanup = makeTerminator(optionsNoCleanup);
 
       let killCalled = false;
       mockProcess.kill = () => {
@@ -454,7 +468,7 @@ describe("ProcessTerminator", function () {
 
     it("should skip graceful shutdown when wait time is 0", async function () {
       const optionsNoWait = { ...options, endGracefulWaitTimeMillis: 0 };
-      const terminatorNoWait = new ProcessTerminator(optionsNoWait);
+      const terminatorNoWait = makeTerminator(optionsNoWait);
 
       let killCalled = false;
       mockProcess.kill = () => {
@@ -492,6 +506,9 @@ describe("ProcessTerminator", function () {
         mockIsRunningStubborn,
       );
 
+      // Should have force-killed the still-running child
+      expect(killedPids).to.eql([{ pid: mockProcess.pid, force: true }]);
+
       // Should still disconnect and destroy streams
       expect(mockProcess.disconnected).to.be.true;
       expect(mockProcess.stdin.destroyed).to.be.true;
@@ -499,7 +516,7 @@ describe("ProcessTerminator", function () {
 
     it("should complete termination when cleanup disabled", async function () {
       const optionsNoCleanup = { ...options, cleanupChildProcs: false };
-      const terminatorNoCleanup = new ProcessTerminator(optionsNoCleanup);
+      const terminatorNoCleanup = makeTerminator(optionsNoCleanup);
 
       await terminatorNoCleanup.terminate(
         mockProcess as any,
@@ -512,6 +529,7 @@ describe("ProcessTerminator", function () {
       );
 
       // Should still complete basic cleanup
+      expect(killedPids).to.be.empty;
       expect(mockProcess.disconnected).to.be.true;
       expect(mockProcess.stdin.destroyed).to.be.true;
     });
@@ -530,6 +548,7 @@ describe("ProcessTerminator", function () {
       );
 
       // Should complete without issues
+      expect(killedPids).to.be.empty;
       expect(mockProcess.disconnected).to.be.true;
       expect(mockProcess.stdin.destroyed).to.be.true;
     });

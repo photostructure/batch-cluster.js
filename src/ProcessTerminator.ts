@@ -13,9 +13,19 @@ import { thenOrTimeout } from "./Timeout";
  */
 export class ProcessTerminator {
   readonly #logger: () => Logger;
+  readonly #kill: (pid: number | undefined, force?: boolean) => boolean;
 
-  constructor(private readonly opts: InternalBatchProcessOptions) {
+  /**
+   * @param killFn sends a signal to the given pid. Defaults to {@link kill}.
+   * Only expected to be provided by tests, which must not signal pids they
+   * don't own.
+   */
+  constructor(
+    private readonly opts: InternalBatchProcessOptions,
+    killFn: (pid: number | undefined, force?: boolean) => boolean = kill,
+  ) {
     this.#logger = opts.logger;
+    this.#kill = killFn;
   }
 
   /**
@@ -172,7 +182,7 @@ export class ProcessTerminator {
       this.#logger().warn(
         `${processName}.terminate(): force-killing still-running child.`,
       );
-      kill(proc.pid, true);
+      this.#kill(proc.pid, true);
     }
   }
 
