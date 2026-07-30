@@ -38,8 +38,7 @@ export interface FindFlushMillisOptions<T = unknown> {
 
   /** Factory that spawns child processes. */
   processFactory: () =>
-    | child_process.ChildProcess
-    | Promise<child_process.ChildProcess>;
+    child_process.ChildProcess | Promise<child_process.ChildProcess>;
 
   /** Low-overhead startup command to verify the child process started. */
   versionCommand: string;

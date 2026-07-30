@@ -36,6 +36,5 @@ export interface ChildProcessFactory {
    * ```
    */
   readonly processFactory: () =>
-    | child_process.ChildProcess
-    | Promise<child_process.ChildProcess>;
+    child_process.ChildProcess | Promise<child_process.ChildProcess>;
 }
