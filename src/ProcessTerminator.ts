@@ -2,7 +2,7 @@ import child_process from "node:child_process";
 import { until } from "./Async";
 import { InternalBatchProcessOptions } from "./InternalBatchProcessOptions";
 import { Logger } from "./Logger";
-import { kill } from "./Pids";
+import { killerFor, killGroupOnly } from "./Pids";
 import { destroy } from "./Stream";
 import { ensureSuffix } from "./String";
 import { Task } from "./Task";
@@ -14,18 +14,26 @@ import { thenOrTimeout } from "./Timeout";
 export class ProcessTerminator {
   readonly #logger: () => Logger;
   readonly #kill: (pid: number | undefined, force?: boolean) => boolean;
+  readonly #killGroupOnly: (
+    pid: number | undefined,
+    force?: boolean,
+  ) => boolean;
 
   /**
-   * @param killFn sends a signal to the given pid. Defaults to {@link kill}.
-   * Only expected to be provided by tests, which must not signal pids they
-   * don't own.
+   * @param killFn sends a signal to the given pid. Defaults to the kill
+   * function implied by `killProcessGroup`. Only expected to be provided by
+   * tests, which must not signal pids they don't own.
+   * @param killGroupOnlyFn signals a detached POSIX process group without
+   * falling back to the leader pid after that leader has exited.
    */
   constructor(
     private readonly opts: InternalBatchProcessOptions,
-    killFn: (pid: number | undefined, force?: boolean) => boolean = kill,
+    killFn?: (pid: number | undefined, force?: boolean) => boolean,
+    killGroupOnlyFn?: (pid: number | undefined, force?: boolean) => boolean,
   ) {
     this.#logger = opts.logger;
-    this.#kill = killFn;
+    this.#kill = killFn ?? killerFor(opts);
+    this.#killGroupOnly = killGroupOnlyFn ?? killGroupOnly;
   }
 
   /**
@@ -163,7 +171,11 @@ export class ProcessTerminator {
 
     // If still running, send kill signal
     if (isRunning() && proc.pid != null) {
-      proc.kill();
+      if (this.opts.killProcessGroup) {
+        this.#kill(proc.pid);
+      } else {
+        proc.kill();
+      }
     }
 
     // Wait for the signal handler to work
@@ -178,11 +190,25 @@ export class ProcessTerminator {
     processName: string,
     isRunning: () => boolean,
   ): void {
-    if (this.opts.cleanupChildProcs && proc.pid != null && isRunning()) {
+    if (!this.opts.cleanupChildProcs || proc.pid == null) return;
+
+    const directChildRunning = isRunning();
+    // A detached process group can outlive its leader. Signal the group even
+    // after the direct child exits, and do not fall back to that dead pid.
+    const groupKilled =
+      this.opts.killProcessGroup && this.#killGroupOnly(proc.pid, true);
+    const killed = groupKilled
+      ? true
+      : directChildRunning
+        ? this.#kill(proc.pid, true)
+        : false;
+
+    if (directChildRunning && killed) {
+      // Kill first, then log: `logger` is consumer-supplied, and one that
+      // throws must not be able to skip the kill and strand the child.
       this.#logger().warn(
-        `${processName}.terminate(): force-killing still-running child.`,
+        `${processName}.terminate(): force-killed still-running child.`,
       );
-      this.#kill(proc.pid, true);
     }
   }
 

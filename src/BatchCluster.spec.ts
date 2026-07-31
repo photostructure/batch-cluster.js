@@ -23,11 +23,11 @@ import { BatchCluster } from "./BatchCluster";
 import { secondMs } from "./BatchClusterOptions";
 import { DefaultTestOptions } from "./DefaultTestOptions.spec";
 import { map, omit } from "./Object";
-import { pidExists } from "./Pids";
+import { kill, killGroup, pidExists } from "./Pids";
 import { isWin } from "./Platform";
 import { toS } from "./String";
 import { Task } from "./Task";
-import { thenOrTimeout } from "./Timeout";
+import { thenOrTimeout, Timeout } from "./Timeout";
 
 const isCI = process.env.CI === "1";
 
@@ -989,7 +989,7 @@ describe("BatchCluster", function () {
       opts = {
         ...DefaultTestOptions,
         maxProcs: 4,
-        maxTasksPerProcess: 100,
+        maxTasksPerProcess: 100, // Don't recycle processes as "worn"
         spawnTimeoutMillis, // maxProcAge must be >= this
         maxProcAgeMillis,
         minDelayBetweenSpawnMillis: 0,
@@ -1706,6 +1706,228 @@ describe("BatchCluster", function () {
 });
 
 // ---------------------------------------------------------------------------
+// maxFailedTasksPerProcess
+// ---------------------------------------------------------------------------
+
+describe("maxFailedTasksPerProcess", function () {
+  it("recycles a process once it has failed too many tasks", async function () {
+    this.timeout(30_000);
+    setFailRatePct(0); // "flaky 1" fails deterministically; nothing else should
+    setIgnoreExit(false);
+
+    const bc = new BatchCluster({
+      ...DefaultTestOptions,
+      maxProcs: 1,
+      maxFailedTasksPerProcess: 1,
+      processFactory,
+    });
+
+    // "stderrfail" writes one stderr line and then exactly one FAIL token,
+    // which the test parser turns into a rejection. ("flaky 1" is unsuitable:
+    // its first line embeds the literal FAIL token, so the task settles early
+    // and the second line arrives task-less, ending the process as
+    // "stdout.error" before it can be recycled as "broken".)
+    await bc.enqueueTask(new Task("stderrfail boom", parser)).catch(() => null);
+
+    expect(
+      await until(() => bc.countEndedChildProcs("broken") > 0, 5_000),
+    ).to.eql(
+      true,
+      "the failed task should have recycled the process, but childEndCounts was " +
+        JSON.stringify(bc.childEndCounts),
+    );
+
+    await bc.end(true).promise;
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Pending work and the event loop
+// ---------------------------------------------------------------------------
+
+/**
+ * Run one of the spec's subprocess helpers to completion, bounded.
+ *
+ * These tests must run out-of-process: mocha's per-test timeout timer is ref'd,
+ * so in-process it holds the event loop open and masks the defects entirely.
+ * That same timeout is why this wait has to be bounded here — mocha rejects the
+ * test but neither cancels this promise nor reaps the child, so an unbounded
+ * wait would hang the runner and leak the helper and everything it spawned.
+ *
+ * The deadline belongs here rather than inside the helper: an in-helper timer
+ * would be ref'd, and would mask the event-loop behavior under test.
+ *
+ * The helper is spawned detached so it leads its own process group, letting us
+ * take its children with it if it misbehaves.
+ */
+async function runSpecHelper(
+  helper: string,
+  args: string[] = [],
+  timeoutMs = 30_000,
+): Promise<{ code: number | null; stdout: string; stderr: string }> {
+  const helperPath = path.join(__dirname, helper);
+  const proc = child_process.spawn(process.execPath, [helperPath, ...args], {
+    detached: true,
+  });
+  let stdout = "";
+  let stderr = "";
+  proc.stdout.on("data", (chunk: Buffer) => (stdout += chunk.toString()));
+  proc.stderr.on("data", (chunk: Buffer) => (stderr += chunk.toString()));
+  // "close" rather than "exit": node fires "exit" as soon as the process ends,
+  // but the stdio pipes may still be draining. These tests parse the helper's
+  // final lines (DONE, RESULT, PIDs), so reading at "exit" can miss them.
+  const closed = new Promise<number | null>((resolve, reject) => {
+    proc.on("close", (code) => resolve(code));
+    proc.on("error", reject);
+  });
+  try {
+    const code = await thenOrTimeout(closed, timeoutMs);
+    if (code === Timeout) {
+      throw new Error(
+        `${helper} did not exit within ${timeoutMs}ms (stdout: ${stdout}) (stderr: ${stderr})`,
+      );
+    }
+    return { code, stdout, stderr };
+  } catch (err) {
+    // Timed out, or never spawned: take the helper and everything it spawned
+    // with us rather than leaving them on the developer's machine.
+    killProcessTree(proc.pid);
+    throw err;
+  }
+}
+
+/**
+ * Kill a helper and its descendants.
+ *
+ * POSIX: the helper leads its own process group (we spawn it detached), so one
+ * group signal covers the tree. Windows has no process groups, and terminating
+ * a parent there does not terminate its children, so shell out to taskkill /T.
+ */
+function killProcessTree(pid: number | undefined): void {
+  if (pid == null) return;
+  if (isWin) {
+    child_process.spawnSync("taskkill", ["/T", "/F", "/PID", String(pid)]);
+  } else {
+    killGroup(pid, true);
+  }
+}
+
+describe("pending work keeps the event loop alive", function () {
+  const runHelper = (mode: "--queued" | "--assigned") =>
+    runSpecHelper("pending-task-helper.js", [mode]);
+
+  it("settles a task that has to wait for a replacement child", async function () {
+    this.timeout(60_000);
+    // The pool empties when the 3rd task wears the child out; the 4th task
+    // waits in the queue behind an unref'd respawn timer. Before the fix, node
+    // exited 0 here with the caller's promise abandoned -- no result, no
+    // rejection, no diagnostic of any kind.
+    const { code, stdout, stderr } = await runHelper("--queued");
+
+    expect(stdout).to.include(
+      "DONE",
+      `helper did not finish (stderr: ${stderr})`,
+    );
+    expect(code).to.eql(0, `helper should exit cleanly (stderr: ${stderr})`);
+
+    const results = stdout.split("\n").filter((ea) => ea.startsWith("RESULT"));
+    expect(results).to.have.length(5, `every task must settle: ${stdout}`);
+    expect(results.filter((ea) => ea.startsWith("RESULT ok"))).to.have.length(
+      5,
+      `every task should have succeeded: ${stdout}`,
+    );
+  });
+
+  it("rejects queued tasks on end() rather than abandoning them", async function () {
+    // In-process is fine here: we're testing that end() settles the queue, not
+    // whether the loop stays alive.
+    setFailRatePct(0);
+    const bc = new BatchCluster({
+      ...DefaultTestOptions,
+      maxProcs: 1,
+      processFactory,
+    });
+    // Same tick as the enqueue, so nothing can have spawned yet and the task
+    // is certainly still queued:
+    const task = bc.enqueueTask(new Task("upcase queued", parser));
+    const ended = bc.end(false);
+
+    await expect(task).to.be.rejectedWith(
+      "BatchCluster.end() was called before this task could be assigned: upcase queued",
+    );
+    await ended.promise;
+  });
+
+  it("settles a slow task with no per-task timeout to hold the loop", async function () {
+    this.timeout(60_000);
+    // taskTimeoutMillis defaults to 0, so #currentTaskTimeout -- previously the
+    // only ref'd handle in the library -- doesn't exist. Before the fix this
+    // task was rejected with "Process terminated before task completed" even
+    // though nothing was wrong with it.
+    const { code, stdout, stderr } = await runHelper("--assigned");
+
+    expect(code).to.eql(0, `helper should exit cleanly (stderr: ${stderr})`);
+    expect(stdout).to.include(
+      "RESULT ok sleep 3000",
+      `the task should have completed: ${stdout}`,
+    );
+  });
+});
+
+// ---------------------------------------------------------------------------
+// IPC disconnect
+// ---------------------------------------------------------------------------
+
+describe("IPC disconnect", function () {
+  it("force-kills a child that disconnected but is still running", async function () {
+    this.timeout(30_000);
+    setFailRatePct(0);
+
+    // An IPC channel closing says nothing about whether the child exited, but
+    // BatchProcess used to resolve its exit deferred on "disconnect" -- which
+    // made running() false, so terminate() skipped both SIGTERM and SIGKILL.
+    let proc: child_process.ChildProcess | undefined;
+    const bc = new BatchCluster({
+      ...DefaultTestOptions,
+      maxProcs: 1,
+      processFactory: () => {
+        proc = child_process.spawn(
+          process.execPath,
+          [path.join(__dirname, "test.js")],
+          {
+            // IGNORE_EXIT: the child ignores the exit command and SIGTERM, so
+            // only a SIGKILL can stop it.
+            env: {
+              FAIL_RATE: "0",
+              RNG_SEED: "disconnect",
+              NEWLINE: "lf",
+              IGNORE_EXIT: "1",
+              UNLUCKY_FAIL: "0",
+            },
+            stdio: ["pipe", "pipe", "pipe", "ipc"],
+          },
+        );
+        childProcs.push(proc);
+        return proc;
+      },
+    });
+
+    // keepalive holds a ref'd timer, so the child also survives stdin EOF.
+    await bc.enqueueTask(new Task("keepalive 60000", parser));
+    const pid = proc?.pid;
+    expect(pid).to.not.be.undefined;
+
+    proc?.disconnect();
+    await bc.end(false).promise;
+
+    expect(await until(() => !pidExists(pid), 5_000, 50)).to.eql(
+      true,
+      `disconnected child ${pid} should have been killed`,
+    );
+  });
+});
+
+// ---------------------------------------------------------------------------
 // Exit-backstop tests
 // ---------------------------------------------------------------------------
 
@@ -1723,44 +1945,73 @@ describe("exit backstop", function () {
     expect(bc.pids().length).to.be.greaterThan(0, "should have live processes");
 
     const endDeferred = bc.end(true); // fire-and-forget
-    // #procs is cleared synchronously in closeChildProcesses — precondition for the fix
+    // #procs is cleared synchronously in closeChildProcesses, well before the
+    // children actually die. That's why the exit backstop reads the pool's
+    // unexitedPids() ledger rather than pids().
     expect(bc.pids()).to.eql([], "pool is empty immediately after end()");
 
     await endDeferred.promise;
   });
 
-  it("kills child processes when process exits before async cleanup completes", async function () {
-    this.timeout(30_000);
-
-    const helperPath = path.join(__dirname, "exit-backstop-helper.js");
-    let stdout = "";
-    let stderr = "";
-    const helper = child_process.spawn(process.execPath, [helperPath]);
-    helper.stdout.on("data", (chunk: Buffer) => (stdout += chunk.toString()));
-    helper.stderr.on("data", (chunk: Buffer) => (stderr += chunk.toString()));
-
-    const exitCode = await new Promise<number | null>((resolve) => {
-      helper.on("exit", resolve);
-    });
-    expect(exitCode).to.eql(
-      0,
-      `helper should exit cleanly (stderr: ${stderr})`,
-    );
+  /**
+   * Runs a helper that leaves a live child process behind and exits, and
+   * asserts BatchCluster's exit backstop SIGKILLed it. The helpers use
+   * IGNORE_EXIT so nothing short of SIGKILL can stop the child.
+   */
+  async function expectHelperKillsItsChildren(
+    helper: string,
+    args: string[] = [],
+  ): Promise<void> {
+    const { code, stdout, stderr } = await runSpecHelper(helper, args);
+    expect(code).to.eql(0, `${helper} should exit cleanly (stderr: ${stderr})`);
 
     const pids = stdout
       .split("\n")
       .filter((line) => /^\d+$/.test(line))
       .map(Number)
       .filter((n) => n > 0);
-    expect(pids.length).to.be.greaterThan(
-      0,
-      `helper must emit at least one PID (stdout: ${stdout})`,
-    );
 
-    // Before fix: PIDs are alive (orphaned). After fix: backstop killed them.
-    for (const pid of pids) {
-      await until(() => !pidExists(pid), 5_000, 50);
-      expect(pidExists(pid)).to.eql(false, `PID ${pid} should be dead`);
+    try {
+      expect(pids.length).to.be.greaterThan(
+        0,
+        `${helper} must emit at least one PID (stdout: ${stdout})`,
+      );
+
+      // Before fix: PIDs are alive (orphaned). After fix: backstop killed them.
+      for (const pid of pids) {
+        await until(() => !pidExists(pid), 5_000, 50);
+        expect(pidExists(pid)).to.eql(false, `PID ${pid} should be dead`);
+      }
+    } finally {
+      // If the backstop didn't kill them, this assertion just failed -- don't
+      // leave the evidence running on the developer's machine.
+      for (const pid of pids) kill(pid, true);
     }
+  }
+
+  it("kills child processes when process exits before async cleanup completes", async function () {
+    this.timeout(30_000);
+    await expectHelperKillsItsChildren("exit-backstop-helper.js");
+  });
+
+  it("kills a child that is mid-recycle when the process exits", async function () {
+    this.timeout(30_000);
+    // vacuumProcs() drops the process from #procs synchronously and terminates
+    // it asynchronously, so pids() cannot see it during that window.
+    await expectHelperKillsItsChildren("exit-backstop-vacuum-helper.js");
+  });
+
+  it("end() does not return while a child is still being recycled", async function () {
+    this.timeout(30_000);
+    // The documented shutdown sequence: `await bc.end(); process.exit(0)`.
+    // end() must be a barrier, not just a request.
+    await expectHelperKillsItsChildren("exit-backstop-vacuum-helper.js", [
+      "--await-end",
+    ]);
+  });
+
+  it("explicit end() waits for a child hidden inside an async factory", async function () {
+    this.timeout(30_000);
+    await expectHelperKillsItsChildren("exit-backstop-factory-helper.js");
   });
 });

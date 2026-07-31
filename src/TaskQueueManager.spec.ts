@@ -39,25 +39,30 @@ describe("TaskQueueManager", function () {
   });
 
   describe("task enqueuing", function () {
-    it("should enqueue tasks when not ended", function () {
+    it("should enqueue tasks", function () {
       const task = new Task("test command", parser);
-      const promise = queueManager.enqueueTask(task, false);
+      queueManager.enqueue(task);
 
       expect(queueManager.pendingTaskCount).to.eql(1);
       expect(queueManager.isEmpty).to.be.false;
       expect(queueManager.pendingTasks).to.have.length(1);
       expect(queueManager.pendingTasks[0]).to.eql(task);
-      expect(promise).to.equal(task.promise);
     });
 
-    it("should reject tasks when ended", function () {
+    it("should reject queued tasks rather than abandoning them", async function () {
       const task = new Task("test command", parser);
-      const promise = queueManager.enqueueTask(task, true);
+      queueManager.enqueue(task);
+
+      queueManager.rejectPendingTasks("shutting down");
 
       expect(queueManager.pendingTaskCount).to.eql(0);
       expect(queueManager.isEmpty).to.be.true;
-      expect(promise).to.equal(task.promise);
       expect(task.pending).to.be.false;
+      // The command is in the message: a caller with several in flight needs
+      // to know which one was dropped.
+      await expect(task.promise).to.be.rejectedWith(
+        "shutting down: test command",
+      );
     });
 
     it("should handle multiple tasks", function () {
@@ -65,9 +70,9 @@ describe("TaskQueueManager", function () {
       const task2 = new Task("command 2", parser);
       const task3 = new Task("command 3", parser);
 
-      queueManager.enqueueTask(task1, false);
-      queueManager.enqueueTask(task2, false);
-      queueManager.enqueueTask(task3, false);
+      queueManager.enqueue(task1);
+      queueManager.enqueue(task2);
+      queueManager.enqueue(task3);
 
       expect(queueManager.pendingTaskCount).to.eql(3);
       expect(queueManager.pendingTasks).to.have.length(3);
@@ -79,7 +84,9 @@ describe("TaskQueueManager", function () {
 
     beforeEach(function () {
       task = new Task("test command", parser);
-      queueManager.enqueueTask(task, false);
+      // Some of these tests reject the queue; nothing here awaits the task:
+      void task.promise.catch(() => null);
+      queueManager.enqueue(task);
     });
 
     it("should assign task to ready process", function () {
@@ -112,7 +119,7 @@ describe("TaskQueueManager", function () {
 
     it("should handle empty queue gracefully", function () {
       // Clear the queue first
-      queueManager.clearAllTasks();
+      queueManager.rejectPendingTasks("test");
 
       const result = queueManager.tryAssignNextTask(mockProcess);
 
@@ -122,17 +129,28 @@ describe("TaskQueueManager", function () {
   });
 
   describe("queue processing", function () {
+    /**
+     * Mirrors BatchCluster's drain loop (`while (this.#execNextTask()) {}`),
+     * which is the only thing that drives assignment in production.
+     * @return the number of tasks assigned.
+     */
+    function drain(findReadyProcess: () => BatchProcess | undefined): number {
+      let assigned = 0;
+      while (queueManager.tryAssignNextTask(findReadyProcess())) assigned++;
+      return assigned;
+    }
+
     beforeEach(function () {
       // Add multiple tasks
       for (let i = 0; i < 5; i++) {
         const task = new Task(`command ${i}`, parser);
-        queueManager.enqueueTask(task, false);
+        queueManager.enqueue(task);
       }
     });
 
     it("should process all tasks when process is always ready", function () {
       const findReadyProcess = () => mockProcess;
-      const assignedCount = queueManager.processQueue(findReadyProcess);
+      const assignedCount = drain(findReadyProcess);
 
       expect(assignedCount).to.eql(5);
       expect(queueManager.pendingTaskCount).to.eql(0);
@@ -141,7 +159,7 @@ describe("TaskQueueManager", function () {
 
     it("should stop processing when no ready process available", function () {
       const findReadyProcess = () => undefined;
-      const assignedCount = queueManager.processQueue(findReadyProcess);
+      const assignedCount = drain(findReadyProcess);
 
       expect(assignedCount).to.eql(0);
       expect(queueManager.pendingTaskCount).to.eql(5);
@@ -155,7 +173,7 @@ describe("TaskQueueManager", function () {
         return callCount <= 3 ? mockProcess : undefined;
       };
 
-      const assignedCount = queueManager.processQueue(findReadyProcess);
+      const assignedCount = drain(findReadyProcess);
 
       expect(assignedCount).to.eql(3);
       expect(queueManager.pendingTaskCount).to.eql(2);
@@ -168,7 +186,7 @@ describe("TaskQueueManager", function () {
       } as unknown as BatchProcess;
 
       const findReadyProcess = () => failingProcess;
-      const assignedCount = queueManager.processQueue(findReadyProcess);
+      const assignedCount = drain(findReadyProcess);
 
       expect(assignedCount).to.eql(0);
       expect(queueManager.pendingTaskCount).to.be.greaterThan(0); // Tasks remain queued
@@ -180,14 +198,16 @@ describe("TaskQueueManager", function () {
       // Add some tasks
       for (let i = 0; i < 3; i++) {
         const task = new Task(`command ${i}`, parser);
-        queueManager.enqueueTask(task, false);
+        // "should clear all tasks" rejects these; nothing here awaits them:
+        void task.promise.catch(() => null);
+        queueManager.enqueue(task);
       }
     });
 
-    it("should clear all tasks", function () {
+    it("should reject and clear all queued tasks", function () {
       expect(queueManager.pendingTaskCount).to.eql(3);
 
-      queueManager.clearAllTasks();
+      queueManager.rejectPendingTasks("test");
 
       expect(queueManager.pendingTaskCount).to.eql(0);
       expect(queueManager.isEmpty).to.be.true;
@@ -206,7 +226,7 @@ describe("TaskQueueManager", function () {
     it("should handle concurrent access gracefully", function () {
       // Add a task
       const task = new Task("test", parser);
-      queueManager.enqueueTask(task, false);
+      queueManager.enqueue(task);
 
       // First process gets the task
       const result1 = queueManager.tryAssignNextTask(mockProcess);
@@ -235,12 +255,14 @@ describe("TaskQueueManager", function () {
       const task2 = new Task("second", parser);
       const task3 = new Task("third", parser);
 
-      queueManager.enqueueTask(task1, false);
-      queueManager.enqueueTask(task2, false);
-      queueManager.enqueueTask(task3, false);
+      queueManager.enqueue(task1);
+      queueManager.enqueue(task2);
+      queueManager.enqueue(task3);
 
-      // Process all tasks
-      queueManager.processQueue(() => trackingProcess);
+      // Process all tasks, the way BatchCluster's drain loop does:
+      while (queueManager.tryAssignNextTask(trackingProcess)) {
+        //
+      }
 
       expect(executedTasks).to.have.length(3);
       expect(executedTasks[0]?.command).to.eql("first");

@@ -18,6 +18,132 @@ See [Semver](http://semver.org/).
 
 - 📦 Minor packaging changes
 
+## [v19.0.0](https://github.com/photostructure/batch-cluster.js/releases/tag/v19.0.0)
+
+This release closes several ways a child process could be leaked, and several ways a task's promise
+could be dropped. The version is major because some fixes change runtime behavior for every
+consumer, even though no API was removed or renamed.
+
+- 💔 **BREAKING**: outstanding work now keeps the event loop alive.
+
+  Every handle this library owns is deliberately unref'd — the child processes, their streams, the
+  idle interval, the respawn timer — so that an idle cluster never stops a script from exiting. But
+  unsettled _work_ had nothing holding the loop open either. When the loop drained, `beforeExit`
+  fired, `end()` tore everything down, and a task the caller was still awaiting was dropped: a
+  queued task's promise was **abandoned entirely** (node then exited 0 with no error at all), and an
+  assigned task was rejected with "Process terminated before task completed".
+
+  The only thing that used to prevent this was the per-task timeout timer, which doesn't exist at
+  the default `taskTimeoutMillis` of 0 — so a single `sleep`-style task on a healthy child, with
+  default options, could fail for no reason. This is longstanding, not new in v19 (verified against
+  v18), though v19's `maxFailedTasksPerProcess` fix made it far easier to hit.
+
+  A cluster with no pending tasks and no busy processes still holds nothing, so the `unrefStreams`
+  contract is unchanged. One consequence to be aware of: if a child wedges and you have not set
+  `taskTimeoutMillis`, your process will now stay alive rather than exiting silently. That's
+  intentional — a visible hang beats losing work without a diagnostic — but it is a good reason to
+  set `taskTimeoutMillis`.
+
+- 💔 **BREAKING**: `end()` rejects tasks still waiting in the queue, with
+  `BatchCluster.end() was called before this task could be assigned: <command>`.
+
+  Nothing settled them previously: `ProcessTerminator` only rejects the task a process was actually
+  running, so queued tasks were silently abandoned. If you called `end()` with work outstanding, you
+  now get rejections where you previously got promises that never settled.
+
+- 💔 **BREAKING**: `maxFailedTasksPerProcess` now defaults to `0` (disabled), and actually works
+  when you set it.
+
+  `BatchProcess.failedTaskCount` was never incremented, so `FailureCountHealthCheck` always read
+  zero and the previous default of `2` never recycled anything. Rather than silently enabling that
+  rule for everyone, the default is now off: a rejected task usually means bad input, not a sick
+  child, and the option counts failures over the process's whole lifetime rather than consecutive
+  ones — so a long-lived child would be recycled after any two bad inputs, ever.
+
+  If you explicitly set this option, it now takes effect: expect more process churn and `"broken"`
+  in `childEndCounts`. Consider `healthCheckCommand` if you can ask the child whether it's healthy
+  instead of inferring it from task failures.
+
+- 💔 **BREAKING**: `kill()` returns `false` on `EPERM` rather than rethrowing, matching how it
+  already handled `ESRCH`. Unrecognized error codes still throw.
+
+  Callers signal a list of pids in a loop, so a single pid we aren't permitted to signal — a child
+  that changed uid, or a pid the OS has since recycled — stranded every pid after it. That included the `exit`
+  backstop, whose entire job is to leave nothing behind, and it aborted
+  `ProcessTerminator.terminate()` before `proc.disconnect()`. Throwing never killed the child; it
+  only skipped the rest of the cleanup.
+
+- 💔 **BREAKING**: `end()` is now a barrier. It previously drained the process pool and resolved,
+  which is not the same thing as "every child is gone": a `processFactory()` still in flight could
+  hand back a live child afterwards, and a process that `vacuumProcs()` had already removed from the
+  pool could still be seconds into its graceful-shutdown window. Either way,
+  `await bc.end(); process.exit(0)` could orphan a child.
+
+  Explicit `end()` now waits for in-flight spawns and in-flight recycling, so it can take longer to
+  resolve than it used to. That wait is deliberately unbounded for an in-flight factory: until the
+  factory returns, BatchCluster cannot know whether it already spawned a child, and returning early
+  would make the documented `await bc.end(); process.exit(0)` sequence unsafe. A factory that never
+  settles therefore makes explicit `end()` wait forever.
+
+  Automatic cleanup from Node's `beforeExit` event is different: it remains bounded by
+  `spawnTimeoutMillis`, since an opaque factory must not prevent process exit forever. The bound
+  covers the whole automatic shutdown, including terminating children still in the pool. When it
+  expires, every child already known to be alive is force-killed and any task still waiting on one
+  of those terminations is rejected. A factory result that arrives later while the host remains
+  alive is terminated instead of joining the ended pool. (Force-killing is skipped if you set
+  `cleanupChildProcs: false`, since that option means you handle PID cleanup yourself.)
+
+- 💔 **BREAKING** (TypeScript only): the new `killProcessGroup` option is a required property of the
+  exported `InternalBatchProcessOptions` and `CombinedBatchProcessOptions` types, so code that
+  builds either type by hand needs the new field. Passing an options object to the `BatchCluster`
+  constructor is unaffected — that parameter is `Partial<BatchClusterOptions>`, and the default
+  applies.
+
+- ✨ Added the `killProcessGroup` option (defaults to `false`), and exported `killGroup()` for
+  direct use.
+
+  Enable it if your `processFactory` spawns children with `detached: true`, which makes each child
+  the leader of its own process group. Graceful and forced shutdown retain ownership of that group
+  even after its leader exits, so any grandchildren the child spawned are cleaned up too.
+
+  It is safe (just pointless) for non-detached children. A process group is named by its leader's
+  pid, so `-pid` names a group only when the child leads one; otherwise the OS reports `ESRCH` and
+  we signal the child directly instead. It cannot signal this process's group by accident — that
+  group is named by its own leader's pid, which is alive and so can never have been reassigned to a
+  child. Windows has no POSIX process groups and ignores this option.
+
+- 🐞 Fixed two ways a child process could be leaked outright. If `new BatchProcess()` threw after
+  the `processFactory` returned a live child (a factory whose `stdio` omits stdin or stdout, or a
+  `childStart` listener that throws), the child was never added to the pool, leaving it invisible to
+  `pids()`, recycling, `end()`, and the exit backstop — one orphan per spawn retry, surviving even
+  the parent's exit. And if `end()` landed while an async `processFactory` was still in flight, the
+  resulting process was added to an already-drained pool, so nothing ever ended it.
+
+- 🐞 The exit backstop now considers every child the pool has spawned and not yet seen exit, rather
+  than current pool membership, so an abrupt `process.exit()` during shutdown or recycling can't
+  leave one behind. This supersedes the PID-snapshot workaround added in v17.3.1, which could only
+  see processes that were still pool members when `end()` was called.
+
+- 🐞 A consumer-supplied `logger` that throws can no longer strand a child. `ProcessTerminator`
+  logged immediately before force-killing, so a throwing `warn()` skipped the kill — and the
+  termination's rejection was reported as an `endError` while shutdown carried on as though the
+  child were gone. Cleanup now runs before the log, and a termination that rejects for any reason
+  force-kills the child before it is treated as finished.
+
+- 🐞 `vacuumProcs()` now catches per-process `end()` rejections, as `closeChildProcesses()` always
+  has. Its only production caller discards the returned promise, so a throwing `childEnd` listener
+  became an unhandled rejection — killing the host process and orphaning every child that was then
+  mid-recycle.
+
+- 📦 The published package no longer includes the spec suite's subprocess fixtures
+  (`*-helper.js`). They require `dist/test.js`, which was already excluded, so they were broken
+  weight in the tarball.
+
+- 🐞 An IPC `disconnect` is no longer treated as process exit. It only means the channel closed, but
+  it made `running()` return `false`, which skipped both the SIGTERM and the SIGKILL during
+  termination. Children from an IPC-enabled `processFactory` (`stdio: [..., "ipc"]` or `fork()`)
+  that disconnect while still running are now terminated.
+
 ## [v18.0.0](https://github.com/photostructure/batch-cluster.js/releases/tag/v18.0.0)
 
 - 💔 **BREAKING**: Raised the minimum supported Node.js version to `>=22`. Node 20 reached end-of-life, so it is no longer supported or tested. Stay on v17 if you must run on Node 20.

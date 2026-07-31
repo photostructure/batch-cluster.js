@@ -1,12 +1,17 @@
+import child_process from "node:child_process";
 import events from "node:events";
 import stream from "node:stream";
 import { expect } from "./_chai.spec";
+import { until } from "./Async";
 import { BatchClusterEmitter } from "./BatchClusterEmitter";
 import { InternalBatchProcessOptions } from "./InternalBatchProcessOptions";
 import { logger } from "./Logger";
 import { SimpleParser } from "./Parser";
+import { kill, killGroup, pidExists } from "./Pids";
+import { isWin } from "./Platform";
 import { ProcessTerminator } from "./ProcessTerminator";
 import { Task } from "./Task";
+import { thenOrTimeout, Timeout } from "./Timeout";
 
 describe("ProcessTerminator", function () {
   let terminator: ProcessTerminator;
@@ -117,6 +122,7 @@ describe("ProcessTerminator", function () {
       maxTasksPerProcess: 100,
       maxIdleMsPerProcess: 300000,
       maxFailedTasksPerProcess: 3,
+      killProcessGroup: false,
       maxProcAgeMillis: 600000,
       pass: "PASS",
       fail: "FAIL",
@@ -512,6 +518,67 @@ describe("ProcessTerminator", function () {
       // Should still disconnect and destroy streams
       expect(mockProcess.disconnected).to.be.true;
       expect(mockProcess.stdin.destroyed).to.be.true;
+    });
+
+    it("cleans up a detached process group after its leader exits", async function () {
+      if (isWin) return this.skip();
+      this.timeout(10_000);
+
+      const proc = child_process.spawn(
+        process.execPath,
+        [
+          "-e",
+          "const cp = require('node:child_process');" +
+            "const grandchild = cp.spawn(process.execPath, ['-e', 'setInterval(() => {}, 1000)']);" +
+            "process.stdout.write(String(grandchild.pid) + '\\n');" +
+            "process.stdin.resume();" +
+            "process.stdin.on('end', () => process.exit(0));" +
+            "setInterval(() => {}, 1000);",
+        ],
+        { detached: true, stdio: ["pipe", "pipe", "ignore"] },
+      );
+      let grandchildPid: number | undefined;
+      try {
+        const handshake = await thenOrTimeout(
+          new Promise<number>((resolve, reject) => {
+            proc.stdout.on("data", (chunk: Buffer) =>
+              resolve(Number(chunk.toString().trim())),
+            );
+            proc.on("error", reject);
+            proc.on("exit", () =>
+              reject(new Error("group leader exited before the handshake")),
+            );
+          }),
+          5_000,
+        );
+        if (handshake === Timeout) {
+          throw new Error("group leader did not report its grandchild");
+        }
+        grandchildPid = handshake;
+
+        const groupTerminator = new ProcessTerminator({
+          ...options,
+          killProcessGroup: true,
+          endGracefulWaitTimeMillis: 100,
+        });
+        await groupTerminator.terminate(
+          proc,
+          `TestProcess(${proc.pid})`,
+          undefined,
+          999,
+          true,
+          false,
+          () => pidExists(proc.pid),
+        );
+
+        expect(await until(() => !pidExists(grandchildPid), 2_000)).to.eql(
+          true,
+          "the detached grandchild survived its group leader",
+        );
+      } finally {
+        killGroup(proc.pid, true);
+        kill(grandchildPid, true);
+      }
     });
 
     it("should complete termination when cleanup disabled", async function () {

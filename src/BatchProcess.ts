@@ -113,6 +113,12 @@ export class BatchProcess {
   };
   #currentTaskTimeout: NodeJS.Timeout | undefined;
 
+  /**
+   * The task this process was running when it was told to end, held only while
+   * termination is in flight. See {@link BatchProcess.abandonTerminatingTask}.
+   */
+  #terminatingTask: Task<unknown> | undefined;
+
   #endPromise: undefined | Deferred<void>;
 
   /**
@@ -166,7 +172,10 @@ export class BatchProcess {
       void this.end(false, "proc.exit");
     });
     this.proc.on("disconnect", () => {
-      this.#processExitDeferred.resolve();
+      // NOTE: unlike "exit" and "close", "disconnect" only means the IPC
+      // channel closed -- the child may well still be running. Resolving
+      // #processExitDeferred here would make running() false, which skips both
+      // the SIGTERM and the SIGKILL in ProcessTerminator.
       void this.end(false, "proc.disconnect");
     });
 
@@ -297,6 +306,24 @@ export class BatchProcess {
     return !this.running();
   }
 
+  /**
+   * Reject the task this process was running when it was told to end, if
+   * termination hasn't settled it yet.
+   *
+   * `ProcessTerminator` gives that task up to 2 seconds to finish on its own,
+   * which is longer than a bounded shutdown may be willing to wait. Without
+   * this, `end()` can resolve -- and the caller `process.exit()` -- while that
+   * promise is still pending, which abandons it entirely.
+   *
+   * @return true if a pending task was rejected.
+   */
+  abandonTerminatingTask(reason: string): boolean {
+    const task = this.#terminatingTask;
+    if (task == null || !task.pending) return false;
+    task.reject(new Error(reason + ": " + task.command));
+    return true;
+  }
+
   maybeRunHealthCheck(): Task<unknown> | undefined {
     return this.#healthMonitor.maybeRunHealthCheck(this);
   }
@@ -414,15 +441,23 @@ export class BatchProcess {
     const lastTask = this.#currentTask;
     this.#clearCurrentTask();
 
-    await this.#terminator.terminate(
-      this.proc,
-      this.name,
-      lastTask,
-      this.startupTaskId,
-      gracefully,
-      this.exited,
-      () => this.running(),
-    );
+    // ProcessTerminator waits up to 2s for this task to settle on its own.
+    // Hold onto it so a shutdown that can't wait that long can settle it
+    // itself, rather than leaving the caller's promise dangling:
+    this.#terminatingTask = lastTask;
+    try {
+      await this.#terminator.terminate(
+        this.proc,
+        this.name,
+        lastTask,
+        this.startupTaskId,
+        gracefully,
+        this.exited,
+        () => this.running(),
+      );
+    } finally {
+      this.#terminatingTask = undefined;
+    }
 
     // Clean up health monitoring for this process
     this.#healthMonitor.cleanupProcess(this.pid);
@@ -489,6 +524,8 @@ export class BatchProcess {
   #clearCurrentTask(task?: Task<unknown>) {
     const taskFailed = task?.state === "rejected";
     if (taskFailed) {
+      // Drives FailureCountHealthCheck, and so maxFailedTasksPerProcess:
+      this.failedTaskCount++;
       this.#healthMonitor.recordJobFailure(this.pid);
     } else if (task != null) {
       this.#healthMonitor.recordJobSuccess(this.pid);

@@ -21,22 +21,8 @@ export class TaskQueueManager {
   /**
    * Add a task to the queue for processing
    */
-  enqueueTask<T>(task: Task<T>, ended: boolean): Promise<T> {
-    if (ended) {
-      task.reject(
-        new Error("BatchCluster has ended, cannot enqueue " + task.command),
-      );
-    } else {
-      this.#tasks.push(task as Task<unknown>);
-    }
-    return task.promise;
-  }
-
-  /**
-   * Simple enqueue method (alias for enqueueTask without ended check)
-   */
-  enqueue(task: Task<unknown>): void {
-    this.#tasks.push(task);
+  enqueue<T>(task: Task<T>): void {
+    this.#tasks.push(task as Task<unknown>);
   }
 
   /**
@@ -96,28 +82,21 @@ export class TaskQueueManager {
   }
 
   /**
-   * Process all pending tasks by assigning them to ready processes.
-   * Returns the number of tasks successfully assigned.
+   * Reject and discard every queued task.
+   *
+   * A queued task has no owning child process, so nothing else will ever
+   * settle it: `ProcessTerminator` only rejects the task a process was
+   * actually running. Leaving them unsettled is the worst outcome for the
+   * caller -- their `await` never returns, and because this library holds no
+   * ref'd handles of its own, node can exit 0 with no error at all.
+   *
+   * @param reason prefixed to each task's command in the rejection message.
    */
-  processQueue(findReadyProcess: () => BatchProcess | undefined): number {
-    let assignedCount = 0;
-
-    while (this.#tasks.length > 0) {
-      const readyProcess = findReadyProcess();
-      if (!this.tryAssignNextTask(readyProcess)) {
-        break;
-      }
-      assignedCount++;
+  rejectPendingTasks(reason: string): void {
+    const pending = this.#tasks.splice(0, this.#tasks.length);
+    for (const task of pending) {
+      task.reject(new Error(reason + ": " + task.command));
     }
-
-    return assignedCount;
-  }
-
-  /**
-   * Clear all pending tasks (used during shutdown)
-   */
-  clearAllTasks(): void {
-    this.#tasks.length = 0;
   }
 
   /**

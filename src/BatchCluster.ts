@@ -4,6 +4,7 @@ import timers from "node:timers";
 import { BatchClusterEmitter, ChildEndReason } from "./BatchClusterEmitter";
 import { BatchClusterEventCoordinator } from "./BatchClusterEventCoordinator";
 import type { BatchClusterOptions } from "./BatchClusterOptions";
+import { secondMs } from "./BatchClusterOptions";
 import type { BatchClusterStats } from "./BatchClusterStats";
 import type { BatchProcessOptions } from "./BatchProcessOptions";
 import type { ChildProcessFactory } from "./ChildProcessFactory";
@@ -11,7 +12,7 @@ import type { CombinedBatchProcessOptions } from "./CombinedBatchProcessOptions"
 import { Deferred } from "./Deferred";
 import { Logger } from "./Logger";
 import { verifyOptions } from "./OptionsVerifier";
-import { kill } from "./Pids";
+import { killerFor } from "./Pids";
 import { ProcessPoolManager } from "./ProcessPoolManager";
 import { Task } from "./Task";
 import { TaskQueueManager } from "./TaskQueueManager";
@@ -22,7 +23,7 @@ export { Deferred } from "./Deferred";
 export { findStreamFlushMillis } from "./FindFlushThresholds";
 export * from "./Logger";
 export { SimpleParser } from "./Parser";
-export { kill, pidExists } from "./Pids";
+export { kill, killGroup, pidExists } from "./Pids";
 export { Task } from "./Task";
 // Type exports organized by source module
 export type { Args } from "./Args";
@@ -42,6 +43,7 @@ export type { HealthCheckStrategy } from "./HealthCheckStrategy";
 export type { InternalBatchProcessOptions } from "./InternalBatchProcessOptions";
 export type { LoggerFunction } from "./Logger";
 export type { Parser } from "./Parser";
+export type { KillFn } from "./Pids";
 export type {
   HealthCheckable,
   ProcessHealthMonitor,
@@ -68,6 +70,7 @@ export class BatchCluster {
   readonly #eventCoordinator: BatchClusterEventCoordinator;
   #onIdleRequested = false;
   #onIdleInterval: NodeJS.Timeout | undefined;
+  #keepAlive: NodeJS.Timeout | undefined;
   #endPromise?: Deferred<void>;
   readonly emitter = new events.EventEmitter() as BatchClusterEmitter;
 
@@ -121,9 +124,10 @@ export class BatchCluster {
   readonly off = this.emitter.off.bind(this.emitter);
 
   // void (not return) because event listeners ignore returned promises.
-  // The async work keeps the process alive until complete regardless.
+  // Automatic cleanup is bounded so a processFactory that never settles
+  // cannot hold Node in beforeExit forever.
   readonly #beforeExitListener = () => {
-    void this.end(true);
+    void this.#end(true, this.options.spawnTimeoutMillis);
   };
 
   /**
@@ -132,10 +136,16 @@ export class BatchCluster {
    * The `exit` event only allows synchronous operations - the event loop is
    * about to terminate, so any async work (like `this.end()`) would be
    * discarded and never execute. We must force-kill immediately.
+   *
+   * This reads `unexitedPids()` rather than `pids()` because a child leaves the
+   * pool as soon as we decide to recycle it, which can be seconds before it
+   * actually dies -- and `pids()` would also poll `running()`, which schedules
+   * async work that an `exit` handler can never run.
    */
   readonly #exitListener = () => {
-    for (const pid of this.#processPool.pids()) {
-      kill(pid, true);
+    const killFn = killerFor(this.options);
+    for (const pid of this.#processPool.unexitedPids()) {
+      killFn(pid, true);
     }
   };
 
@@ -145,11 +155,27 @@ export class BatchCluster {
 
   /**
    * Shut down this instance, and all child processes.
+   *
+   * This is a true barrier for in-flight process factories. If a factory never
+   * settles, `end()` cannot know whether it owns an unreported child and
+   * therefore remains pending. Automatic `beforeExit` cleanup uses a bounded
+   * best-effort variant instead.
+   *
    * @param gracefully should an attempt be made to finish in-flight tasks, or
    * should we force-kill child PIDs.
    */
   // NOT ASYNC so state transition happens immediately
   end(gracefully = true): Deferred<void> {
+    return this.#end(gracefully);
+  }
+
+  /**
+   * Shared implementation for explicit shutdown and automatic beforeExit
+   * cleanup. Explicit callers omit `maxWaitMillis` and receive a true barrier;
+   * beforeExit supplies a bound because an opaque processFactory may never
+   * settle.
+   */
+  #end(gracefully: boolean, maxWaitMillis?: number): Deferred<void> {
     this.#logger().info("BatchCluster.end()", { gracefully });
 
     if (this.#endPromise == null) {
@@ -157,28 +183,28 @@ export class BatchCluster {
       if (this.#onIdleInterval != null)
         timers.clearInterval(this.#onIdleInterval);
       this.#onIdleInterval = undefined;
-      let removeBackstop: (() => void) | undefined;
 
-      if (this.options.cleanupChildProcsOnExit) {
-        // Remove only beforeExit to prevent re-calling end().
-        process.removeListener("beforeExit", this.#beforeExitListener);
+      // Queued tasks have no owning process, so nothing downstream will ever
+      // settle them -- ProcessTerminator only rejects the task a process was
+      // actually running. Reject them here rather than abandoning the caller's
+      // promise.
+      this.#taskQueue.rejectPendingTasks(
+        "BatchCluster.end() was called before this task could be assigned",
+      );
+      this.#clearKeepAlive();
 
-        // Snapshot live PIDs BEFORE closeChildProcesses empties #procs.
-        const livePids = this.#processPool.pids();
-
-        // Swap the pool-based listener for a snapshot-based backstop.
-        process.removeListener("exit", this.#exitListener);
-        const backstop = () => {
-          for (const pid of livePids) kill(pid, true);
-        };
-        process.once("exit", backstop);
-        removeBackstop = () => process.removeListener("exit", backstop);
-      }
+      // Remove only beforeExit, to prevent re-calling end(). #exitListener
+      // stays registered until every child is confirmed dead: it reads the
+      // pool's unexited-child ledger, which remains accurate throughout
+      // shutdown (and empties as each child exits).
+      process.removeListener("beforeExit", this.#beforeExitListener);
 
       this.#endPromise = new Deferred<void>().observe(
-        this.closeChildProcesses(gracefully).then(() => {
-          // Async cleanup done — backstop is no longer needed.
-          removeBackstop?.();
+        this.#processPool.end(gracefully, maxWaitMillis).then(() => {
+          // Explicit end() is a true barrier. Automatic beforeExit cleanup may
+          // instead exhaust its bound while an opaque factory is still
+          // pending; if the host remains alive, the late result is terminated.
+          process.removeListener("exit", this.#exitListener);
           this.emitter.emit("end");
         }),
       );
@@ -200,7 +226,10 @@ export class BatchCluster {
       );
       return task.promise;
     }
-    this.#taskQueue.enqueue(task as Task<unknown>);
+    this.#taskQueue.enqueue(task);
+    // Immediately, not via #onIdleLater: the caller may hand control straight
+    // back to the event loop, and this task must already be holding it open.
+    this.#updateKeepAlive();
 
     // Run #onIdle now (not later), to make sure the task gets enqueued asap if
     // possible
@@ -217,6 +246,38 @@ export class BatchCluster {
    */
   get isIdle(): boolean {
     return this.pendingTaskCount === 0 && this.busyProcCount === 0;
+  }
+
+  /**
+   * Hold the event loop open while any task is outstanding.
+   *
+   * Everything else this library owns is deliberately unref'd -- child
+   * processes, their streams, the idle interval, the respawn timer -- so that
+   * an *idle* cluster never stops a script from exiting (see `unrefStreams`).
+   * But without this, unsettled work has nothing holding the loop open either:
+   * node drains, `beforeExit` fires, and `end()` tears down a task the caller
+   * is still awaiting. The only thing that used to prevent that was the
+   * per-task timeout timer, which doesn't exist at the default
+   * `taskTimeoutMillis` of 0.
+   *
+   * The interval is long because it never needs to *do* anything; it only
+   * needs to exist.
+   */
+  #updateKeepAlive(): void {
+    if (this.ended || this.isIdle) {
+      this.#clearKeepAlive();
+    } else {
+      this.#keepAlive ??= timers.setInterval(() => {
+        // no-op: this timer exists only to keep the event loop alive
+      }, secondMs);
+    }
+  }
+
+  #clearKeepAlive(): void {
+    if (this.#keepAlive != null) {
+      timers.clearInterval(this.#keepAlive);
+      this.#keepAlive = undefined;
+    }
   }
 
   /**
@@ -351,6 +412,8 @@ export class BatchCluster {
       //
     }
     void this.#maybeSpawnProcs();
+    // Every transition that can make us idle (or busy) routes through here:
+    this.#updateKeepAlive();
   }
 
   /**
@@ -375,9 +438,6 @@ export class BatchCluster {
   }
 
   async #maybeSpawnProcs() {
-    return this.#processPool.maybeSpawnProcs(
-      this.#taskQueue.pendingTaskCount,
-      this.ended,
-    );
+    return this.#processPool.maybeSpawnProcs(this.#taskQueue.pendingTaskCount);
   }
 }

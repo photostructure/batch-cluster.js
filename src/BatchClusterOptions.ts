@@ -135,9 +135,33 @@ export class BatchClusterOptions {
    * How many failed tasks should a process be allowed to process before it is
    * recycled?
    *
-   * Set this to 0 to disable this feature.
+   * Defaults to 0 (disabled), because a rejected task usually means bad input
+   * rather than a sick child, and this counts failures over the process's
+   * whole lifetime rather than consecutive ones: a long-lived child would be
+   * recycled after any two bad inputs, ever.
+   *
+   * Set this if a task failure is a reliable signal that the child itself is
+   * unhealthy. Consider `healthCheckCommand` instead if you can ask the child
+   * directly.
    */
-  maxFailedTasksPerProcess = 2;
+  maxFailedTasksPerProcess = 0;
+
+  /**
+   * Should termination signal the child's entire process group, rather than
+   * just the child?
+   *
+   * Enable this if your `processFactory` spawns children with `detached: true`,
+   * which makes each child the leader of its own process group: it lets us also
+   * stop any grandchildren the child spawned, which would otherwise survive
+   * even when their direct parent exits gracefully.
+   *
+   * Harmless for non-detached children -- signalling a group that doesn't exist
+   * fails, and we then signal the child directly -- but pointless, as their
+   * descendants aren't in a group we can name.
+   *
+   * Windows has no POSIX process groups, so this is ignored there.
+   */
+  killProcessGroup = false;
 
   /**
    * If `healthCheckCommand` is set, how frequently should we check for

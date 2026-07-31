@@ -1,8 +1,10 @@
 import child_process from "node:child_process";
 import process from "node:process";
 import { expect } from "./_chai.spec";
-import { kill, pidExists } from "./Pids";
+import { until } from "./Async";
+import { kill, killerFor, killGroup, killGroupOnly, pidExists } from "./Pids";
 import { isWin } from "./Platform";
+import { thenOrTimeout, Timeout } from "./Timeout";
 
 describe("Pids", function () {
   describe("pidExists", function () {
@@ -146,54 +148,171 @@ describe("Pids", function () {
       expect(kill(999999999)).to.be.false;
     });
 
-    it("should handle ESRCH error gracefully", function () {
-      // eslint-disable-next-line @typescript-eslint/unbound-method
-      const originalKill = process.kill;
-
+    it("should return false on ESRCH: the pid is already gone", function () {
       const mockKill = () => {
-        const err = new Error("No such process - ESRCH");
+        const err = new Error("No such process") as NodeJS.ErrnoException;
+        err.code = "ESRCH";
         throw err;
       };
-      process.kill = mockKill;
-
-      expect(kill(12345)).to.be.false;
-
-      process.kill = originalKill;
+      expect(kill(12345, false, mockKill)).to.be.false;
     });
 
-    it("should re-throw non-ESRCH errors", function () {
-      // eslint-disable-next-line @typescript-eslint/unbound-method
-      const originalKill = process.kill;
-
+    it("should return false on EPERM: the pid isn't ours to signal", function () {
+      // Callers signal several pids in a loop (see BatchCluster's exit
+      // listener): throwing here would strand every pid after this one.
       const mockKill = () => {
-        const err = new Error("Operation not permitted");
+        const err = new Error(
+          "Operation not permitted",
+        ) as NodeJS.ErrnoException;
+        err.code = "EPERM";
         throw err;
       };
-      process.kill = mockKill;
+      expect(kill(12345, true, mockKill)).to.be.false;
+    });
 
-      expect(() => kill(12345)).to.throw("Operation not permitted");
-
-      process.kill = originalKill;
+    it("should re-throw unexpected errors", function () {
+      const mockKill = () => {
+        const err = new Error("Unexpected") as NodeJS.ErrnoException;
+        err.code = "EUNKNOWN";
+        throw err;
+      };
+      expect(() => kill(12345, false, mockKill)).to.throw("Unexpected");
     });
 
     it("should use SIGKILL when force is true", function () {
-      // eslint-disable-next-line @typescript-eslint/unbound-method
-      const originalKill = process.kill;
       let capturedSignal: string | number | undefined;
 
       const mockKill = (_pid: number, signal?: string | number): true => {
         capturedSignal = signal;
         return true;
       };
-      process.kill = mockKill;
 
-      kill(12345, true);
+      kill(12345, true, mockKill);
       expect(capturedSignal).to.equal("SIGKILL");
 
-      kill(12345, false);
+      kill(12345, false, mockKill);
       expect(capturedSignal).to.be.undefined;
+    });
+  });
 
-      process.kill = originalKill;
+  describe("killGroup", function () {
+    it("should refuse invalid PIDs rather than signalling a group", function () {
+      // A negated pid here would signal an arbitrary group -- and killGroup(-1)
+      // would ask the OS to signal *every* process we're allowed to signal.
+      expect(killGroup(0)).to.be.false;
+      expect(killGroup(-1)).to.be.false;
+      expect(killGroup(undefined)).to.be.false;
+      expect(killGroup(NaN)).to.be.false;
+    });
+
+    it("should signal the negated pid", function () {
+      let capturedPid: number | undefined;
+      const mockKill = (pid: number): true => {
+        capturedPid = pid;
+        return true;
+      };
+      killGroup(12345, true, mockKill);
+      // Windows has no POSIX process groups, so we signal the pid itself:
+      expect(capturedPid).to.eql(isWin ? 12345 : -12345);
+    });
+
+    it("can signal only a surviving group without falling back to its dead leader", function () {
+      const capturedPids: number[] = [];
+      const mockKill = (pid: number): false => {
+        capturedPids.push(pid);
+        return false;
+      };
+
+      expect(killGroupOnly(12345, true, mockKill)).to.be.false;
+      expect(capturedPids).to.eql(isWin ? [] : [-12345]);
+    });
+
+    it("should stop a detached child's grandchildren", async function () {
+      if (isWin) return this.skip();
+      this.timeout(15_000);
+
+      // detached: true makes the child its own process group leader, so its
+      // grandchild shares that group. Killing only proc.pid would orphan it.
+      const proc = child_process.spawn(
+        process.execPath,
+        [
+          "-e",
+          "const c = require('node:child_process').spawn(process.execPath, ['-e', 'setInterval(() => {}, 1000)']);" +
+            "process.stdout.write(c.pid + '\\n');" +
+            "setInterval(() => {}, 1000)",
+        ],
+        { detached: true, stdio: ["ignore", "pipe", "ignore"] },
+      );
+
+      // The try must start here, not after the pid handshake: a spawn error,
+      // an early exit, or a failed assertion below would otherwise leave a
+      // detached child *and* its grandchild running on the developer's machine.
+      let grandchildPid: number | undefined;
+      try {
+        const handshake = await thenOrTimeout(
+          new Promise<number>((resolve, reject) => {
+            proc.stdout.on("data", (chunk: Buffer) =>
+              resolve(Number(chunk.toString().trim())),
+            );
+            proc.on("error", reject);
+            proc.on("exit", () =>
+              reject(new Error("child exited before reporting its grandchild")),
+            );
+          }),
+          5_000,
+        );
+        if (handshake === Timeout) {
+          throw new Error("child did not report its grandchild within 5000ms");
+        }
+        grandchildPid = handshake;
+        expect(pidExists(grandchildPid)).to.be.true;
+
+        expect(killGroup(proc.pid, true)).to.be.true;
+
+        expect(await until(() => !pidExists(proc.pid), 5_000)).to.eql(
+          true,
+          "detached child should be dead",
+        );
+        expect(await until(() => !pidExists(grandchildPid), 5_000)).to.eql(
+          true,
+          "grandchild should be dead too",
+        );
+      } finally {
+        // The group kill covers the grandchild too, but it may have been
+        // reparented if the child died first; kill(undefined) is a no-op.
+        killGroup(proc.pid, true);
+        kill(grandchildPid, true);
+      }
+    });
+
+    it("still kills a child that leads no process group", async function () {
+      if (isWin) return this.skip();
+      this.timeout(15_000);
+
+      // NOT detached, so `-pid` names no group and the group signal fails with
+      // ESRCH. Without the fallback this would silently no-op, and enabling
+      // killProcessGroup would turn every force-kill into a leak.
+      const proc = child_process.spawn(process.execPath, [
+        "-e",
+        "setInterval(() => {}, 1000)",
+      ]);
+      try {
+        expect(killGroup(proc.pid, true)).to.eql(
+          true,
+          "should have fallen back to signalling the pid",
+        );
+        expect(await until(() => !pidExists(proc.pid), 5_000)).to.eql(
+          true,
+          "non-detached child should be dead",
+        );
+      } finally {
+        kill(proc.pid, true);
+      }
+    });
+
+    it("killerFor selects the group killer only when opted in", function () {
+      expect(killerFor({ killProcessGroup: false })).to.eql(kill);
+      expect(killerFor({ killProcessGroup: true })).to.eql(killGroup);
     });
   });
 });

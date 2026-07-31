@@ -174,7 +174,11 @@ async function runTrial<T>(
     maxTasksPerProcess: taskCount + 10,
     taskTimeoutMillis: 5000,
     spawnTimeoutMillis: 15000,
-    cleanupChildProcsOnExit: false,
+    // A search runs hundreds of trials, each with up to maxProcs children. If
+    // this tool exits abnormally (see find-flush-thresholds.ts' process.exit),
+    // the backstop is all that stops the in-flight trial's children from being
+    // orphaned. end() removes its own listeners, so these don't accumulate.
+    cleanupChildProcsOnExit: true,
     processFactory: opts.processFactory,
   });
 
@@ -226,8 +230,14 @@ async function runTrial<T>(
   } finally {
     // Snapshot count before cleanup — shutdown can emit spurious noTaskData.
     const finalCount = noTaskDataCount;
-    await bc.end(true);
-    clearInterval(keepalive);
+    try {
+      // The keepalive has to outlive end(), or the event loop can drain
+      // mid-shutdown -- but it must be cleared even if end() rejects, or this
+      // ref'd interval hangs the tool forever.
+      await bc.end(true);
+    } finally {
+      clearInterval(keepalive);
+    }
     noTaskDataCount = finalCount;
   }
 
