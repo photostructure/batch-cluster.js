@@ -13,9 +13,22 @@
     "url": "git+https://github.com/photostructure/batch-cluster.js.git"
   },
   "publishConfig": {
-    "access": "public",
-    "provenance": true
+    "access": "public"
   },
+  "files": [
+    "dist",
+    "!dist/**/*.spec.*",
+    "!dist/test.*",
+    "!dist/test-helpers.*",
+    "!dist/*-helper.*",
+    "!dist/find-flush-thresholds.*",
+    "!dist/FlushThresholdTestHelpers.*",
+    "!dist/TestEnv.*",
+    "CHANGELOG.md",
+    "LICENSE",
+    "README.md",
+    "SECURITY.md"
+  ],
   "engines": {
     "node": ">=22"
   },
@@ -27,42 +40,21 @@
     "fmt:prettier": "prettier --write .",
     "lint": "eslint src",
     "compile": "rimraf dist && tsc && node -e \"require('fs').copyFileSync('src/test.js','dist/test.js')\"",
+    "check:package": "node scripts/check-package.mjs",
+    "check:npm-version": "node scripts/check-npm-version.mjs",
     "watch": "rimraf dist && tsc --watch",
-    "test": "run-s clean lint compile test:mocha",
+    "test": "run-s clean lint compile check:package test:mocha",
     "test:mocha": "mocha dist/**/*.spec.js",
     "docs": "run-s docs:*",
     "docs:build": "typedoc",
     "docs:serve": "cp .serve.json build/docs/serve.json && touch build/docs/.nojekyll && serve build/docs",
     "update": "run-p update:*",
-    "update:deps": "npm-check-updates --upgrade --install always",
-    "install:pinact": "go install github.com/suzuki-shunsuke/pinact/v3/cmd/pinact@latest",
+    "update:deps": "npm run check:npm-version && npm-check-updates --upgrade --install always",
+    "install:pinact": "go install github.com/suzuki-shunsuke/pinact/v4/cmd/pinact@v4.1.0",
     "update:actions": "command -v pinact > /dev/null 2>&1 && pinact run -u || echo 'Skipping pinact (not installed)'",
     "find-flush-thresholds": "npm run compile && node dist/find-flush-thresholds.js",
-    "release": "release-it",
-    "all": "npm install && run-s update fmt docs:build test"
+    "all": "npm run check:npm-version && npm install && run-s update fmt docs:build test"
   },
-  "release-it": {
-    "src": {
-      "tagName": "v%s",
-      "commitArgs": "-S",
-      "tagArgs": "-S"
-    },
-    "hooks": {
-      "before:init": [
-        "npm ci",
-        "npm run clean",
-        "npm run compile"
-      ]
-    },
-    "github": {
-      "release": true
-    },
-    "npm": {
-      "publish": true,
-      "skipChecks": true
-    }
-  },
-  "# release-it.npm.skipChecks": "Required for OIDC Trusted Publishing - bypasses npm auth checks since OIDC handles authentication automatically. See: https://github.com/release-it/release-it/issues/1244 and https://docs.npmjs.com/trusted-publishers#supported-cicd-providers",
   "author": "Matthew McEachen <matthew-batchcluster@photostructure.com>",
   "license": "MIT",
   "devDependencies": {
@@ -87,7 +79,6 @@
     "npm-run-all2": "9.0.3",
     "prettier": "^3.9.6",
     "prettier-plugin-organize-imports": "^4.3.0",
-    "release-it": "^21.0.1",
     "rimraf": "^5.0.10",
     "seedrandom": "^3.0.5",
     "serve": "^14.2.6",

@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ### Build & Development
 
-- `npm install` - Install dependencies
+- `npm ci` - Install the committed dependency versions without resolving updates
 - `npm run compile` - Compile TypeScript to JavaScript (outputs to dist/)
 - `npm run watch` - Watch mode for TypeScript compilation
 - `npm run clean` - Clean build artifacts

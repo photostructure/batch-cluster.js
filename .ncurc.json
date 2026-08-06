@@ -1,6 +1,7 @@
 {
   "$schema": "https://raw.githubusercontent.com/raineorshine/npm-check-updates/main/src/types/RunOptions.json",
-  "cooldown": 4,
+  "removeRange": true,
+  "cooldown": 14,
   "reject": [
     "@types/chai",
     "@types/chai-as-promised",

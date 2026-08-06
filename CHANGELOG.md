@@ -18,6 +18,12 @@ See [Semver](http://semver.org/).
 
 - 📦 Minor packaging changes
 
+## [v19.0.1](https://github.com/photostructure/batch-cluster.js/releases/tag/v19.0.1)
+
+- 📦 Restricted the published package to compiled library output and standard package documentation,
+  excluding development configuration and maintainer-only files.
+- 📦 Hardened releases with signed tags and exact-artifact verification before npm staging.
+
 ## [v19.0.0](https://github.com/photostructure/batch-cluster.js/releases/tag/v19.0.0)
 
 This release closes several ways a child process could be leaked, and several ways a task's promise
