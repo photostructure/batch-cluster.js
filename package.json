@@ -53,7 +53,7 @@
     "install:pinact": "go install github.com/suzuki-shunsuke/pinact/v4/cmd/pinact@v4.1.0",
     "update:actions": "command -v pinact > /dev/null 2>&1 && pinact run -u || echo 'Skipping pinact (not installed)'",
     "find-flush-thresholds": "npm run compile && node dist/find-flush-thresholds.js",
-    "all": "npm run check:npm-version && npm install && run-s update fmt docs:build test"
+    "preflight": "npm run check:npm-version && npm install && run-s update fmt docs:build test"
   },
   "author": "Matthew McEachen <matthew-batchcluster@photostructure.com>",
   "license": "MIT",

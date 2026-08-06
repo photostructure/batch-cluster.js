@@ -6,6 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ### Build & Development
 
+- `make preflight` (or `npm run preflight`) - everything that should pass before a release: update deps, fmt, docs, test
 - `npm ci` - Install the committed dependency versions without resolving updates
 - `npm run compile` - Compile TypeScript to JavaScript (outputs to dist/)
 - `npm run watch` - Watch mode for TypeScript compilation
