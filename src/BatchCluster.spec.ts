@@ -693,6 +693,148 @@ describe("BatchCluster", function () {
     }
   }
 
+  describe("shouldIgnoreStderrLine", function () {
+    let bc: BatchCluster;
+
+    afterEach(() => shutdown(bc));
+
+    const ignoredLine = "Error: benign startup warning";
+    const shouldIgnoreStderrLine = (line: string) => line === ignoredLine;
+
+    it("discards an ignored stderr line during startup", async function () {
+      this.timeout(60000);
+      setFailRatePct(0);
+      const opts = {
+        ...DefaultTestOptions,
+        processFactory,
+        maxProcs: 1,
+        versionCommand: "stderr benign startup warning",
+        shouldIgnoreStderrLine,
+      };
+      bc = listen(new BatchCluster(opts));
+      const waitMillis = Math.max(2000, (await measureSpawnTime()) * 3);
+
+      const result = await thenOrTimeout(
+        bc.enqueueTask(new Task("upcase hello", parser)),
+        waitMillis,
+      );
+
+      expect(result).to.eql("HELLO");
+      expect(events.startErrors).to.eql([]);
+    });
+
+    it("retains real errors emitted with an ignored startup line", async function () {
+      this.timeout(60000);
+      setFailRatePct(0);
+      const opts = {
+        ...DefaultTestOptions,
+        processFactory,
+        maxProcs: 1,
+        versionCommand: "stderr benign startup warning<br>fatal startup error",
+        shouldIgnoreStderrLine,
+      };
+      bc = listen(new BatchCluster(opts));
+
+      void bc.enqueueTask(new Task("upcase hello", parser)).catch(() => {
+        /* expected to remain pending until shutdown */
+      });
+      const waitMillis = Math.max(2000, (await measureSpawnTime()) * 3);
+
+      expect(
+        await until(() => events.startErrors.length > 0, waitMillis),
+      ).to.eql(true);
+      expect(events.startErrors.map(String).join("\n")).to.include(
+        "fatal startup error",
+      );
+      expect(events.startErrors.map(String).join("\n")).to.not.include(
+        ignoredLine,
+      );
+    });
+
+    it("retains strict startup stderr handling by default", async function () {
+      this.timeout(60000);
+      setFailRatePct(0);
+      bc = listen(
+        new BatchCluster({
+          ...DefaultTestOptions,
+          processFactory,
+          maxProcs: 1,
+          versionCommand: "stderr unexpected startup error",
+        }),
+      );
+
+      void bc.enqueueTask(new Task("upcase hello", parser)).catch(() => {
+        /* expected to remain pending until shutdown */
+      });
+      const waitMillis = Math.max(2000, (await measureSpawnTime()) * 3);
+
+      expect(
+        await until(() => events.startErrors.length > 0, waitMillis),
+      ).to.eql(true);
+      expect(events.startErrors.map(String).join("\n")).to.include(
+        "unexpected startup error",
+      );
+    });
+
+    it("discards ignored lines from consumer tasks", async function () {
+      setFailRatePct(0);
+      bc = listen(
+        new BatchCluster({
+          ...DefaultTestOptions,
+          processFactory,
+          maxProcs: 1,
+          shouldIgnoreStderrLine: (line) =>
+            line === "Error: benign task warning",
+        }),
+      );
+
+      expect(
+        await bc.enqueueTask(new Task("stderr benign task warning", parser)),
+      ).to.eql("");
+    });
+
+    it("routes retained unterminated stderr before parsing its task", async function () {
+      setFailRatePct(0);
+      bc = listen(
+        new BatchCluster({
+          ...DefaultTestOptions,
+          processFactory,
+          maxProcs: 1,
+          shouldIgnoreStderrLine: () => false,
+        }),
+      );
+
+      await expect(
+        bc.enqueueTask(new Task("stderr-no-newline fatal task error", parser)),
+      ).to.eventually.be.rejectedWith("fatal task error");
+      expect(
+        await bc.enqueueTask(new Task("upcase still available", parser)),
+      ).to.eql("STILL AVAILABLE");
+    });
+
+    it("releases a worker after ignoring unterminated task stderr", async function () {
+      setFailRatePct(0);
+      bc = listen(
+        new BatchCluster({
+          ...DefaultTestOptions,
+          processFactory,
+          maxProcs: 1,
+          shouldIgnoreStderrLine: (line) =>
+            line === "Error: benign task warning",
+        }),
+      );
+
+      expect(
+        await bc.enqueueTask(
+          new Task("stderr-no-newline benign task warning", parser),
+        ),
+      ).to.eql("");
+      expect(
+        await bc.enqueueTask(new Task("upcase still available", parser)),
+      ).to.eql("STILL AVAILABLE");
+    });
+  });
+
   describe("stderr capture", function () {
     let bc: BatchCluster;
     afterEach(() => shutdown(bc));

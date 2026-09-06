@@ -1,8 +1,9 @@
+import FakeTimers from "@sinonjs/fake-timers";
 import child_process from "node:child_process";
 import events from "node:events";
 import { expect, processFactory } from "./_chai.spec";
 import { BatchClusterEmitter } from "./BatchClusterEmitter";
-import { logger } from "./Logger";
+import { logger, Logger, NoLogger } from "./Logger";
 import {
   StreamContext,
   StreamHandler,
@@ -16,6 +17,7 @@ describe("StreamHandler", function () {
   let mockContext: StreamContext;
   let onErrorCalls: { reason: string; error: Error }[] = [];
   let endCalls: { gracefully: boolean; reason: string }[] = [];
+  let onIdleCalls = 0;
 
   const options: StreamHandlerOptions = {
     logger,
@@ -27,6 +29,7 @@ describe("StreamHandler", function () {
 
     onErrorCalls = [];
     endCalls = [];
+    onIdleCalls = 0;
 
     // Create a mock context that simulates BatchProcess behavior
     mockContext = {
@@ -38,6 +41,9 @@ describe("StreamHandler", function () {
       },
       end: (gracefully: boolean, reason: string) => {
         endCalls.push({ gracefully, reason });
+      },
+      onIdle: () => {
+        onIdleCalls++;
       },
     };
   });
@@ -300,6 +306,208 @@ describe("StreamHandler", function () {
       expect(noTaskDataEvents).to.have.length(1);
       expect(endCalls).to.have.length(1);
       expect(endCalls[0]?.reason).to.eql("stderr");
+    });
+  });
+
+  describe("shouldIgnoreStderrLine", function () {
+    const sharpWarningLines = [
+      "[SharpElectronLinux] Warning: Binaries provided by Electron for use on Linux may be",
+      "incompatible with sharp - see https://sharp.pixelplumbing.com/install#electron-and-linux",
+    ];
+    let noTaskDataEvents: { stdout: any; stderr: any; context: any }[];
+    let warnings: string[];
+
+    function ignoringHandler(
+      shouldIgnoreStderrLine: (line: string) => boolean,
+      streamFlushMillis = 30,
+    ): StreamHandler {
+      const testLogger: Logger = {
+        ...NoLogger,
+        warn: (message) => warnings.push(message),
+      };
+      const handlerOptions = {
+        logger: () => testLogger,
+        shouldIgnoreStderrLine,
+        streamFlushMillis,
+      };
+      return new StreamHandler(handlerOptions, emitter);
+    }
+
+    beforeEach(function () {
+      noTaskDataEvents = [];
+      warnings = [];
+      emitter.on("noTaskData", (stdout, stderr, context) => {
+        noTaskDataEvents.push({ stdout, stderr, context });
+      });
+    });
+
+    it("assembles ignored lines across arbitrary chunks", function () {
+      const seenLines: string[] = [];
+      streamHandler = ignoringHandler((line) => {
+        seenLines.push(line);
+        return sharpWarningLines.includes(line);
+      });
+      const warning = sharpWarningLines[0] as string;
+
+      streamHandler.processStderr(warning.slice(0, 24), mockContext);
+      streamHandler.processStderr(warning.slice(24) + "\r", mockContext);
+      streamHandler.processStderr("\n", mockContext);
+
+      expect(seenLines).to.eql([warning]);
+      expect(warnings).to.eql([]);
+      expect(noTaskDataEvents).to.eql([]);
+      expect(endCalls).to.eql([]);
+    });
+
+    it("retains errors alongside ignored lines", function () {
+      streamHandler = ignoringHandler((line) =>
+        sharpWarningLines.includes(line),
+      );
+
+      streamHandler.processStderr(
+        sharpWarningLines[0] +
+          "\nreal worker error\n" +
+          sharpWarningLines[1] +
+          "\n",
+        mockContext,
+      );
+
+      expect(noTaskDataEvents).to.have.length(1);
+      expect(noTaskDataEvents[0]?.stderr).to.eql("real worker error\n");
+      expect(warnings).to.have.length(1);
+      expect(warnings[0]).to.include("real worker error");
+      expect(warnings[0]).to.not.include("SharpElectronLinux");
+      expect(endCalls).to.eql([{ gracefully: false, reason: "stderr" }]);
+    });
+
+    it("passes retained lines to the current task", function () {
+      let taskStderr = "";
+      const mockTask = {
+        pending: true,
+        onStderr: (data: string | Buffer) => {
+          taskStderr += String(data);
+        },
+      } as unknown as Task<unknown>;
+      mockContext.getCurrentTask = () => mockTask;
+      streamHandler = ignoringHandler((line) => line === "benign warning");
+
+      streamHandler.processStderr(
+        "benign warning\nreal task error\n",
+        mockContext,
+      );
+
+      expect(taskStderr).to.eql("real task error\n");
+      expect(warnings).to.have.length(1);
+      expect(warnings[0]).to.include("real task error");
+      expect(warnings[0]).to.not.include("benign warning");
+    });
+
+    it("evaluates an unterminated final line when stderr ends", function () {
+      streamHandler = ignoringHandler((line) => line === "benign warning");
+
+      streamHandler.processStderr("benign warning", mockContext);
+      streamHandler.endStderr(mockContext);
+
+      expect(warnings).to.eql([]);
+      expect(noTaskDataEvents).to.eql([]);
+      expect(endCalls).to.eql([]);
+    });
+
+    it("flushes taskless unterminated stderr after a quiet period", function () {
+      const clock = FakeTimers.install();
+      try {
+        streamHandler = ignoringHandler(() => false, 30);
+
+        streamHandler.processStderr("real worker error", mockContext);
+        expect(noTaskDataEvents).to.eql([]);
+
+        clock.tick(30);
+
+        expect(noTaskDataEvents[0]?.stderr).to.eql("real worker error");
+        expect(endCalls).to.eql([{ gracefully: false, reason: "stderr" }]);
+      } finally {
+        clock.uninstall();
+      }
+    });
+
+    it("retains taskless ownership when a task starts mid-line", function () {
+      let taskStderr = "";
+      let currentTask: Task<unknown> | undefined = undefined;
+      mockContext.getCurrentTask = () => currentTask;
+      streamHandler = ignoringHandler(() => false);
+
+      streamHandler.processStderr("real worker error", mockContext);
+      currentTask = {
+        pending: true,
+        onStderr: (data: string | Buffer) => {
+          taskStderr += String(data);
+        },
+      } as unknown as Task<unknown>;
+      streamHandler.processStderr("\n", mockContext);
+
+      expect(taskStderr).to.eql("");
+      expect(noTaskDataEvents[0]?.stderr).to.eql("real worker error\n");
+      expect(endCalls).to.eql([{ gracefully: false, reason: "stderr" }]);
+    });
+
+    it("wakes scheduling after an ignored partial line completes", function () {
+      streamHandler = ignoringHandler((line) => line === "benign warning");
+
+      streamHandler.processStderr("benign", mockContext);
+      expect(streamHandler.hasIncompleteStderrLine).to.eql(true);
+      streamHandler.processStderr(" warning\n", mockContext);
+
+      expect(streamHandler.hasIncompleteStderrLine).to.eql(false);
+      expect(onIdleCalls).to.eql(1);
+      expect(noTaskDataEvents).to.eql([]);
+      expect(endCalls).to.eql([]);
+    });
+
+    it("fails closed when an unterminated line exceeds 64 KiB", function () {
+      let predicateCalls = 0;
+      streamHandler = ignoringHandler(() => {
+        predicateCalls++;
+        return true;
+      });
+
+      streamHandler.processStderr("x".repeat(64 * 1024 + 1), mockContext);
+
+      expect(predicateCalls).to.eql(0);
+      expect(noTaskDataEvents).to.have.length(1);
+      expect(noTaskDataEvents[0]?.stderr).to.have.length(64 * 1024 + 1);
+      expect(endCalls).to.eql([{ gracefully: false, reason: "stderr" }]);
+    });
+
+    it("preserves UTF-8 code points split across Buffer chunks", function () {
+      const warning = "benign ⚠️ warning";
+      const bytes = Buffer.from(warning + "\n");
+      const splitAt = bytes.indexOf(Buffer.from("⚠️")) + 1;
+      const seenLines: string[] = [];
+      streamHandler = ignoringHandler((line) => {
+        seenLines.push(line);
+        return line === warning;
+      });
+
+      streamHandler.processStderr(bytes.subarray(0, splitAt), mockContext);
+      streamHandler.processStderr(bytes.subarray(splitAt), mockContext);
+
+      expect(seenLines).to.eql([warning]);
+      expect(noTaskDataEvents).to.eql([]);
+      expect(endCalls).to.eql([]);
+    });
+
+    it("fails closed when the predicate throws", function () {
+      streamHandler = ignoringHandler(() => {
+        throw new Error("predicate failure");
+      });
+
+      streamHandler.processStderr("worker output\n", mockContext);
+
+      expect(noTaskDataEvents[0]?.stderr).to.eql("worker output\n");
+      expect(warnings[0]).to.include("worker output");
+      expect(onErrorCalls).to.have.length(1);
+      expect(onErrorCalls[0]?.reason).to.eql("stderr.error");
+      expect(onErrorCalls[0]?.error.message).to.include("predicate failure");
     });
   });
 

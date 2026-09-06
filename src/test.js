@@ -190,6 +190,11 @@ async function onLine(line) {
         write("PASS");
         break;
       }
+      case "stderr-no-newline": {
+        process.stderr.write("Error: " + postToken);
+        write("PASS");
+        break;
+      }
       case "stderrfail": {
         // Emit stderr error content before the fail token on stdout, like
         // ExifTool (which always emits {ready} on stdout, never stderr):

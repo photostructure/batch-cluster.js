@@ -66,6 +66,7 @@ export class BatchProcess {
   readonly #terminator: ProcessTerminator;
   readonly #healthMonitor: ProcessHealthMonitor;
   readonly #streamHandler: StreamHandler;
+  readonly #streamContext: StreamContext;
   #lastJobFinishedAt = Date.now();
 
   // Only set to true when `proc.pid` is no longer in the process table.
@@ -109,6 +110,7 @@ export class BatchProcess {
         this.#onError(reason as WhyNotHealthy, error),
       end: (gracefully: boolean, reason: string) =>
         void this.end(gracefully, reason as WhyNotHealthy),
+      onIdle: () => this.onIdle(),
     };
   };
   #currentTaskTimeout: NodeJS.Timeout | undefined;
@@ -137,9 +139,14 @@ export class BatchProcess {
     this.#healthMonitor =
       healthMonitor ?? new ProcessHealthMonitor(opts, opts.observer);
     this.#streamHandler = new StreamHandler(
-      { logger: this.#logger },
+      {
+        logger: this.#logger,
+        shouldIgnoreStderrLine: opts.shouldIgnoreStderrLine,
+        streamFlushMillis: opts.streamFlushMillis,
+      },
       opts.observer,
     );
+    this.#streamContext = this.#createStreamContext();
     // don't let node count the child processes as a reason to stay alive
     this.proc.unref();
     if (opts.unrefStreams) {
@@ -180,10 +187,7 @@ export class BatchProcess {
     });
 
     // Set up stream handlers using StreamHandler
-    this.#streamHandler.setupStreamListeners(
-      this.proc,
-      this.#createStreamContext(),
-    );
+    this.#streamHandler.setupStreamListeners(this.proc, this.#streamContext);
 
     const startupTask = new Task(opts.versionCommand, SimpleParser);
     this.startupTaskId = startupTask.taskId;
@@ -268,7 +272,9 @@ export class BatchProcess {
    * task, or `undefined` if this process is idle and healthy.
    */
   get whyNotReady(): WhyNotReady | null {
-    return !this.idle ? "busy" : this.whyNotHealthy;
+    return !this.idle || this.#streamHandler.hasIncompleteStderrLine
+      ? "busy"
+      : this.whyNotHealthy;
   }
 
   /**
@@ -397,7 +403,12 @@ export class BatchProcess {
     );
 
     try {
-      task.onStart(this.opts);
+      task.onStart(this.opts, () =>
+        this.#streamHandler.flushStderrForTask(
+          task as Task<unknown>,
+          this.#streamContext,
+        ),
+      );
       const stdin = this.proc?.stdin;
       if (stdin == null || stdin.destroyed) {
         task.reject(new Error("proc.stdin unexpectedly closed"));

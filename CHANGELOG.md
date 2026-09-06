@@ -18,6 +18,10 @@ See [Semver](http://semver.org/).
 
 - 📦 Minor packaging changes
 
+## [v19.1.0](https://github.com/photostructure/batch-cluster.js/releases/tag/v19.1.0)
+
+- ✨ Added `shouldIgnoreStderrLine` to discard known benign stderr lines before logging or routing.
+
 ## [v19.0.1](https://github.com/photostructure/batch-cluster.js/releases/tag/v19.0.1)
 
 - 📦 Restricted the published package to compiled library output and standard package documentation,

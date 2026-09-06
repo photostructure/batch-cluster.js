@@ -24,6 +24,7 @@ export class Task<T = unknown> {
   readonly #d = new Deferred<T>();
   #stdout = "";
   #stderr = "";
+  #beforeParse: (() => void) | undefined;
 
   /**
    * @param {string} command is the value written to stdin to perform the given
@@ -62,8 +63,9 @@ export class Task<T = unknown> {
         : "resolved";
   }
 
-  onStart(opts: TaskOptions) {
+  onStart(opts: TaskOptions, beforeParse?: () => void) {
     this.#opts = opts;
+    this.#beforeParse = beforeParse;
     this.#startedAt = Date.now();
   }
 
@@ -144,6 +146,8 @@ export class Task<T = unknown> {
     this.#parsing = true;
 
     try {
+      this.#beforeParse?.();
+      if (!this.pending) return;
       const parseResult = await this.parser(this.#stdout, this.#stderr, passed);
       // Deferred.resolve() returns false if already settled (e.g., external
       // reject during parsing). This is expected behavior, not an error.
