@@ -77,6 +77,7 @@ export class BatchProcess {
 
   // override for .whyNotHealthy()
   #whyNotHealthy?: WhyNotHealthy;
+  #retirementRequested = false;
 
   failedTaskCount = 0;
 
@@ -111,6 +112,7 @@ export class BatchProcess {
       end: (gracefully: boolean, reason: string) =>
         void this.end(gracefully, reason as WhyNotHealthy),
       onIdle: () => this.onIdle(),
+      requestRetirement: () => this.requestRetirement(),
     };
   };
   #currentTaskTimeout: NodeJS.Timeout | undefined;
@@ -142,6 +144,7 @@ export class BatchProcess {
       {
         logger: this.#logger,
         shouldIgnoreStderrLine: opts.shouldIgnoreStderrLine,
+        isRetirementRequest: opts.isRetirementRequest,
         streamFlushMillis: opts.streamFlushMillis,
       },
       opts.observer,
@@ -249,7 +252,28 @@ export class BatchProcess {
    * know if a process can handle a new task.
    */
   get whyNotHealthy(): WhyNotHealthy | null {
-    return this.#healthMonitor.assessHealth(this, this.#whyNotHealthy);
+    return this.#healthMonitor.assessHealth(
+      this,
+      this.#whyNotHealthy ??
+        (this.#retirementRequested ? "retired" : undefined),
+    );
+  }
+
+  /** Whether this worker has been asked to retire after its current task. */
+  get retirementRequested(): boolean {
+    return this.#retirementRequested;
+  }
+
+  /**
+   * Permanently prevent further assignments while letting the active task
+   * settle under its normal timeout. Idle workers are recycled immediately.
+   * Repeated calls have no additional effect. Unlike `end()`, this preserves
+   * the current task and its output streams until the task settles.
+   */
+  requestRetirement(): void {
+    if (this.#retirementRequested || this.ending) return;
+    this.#retirementRequested = true;
+    if (this.idle) this.onIdle();
   }
 
   /**
@@ -272,7 +296,7 @@ export class BatchProcess {
    * task, or `undefined` if this process is idle and healthy.
    */
   get whyNotReady(): WhyNotReady | null {
-    return !this.idle || this.#streamHandler.hasIncompleteStderrLine
+    return !this.idle || this.#streamHandler.hasIncompleteOutputLine
       ? "busy"
       : this.whyNotHealthy;
   }
@@ -331,7 +355,9 @@ export class BatchProcess {
   }
 
   maybeRunHealthCheck(): Task<unknown> | undefined {
-    return this.#healthMonitor.maybeRunHealthCheck(this);
+    return this.ready
+      ? this.#healthMonitor.maybeRunHealthCheck(this)
+      : undefined;
   }
 
   // This must not be async, or new instances aren't started as busy (until the
@@ -404,7 +430,7 @@ export class BatchProcess {
 
     try {
       task.onStart(this.opts, () =>
-        this.#streamHandler.flushStderrForTask(
+        this.#streamHandler.flushOutputForTask(
           task as Task<unknown>,
           this.#streamContext,
         ),
@@ -548,5 +574,6 @@ export class BatchProcess {
     this.#currentTaskTimeout = undefined;
     this.#currentTask = undefined;
     this.#lastJobFinishedAt = Date.now();
+    if (task != null) this.#streamHandler.onTaskSettled(this.#streamContext);
   }
 }

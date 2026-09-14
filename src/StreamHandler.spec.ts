@@ -18,6 +18,7 @@ describe("StreamHandler", function () {
   let onErrorCalls: { reason: string; error: Error }[] = [];
   let endCalls: { gracefully: boolean; reason: string }[] = [];
   let onIdleCalls = 0;
+  let retirementRequests = 0;
 
   const options: StreamHandlerOptions = {
     logger,
@@ -30,6 +31,7 @@ describe("StreamHandler", function () {
     onErrorCalls = [];
     endCalls = [];
     onIdleCalls = 0;
+    retirementRequests = 0;
 
     // Create a mock context that simulates BatchProcess behavior
     mockContext = {
@@ -44,6 +46,9 @@ describe("StreamHandler", function () {
       },
       onIdle: () => {
         onIdleCalls++;
+      },
+      requestRetirement: () => {
+        retirementRequests++;
       },
     };
   });
@@ -508,6 +513,351 @@ describe("StreamHandler", function () {
       expect(onErrorCalls).to.have.length(1);
       expect(onErrorCalls[0]?.reason).to.eql("stderr.error");
       expect(onErrorCalls[0]?.error.message).to.include("predicate failure");
+    });
+  });
+
+  describe("isRetirementRequest", function () {
+    const marker = "{photostructure:retire}";
+    let seen: { line: string; stream: string }[];
+    let stdout: string;
+    let stderr: string;
+    let warnings: string[];
+    let taskData: string[];
+    let noTaskData: unknown[];
+
+    beforeEach(function () {
+      seen = [];
+      stdout = "";
+      stderr = "";
+      warnings = [];
+      taskData = [];
+      noTaskData = [];
+      streamHandler = new StreamHandler(
+        {
+          logger: () => ({ ...NoLogger, warn: (s) => warnings.push(s) }),
+          streamFlushMillis: 0,
+          isRetirementRequest: (line, stream) => {
+            seen.push({ line, stream });
+            return line === marker;
+          },
+        },
+        emitter,
+      );
+      const task = {
+        pending: true,
+        onStdout: (data: string | Buffer) => {
+          stdout += String(data);
+        },
+        onStderr: (data: string | Buffer) => {
+          stderr += String(data);
+        },
+      } as unknown as Task<unknown>;
+      mockContext.getCurrentTask = () => task;
+      emitter.on("taskData", (data) => taskData.push(String(data)));
+      emitter.on("noTaskData", (...args) => noTaskData.push(args));
+    });
+
+    for (const stream of ["stdout", "stderr"] as const) {
+      const write = (
+        handler: StreamHandler,
+        data: string | Buffer,
+        context: StreamContext,
+      ) =>
+        stream === "stdout"
+          ? handler.processStdout(data, context)
+          : handler.processStderr(data, context);
+
+      it(`consumes ${stream} markers and preserves surrounding output`, function () {
+        write(streamHandler, `before\r\n${marker}\r\nafter\n`, mockContext);
+        expect(retirementRequests).to.eql(1);
+        expect(stream === "stdout" ? stdout : stderr).to.eql(
+          "before\r\nafter\n",
+        );
+        expect(taskData.join("")).to.not.include(marker);
+        expect(warnings.join("")).to.not.include(marker);
+        expect(noTaskData).to.eql([]);
+        expect(seen).to.eql([
+          { line: "before", stream },
+          { line: marker, stream },
+          { line: "after", stream },
+        ]);
+      });
+
+      it(`assembles ${stream} markers across delayed chunks`, function () {
+        const clock = FakeTimers.install();
+        try {
+          write(streamHandler, marker.slice(0, 9), mockContext);
+          clock.tick(1000);
+          expect(retirementRequests).to.eql(0);
+          expect(stdout + stderr).to.eql("");
+          expect(streamHandler.hasIncompleteOutputLine).to.eql(true);
+          write(streamHandler, marker.slice(9) + "\r", mockContext);
+          clock.tick(1000);
+          write(streamHandler, "\n", mockContext);
+          expect(retirementRequests).to.eql(1);
+          expect(streamHandler.hasIncompleteOutputLine).to.eql(false);
+          expect(stdout + stderr).to.eql("");
+        } finally {
+          clock.uninstall();
+        }
+      });
+
+      it(`decodes split UTF-8 ${stream} lines`, function () {
+        for (const byte of Buffer.from("ordinary 🌻 output\n")) {
+          write(streamHandler, Buffer.from([byte]), mockContext);
+        }
+        expect(seen).to.eql([{ line: "ordinary 🌻 output", stream }]);
+        expect(stdout + stderr).to.eql("ordinary 🌻 output\n");
+      });
+
+      it(`keeps ${stream} ownership when a chunk ends with an undecoded code point after a newline`, function () {
+        const bytes = Buffer.from("first\n🌻 second\n");
+        write(streamHandler, bytes.subarray(0, 7), mockContext);
+        expect(streamHandler.hasIncompleteOutputLine).to.eql(true);
+        write(streamHandler, bytes.subarray(7), mockContext);
+        expect(streamHandler.hasIncompleteOutputLine).to.eql(false);
+        expect(stdout + stderr).to.eql("first\n🌻 second\n");
+      });
+
+      it(`consumes idle ${stream} requests without treating them as stray output`, function () {
+        mockContext.getCurrentTask = () => undefined;
+        write(streamHandler, marker + "\n", mockContext);
+        expect(retirementRequests).to.eql(1);
+        expect(noTaskData).to.eql([]);
+        expect(warnings).to.eql([]);
+        expect(endCalls).to.eql([]);
+      });
+
+      it(`releases an idle ${stream} fragment after the flush interval`, function () {
+        // R683-A: a taskless fragment must reach normal stray-output handling
+        // without relying on EOF, worker age, or another task starting.
+        const clock = FakeTimers.install();
+        try {
+          mockContext.getCurrentTask = () => undefined;
+          write(streamHandler, "progress: 50%", mockContext);
+          expect(streamHandler.hasIncompleteOutputLine).to.eql(true);
+          clock.tick(1);
+          expect(streamHandler.hasIncompleteOutputLine).to.eql(false);
+          expect(noTaskData).to.have.length(1);
+          expect(endCalls).to.eql([
+            {
+              gracefully: false,
+              reason: stream === "stdout" ? "stdout.error" : "stderr",
+            },
+          ]);
+          expect(retirementRequests).to.eql(0);
+        } finally {
+          clock.uninstall();
+        }
+      });
+
+      it(`cancels the idle ${stream} timer when a split retirement line completes`, function () {
+        const clock = FakeTimers.install();
+        try {
+          mockContext.getCurrentTask = () => undefined;
+          write(streamHandler, marker.slice(0, 9), mockContext);
+          write(streamHandler, marker.slice(9) + "\n", mockContext);
+          clock.tick(100);
+          expect(retirementRequests).to.eql(1);
+          expect(noTaskData).to.eql([]);
+          expect(streamHandler.hasIncompleteOutputLine).to.eql(false);
+          expect(clock.countTimers()).to.eql(0);
+        } finally {
+          clock.uninstall();
+        }
+      });
+
+      it(`does not recognize an idle ${stream} marker across a timer flush`, function () {
+        const clock = FakeTimers.install();
+        try {
+          mockContext.getCurrentTask = () => undefined;
+          write(streamHandler, "prefix ", mockContext);
+          clock.tick(1);
+          write(streamHandler, marker + "\n", mockContext);
+          expect(retirementRequests).to.eql(0);
+          expect(noTaskData).to.have.length(2);
+          write(streamHandler, marker + "\n", mockContext);
+          expect(retirementRequests).to.eql(1);
+        } finally {
+          clock.uninstall();
+        }
+      });
+
+      it(`bypasses recognition for oversized ${stream} lines, including their tails`, function () {
+        const prefix = "x".repeat(64 * 1024 + 1);
+        write(streamHandler, prefix, mockContext);
+        expect(stdout + stderr).to.eql(prefix);
+        write(streamHandler, marker + "\n" + marker + "\n", mockContext);
+        expect(seen).to.eql([{ line: marker, stream }]);
+        expect(retirementRequests).to.eql(1);
+        expect(stdout + stderr).to.eql(prefix + marker + "\n");
+      });
+
+      it(`retains unterminated ${stream} markers at EOF`, function () {
+        write(streamHandler, marker, mockContext);
+        if (stream === "stdout") {
+          streamHandler.endStdout(mockContext);
+          streamHandler.endStdout(mockContext);
+        } else {
+          streamHandler.endStderr(mockContext);
+          streamHandler.endStderr(mockContext);
+        }
+        expect(retirementRequests).to.eql(0);
+        expect(seen).to.eql([]);
+        expect(stdout + stderr).to.eql(marker);
+        expect(streamHandler.hasIncompleteOutputLine).to.eql(false);
+      });
+
+      it(`contains exceptions from the ${stream} predicate before task completion`, async function () {
+        let parserCalls = 0;
+        const task = new Task<unknown>("test", () => {
+          parserCalls++;
+        });
+        task.onStart({
+          streamFlushMillis: 0,
+          logger,
+          observer: emitter,
+          passRE: /PASS/,
+          failRE: /FAIL/,
+        });
+        mockContext.getCurrentTask = () => task;
+        const originalOnError = mockContext.onError;
+        mockContext.onError = (reason, error) => {
+          originalOnError(reason, error);
+          task.reject(error);
+          mockContext.isEnding = () => true;
+        };
+        streamHandler = new StreamHandler(
+          {
+            logger,
+            isRetirementRequest: () => {
+              throw new Error("bad recognizer");
+            },
+          },
+          emitter,
+        );
+        write(streamHandler, "PASS\n", mockContext);
+        await expect(task.promise).to.be.rejectedWith(
+          "isRetirementRequest threw: bad recognizer",
+        );
+        expect(parserCalls).to.eql(0);
+        expect(onErrorCalls[0]?.reason).to.eql(`${stream}.error`);
+        expect(retirementRequests).to.eql(0);
+      });
+    }
+
+    it("recognizes retirement before parsing a completion token in the same chunk", async function () {
+      const task = new Task<unknown>("test", (out, err, passed) => {
+        expect(retirementRequests).to.eql(1);
+        expect(passed).to.eql(true);
+        expect(err).to.eql("");
+        return out;
+      });
+      task.onStart({
+        streamFlushMillis: 0,
+        logger,
+        observer: emitter,
+        passRE: /PASS\n/,
+        failRE: /FAIL\n/,
+      });
+      mockContext.getCurrentTask = () => task;
+      streamHandler.processStdout(`result\n${marker}\nPASS\n`, mockContext);
+      expect(await task.promise).to.eql("result\n");
+    });
+
+    it("recognizes retirement before stderr filtering and retains real errors", function () {
+      const ignored: string[] = [];
+      streamHandler = new StreamHandler(
+        {
+          logger: () => ({ ...NoLogger, warn: (s) => warnings.push(s) }),
+          isRetirementRequest: (line) => line === marker,
+          shouldIgnoreStderrLine: (line) => {
+            ignored.push(line);
+            return line === "advisory";
+          },
+        },
+        emitter,
+      );
+      streamHandler.processStderr(
+        `${marker}\nadvisory\nreal error\n`,
+        mockContext,
+      );
+      expect(retirementRequests).to.eql(1);
+      expect(ignored).to.eql(["advisory", "real error"]);
+      expect(stderr).to.eql("real error\n");
+      expect(warnings).to.have.length(1);
+      expect(warnings[0]).to.include("real error");
+    });
+
+    it("flushes ordinary unterminated stderr before parsing", async function () {
+      const task = new Task<unknown>("test", (_out, err) => err);
+      task.onStart(
+        {
+          streamFlushMillis: 0,
+          logger,
+          observer: emitter,
+          passRE: /PASS\n/,
+          failRE: /FAIL\n/,
+        },
+        () => streamHandler.flushStderrForTask(task, mockContext),
+      );
+      mockContext.getCurrentTask = () => task;
+      streamHandler.processStderr("real error", mockContext);
+      streamHandler.processStdout("PASS\n", mockContext);
+      expect(await task.promise).to.eql("real error");
+      expect(retirementRequests).to.eql(0);
+    });
+
+    it("does not recognize the suffix of stderr already flushed for task parsing", function () {
+      streamHandler.processStderr("prefix ", mockContext);
+      streamHandler.flushStderrForTask(
+        mockContext.getCurrentTask()!,
+        mockContext,
+      );
+      streamHandler.processStderr(marker + "\n", mockContext);
+      expect(retirementRequests).to.eql(0);
+      expect(stderr).to.eql("prefix " + marker + "\n");
+      streamHandler.processStderr(marker + "\n", mockContext);
+      expect(retirementRequests).to.eql(1);
+    });
+
+    it("preserves partial stdout when stderr completes the task", async function () {
+      const task = new Task<unknown>("test", (out, err, passed) => ({
+        out,
+        err,
+        passed,
+      }));
+      task.onStart(
+        {
+          streamFlushMillis: 0,
+          logger,
+          observer: emitter,
+          passRE: /PASS\n/,
+          failRE: /FAIL\n/,
+        },
+        () => streamHandler.flushOutputForTask(task, mockContext),
+      );
+      mockContext.getCurrentTask = () => task;
+      streamHandler.processStdout("partial diagnostic", mockContext);
+      streamHandler.processStderr("FAIL\n", mockContext);
+      expect(await task.promise).to.eql({
+        out: "partial diagnostic",
+        err: "",
+        passed: false,
+      });
+    });
+
+    it("does not recognize the suffix of stdout already flushed for task parsing", function () {
+      streamHandler.processStdout("prefix ", mockContext);
+      streamHandler.flushOutputForTask(
+        mockContext.getCurrentTask()!,
+        mockContext,
+      );
+      streamHandler.processStdout(marker + "\n", mockContext);
+      expect(retirementRequests).to.eql(0);
+      expect(stdout).to.eql("prefix " + marker + "\n");
+      streamHandler.processStdout(marker + "\n", mockContext);
+      expect(retirementRequests).to.eql(1);
     });
   });
 

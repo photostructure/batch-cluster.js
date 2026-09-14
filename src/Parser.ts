@@ -8,10 +8,11 @@ import { notBlank } from "./String";
 /**
  * Invoked once per task.
  *
- * @param stdout the concatenated stream from `stdin`, stripped of the `PASS`
- * or `FAIL` tokens from `BatchProcessOptions`.
+ * @param stdout the concatenated stdout, stripped of the `PASS` or `FAIL`
+ * tokens and any lines consumed by `isRetirementRequest`.
  *
- * @param stderr if defined, includes all text emitted to stderr.
+ * @param stderr if defined, includes stderr except lines consumed by
+ * `isRetirementRequest` or `shouldIgnoreStderrLine`.
  *
  * @param passed `true` iff the `PASS` pattern was found in stdout.
  *

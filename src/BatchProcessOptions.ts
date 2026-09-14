@@ -2,7 +2,7 @@
  * `BatchProcessOptions` have no reasonable defaults, as they are specific to
  * the API of the command that BatchCluster is spawning.
  *
- * All fields must be set.
+ * Required fields must be set.
  */
 export interface BatchProcessOptions {
   /**
@@ -20,14 +20,53 @@ export interface BatchProcessOptions {
   versionCommand: string;
 
   /**
+   * Recognize a worker's request to retire after its current task settles.
+   * Called synchronously for complete stdout/stderr lines, without LF or CRLF.
+   * Return `true` to consume the entire line (including its line ending): it
+   * will not reach the task parser, pass/fail matching, `taskData`, `noTaskData`,
+   * stderr logging, or `shouldIgnoreStderrLine`. Return `false` to retain normal
+   * handling. Use an exact, reserved control line rather than ordinary log text.
+   *
+   * A match immediately prevents new tasks and health checks. The active task
+   * keeps receiving output and retains its normal timeout; the request itself
+   * neither resolves nor rejects it. Once idle, the worker is gracefully ended
+   * with reason `retired`. Repeated requests have no additional effect. Startup
+   * and idle workers can also request retirement. The worker should wait for
+   * the parent's exit command or stdin closure instead of exiting itself.
+   *
+   * For ordering, write the marker and then the task completion token through
+   * the same stdout writer. Both must end with a newline. The marker is consumed
+   * before completion is processed, even when both arrive in one chunk. Stderr
+   * requests have no ordering guarantee relative to stdout completion.
+   *
+   * Enabling this option buffers stdout and stderr into lines, independently of
+   * chunk boundaries. Stdout completion tokens must therefore end with a
+   * newline. Partial lines block new assignments; received fragments are flushed
+   * before task parsing or at EOF. Fragments without a pending owning task are
+   * also flushed after no more data arrives for `streamFlushMillis`, retaining
+   * normal stray-output handling. Idle retirement markers must finish within
+   * that interval. Fragments are never reassembled across a flush boundary.
+   * Unterminated fragments are ordinary output, never retirement requests.
+   * Lines longer than 64 * 1024 UTF-16 code units bypass recognition. If the
+   * callback throws, the worker is ended with `stdout.error` or `stderr.error`
+   * and its active task is rejected.
+   *
+   * Defaults to `undefined`, preserving existing stream handling.
+   */
+  isRetirementRequest?:
+    ((line: string, stream: "stdout" | "stderr") => boolean) | undefined;
+
+  /**
    * Called for each complete line written to stderr. Return `true` to discard
    * that line before it is logged, associated with a task, or treated as
    * taskless process output. The line ending is not included.
    *
    * Lines are assembled independently of stream chunk boundaries. An
    * unterminated fragment is evaluated before its task is parsed, when no more
-   * stderr arrives for `streamFlushMillis`, or when the stream ends. The worker
-   * is not assigned another task while a fragment is pending.
+   * stderr arrives for `streamFlushMillis`, or when the stream ends. With
+   * `isRetirementRequest` enabled, the quiet-period flush waits until the line's
+   * owning task is no longer pending. The worker is not assigned another task
+   * while a fragment is pending.
    *
    * Lines longer than 64 KiB bypass this callback and retain the normal stderr
    * behavior. If this callback throws, its line is retained and the worker is

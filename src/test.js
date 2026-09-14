@@ -151,6 +151,38 @@ async function onLine(line) {
         break;
       }
 
+      case "retire": {
+        const marker = "{photostructure:retire}";
+        const mode = tokens[0];
+        if (mode === "idle") {
+          await write(String(process.pid) + newline + "PASS");
+          await delay(50);
+          await write(marker);
+          break;
+        }
+        if (mode === "split") {
+          process.stdout.write(marker.slice(0, 9));
+          await delay(50);
+          await write(
+            marker.slice(9) + newline + process.pid + newline + "PASS",
+          );
+          break;
+        }
+        if (mode === "early" || mode === "timeout") {
+          await write(marker);
+          if (mode === "timeout") break;
+          await delay(2100);
+          await write(String(process.pid) + newline + "PASS");
+          break;
+        }
+        await write(
+          marker +
+            newline +
+            (mode === "fail" ? "FAIL" : process.pid + newline + "PASS"),
+        );
+        break;
+      }
+
       case "exit": {
         if (ignoreExit) {
           write("IGNORE_EXIT is set");
@@ -193,6 +225,22 @@ async function onLine(line) {
       case "stderr-no-newline": {
         process.stderr.write("Error: " + postToken);
         write("PASS");
+        break;
+      }
+      case "buffered-failure": {
+        // The parent acknowledges receiving stderr with "complete-failure",
+        // so tests do not rely on ordering between independent pipes.
+        process.stderr.write("FAIL");
+        break;
+      }
+      case "complete-failure": {
+        write("PASS");
+        break;
+      }
+      case "idle-fragment": {
+        // Test control command: emit unsolicited output without a task token.
+        const stream = tokens[0] === "stderr" ? process.stderr : process.stdout;
+        stream.write("progress: 50%");
         break;
       }
       case "stderrfail": {

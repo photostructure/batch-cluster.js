@@ -18,6 +18,18 @@ See [Semver](http://semver.org/).
 
 - 📦 Minor packaging changes
 
+## Unreleased
+
+- Added `isRetirementRequest` to consume worker retirement control lines and
+  recycle the worker after its current task settles. Recognized lines are
+  excluded from task output, events, and stderr logging. Added
+  `BatchProcess.requestRetirement()`, `retirementRequested`, and the expected
+  termination reason `"retired"`.
+- Preserve failure tokens discovered while flushing buffered output before task
+  parsing, including when `shouldIgnoreStderrLine` is enabled.
+- Flush orphaned output fragments after `streamFlushMillis` so they cannot
+  strand an idle worker or block queued tasks indefinitely.
+
 ## [v19.1.0](https://github.com/photostructure/batch-cluster.js/releases/tag/v19.1.0)
 
 - ✨ Added `shouldIgnoreStderrLine` to discard known benign stderr lines before logging or routing.

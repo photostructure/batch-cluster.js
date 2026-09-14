@@ -30,6 +30,59 @@ As of version 4, retry logic for tasks is a separate concern from this module.
 This package powers [exiftool-vendored](https://photostructure.github.io/exiftool-vendored.js/),
 whose source you can examine as an example consumer.
 
+## Worker retirement
+
+A worker can request retirement when, for example, its memory use exceeds an
+application-defined threshold. Configure a predicate for an exact control line:
+
+```ts
+const cluster = new BatchCluster({
+  // ...your processFactory and other options
+  isRetirementRequest: (line, stream) =>
+    stream === "stdout" && line === "{photostructure:retire}",
+});
+```
+
+**Returning `true` consumes the entire stdout or stderr line, including its line
+ending.** It is removed before task parsing, completion-token matching,
+`taskData`/`noTaskData` events, stderr logging, and `shouldIgnoreStderrLine`.
+Returning `false` preserves normal handling of that line.
+
+On a match, the worker becomes unavailable for new tasks and health checks. Its
+current task keeps receiving output and retains its normal timeout. After that
+task settles, batch-cluster gracefully shuts down the worker and reports
+`childEnd` with reason `"retired"`. The request itself does not resolve or reject
+the task. Repeated requests are harmless, and idle workers can request retirement
+too. Parent-side callers can use `BatchProcess.requestRetirement()` for the same
+behavior and inspect `retirementRequested`.
+
+Write the marker **before** the completion token through the same stdout writer:
+
+```js
+process.stdout.write("{photostructure:retire}\n");
+process.stdout.write("PASS\n"); // Use your configured completion token.
+```
+
+The worker should then wait for the parent's exit command or stdin closure.
+Stdout and stderr are independent streams: a retirement marker on stderr may
+arrive after stdout completion and the next task's assignment.
+
+Enabling this option buffers output into lines, so **stdout completion tokens
+must end with a newline**. LF and CRLF are supported, including markers split
+across chunks or received in the same chunk as completion. Partial lines block
+new assignments. Unterminated fragments are ordinary output, never retirement
+requests; received fragments are flushed before task parsing or at EOF.
+Fragments without a pending owning task also flush after `streamFlushMillis`
+without new data, preserving normal stray-output handling. An idle retirement
+marker must therefore finish within that interval; fragments are never
+reassembled across a flush boundary. Active tasks retain split markers until
+the newline arrives or their output is flushed before parsing.
+
+Lines longer than 64 * 1024 UTF-16 code units bypass recognition.
+A throwing predicate ends the worker with `stdout.error` or
+`stderr.error` and rejects its active task. Without this option, stream handling
+is unchanged.
+
 ## Installation
 
 ```bash

@@ -20,6 +20,7 @@ export class Task<T = unknown> {
   #opts?: TaskOptions;
   #startedAt?: number;
   #parsing = false;
+  #sawFailureToken = false;
   #settledAt?: number;
   readonly #d = new Deferred<T>();
   #stdout = "";
@@ -124,8 +125,9 @@ export class Task<T = unknown> {
   }
 
   async #resolve(passed: boolean) {
-    // fail always wins.
-    passed = !this.#d.rejected && passed;
+    // Record failures even when another resolution owns parsing. The
+    // beforeParse flush can deliver a failure token through a reentrant call.
+    this.#sawFailureToken ||= !passed;
 
     // Wait for the *other* stream to flush.
     const flushMs = this.#opts?.streamFlushMillis ?? 0;
@@ -148,7 +150,11 @@ export class Task<T = unknown> {
     try {
       this.#beforeParse?.();
       if (!this.pending) return;
-      const parseResult = await this.parser(this.#stdout, this.#stderr, passed);
+      const parseResult = await this.parser(
+        this.#stdout,
+        this.#stderr,
+        passed && !this.#sawFailureToken,
+      );
       // Deferred.resolve() returns false if already settled (e.g., external
       // reject during parsing). This is expected behavior, not an error.
       this.#d.resolve(parseResult);

@@ -12,6 +12,7 @@ export type WhyNotHealthy =
   | "proc.disconnect"
   | "proc.error"
   | "proc.exit"
+  | "retired"
   | "stderr.error"
   | "stderr"
   | "stdin.error"
@@ -35,6 +36,7 @@ export type WhyNotReady = WhyNotHealthy | "busy";
  * - "old": Process ran too long (maxProcAgeMillis)
  * - "worn": Process handled too many tasks (maxTasksPerProcess)
  * - "tooMany": maxProcs was reduced
+ * - "retired": Worker requested retirement after its current task
  */
 export const ExpectedTerminationReasons: readonly WhyNotHealthy[] = [
   "ending",
@@ -43,4 +45,5 @@ export const ExpectedTerminationReasons: readonly WhyNotHealthy[] = [
   "old",
   "worn",
   "tooMany",
+  "retired",
 ] as const;
