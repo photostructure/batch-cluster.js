@@ -19,6 +19,8 @@ export class Task<T = unknown> {
   readonly taskId = _taskId++;
   #opts?: TaskOptions;
   #startedAt?: number;
+  #lastTimeoutResetAt?: number;
+  #resetTimeout: (() => boolean) | undefined;
   #parsing = false;
   #sawFailureToken = false;
   #settledAt?: number;
@@ -64,10 +66,38 @@ export class Task<T = unknown> {
         : "resolved";
   }
 
-  onStart(opts: TaskOptions, beforeParse?: () => void) {
+  /**
+   * Called by BatchProcess when this task starts. Overrides must pass every
+   * argument to `super.onStart()`, or {@link Task.resetTimeout} stops working.
+   */
+  onStart(
+    opts: TaskOptions,
+    beforeParse?: () => void,
+    resetTimeout?: () => boolean,
+  ) {
     this.#opts = opts;
     this.#beforeParse = beforeParse;
     this.#startedAt = Date.now();
+    this.#resetTimeout = resetTimeout;
+  }
+
+  /**
+   * Restart this task's timeout. Call this only after verifying that the task
+   * made progress: output alone is not progress.
+   *
+   * @return false if the task isn't running or has no timeout, and for
+   * startup and health-check tasks.
+   */
+  resetTimeout(): boolean {
+    if (!this.pending || this.#resetTimeout?.() !== true) return false;
+    this.#lastTimeoutResetAt = Date.now();
+    return true;
+  }
+
+  /** Time since this task started, or since its last timeout reset. */
+  get timeoutElapsedMs(): number | undefined {
+    const since = this.#lastTimeoutResetAt ?? this.#startedAt;
+    return since == null ? undefined : (this.#settledAt ?? Date.now()) - since;
   }
 
   get runtimeMs() {
@@ -115,6 +145,7 @@ export class Task<T = unknown> {
 
   #onSettle() {
     this.#settledAt ??= Date.now();
+    this.#resetTimeout = undefined;
   }
 
   /**

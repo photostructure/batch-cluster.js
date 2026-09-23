@@ -189,6 +189,22 @@ describe("ProcessPoolManager", function () {
       );
     });
 
+    it("end() rejects while an unadoptable child is still running", async function () {
+      // With cleanupChildProcs disabled, the pool leaves this child running
+      // for the caller, so end() must not report that every child is gone.
+      const pool = poolWith(() => spawnStubbornChild("ignore"), {
+        cleanupChildProcs: false,
+      });
+      await pool.maybeSpawnProcs(1);
+      const pid = childProcs[childProcs.length - 1]?.pid;
+
+      await expect(pool.end(true)).to.be.rejectedWith("still running");
+      expect(pidExists(pid)).to.eql(
+        true,
+        "the caller opted out of PID cleanup; we must not have signalled it",
+      );
+    });
+
     it("does not claim cleanup is disabled when an exited child cannot be signalled", async function () {
       const proc = child_process.spawn(process.execPath, ["-e", ""], {
         stdio: "ignore",
@@ -485,8 +501,7 @@ describe("ProcessPoolManager", function () {
       await pool.maybeSpawnProcs(1);
       const pid = childProcs[childProcs.length - 1]?.pid;
 
-      await pool.end(true);
-      await delay(200);
+      await expect(pool.end(true)).to.be.rejectedWith("still running");
 
       expect(pidExists(pid)).to.eql(
         true,

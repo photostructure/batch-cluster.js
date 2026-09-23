@@ -25,6 +25,7 @@ export * from "./Logger";
 export { SimpleParser } from "./Parser";
 export { kill, killGroup, pidExists } from "./Pids";
 export { Task } from "./Task";
+export { TaskTimeoutError } from "./TaskTimeoutError";
 // Type exports organized by source module
 export type { Args } from "./Args";
 export type {
@@ -161,6 +162,9 @@ export class BatchCluster {
    * therefore remains pending. Automatic `beforeExit` cleanup uses a bounded
    * best-effort variant instead.
    *
+   * Rejects, without emitting `end`, if a child process this instance spawned
+   * is still running once termination has finished.
+   *
    * @param gracefully should an attempt be made to finish in-flight tasks, or
    * should we force-kill child PIDs.
    */
@@ -208,6 +212,10 @@ export class BatchCluster {
           this.emitter.emit("end");
         }),
       );
+      // Callers may fire and forget (beforeExit always does). On rejection,
+      // #exitListener stays registered to kill surviving children when this
+      // process exits.
+      void this.#endPromise.promise.catch(() => undefined);
     }
 
     return this.#endPromise;
@@ -227,6 +235,15 @@ export class BatchCluster {
       return task.promise;
     }
     this.#taskQueue.enqueue(task);
+    // A caller can reject a task that is still queued, e.g. when an admission
+    // deadline expires. Drop it: while it is counted as pending, we keep
+    // spawning processes for it and holding the event loop open.
+    void task.promise.catch(() => {
+      // Only a task that never started can still be queued:
+      if (task.runtimeMs == null && this.#taskQueue.remove(task)) {
+        this.#onIdleLater();
+      }
+    });
     // Immediately, not via #onIdleLater: the caller may hand control straight
     // back to the event loop, and this task must already be holding it open.
     this.#updateKeepAlive();

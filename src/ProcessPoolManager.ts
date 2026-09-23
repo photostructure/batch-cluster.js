@@ -1,8 +1,9 @@
 import child_process from "node:child_process";
 import timers from "node:timers";
 import { count, filterInPlace } from "./Array";
+import { until } from "./Async";
 import { BatchClusterEmitter } from "./BatchClusterEmitter";
-import { BatchProcess } from "./BatchProcess";
+import { BatchProcess, ExitConfirmationMillis } from "./BatchProcess";
 import { CombinedBatchProcessOptions } from "./CombinedBatchProcessOptions";
 import { asError } from "./Error";
 import { Logger } from "./Logger";
@@ -200,6 +201,9 @@ export class ProcessPoolManager {
    * Contrast with {@link ProcessPoolManager.closeChildProcesses}, which only
    * recycles the current children and leaves the pool able to spawn more.
    *
+   * Rejects if a child this pool spawned is still running once termination
+   * has finished.
+   *
    * @param maxWaitMillis optional bound used only by automatic process-exit
    * cleanup. Omit it for the public `BatchCluster.end()` barrier.
    */
@@ -267,6 +271,17 @@ export class ProcessPoolManager {
         await thenOrTimeout(pending, remainingMs);
       }
       await this.closeChildProcesses(gracefully);
+    }
+    // A last-resort kill may still be landing, but stay within our deadline:
+    await until(
+      () => this.#unexitedProcs.size === 0,
+      Math.min(ExitConfirmationMillis, (deadline ?? Infinity) - Date.now()),
+    );
+    if (this.#unexitedProcs.size > 0) {
+      throw new Error(
+        "ProcessPoolManager.end(): child processes are still running: " +
+          this.unexitedPids().join(", "),
+      );
     }
   }
 
@@ -443,7 +458,9 @@ export class ProcessPoolManager {
   }
 
   #procsToSpawn(pendingTaskCount: number): number {
-    const remainingCapacity = this.options.maxProcs - this.#procs.length;
+    // A child keeps its slot until it exits, including while it's being
+    // terminated or after termination failed.
+    const remainingCapacity = this.options.maxProcs - this.#unexitedProcs.size;
 
     // take into account starting procs, so one task doesn't result in multiple
     // processes being spawned:
@@ -472,7 +489,11 @@ export class ProcessPoolManager {
       return;
     }
     this.#unexitedProcs.add(proc);
-    proc.once("exit", () => this.#unexitedProcs.delete(proc));
+    proc.once("exit", () => {
+      this.#unexitedProcs.delete(proc);
+      // This frees a slot: wake queued work, even if onIdleIntervalMillis is 0.
+      this.onIdle();
+    });
   }
 
   /**

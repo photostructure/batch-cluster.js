@@ -9,6 +9,14 @@ import { blank } from "./String";
 import { Task } from "./Task";
 import { WhyNotHealthy, WhyNotReady } from "./WhyNotHealthy";
 
+class HealthCheckTask extends Task<unknown> {
+  // Health checks detect workers that stopped responding. Letting their own
+  // output extend the deadline would disable that fixed recovery bound.
+  override resetTimeout(): boolean {
+    return false;
+  }
+}
+
 /**
  * Interface for objects that can be health checked
  */
@@ -153,7 +161,7 @@ export class ProcessHealthMonitor {
           this.options.healthCheckIntervalMillis)
     ) {
       state.lastHealthCheck = Date.now();
-      const t = new Task(hcc, SimpleParser);
+      const t = new HealthCheckTask(hcc, SimpleParser);
       t.promise
         .catch((err) => {
           this.emitter.emit(
@@ -170,8 +178,8 @@ export class ProcessHealthMonitor {
         });
 
       // Execute the health check task on the process
-      if (process.execTask(t as Task<unknown>)) {
-        return t as Task<unknown>;
+      if (process.execTask(t)) {
+        return t;
       }
     }
     return;

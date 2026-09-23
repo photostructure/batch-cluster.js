@@ -61,6 +61,11 @@ export class TaskQueueManager {
       return false;
     }
 
+    if (!task.pending) {
+      // Its caller rejected it while it was queued: never execute it.
+      return this.tryAssignNextTask(readyProcess);
+    }
+
     if (readyProcess.execTask(task)) {
       this.#logger().trace("tryAssignNextTask(): task submitted", {
         pid: readyProcess.pid,
@@ -70,7 +75,7 @@ export class TaskQueueManager {
     }
 
     // Process became unavailable (ending or busy). Requeue for next onIdle.
-    this.#tasks.push(task);
+    if (task.pending) this.#tasks.push(task);
     this.#logger().debug(
       "tryAssignNextTask(): process unavailable, task requeued",
       {
@@ -79,6 +84,17 @@ export class TaskQueueManager {
       },
     );
     return false;
+  }
+
+  /**
+   * Remove `task` if it is still waiting for a process.
+   * @return true if the task was removed
+   */
+  remove<T>(task: Task<T>): boolean {
+    const i = this.#tasks.indexOf(task as Task<unknown>);
+    if (i < 0) return false;
+    this.#tasks.splice(i, 1);
+    return true;
   }
 
   /**

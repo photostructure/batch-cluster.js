@@ -12,7 +12,7 @@ export const minuteMs = 60 * secondMs;
 export class BatchClusterOptions {
   /**
    * No more than `maxProcs` child processes will be run at a given time
-   * to serve pending tasks.
+   * to serve pending tasks. A child keeps its slot until it exits.
    *
    * Defaults to 1.
    */
@@ -57,7 +57,8 @@ export class BatchClusterOptions {
 
   /**
    * If commands take longer than this, presume the underlying process is dead
-   * and we should fail the task.
+   * and we should fail the task with a `TaskTimeoutError`. The timeout starts
+   * when a process begins the task, and `Task.resetTimeout()` restarts it.
    *
    * This should be set to something on the order of seconds to a minute, but at
    * least 2-10 times longer than the expected task duration under typical load.
@@ -117,6 +118,8 @@ export class BatchClusterOptions {
    * shut down?
    *
    * Only disable this if you have another means of PID cleanup.
+   * `BatchProcess.end()` still rejects if that child is running 5 seconds
+   * after termination.
    *
    * Defaults to `true`.
    */

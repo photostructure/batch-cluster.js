@@ -31,7 +31,7 @@ export interface StreamContext {
   isEnding(): boolean;
   getCurrentTask(): Task<unknown> | undefined;
   onError: (reason: string, error: Error) => void;
-  end: (gracefully: boolean, reason: string) => void;
+  end: (gracefully: boolean, reason: string) => void | Promise<void>;
   onIdle: () => void;
   requestRetirement: () => void;
 }
@@ -234,7 +234,7 @@ export class StreamHandler {
     } else if (!blank(data)) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
       this.emitter.emit("noTaskData", data, null, context as any);
-      context.end(false, "stdout.error");
+      void context.end(false, "stdout.error");
     }
   }
 
@@ -441,7 +441,7 @@ export class StreamHandler {
       // If we're ending and there isn't a task, don't worry about it.
       // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
       this.emitter.emit("noTaskData", null, data, context as any);
-      context.end(false, "stderr");
+      void context.end(false, "stderr");
     }
   }
 

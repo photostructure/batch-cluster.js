@@ -152,7 +152,7 @@ describe("ProcessHealthMonitor", function () {
     it("should detect timed out task", function () {
       // Create a mock task that simulates a long runtime
       const mockTask = {
-        runtimeMs: 1500, // longer than 1000ms timeout
+        timeoutElapsedMs: 1500, // longer than 1000ms timeout
       } as Task<unknown>;
 
       const timedOutProcess = {

@@ -65,6 +65,17 @@ describe("TaskQueueManager", function () {
       );
     });
 
+    it("should remove only a task that is still queued", function () {
+      const queued = new Task("queued", parser);
+      const other = new Task("other", parser);
+      queueManager.enqueue(queued);
+
+      expect(queueManager.remove(other)).to.be.false;
+      expect(queueManager.remove(queued)).to.be.true;
+      expect(queueManager.remove(queued)).to.be.false;
+      expect(queueManager.isEmpty).to.be.true;
+    });
+
     it("should handle multiple tasks", function () {
       const task1 = new Task("command 1", parser);
       const task2 = new Task("command 2", parser);

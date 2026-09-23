@@ -120,7 +120,7 @@ export class TaskTimeoutHealthCheck implements HealthCheckStrategy {
   ): WhyNotHealthy | null {
     if (
       options.taskTimeoutMillis > 0 &&
-      (process.currentTask?.runtimeMs ?? 0) > options.taskTimeoutMillis
+      (process.currentTask?.timeoutElapsedMs ?? 0) > options.taskTimeoutMillis
     ) {
       return "timeout";
     }

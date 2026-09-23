@@ -30,6 +30,23 @@ As of version 4, retry logic for tasks is a separate concern from this module.
 This package powers [exiftool-vendored](https://photostructure.github.io/exiftool-vendored.js/),
 whose source you can examine as an example consumer.
 
+## Task progress and cancellation
+
+`taskTimeoutMillis` starts when a worker begins a task, not while the task is
+queued. If your worker reports progress, call `task.resetTimeout()` each time
+you have verified that the task advanced: this restarts its timeout. Don't
+reset on output alone. Startup and health-check tasks keep a fixed deadline.
+
+A task that times out rejects with `TaskTimeoutError`, possibly before its
+worker has exited. To retry safely, await that worker's `end()`
+(`BatchProcess.end()`, or `context.end()` in a `taskData` listener). `end()`
+resolves once the child has exited, and rejects if the child is still running
+5 seconds after termination. The pool then emits `endError`.
+`BatchCluster.end()` rejects while any child it spawned is still running. A child keeps its `maxProcs` slot until it exits.
+
+Rejecting a queued task removes it from the queue. Rejecting a running task
+does not stop its worker: call and await that worker's `end()` as well.
+
 ## Worker retirement
 
 A worker can request retirement when, for example, its memory use exceeds an

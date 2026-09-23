@@ -12,11 +12,16 @@ import { ProcessTerminator } from "./ProcessTerminator";
 import { StreamContext, StreamHandler } from "./StreamHandler";
 import { ensureSuffix } from "./String";
 import { Task } from "./Task";
+import { TaskTimeoutError } from "./TaskTimeoutError";
+import { thenOrTimeout, Timeout } from "./Timeout";
 import {
   ExpectedTerminationReasons,
   WhyNotHealthy,
   WhyNotReady,
 } from "./WhyNotHealthy";
+
+/** How long end() waits for the child to exit after termination. */
+export const ExitConfirmationMillis = 5000;
 
 /**
  * BatchProcess manages the care and feeding of a single child process.
@@ -110,7 +115,7 @@ export class BatchProcess {
       onError: (reason: string, error: Error) =>
         this.#onError(reason as WhyNotHealthy, error),
       end: (gracefully: boolean, reason: string) =>
-        void this.end(gracefully, reason as WhyNotHealthy),
+        this.end(gracefully, reason as WhyNotHealthy),
       onIdle: () => this.onIdle(),
       requestRetirement: () => this.requestRetirement(),
     };
@@ -167,6 +172,13 @@ export class BatchProcess {
     }
 
     this.pid = proc.pid;
+
+    // An async processFactory can return a child whose "exit" already fired:
+    if (proc.exitCode != null || proc.signalCode != null) {
+      this.#exitCode = proc.exitCode;
+      this.#exitSignal = proc.signalCode;
+      this.#processExitDeferred.resolve();
+    }
 
     this.proc.on("error", (err) => this.#onError("proc.error", err));
     this.proc.on("close", () => {
@@ -228,9 +240,8 @@ export class BatchProcess {
 
   /**
    * @return true if `this.end()` has completed running, which includes child
-   * process cleanup. Note that this may return `true` and the process table may
-   * still include the child pid. Call {@link BatchProcess#running()} for an authoritative
-   * (but expensive!) answer.
+   * process cleanup. A failed termination also settles end(); use `exited`
+   * to distinguish confirmed exit, and await end() to receive cleanup errors.
    */
   get ended(): boolean {
     return true === this.#endPromise?.settled;
@@ -367,7 +378,7 @@ export class BatchProcess {
   }
 
   #execTask<T>(task: Task<T>): boolean {
-    if (this.ending) return false;
+    if (this.ending || !task.pending) return false;
 
     this.#currentTask = task as Task<unknown>;
     const cmd = ensureSuffix(task.command, "\n");
@@ -429,12 +440,28 @@ export class BatchProcess {
     );
 
     try {
-      task.onStart(this.opts, () =>
-        this.#streamHandler.flushOutputForTask(
-          task as Task<unknown>,
-          this.#streamContext,
-        ),
+      task.onStart(
+        this.opts,
+        () =>
+          this.#streamHandler.flushOutputForTask(
+            task as Task<unknown>,
+            this.#streamContext,
+          ),
+        isStartupTask
+          ? undefined
+          : () => {
+              // end() clears #currentTask and its timer.
+              if (
+                this.#currentTask !== task ||
+                this.#currentTaskTimeout == null
+              )
+                return false;
+              this.#currentTaskTimeout.refresh();
+              return true;
+            },
       );
+      // onStart is consumer-overridable and may cancel synchronously.
+      if (!task.pending || this.ending) return false;
       const stdin = this.proc?.stdin;
       if (stdin == null || stdin.destroyed) {
         task.reject(new Error("proc.stdin unexpectedly closed"));
@@ -461,15 +488,24 @@ export class BatchProcess {
    * @param gracefully Wait for any current task to be resolved or rejected
    * before shutting down the child process.
    * @param reason who called end() (used for logging)
-   * @return Promise that will be resolved when the process has completed.
+   * @return Promise that resolves after the child exits, or rejects if it is
+   * still running 5 seconds after termination.
    * Subsequent calls to end() will ignore the parameters and return the first
    * endPromise.
    */
   // NOT ASYNC! needs to change state immediately.
   end(gracefully = true, reason: WhyNotHealthy): Promise<void> {
-    return (this.#endPromise ??= new Deferred<void>().observe(
-      this.#end(gracefully, (this.#whyNotHealthy ??= reason)),
-    )).promise;
+    if (this.#endPromise == null) {
+      // Assigned before #end() runs, so `ending` is already true inside it.
+      this.#endPromise = new Deferred<void>();
+      // Internal callers fire and forget. Callers that await still see a
+      // failed exit, and the pool reports it as endError.
+      void this.#endPromise.promise.catch(() => undefined);
+      this.#endPromise.observe(
+        this.#end(gracefully, (this.#whyNotHealthy ??= reason)),
+      );
+    }
+    return this.#endPromise.promise;
   }
 
   // NOTE: Must only be invoked by this.end(), and only expected to be invoked
@@ -492,20 +528,31 @@ export class BatchProcess {
         this.exited,
         () => this.running(),
       );
+      // Sending SIGKILL is not confirmation of exit. In particular a blocked
+      // kernel operation may keep a child alive after its streams are closed.
+      if (
+        (await thenOrTimeout(
+          this.#processExitDeferred.promise,
+          ExitConfirmationMillis,
+        )) === Timeout
+      ) {
+        throw new Error(
+          `${this.name}: exit was not confirmed within ${ExitConfirmationMillis}ms`,
+        );
+      }
     } finally {
       this.#terminatingTask = undefined;
+      this.#healthMonitor.cleanupProcess(this.pid);
+      // Preserve the termination diagnostic even when exit cannot be confirmed.
+      // The rejected end() promise (and pool endError) reports recovery failure.
+      this.opts.observer.emit("childEnd", this, reason);
     }
-
-    // Clean up health monitoring for this process
-    this.#healthMonitor.cleanupProcess(this.pid);
-
-    this.opts.observer.emit("childEnd", this, reason);
   }
 
   #onTimeout(task: Task<unknown>, timeoutMs: number): void {
     if (task.pending) {
       this.opts.observer.emit("taskTimeout", timeoutMs, task, this);
-      this.#onError("timeout", new Error("waited " + timeoutMs + "ms"), task);
+      this.#onError("timeout", new TaskTimeoutError(timeoutMs), task);
     }
   }
 
@@ -513,7 +560,10 @@ export class BatchProcess {
     if (task == null) {
       task = this.#currentTask;
     }
-    const cleanedError = new Error(reason + ": " + cleanError(error.message));
+    const cleanedError =
+      error instanceof TaskTimeoutError
+        ? error
+        : new Error(reason + ": " + cleanError(error.message));
     if (error.stack != null) {
       // Error stacks, if set, will not be redefined from a rethrow:
       cleanedError.stack = cleanError(error.stack);

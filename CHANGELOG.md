@@ -18,16 +18,28 @@ See [Semver](http://semver.org/).
 
 - 📦 Minor packaging changes
 
-## Unreleased
+## [v19.3.0](https://github.com/photostructure/batch-cluster.js/releases/tag/v19.3.0)
 
-- Added `isRetirementRequest` to consume worker retirement control lines and
+- ✨ Added `Task.resetTimeout()`, so a worker that reports progress can restart
+  its task's `taskTimeoutMillis` while the task advances. Timeouts now reject
+  with the exported `TaskTimeoutError`.
+- ✨ `BatchProcess.end()` now resolves only after the child exits, and rejects if
+  the child is still running 5 seconds after termination. `context.end()` in
+  `taskData` listeners returns the same promise. `BatchCluster.end()` rejects,
+  and doesn't emit `end`, while a child it spawned is still running. A child
+  keeps its `maxProcs` slot until it exits.
+- 🐞 A task rejected while queued is removed from the queue and never executed.
+
+## [v19.2.0](https://github.com/photostructure/batch-cluster.js/releases/tag/v19.2.0)
+
+- ✨ Added `isRetirementRequest` to consume worker retirement control lines and
   recycle the worker after its current task settles. Recognized lines are
   excluded from task output, events, and stderr logging. Added
   `BatchProcess.requestRetirement()`, `retirementRequested`, and the expected
   termination reason `"retired"`.
-- Preserve failure tokens discovered while flushing buffered output before task
+- 🐞 Preserve failure tokens discovered while flushing buffered output before task
   parsing, including when `shouldIgnoreStderrLine` is enabled.
-- Flush orphaned output fragments after `streamFlushMillis` so they cannot
+- 🐞 Flush orphaned output fragments after `streamFlushMillis` so they cannot
   strand an idle worker or block queued tasks indefinitely.
 
 ## [v19.1.0](https://github.com/photostructure/batch-cluster.js/releases/tag/v19.1.0)

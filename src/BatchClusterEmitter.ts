@@ -42,7 +42,8 @@ export interface BatchClusterEvents {
   childStart: (childProcess: BatchProcess) => void;
 
   /**
-   * Emitted when a child process has ended
+   * Emitted when a child process has ended, or when termination failed to
+   * make it exit (see `endError`). Check `proc.exited` to tell them apart.
    *
    * @example
    * ```typescript
@@ -116,7 +117,8 @@ export interface BatchClusterEvents {
   healthCheckError: (error: Error, proc: BatchProcess) => void;
 
   /**
-   * Emitted when a child process has an error during shutdown
+   * Emitted when a child process has an error during shutdown, including
+   * when it is still running 5 seconds after termination.
    */
   endError: (error: Error, proc?: BatchProcess) => void;
 
