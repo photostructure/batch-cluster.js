@@ -57,11 +57,7 @@ export function verifyOptions(
 
   gte("maxProcs", 1);
 
-  if (
-    opts.maxProcAgeMillis != null &&
-    opts.maxProcAgeMillis > 0 &&
-    result.taskTimeoutMillis
-  ) {
+  if (opts.maxProcAgeMillis != null && opts.maxProcAgeMillis > 0) {
     // maxProcAgeMillis may be shorter than taskTimeoutMillis: a worker that
     // reaches maxProcAgeMillis mid-task finishes that task. Being "old" makes
     // the worker not `.ready`, so it gets no new tasks, and

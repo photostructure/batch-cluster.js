@@ -23,6 +23,9 @@ See [Semver](http://semver.org/).
 - 🐞 `maxProcAgeMillis` may now be less than `taskTimeoutMillis`. A child that
   reaches `maxProcAgeMillis` during a task already finished that task before
   being recycled, so the check rejected configurations that work.
+- 🐞 The `BatchCluster` constructor now rejects a `maxProcAgeMillis` below
+  `spawnTimeoutMillis` when `taskTimeoutMillis` is 0. Previously it skipped
+  that check whenever task timeouts were disabled.
 
 ## [v19.4.0](https://github.com/photostructure/batch-cluster.js/releases/tag/v19.4.0)
 

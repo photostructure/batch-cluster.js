@@ -19,26 +19,30 @@ describe("BatchClusterOptions", () => {
       expect(verifyOptions(opts as any)).to.containSubset(opts);
     });
 
-    it("requires maxProcAgeMillis to be > spawnTimeoutMillis", () => {
-      const spawnTimeoutMillis = DefaultTestOptions.taskTimeoutMillis + 1;
-      try {
-        bc = new BatchCluster({
-          processFactory,
-          ...DefaultTestOptions,
-          spawnTimeoutMillis,
-          maxProcAgeMillis: spawnTimeoutMillis - 1,
-        });
-        throw new Error("expected an error due to invalid opts");
-      } catch (err) {
-        expect(errToArr(err)).to.eql([
-          "Error",
-          "BatchCluster was given invalid options",
-          "maxProcAgeMillis must be greater than or equal to " +
+    // A taskTimeoutMillis of 0 disables task timeouts, not this check:
+    for (const taskTimeoutMillis of [DefaultTestOptions.taskTimeoutMillis, 0]) {
+      it(`requires maxProcAgeMillis to be > spawnTimeoutMillis (taskTimeoutMillis: ${taskTimeoutMillis})`, () => {
+        const spawnTimeoutMillis = DefaultTestOptions.taskTimeoutMillis + 1;
+        try {
+          bc = new BatchCluster({
+            processFactory,
+            ...DefaultTestOptions,
+            taskTimeoutMillis,
             spawnTimeoutMillis,
-          "the value of spawnTimeoutMillis",
-        ]);
-      }
-    });
+            maxProcAgeMillis: spawnTimeoutMillis - 1,
+          });
+          throw new Error("expected an error due to invalid opts");
+        } catch (err) {
+          expect(errToArr(err)).to.eql([
+            "Error",
+            "BatchCluster was given invalid options",
+            "maxProcAgeMillis must be greater than or equal to " +
+              spawnTimeoutMillis,
+            "the value of spawnTimeoutMillis",
+          ]);
+        }
+      });
+    }
 
     it("allows maxProcAgeMillis to be < taskTimeoutMillis", () => {
       const taskTimeoutMillis = DefaultTestOptions.spawnTimeoutMillis + 1;
@@ -74,8 +78,6 @@ describe("BatchClusterOptions", () => {
 
           maxTasksPerProcess: 0,
           minDelayBetweenSpawnMillis: -1,
-          // must be non-zero to trigger maxProcAgeMillis validation
-          taskTimeoutMillis: 10000,
 
           maxProcs: -1,
           maxProcAgeMillis: 10,
