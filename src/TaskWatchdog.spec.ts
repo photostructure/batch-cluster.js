@@ -417,6 +417,22 @@ describe("request watchdog", function () {
     }
   });
 
+  it("rejects with TaskTimeoutError even when a taskTimeout listener ends the worker", async function () {
+    // taskTimeout hands out the BatchProcess, and awaiting its end() is how a
+    // caller waits for the timed-out child to exit. Ending it there must not
+    // replace the timeout with the terminator's generic rejection, or record
+    // the listener's reason instead of "timeout".
+    await setup();
+    const reasons: string[] = [];
+    observer.on("taskTimeout", (_ms, _task, proc) => {
+      void proc.end(false, "ending");
+    });
+    observer.on("childEnd", (_proc, reason) => reasons.push(reason));
+    await expect(submit("gate").promise).to.be.rejectedWith(TaskTimeoutError);
+    await bp.end(false, "timeout");
+    expect(reasons).to.eql(["timeout"]);
+  });
+
   it("execution timeout errors can be identified without message matching", async function () {
     await setup();
     const result = await submit("gate").promise.catch(

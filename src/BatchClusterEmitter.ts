@@ -89,6 +89,9 @@ export interface BatchClusterEvents {
 
   /**
    * Emitted when a task times out. Note that a `taskError` event always succeeds these events.
+   *
+   * By then the task has been rejected with a `TaskTimeoutError` and `proc` is
+   * ending, so `proc.end()` returns that same termination.
    */
   taskTimeout: (
     timeoutMs: number,

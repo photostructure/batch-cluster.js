@@ -551,8 +551,11 @@ export class BatchProcess {
 
   #onTimeout(task: Task<unknown>, timeoutMs: number): void {
     if (task.pending) {
-      this.opts.observer.emit("taskTimeout", timeoutMs, task, this);
+      // Settle the timeout before listeners run: a listener that ends this
+      // process would otherwise make #onError skip the TaskTimeoutError, and
+      // the terminator would reject the task with a generic error instead.
       this.#onError("timeout", new TaskTimeoutError(timeoutMs), task);
+      this.opts.observer.emit("taskTimeout", timeoutMs, task, this);
     }
   }
 

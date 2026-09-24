@@ -18,6 +18,14 @@ See [Semver](http://semver.org/).
 
 - 📦 Minor packaging changes
 
+## [v19.3.1](https://github.com/photostructure/batch-cluster.js/releases/tag/v19.3.1)
+
+- 🐞 A timed-out task now rejects with `TaskTimeoutError` even when a
+  `taskTimeout` listener ends its process. Previously the listener's `end()`
+  made the task reject later with a generic "Process terminated before task
+  completed" error, and `childEnd` recorded the listener's reason instead of
+  `"timeout"`.
+
 ## [v19.3.0](https://github.com/photostructure/batch-cluster.js/releases/tag/v19.3.0)
 
 - ✨ Added `Task.resetTimeout()`, so a worker that reports progress can restart
