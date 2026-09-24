@@ -19,10 +19,11 @@ export class BatchClusterOptions {
   maxProcs = 1;
 
   /**
-   * Child processes will be recycled when they reach this age.
+   * Child processes will be recycled when they reach this age. A child that
+   * reaches this age while running a task will finish that task before being
+   * recycled.
    *
-   * If non-zero, this value must not be less than `spawnTimeoutMillis` or
-   * `taskTimeoutMillis`.
+   * If non-zero, this value must not be less than `spawnTimeoutMillis`.
    *
    * Defaults to 5 minutes. Set to 0 to disable.
    */

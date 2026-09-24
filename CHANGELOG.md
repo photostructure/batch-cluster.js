@@ -18,6 +18,12 @@ See [Semver](http://semver.org/).
 
 - 📦 Minor packaging changes
 
+## [v19.4.1](https://github.com/photostructure/batch-cluster.js/releases/tag/v19.4.1)
+
+- 🐞 `maxProcAgeMillis` may now be less than `taskTimeoutMillis`. A child that
+  reaches `maxProcAgeMillis` during a task already finished that task before
+  being recycled, so the check rejected configurations that work.
+
 ## [v19.4.0](https://github.com/photostructure/batch-cluster.js/releases/tag/v19.4.0)
 
 - ✨ `Task.onStderr()` now logs a task's stderr at warn, instead of the stream

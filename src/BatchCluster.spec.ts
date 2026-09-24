@@ -1639,6 +1639,42 @@ describe("BatchCluster", function () {
         return;
       });
     }
+
+    it("a proc that ages out mid-task finishes that task", async () => {
+      setFailRatePct(0);
+      const maxProcAgeMillis = 5000;
+      bc = listen(
+        new BatchCluster({
+          ...DefaultTestOptions,
+          maxProcs: 1,
+          maxProcAgeMillis,
+          spawnTimeoutMillis: maxProcAgeMillis,
+          taskTimeoutMillis: maxProcAgeMillis * 2,
+          processFactory,
+        }),
+      );
+      assertExpectedResults(await Promise.all(runTasks(bc, 1)));
+      const pids = bc.pids();
+
+      // The child sleeps in real time, so this task is still running after the
+      // fake clock jumps past maxProcAgeMillis.
+      const taskP = bc.enqueueTask(new Task("sleep 500", parser));
+      expect(await until(() => bc.stats().pendingTaskCount === 0, 1000)).to.eql(
+        true,
+      );
+      clock.tick(maxProcAgeMillis + 1);
+      await bc.vacuumProcs();
+      expect(bc.countEndedChildProcs("old")).to.eql(0);
+      expect(bc.pids()).to.eql(pids);
+
+      const result = JSON.parse(await taskP) as { pid: number };
+      expect([result.pid]).to.eql(pids);
+      await bc.vacuumProcs();
+      expect(bc.countEndedChildProcs("old")).to.eql(1);
+      // Not postAssertions(): the clock jump makes this task's runtime exceed
+      // its 5 second bound.
+      expect(internalErrors).to.eql([], "internal errors");
+    });
   });
 
   describe("exitCode and exitSignal capture", function () {

@@ -62,10 +62,14 @@ export function verifyOptions(
     opts.maxProcAgeMillis > 0 &&
     result.taskTimeoutMillis
   ) {
+    // maxProcAgeMillis may be shorter than taskTimeoutMillis: a worker that
+    // reaches maxProcAgeMillis mid-task finishes that task. Being "old" makes
+    // the worker not `.ready`, so it gets no new tasks, and
+    // ProcessPoolManager.vacuumProcs() only ends idle workers.
     gte(
       "maxProcAgeMillis",
-      Math.max(result.spawnTimeoutMillis, result.taskTimeoutMillis),
-      `the max value of spawnTimeoutMillis (${result.spawnTimeoutMillis}) and taskTimeoutMillis (${result.taskTimeoutMillis})`,
+      result.spawnTimeoutMillis,
+      "the value of spawnTimeoutMillis",
     );
   }
   // 0 disables:

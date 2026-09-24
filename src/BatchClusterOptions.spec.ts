@@ -35,30 +35,21 @@ describe("BatchClusterOptions", () => {
           "BatchCluster was given invalid options",
           "maxProcAgeMillis must be greater than or equal to " +
             spawnTimeoutMillis,
-          `the max value of spawnTimeoutMillis (${spawnTimeoutMillis}) and taskTimeoutMillis (${DefaultTestOptions.taskTimeoutMillis})`,
+          "the value of spawnTimeoutMillis",
         ]);
       }
     });
 
-    it("requires maxProcAgeMillis to be > taskTimeoutMillis", () => {
+    it("allows maxProcAgeMillis to be < taskTimeoutMillis", () => {
       const taskTimeoutMillis = DefaultTestOptions.spawnTimeoutMillis + 1;
-      try {
-        bc = new BatchCluster({
-          processFactory,
-          ...DefaultTestOptions,
-          taskTimeoutMillis,
-          maxProcAgeMillis: taskTimeoutMillis - 1,
-        });
-        throw new Error("expected an error due to invalid opts");
-      } catch (err) {
-        expect(errToArr(err)).to.eql([
-          "Error",
-          "BatchCluster was given invalid options",
-          "maxProcAgeMillis must be greater than or equal to " +
-            taskTimeoutMillis,
-          `the max value of spawnTimeoutMillis (${DefaultTestOptions.spawnTimeoutMillis}) and taskTimeoutMillis (${taskTimeoutMillis})`,
-        ]);
-      }
+      bc = new BatchCluster({
+        processFactory,
+        ...DefaultTestOptions,
+        taskTimeoutMillis,
+        maxProcAgeMillis: taskTimeoutMillis - 1,
+      });
+
+      expect(bc.options.maxProcAgeMillis).to.equal(taskTimeoutMillis - 1);
     });
 
     it("allows maxProcAgeMillis to be 0", () => {
@@ -104,7 +95,7 @@ describe("BatchClusterOptions", () => {
           "maxProcs must be greater than or equal to 1",
           "maxProcAgeMillis must be greater than or equal to 15000",
           // DON'T PANIC: this is just a continuation of the previous error message.
-          "the max value of spawnTimeoutMillis (15000) and taskTimeoutMillis (10000)",
+          "the value of spawnTimeoutMillis",
           "minDelayBetweenSpawnMillis must be greater than or equal to 0",
           "onIdleIntervalMillis must be greater than or equal to 0",
           "endGracefulWaitTimeMillis must be greater than or equal to 0",
