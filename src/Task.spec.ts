@@ -54,7 +54,7 @@ describe("Task", () => {
   describe("failure precedence", () => {
     for (const streamFlushMillis of [0, 30]) {
       it(`retains a failure discovered by beforeParse (${streamFlushMillis} ms)`, async () => {
-        // R572-A: buffered FAIL must reach the parser as passed=false, even
+        // Buffered FAIL must reach the parser as passed=false, even
         // when PASS has already entered the guarded beforeParse flush.
         const outcomes: boolean[] = [];
         const task = new Task("test", (stdout, stderr, passed) => {

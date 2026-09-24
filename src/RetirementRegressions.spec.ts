@@ -43,7 +43,7 @@ describe("retirement regressions", function () {
 
   for (const streamFlushMillis of [0, 30]) {
     for (const mode of ["default", "retirement", "stderr-filter"] as const) {
-      it(`R572-A: rejects buffered FAIL followed by PASS (${mode}, ${streamFlushMillis} ms)`, async function () {
+      it(`Rejects buffered FAIL followed by PASS (${mode}, ${streamFlushMillis} ms)`, async function () {
         const outcomes: boolean[] = [];
         const clusterInstance = cluster({
           streamFlushMillis,
@@ -77,7 +77,7 @@ describe("retirement regressions", function () {
 
     for (const stream of ["stdout", "stderr"] as const) {
       for (const whileParsing of [false, true]) {
-        it(`R683-A: replaces a worker after an orphan ${stream} fragment (${streamFlushMillis} ms, parsing=${whileParsing})`, async function () {
+        it(`Replaces a worker after an orphan ${stream} fragment (${streamFlushMillis} ms, parsing=${whileParsing})`, async function () {
           const clusterInstance = cluster({ streamFlushMillis });
           const parsing = new Deferred<void>();
           const releaseParser = new Deferred<void>();

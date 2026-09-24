@@ -652,7 +652,7 @@ describe("StreamHandler", function () {
       });
 
       it(`releases an idle ${stream} fragment after the flush interval`, function () {
-        // R683-A: a taskless fragment must reach normal stray-output handling
+        // A taskless fragment must reach normal stray-output handling
         // without relying on EOF, worker age, or another task starting.
         const clock = FakeTimers.install();
         try {
