@@ -4,6 +4,7 @@ import events from "node:events";
 import { expect, processFactory } from "./_chai.spec";
 import { BatchClusterEmitter } from "./BatchClusterEmitter";
 import { logger, Logger, NoLogger } from "./Logger";
+import { SimpleParser } from "./Parser";
 import {
   StreamContext,
   StreamHandler,
@@ -282,6 +283,29 @@ describe("StreamHandler", function () {
       expect(endCalls[0]?.reason).to.eql("stderr");
     });
 
+    it("logs stderr for a pending task once, through the task", function () {
+      const warnings: string[] = [];
+      const testLogger = () => ({
+        ...NoLogger,
+        warn: (s: string) => warnings.push(s),
+      });
+      streamHandler = new StreamHandler({ logger: testLogger }, emitter);
+      const task = new Task<unknown>("test", SimpleParser);
+      task.onStart({
+        streamFlushMillis: 0,
+        logger: testLogger,
+        observer: emitter,
+        passRE: /PASS\n/,
+        failRE: /FAIL\n/,
+      });
+      mockContext.getCurrentTask = () => task;
+
+      streamHandler.processStderr("real error\n", mockContext);
+
+      expect(warnings).to.have.length(1);
+      expect(warnings[0]).to.include("real error");
+    });
+
     it("should ignore blank stderr data", function () {
       mockContext.getCurrentTask = () => undefined;
       mockContext.isEnding = () => false;
@@ -402,9 +426,8 @@ describe("StreamHandler", function () {
       );
 
       expect(taskStderr).to.eql("real task error\n");
-      expect(warnings).to.have.length(1);
-      expect(warnings[0]).to.include("real task error");
-      expect(warnings[0]).to.not.include("benign warning");
+      // The task logs the stderr it keeps (see Task.onStderr):
+      expect(warnings).to.eql([]);
     });
 
     it("evaluates an unterminated final line when stderr ends", function () {
@@ -785,8 +808,8 @@ describe("StreamHandler", function () {
       expect(retirementRequests).to.eql(1);
       expect(ignored).to.eql(["advisory", "real error"]);
       expect(stderr).to.eql("real error\n");
-      expect(warnings).to.have.length(1);
-      expect(warnings[0]).to.include("real error");
+      // The task logs the stderr it keeps (see Task.onStderr):
+      expect(warnings).to.eql([]);
     });
 
     it("flushes ordinary unterminated stderr before parsing", async function () {

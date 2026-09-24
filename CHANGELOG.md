@@ -18,6 +18,15 @@ See [Semver](http://semver.org/).
 
 - 📦 Minor packaging changes
 
+## [v19.4.0](https://github.com/photostructure/batch-cluster.js/releases/tag/v19.4.0)
+
+- ✨ `Task.onStderr()` now logs a task's stderr at warn, instead of the stream
+  handler logging it before the task sees it. A `Task` subclass that removes
+  lines it understands before calling `super.onStderr()` keeps those lines out
+  of the log. These log lines now name the task (`Task.toString()`) instead of
+  the process. Stderr that arrives with no pending task is still logged with
+  the process name.
+
 ## [v19.3.2](https://github.com/photostructure/batch-cluster.js/releases/tag/v19.3.2)
 
 - 🐞 A timed-out task now rejects with `TaskTimeoutError` even when a

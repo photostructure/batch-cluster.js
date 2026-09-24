@@ -1,7 +1,7 @@
 import events from "node:events";
 import { expect } from "./_chai.spec";
 import { BatchClusterEmitter } from "./BatchClusterEmitter";
-import { logger } from "./Logger";
+import { logger, NoLogger } from "./Logger";
 import { SimpleParser } from "./Parser";
 import { Task, TaskOptions } from "./Task";
 
@@ -17,6 +17,40 @@ function mkOpts(overrides: Partial<TaskOptions> = {}): TaskOptions {
 }
 
 describe("Task", () => {
+  describe("stderr logging", () => {
+    let warnings: string[];
+    beforeEach(() => (warnings = []));
+    const opts = () =>
+      mkOpts({
+        logger: () => ({ ...NoLogger, warn: (s) => warnings.push(s) }),
+      });
+
+    it("logs stderr at warn, and skips blank stderr", () => {
+      const task = new Task("test", SimpleParser);
+      task.onStart(opts());
+      task.onStderr("real error\n");
+      task.onStderr(" \n");
+      expect(warnings).to.have.length(1);
+      expect(warnings[0]).to.include("real error");
+    });
+
+    it("logs only the stderr a subclass passes to super.onStderr()", () => {
+      // exiftool-vendored removes ExifTool's progress lines this way:
+      class FilteringTask extends Task<string> {
+        override onStderr(buf: string | Buffer): void {
+          super.onStderr(buf.toString().replace(/^\{progress:\d+\}\n/gm, ""));
+        }
+      }
+      const task = new FilteringTask("test", SimpleParser);
+      task.onStart(opts());
+      task.onStderr("{progress:10}\n");
+      task.onStderr("{progress:20}\nreal error\n");
+      expect(warnings).to.have.length(1);
+      expect(warnings[0]).to.include("real error");
+      expect(warnings[0]).to.not.include("progress");
+    });
+  });
+
   describe("failure precedence", () => {
     for (const streamFlushMillis of [0, 30]) {
       it(`retains a failure discovered by beforeParse (${streamFlushMillis} ms)`, async () => {

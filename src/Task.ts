@@ -2,6 +2,7 @@ import { delay } from "./Async";
 import { Deferred } from "./Deferred";
 import { InternalBatchProcessOptions } from "./InternalBatchProcessOptions";
 import { Parser } from "./Parser";
+import { blank } from "./String";
 
 export type TaskOptions = Pick<
   InternalBatchProcessOptions,
@@ -133,8 +134,17 @@ export class Task<T = unknown> {
     }
   }
 
+  /**
+   * Called with this task's stderr. Non-blank stderr is logged at warn, so a
+   * subclass that removes lines it understands before calling
+   * `super.onStderr()` keeps those lines out of the log.
+   */
   onStderr(buf: string | Buffer): void {
-    this.#stderr += buf.toString();
+    const s = buf.toString();
+    if (!blank(s)) {
+      this.#opts?.logger().warn(this.toString() + ".onStderr(): " + s);
+    }
+    this.#stderr += s;
     const failRE = this.#opts?.failRE;
     if (failRE != null && failRE.exec(this.#stderr) != null) {
       // remove the fail token from stderr:

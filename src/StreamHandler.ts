@@ -432,17 +432,18 @@ export class StreamHandler {
   ): void {
     if (blank(data)) return;
 
-    this.#logger().warn(context.name + ".onStderr(): " + String(data));
-
     const task = owner == null ? context.getCurrentTask() : owner.task;
     if (task != null && task.pending) {
+      // Task.onStderr() logs the stderr the task keeps:
       task.onStderr(data);
-    } else if (!context.isEnding()) {
-      // If we're ending and there isn't a task, don't worry about it.
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
-      this.emitter.emit("noTaskData", null, data, context as any);
-      void context.end(false, "stderr");
+      return;
     }
+    this.#logger().warn(context.name + ".onStderr(): " + String(data));
+    // If we're ending and there isn't a task, don't worry about it.
+    if (context.isEnding()) return;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
+    this.emitter.emit("noTaskData", null, data, context as any);
+    void context.end(false, "stderr");
   }
 
   /** Consume recognized control lines before any ordinary output handling. */
