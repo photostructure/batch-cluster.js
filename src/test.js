@@ -142,6 +142,20 @@ async function onLine(line) {
         }
         break;
       }
+      case "split-utf8": {
+        // Writes a 4-byte code point in two parts, so the parent reads them in
+        // separate chunks. Like "lines", the stderr variant ends with FAIL on
+        // stderr.
+        const stderr = tokens[0] === "stderr";
+        const bytes = Buffer.from(
+          "🌻" + newline + (stderr ? "FAIL" : "PASS") + newline,
+        );
+        const stream = stderr ? process.stderr : process.stdout;
+        stream.write(bytes.subarray(0, 2));
+        await delay(50);
+        stream.write(bytes.subarray(2));
+        break;
+      }
       case "sleep": {
         const millis = parseInt(tokens[0] ?? "100");
         if (millis > 0) await delay(millis);

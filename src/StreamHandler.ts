@@ -133,7 +133,10 @@ export class StreamHandler {
   #onStdout(data: string | Buffer, context: StreamContext): void {
     if (data == null) return;
     if (this.#isRetirementRequest == null || this.#stdoutEnded) {
-      this.#routeStdout(data, context);
+      // The decoder retains a code point split across chunks, which decoding
+      // each chunk separately would turn into U+FFFD replacement characters.
+      const output = this.#stdoutDecoder.write(data);
+      if (output.length > 0) this.#routeStdout(output, context);
       return;
     }
 
@@ -232,7 +235,12 @@ export class StreamHandler {
   }
 
   #endStdout(context: StreamContext): void {
-    if (this.#isRetirementRequest == null || this.#stdoutEnded) return;
+    if (this.#isRetirementRequest == null) {
+      const output = this.#stdoutDecoder.end();
+      if (output.length > 0) this.#routeStdout(output, context);
+      return;
+    }
+    if (this.#stdoutEnded) return;
     const hadIncompleteLine = this.hasIncompleteOutputLine;
     this.#stdoutEnded = true;
     this.#consumeStdout(this.#stdoutDecoder.end(), context);
@@ -252,11 +260,7 @@ export class StreamHandler {
     if (fragment.length > 0) this.#routeStdout(fragment, context, owner);
   }
 
-  #routeStdout(
-    data: string | Buffer,
-    context: StreamContext,
-    owner?: LineOwner,
-  ): void {
+  #routeStdout(data: string, context: StreamContext, owner?: LineOwner): void {
     const task = owner == null ? context.getCurrentTask() : owner.task;
     if (task != null && task.pending) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
@@ -279,12 +283,13 @@ export class StreamHandler {
       this.#shouldIgnoreStderrLine == null &&
       this.#isRetirementRequest == null
     ) {
-      this.#routeStderr(data, context);
+      // See #onStdout:
+      this.#routeStderr(this.#stderrDecoder.write(data), context);
       return;
     }
 
     if (this.#stderrEnded) {
-      this.#routeStderr(data, context);
+      this.#routeStderr(this.#stderrDecoder.write(data), context);
       return;
     }
 
@@ -434,11 +439,13 @@ export class StreamHandler {
 
   #endStderr(context: StreamContext): void {
     if (
-      (this.#shouldIgnoreStderrLine == null &&
-        this.#isRetirementRequest == null) ||
-      this.#stderrEnded
-    )
+      this.#shouldIgnoreStderrLine == null &&
+      this.#isRetirementRequest == null
+    ) {
+      this.#routeStderr(this.#stderrDecoder.end(), context);
       return;
+    }
+    if (this.#stderrEnded) return;
 
     const hadIncompleteLine = this.hasIncompleteOutputLine;
     this.#stderrEnded = true;
@@ -461,11 +468,7 @@ export class StreamHandler {
     }
   }
 
-  #routeStderr(
-    data: string | Buffer,
-    context: StreamContext,
-    owner?: LineOwner,
-  ): void {
+  #routeStderr(data: string, context: StreamContext, owner?: LineOwner): void {
     if (blank(data)) return;
 
     const task = owner == null ? context.getCurrentTask() : owner.task;

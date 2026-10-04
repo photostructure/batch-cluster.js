@@ -879,6 +879,31 @@ describe("BatchCluster", function () {
     });
   });
 
+  describe("UTF-8 split across chunks", function () {
+    let bc: BatchCluster;
+    afterEach(() => shutdown(bc));
+
+    for (const stream of ["stdout", "stderr"] as const) {
+      it(`decodes a ${stream} code point split across two chunks`, async function () {
+        setFailRatePct(0);
+        bc = listen(
+          new BatchCluster({
+            ...DefaultTestOptions,
+            processFactory,
+            maxProcs: 1,
+          }),
+        );
+        const output = await bc.enqueueTask(
+          new Task("split-utf8 " + stream, (stdout, stderr) =>
+            (stream === "stdout" ? stdout : (stderr ?? "")).trim(),
+          ),
+        );
+        expect(output).to.eql("🌻");
+        postAssertions();
+      });
+    }
+  });
+
   describe("maxProcs", function () {
     const iters = 50;
     const maxProcs = 10;

@@ -967,7 +967,7 @@ describe("StreamHandler", function () {
       streamHandler.processStdout(bufferData, mockContext);
 
       expect(taskDataEvents).to.have.length(1);
-      expect(taskDataEvents[0]?.data).to.eql(bufferData);
+      expect(taskDataEvents[0]?.data).to.eql("test buffer data");
     });
 
     it("should handle Buffer data in stderr", function () {
@@ -979,6 +979,50 @@ describe("StreamHandler", function () {
         streamHandler.processStderr(bufferData, mockContext);
       }).to.not.throw();
     });
+
+    for (const stream of ["stdout", "stderr"] as const) {
+      describe(`${stream} decoding`, function () {
+        const write = (data: Buffer) =>
+          stream === "stdout"
+            ? streamHandler.processStdout(data, mockContext)
+            : streamHandler.processStderr(data, mockContext);
+        const end = () =>
+          stream === "stdout"
+            ? streamHandler.endStdout(mockContext)
+            : streamHandler.endStderr(mockContext);
+        let received: string[];
+
+        beforeEach(function () {
+          received = [];
+          mockContext.getCurrentTask = () =>
+            ({
+              pending: true,
+              onStdout: (data: string | Buffer) => {
+                received.push(String(data));
+              },
+              onStderr: (data: string | Buffer) => {
+                received.push(String(data));
+              },
+            }) as unknown as Task<unknown>;
+        });
+
+        it(`decodes a code point split across ${stream} chunks`, function () {
+          const bytes = Buffer.from("🌻\n");
+          write(bytes.subarray(0, 2));
+          expect(received).to.eql([]);
+          write(bytes.subarray(2));
+          expect(received).to.eql(["🌻\n"]);
+        });
+
+        it(`delivers a ${stream} code point truncated at EOF as U+FFFD`, function () {
+          write(Buffer.from("🌻").subarray(0, 2));
+          expect(received).to.eql([]);
+          end();
+          end();
+          expect(received).to.eql(["�"]);
+        });
+      });
+    }
   });
 
   describe("integration scenarios", function () {

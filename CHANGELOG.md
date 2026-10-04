@@ -26,6 +26,12 @@ See [Semver](http://semver.org/).
   call rescans the task's accumulated output, so a task that printed 100,000
   lines took 30 seconds instead of 55 ms. `taskData` events now carry these
   batches, as they carry chunks without these options.
+- 🐞 A multi-byte UTF-8 character split across two stdout or stderr chunks no
+  longer reaches the task as U+FFFD replacement characters. Without
+  `isRetirementRequest` (or, for stderr, `shouldIgnoreStderrLine`), each chunk
+  was decoded separately: ExifTool's `-listx` output contained `Кана��ов` where
+  it printed `Каналов`. Tasks, `taskData`, and `noTaskData` now always receive
+  decoded strings, never `Buffer`s.
 
 ## [v19.4.1](https://github.com/photostructure/batch-cluster.js/releases/tag/v19.4.1)
 
