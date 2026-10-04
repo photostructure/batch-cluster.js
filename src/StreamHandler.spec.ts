@@ -547,6 +547,7 @@ describe("StreamHandler", function () {
     let warnings: string[];
     let taskData: string[];
     let noTaskData: unknown[];
+    let taskCalls: string[];
 
     beforeEach(function () {
       seen = [];
@@ -555,6 +556,7 @@ describe("StreamHandler", function () {
       warnings = [];
       taskData = [];
       noTaskData = [];
+      taskCalls = [];
       streamHandler = new StreamHandler(
         {
           logger: () => ({ ...NoLogger, warn: (s) => warnings.push(s) }),
@@ -570,9 +572,11 @@ describe("StreamHandler", function () {
         pending: true,
         onStdout: (data: string | Buffer) => {
           stdout += String(data);
+          taskCalls.push(String(data));
         },
         onStderr: (data: string | Buffer) => {
           stderr += String(data);
+          taskCalls.push(String(data));
         },
       } as unknown as Task<unknown>;
       mockContext.getCurrentTask = () => task;
@@ -604,6 +608,32 @@ describe("StreamHandler", function () {
           { line: marker, stream },
           { line: "after", stream },
         ]);
+      });
+
+      it(`routes a chunk's ${stream} lines to their task in one call`, function () {
+        // Task rescans all of its output on every call, so routing each line
+        // separately takes time quadratic in the output size.
+        write(streamHandler, `first\nsecond\n${marker}\nthird\n`, mockContext);
+        expect(retirementRequests).to.eql(1);
+        expect(taskCalls).to.eql(["first\nsecond\nthird\n"]);
+      });
+
+      it(`keeps ${stream} lines with their owning task when a chunk spans two tasks`, function () {
+        const nextTaskCalls: string[] = [];
+        write(streamHandler, "first ", mockContext);
+        const nextTask = {
+          pending: true,
+          onStdout: (data: string | Buffer) => {
+            nextTaskCalls.push(String(data));
+          },
+          onStderr: (data: string | Buffer) => {
+            nextTaskCalls.push(String(data));
+          },
+        } as unknown as Task<unknown>;
+        mockContext.getCurrentTask = () => nextTask;
+        write(streamHandler, "line\nsecond line\n", mockContext);
+        expect(taskCalls).to.eql(["first line\n"]);
+        expect(nextTaskCalls).to.eql(["second line\n"]);
       });
 
       it(`assembles ${stream} markers across delayed chunks`, function () {

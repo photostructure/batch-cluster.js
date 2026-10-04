@@ -18,6 +18,15 @@ See [Semver](http://semver.org/).
 
 - 📦 Minor packaging changes
 
+## [v19.4.2](https://github.com/photostructure/batch-cluster.js/releases/tag/v19.4.2)
+
+- 🐞 With `isRetirementRequest` set, or `shouldIgnoreStderrLine` for stderr, a
+  task now receives the complete lines from one stdout or stderr chunk in a
+  single `onStdout()` or `onStderr()` call, instead of one call per line. Each
+  call rescans the task's accumulated output, so a task that printed 100,000
+  lines took 30 seconds instead of 55 ms. `taskData` events now carry these
+  batches, as they carry chunks without these options.
+
 ## [v19.4.1](https://github.com/photostructure/batch-cluster.js/releases/tag/v19.4.1)
 
 - 🐞 `maxProcAgeMillis` may now be less than `taskTimeoutMillis`. A child that

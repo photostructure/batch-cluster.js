@@ -86,6 +86,22 @@ describe("worker retirement", function () {
     });
   }
 
+  for (const stream of ["stdout", "stderr"] as const) {
+    it(`completes a task that prints 100,000 ${stream} lines within its timeout`, async function () {
+      // Line buffering must not make each line rescan the task's entire output.
+      cluster();
+      const lineCount = await bc.enqueueTask(
+        new Task(
+          "lines 100000 " + stream,
+          (stdout, stderr) =>
+            (stream === "stdout" ? stdout : (stderr ?? "")).trim().split("\n")
+              .length,
+        ),
+      );
+      expect(lineCount).to.eql(100000);
+    });
+  }
+
   it("recycles a worker that requests retirement while idle", async function () {
     cluster();
     const oldPid = await bc.enqueueTask(new Task("retire idle", parser));

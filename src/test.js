@@ -126,6 +126,22 @@ async function onLine(line) {
         write("PASS");
         break;
       }
+      case "lines": {
+        // Many short lines in one write, like ExifTool's -listx. The stderr
+        // variant ends with FAIL on stderr, so its task completes without
+        // depending on ordering between independent pipes.
+        const count = parseInt(tokens[0] ?? "1");
+        const lines = [];
+        for (let i = 0; i < count; i++) lines.push("line " + i);
+        if (tokens[1] === "stderr") {
+          process.stderr.write(
+            lines.join(newline) + newline + "FAIL" + newline,
+          );
+        } else {
+          await write(lines.join(newline) + newline + "PASS");
+        }
+        break;
+      }
       case "sleep": {
         const millis = parseInt(tokens[0] ?? "100");
         if (millis > 0) await delay(millis);

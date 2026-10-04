@@ -13,6 +13,35 @@ interface LineOwner {
   readonly task: Task<unknown> | undefined;
 }
 
+type RouteOutput = (output: string, owner: LineOwner | undefined) => void;
+
+/**
+ * Collects the lines that one chunk delivers, so their task receives them in a
+ * single call. Task rescans all of its accumulated output on every call, so
+ * routing each line separately takes time quadratic in the output size.
+ */
+class TaskOutputBatch {
+  #output = "";
+  #owner: LineOwner | undefined;
+
+  constructor(private readonly route: RouteOutput) {}
+
+  readonly add: RouteOutput = (output, owner) => {
+    if (this.#output.length > 0 && this.#owner?.task !== owner?.task) {
+      this.flush();
+    }
+    this.#output += output;
+    this.#owner = owner;
+  };
+
+  flush(): void {
+    if (this.#output.length === 0) return;
+    const output = this.#output;
+    this.#output = "";
+    this.route(output, this.#owner);
+  }
+}
+
 /**
  * Configuration for stream handling behavior
  */
@@ -130,6 +159,9 @@ export class StreamHandler {
   }
 
   #consumeStdout(data: string, context: StreamContext): void {
+    const batch = new TaskOutputBatch((output, owner) =>
+      this.#routeStdout(output, context, owner),
+    );
     let remaining = data;
     while (remaining.length > 0) {
       this.#captureStdoutLineOwner(context);
@@ -141,7 +173,7 @@ export class StreamHandler {
       const owner = this.#stdoutLineOwner;
       if (this.#passingLongStdoutLine) {
         if (newlineIndex >= 0) this.#finishStdoutLine();
-        this.#routeStdout(segment, context, owner);
+        batch.add(segment, owner);
         continue;
       }
 
@@ -154,7 +186,7 @@ export class StreamHandler {
         } else {
           this.#passingLongStdoutLine = true;
         }
-        this.#routeStdout(rawLine, context, owner);
+        batch.add(rawLine, owner);
       } else if (newlineIndex >= 0) {
         const rawLine = this.#stdoutLineBuffer;
         const alreadyFlushed = this.#stdoutRetirementLineFlushed;
@@ -164,10 +196,11 @@ export class StreamHandler {
           alreadyFlushed ||
           !this.#consumeRetirementRequest(rawLine, "stdout", context)
         ) {
-          this.#routeStdout(rawLine, context, owner);
+          batch.add(rawLine, owner);
         }
       }
     }
+    batch.flush();
   }
 
   #finishStdoutLine(): void {
@@ -267,6 +300,9 @@ export class StreamHandler {
   }
 
   #consumeStderr(data: string, context: StreamContext): void {
+    const batch = new TaskOutputBatch((output, owner) =>
+      this.#routeStderr(output, context, owner),
+    );
     let remaining = data;
     while (remaining.length > 0) {
       this.#captureStderrLineOwner(context);
@@ -276,7 +312,7 @@ export class StreamHandler {
       remaining = newlineIndex < 0 ? "" : remaining.slice(newlineIndex + 1);
 
       if (this.#passingLongStderrLine) {
-        this.#routeStderr(segment, context, this.#stderrLineOwner);
+        batch.add(segment, this.#stderrLineOwner);
         if (newlineIndex >= 0) {
           this.#finishStderrLine();
           this.#stderrRetirementLineFlushed = false;
@@ -286,11 +322,7 @@ export class StreamHandler {
 
       this.#stderrLineBuffer += segment;
       if (this.#stderrLineBuffer.length > MaxBufferedLineLength) {
-        this.#routeStderr(
-          this.#stderrLineBuffer,
-          context,
-          this.#stderrLineOwner,
-        );
+        batch.add(this.#stderrLineBuffer, this.#stderrLineOwner);
         this.#stderrLineBuffer = "";
         if (newlineIndex < 0) {
           this.#passingLongStderrLine = true;
@@ -303,10 +335,11 @@ export class StreamHandler {
         const owner = this.#stderrLineOwner;
         this.#stderrLineBuffer = "";
         this.#finishStderrLine();
-        this.#processStderrLine(rawLine, owner, context);
+        this.#processStderrLine(rawLine, owner, context, batch.add);
         this.#stderrRetirementLineFlushed = false;
       }
     }
+    batch.flush();
   }
 
   #captureStderrLineOwner(context: StreamContext): void {
@@ -358,7 +391,9 @@ export class StreamHandler {
       const owner = this.#stderrLineOwner;
       this.#stderrLineBuffer = "";
       this.#finishStderrLine();
-      this.#processStderrLine(finalLine, owner, context);
+      this.#processStderrLine(finalLine, owner, context, (line, lineOwner) =>
+        this.#routeStderr(line, context, lineOwner),
+      );
     }
     // Flushing a fragment for task parsing doesn't create a physical newline.
     // Its later suffix cannot independently become a retirement control line.
@@ -370,6 +405,7 @@ export class StreamHandler {
     rawLine: string,
     owner: LineOwner | undefined,
     context: StreamContext,
+    route: RouteOutput,
   ): void {
     if (
       !this.#stderrRetirementLineFlushed &&
@@ -382,7 +418,7 @@ export class StreamHandler {
     try {
       if (this.#shouldIgnoreStderrLine?.(line) === true) return;
     } catch (error: unknown) {
-      this.#routeStderr(rawLine, context, owner);
+      route(rawLine, owner);
       context.onError(
         "stderr.error",
         new Error(
@@ -393,7 +429,7 @@ export class StreamHandler {
       return;
     }
 
-    this.#routeStderr(rawLine, context, owner);
+    route(rawLine, owner);
   }
 
   #endStderr(context: StreamContext): void {
