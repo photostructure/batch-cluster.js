@@ -18,20 +18,35 @@ See [Semver](http://semver.org/).
 
 - 📦 Minor packaging changes
 
-## [v19.4.2](https://github.com/photostructure/batch-cluster.js/releases/tag/v19.4.2)
+## [v19.5.0](https://github.com/photostructure/batch-cluster.js/releases/tag/v19.5.0)
 
 - 🐞 With `isRetirementRequest` set, or `shouldIgnoreStderrLine` for stderr, a
   task now receives the complete lines from one stdout or stderr chunk in a
   single `onStdout()` or `onStderr()` call, instead of one call per line. Each
   call rescans the task's accumulated output, so a task that printed 100,000
-  lines took 30 seconds instead of 55 ms. `taskData` events now carry these
-  batches, as they carry chunks without these options.
+  lines now takes about 55 ms instead of 30 seconds. `taskData` events and a
+  task's stderr warning logs now cover these batches, as they cover chunks
+  without these options. With `streamFlushMillis: 0`, output after a completion
+  token in the same chunk now reaches the parser, including an unterminated
+  fragment flushed before parsing; at zero delay that fragment previously
+  ended the worker with `stdout.error`.
 - 🐞 A multi-byte UTF-8 character split across two stdout or stderr chunks no
-  longer reaches the task as U+FFFD replacement characters. Without
-  `isRetirementRequest` (or, for stderr, `shouldIgnoreStderrLine`), each chunk
-  was decoded separately: ExifTool's `-listx` output contained `Кана��ов` where
-  it printed `Каналов`. Tasks, `taskData`, and `noTaskData` now always receive
-  decoded strings, never `Buffer`s.
+  longer reaches the task as U+FFFD replacement characters. Stdout chunks were
+  decoded separately when `isRetirementRequest` was unset; stderr chunks were
+  decoded separately when both `isRetirementRequest` and
+  `shouldIgnoreStderrLine` were unset. ExifTool's `-listx` output contained
+  `Кана��ов` where it printed `Каналов`.
+- ✨ `Task.onStdout()`, `Task.onStderr()`, `taskData`, and `noTaskData` now
+  always receive decoded strings, never `Buffer`s. Listeners or subclasses
+  that need a `Buffer` must convert with `Buffer.from(data)`; including those
+  strings in a `Buffer.concat([...])` call throws a `TypeError`.
+- 🐞 When both pass and fail tokens match a task's stdout buffer, the earlier
+  match decides, with same-position ties passing. `FAIL\nPASS\n` now fails
+  even when delivered in one chunk. With `pass: "OK"` and `fail: "NOT OK"`,
+  `NOT OK` now fails instead of matching the overlapping pass token first.
+  Later stdout is retained for parsing without changing that decision;
+  stderr failure tokens still take precedence. Stdout matching and token
+  removal no longer advance shared `RegExp.lastIndex` values.
 
 ## [v19.4.1](https://github.com/photostructure/batch-cluster.js/releases/tag/v19.4.1)
 
