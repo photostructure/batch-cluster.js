@@ -20,83 +20,35 @@ See [Semver](http://semver.org/).
 
 ## [v19.5.0](https://github.com/photostructure/batch-cluster.js/releases/tag/v19.5.0)
 
-- 🐞 With `isRetirementRequest` set, or `shouldIgnoreStderrLine` for stderr, a
-  task now receives the complete lines from one stdout or stderr chunk in a
-  single `onStdout()` or `onStderr()` call, instead of one call per line. Each
-  call rescans the task's accumulated output, so a task that printed 100,000
-  lines now takes about 55 ms instead of 30 seconds. `taskData` events and a
-  task's stderr warning logs now cover these batches, as they cover chunks
-  without these options. With `streamFlushMillis: 0`, output after a completion
-  token in the same chunk now reaches the parser, including an unterminated
-  fragment flushed before parsing; at zero delay that fragment previously
-  ended the worker with `stdout.error`.
-- 🐞 A multi-byte UTF-8 character split across two stdout or stderr chunks no
-  longer reaches the task as U+FFFD replacement characters. Stdout chunks were
-  decoded separately when `isRetirementRequest` was unset; stderr chunks were
-  decoded separately when both `isRetirementRequest` and
-  `shouldIgnoreStderrLine` were unset. ExifTool's `-listx` output contained
-  `Кана��ов` where it printed `Каналов`.
-- ✨ `Task.onStdout()`, `Task.onStderr()`, `taskData`, and `noTaskData` now
-  always receive decoded strings, never `Buffer`s. Listeners or subclasses
-  that need a `Buffer` must convert with `Buffer.from(data)`; including those
-  strings in a `Buffer.concat([...])` call throws a `TypeError`.
-- 🐞 When both pass and fail tokens match a task's stdout buffer, the earlier
-  match decides, with same-position ties passing. `FAIL\nPASS\n` now fails
-  even when delivered in one chunk. With `pass: "OK"` and `fail: "NOT OK"`,
-  `NOT OK` now fails instead of matching the overlapping pass token first.
-  Later stdout is retained for parsing without changing that decision;
-  stderr failure tokens still take precedence. Stdout matching and token
-  removal no longer advance shared `RegExp.lastIndex` values.
+- 🐞 With `isRetirementRequest` set, or `shouldIgnoreStderrLine` for stderr, a task now receives the complete lines from one stdout or stderr chunk in a single `onStdout()` or `onStderr()` call, instead of one call per line. Each call rescans the task's accumulated output, so a task that printed 100,000 lines now takes about 55 ms instead of 30 seconds. `taskData` events and a task's stderr warning logs now cover these batches, as they cover chunks without these options. With `streamFlushMillis: 0`, output after a completion token in the same chunk now reaches the parser, including an unterminated fragment flushed before parsing; at zero delay that fragment previously ended the worker with `stdout.error`.
+- 🐞 A multi-byte UTF-8 character split across two stdout or stderr chunks no longer reaches the task as U+FFFD replacement characters. Stdout chunks were decoded separately when `isRetirementRequest` was unset; stderr chunks were decoded separately when both `isRetirementRequest` and `shouldIgnoreStderrLine` were unset. ExifTool's `-listx` output contained `Кана��ов` where it printed `Каналов`.
+- ✨ `Task.onStdout()`, `Task.onStderr()`, `taskData`, and `noTaskData` now always receive decoded strings, never `Buffer`s. Listeners or subclasses that need a `Buffer` must convert with `Buffer.from(data)`; including those strings in a `Buffer.concat([...])` call throws a `TypeError`.
+- 🐞 When both pass and fail tokens match a task's stdout buffer, the earlier match decides, with same-position ties passing. `FAIL\nPASS\n` now fails even when delivered in one chunk. With `pass: "OK"` and `fail: "NOT OK"`, `NOT OK` now fails instead of matching the overlapping pass token first. Later stdout is retained for parsing without changing that decision; stderr failure tokens still take precedence. Stdout matching and token removal no longer advance shared `RegExp.lastIndex` values.
 
 ## [v19.4.1](https://github.com/photostructure/batch-cluster.js/releases/tag/v19.4.1)
 
-- 🐞 `maxProcAgeMillis` may now be less than `taskTimeoutMillis`. A child that
-  reaches `maxProcAgeMillis` during a task already finished that task before
-  being recycled, so the check rejected configurations that work.
-- 🐞 The `BatchCluster` constructor now rejects a `maxProcAgeMillis` below
-  `spawnTimeoutMillis` when `taskTimeoutMillis` is 0. Previously it skipped
-  that check whenever task timeouts were disabled.
+- 🐞 `maxProcAgeMillis` may now be less than `taskTimeoutMillis`. A child that reaches `maxProcAgeMillis` during a task already finished that task before being recycled, so the check rejected configurations that work.
+- 🐞 The `BatchCluster` constructor now rejects a `maxProcAgeMillis` below `spawnTimeoutMillis` when `taskTimeoutMillis` is 0. Previously it skipped that check whenever task timeouts were disabled.
 
 ## [v19.4.0](https://github.com/photostructure/batch-cluster.js/releases/tag/v19.4.0)
 
-- ✨ `Task.onStderr()` now logs a task's stderr at warn, instead of the stream
-  handler logging it before the task sees it. A `Task` subclass that removes
-  lines it understands before calling `super.onStderr()` keeps those lines out
-  of the log. These log lines now name the task (`Task.toString()`) instead of
-  the process. Stderr that arrives with no pending task is still logged with
-  the process name.
+- ✨ `Task.onStderr()` now logs a task's stderr at warn, instead of the stream handler logging it before the task sees it. A `Task` subclass that removes lines it understands before calling `super.onStderr()` keeps those lines out of the log. These log lines now name the task (`Task.toString()`) instead of the process. Stderr that arrives with no pending task is still logged with the process name.
 
 ## [v19.3.2](https://github.com/photostructure/batch-cluster.js/releases/tag/v19.3.2)
 
-- 🐞 A timed-out task now rejects with `TaskTimeoutError` even when a
-  `taskTimeout` listener ends its process. Previously the listener's `end()`
-  made the task reject later with a generic "Process terminated before task
-  completed" error, and `childEnd` recorded the listener's reason instead of
-  `"timeout"`.
+- 🐞 A timed-out task now rejects with `TaskTimeoutError` even when a `taskTimeout` listener ends its process. Previously the listener's `end()` made the task reject later with a generic "Process terminated before task completed" error, and `childEnd` recorded the listener's reason instead of `"timeout"`.
 
 ## [v19.3.0](https://github.com/photostructure/batch-cluster.js/releases/tag/v19.3.0)
 
-- ✨ Added `Task.resetTimeout()`, so a worker that reports progress can restart
-  its task's `taskTimeoutMillis` while the task advances. Timeouts now reject
-  with the exported `TaskTimeoutError`.
-- ✨ `BatchProcess.end()` now resolves only after the child exits, and rejects if
-  the child is still running 5 seconds after termination. `context.end()` in
-  `taskData` listeners returns the same promise. `BatchCluster.end()` rejects,
-  and doesn't emit `end`, while a child it spawned is still running. A child
-  keeps its `maxProcs` slot until it exits.
+- ✨ Added `Task.resetTimeout()`, so a worker that reports progress can restart its task's `taskTimeoutMillis` while the task advances. Timeouts now reject with the exported `TaskTimeoutError`.
+- ✨ `BatchProcess.end()` now resolves only after the child exits, and rejects if the child is still running 5 seconds after termination. `context.end()` in `taskData` listeners returns the same promise. `BatchCluster.end()` rejects, and doesn't emit `end`, while a child it spawned is still running. A child keeps its `maxProcs` slot until it exits.
 - 🐞 A task rejected while queued is removed from the queue and never executed.
 
 ## [v19.2.0](https://github.com/photostructure/batch-cluster.js/releases/tag/v19.2.0)
 
-- ✨ Added `isRetirementRequest` to consume worker retirement control lines and
-  recycle the worker after its current task settles. Recognized lines are
-  excluded from task output, events, and stderr logging. Added
-  `BatchProcess.requestRetirement()`, `retirementRequested`, and the expected
-  termination reason `"retired"`.
-- 🐞 Preserve failure tokens discovered while flushing buffered output before task
-  parsing, including when `shouldIgnoreStderrLine` is enabled.
-- 🐞 Flush orphaned output fragments after `streamFlushMillis` so they cannot
-  strand an idle worker or block queued tasks indefinitely.
+- ✨ Added `isRetirementRequest` to consume worker retirement control lines and recycle the worker after its current task settles. Recognized lines are excluded from task output, events, and stderr logging. Added `BatchProcess.requestRetirement()`, `retirementRequested`, and the expected termination reason `"retired"`.
+- 🐞 Preserve failure tokens discovered while flushing buffered output before task parsing, including when `shouldIgnoreStderrLine` is enabled.
+- 🐞 Flush orphaned output fragments after `streamFlushMillis` so they cannot strand an idle worker or block queued tasks indefinitely.
 
 ## [v19.1.0](https://github.com/photostructure/batch-cluster.js/releases/tag/v19.1.0)
 
@@ -104,98 +56,50 @@ See [Semver](http://semver.org/).
 
 ## [v19.0.1](https://github.com/photostructure/batch-cluster.js/releases/tag/v19.0.1)
 
-- 📦 Restricted the published package to compiled library output and standard package documentation,
-  excluding development configuration and maintainer-only files.
+- 📦 Restricted the published package to compiled library output and standard package documentation, excluding development configuration and maintainer-only files.
 - 📦 Hardened releases with signed tags and exact-artifact verification before npm staging.
 
 ## [v19.0.0](https://github.com/photostructure/batch-cluster.js/releases/tag/v19.0.0)
 
-This release closes several ways a child process could be leaked, and several ways a task's promise
-could be dropped. It is major because some fixes change runtime behavior for every consumer, even
-though no API was removed or renamed.
+This release closes several ways a child process could be leaked, and several ways a task's promise could be dropped. It is major because some fixes change runtime behavior for every consumer, even though no API was removed or renamed.
 
 - 💔 **BREAKING**: outstanding work now keeps the event loop alive.
 
-  Everything this library owns is deliberately unref'd, so an idle cluster never stops a script from
-  exiting. But unsettled _work_ held nothing open either: when the loop drained, `beforeExit` fired
-  and `end()` tore down a task the caller was still awaiting. A queued task's promise was
-  **abandoned entirely** — node exited 0 with no error at all — and an assigned task was rejected
-  with "Process terminated before task completed". The only thing that ever prevented this was the
-  per-task timeout timer, which doesn't exist at the default `taskTimeoutMillis` of 0.
+  Everything this library owns is deliberately unref'd, so an idle cluster never stops a script from exiting. But unsettled _work_ held nothing open either: when the loop drained, `beforeExit` fired and `end()` tore down a task the caller was still awaiting. A queued task's promise was **abandoned entirely** — node exited 0 with no error at all — and an assigned task was rejected with "Process terminated before task completed". The only thing that ever prevented this was the per-task timeout timer, which doesn't exist at the default `taskTimeoutMillis` of 0.
 
-  This is longstanding, not new in v19. An idle cluster still holds nothing, so the `unrefStreams`
-  contract is unchanged. One consequence: if a child wedges and you haven't set `taskTimeoutMillis`,
-  your process now stays alive rather than exiting silently. A visible hang beats losing work
-  without a diagnostic, but it is a good reason to set that option.
+  This is longstanding, not new in v19. An idle cluster still holds nothing, so the `unrefStreams` contract is unchanged. One consequence: if a child wedges and you haven't set `taskTimeoutMillis`, your process now stays alive rather than exiting silently. A visible hang beats losing work without a diagnostic, but it is a good reason to set that option.
 
-- 💔 **BREAKING**: `end()` is a barrier. It previously drained the pool and resolved, which is not
-  the same as "every child is gone": an in-flight `processFactory()` could hand back a live child
-  afterwards, and a recycling process could still be seconds into its graceful shutdown. Either way,
-  `await bc.end(); process.exit(0)` could orphan a child.
+- 💔 **BREAKING**: `end()` is a barrier. It previously drained the pool and resolved, which is not the same as "every child is gone": an in-flight `processFactory()` could hand back a live child afterwards, and a recycling process could still be seconds into its graceful shutdown. Either way, `await bc.end(); process.exit(0)` could orphan a child.
 
-  Explicit `end()` now waits for in-flight spawns and recycling, so it can take longer than it used
-  to — and deliberately has no deadline, because until a factory returns we cannot know whether it
-  already spawned a child. A factory that never settles keeps explicit shutdown pending.
+  Explicit `end()` now waits for in-flight spawns and recycling, so it can take longer than it used to — and deliberately has no deadline, because until a factory returns we cannot know whether it already spawned a child. A factory that never settles keeps explicit shutdown pending.
 
-  Automatic cleanup on `beforeExit` stays bounded by `spawnTimeoutMillis`, since process exit can't
-  wait forever on an opaque factory. When that bound expires, every child known to be alive is
-  force-killed and any task still waiting on those terminations is rejected — unless you set
-  `cleanupChildProcs: false`, which means you handle PID cleanup yourself.
+  Automatic cleanup on `beforeExit` stays bounded by `spawnTimeoutMillis`, since process exit can't wait forever on an opaque factory. When that bound expires, every child known to be alive is force-killed and any task still waiting on those terminations is rejected — unless you set `cleanupChildProcs: false`, which means you handle PID cleanup yourself.
 
-- 💔 **BREAKING**: `end()` rejects tasks still queued, with
-  `BatchCluster.end() was called before this task could be assigned: <command>`. Nothing settled
-  them before, so calling `end()` with work outstanding now yields rejections where you previously
-  got promises that never settled.
+- 💔 **BREAKING**: `end()` rejects tasks still queued, with `BatchCluster.end() was called before this task could be assigned: <command>`. Nothing settled them before, so calling `end()` with work outstanding now yields rejections where you previously got promises that never settled.
 
 - 💔 **BREAKING**: `maxFailedTasksPerProcess` defaults to `0` (disabled), and works when you set it.
 
-  `failedTaskCount` was never incremented, so the previous default of `2` never recycled anything.
-  Rather than silently enabling that rule for everyone, it is now off by default: a rejected task
-  usually means bad input rather than a sick child, and it counts failures over the process's whole
-  lifetime, so a long-lived child would be recycled after any two bad inputs, ever. If you set it
-  explicitly, expect more churn and `"broken"` in `childEndCounts`. Prefer `healthCheckCommand` if
-  you can ask the child directly.
+  `failedTaskCount` was never incremented, so the previous default of `2` never recycled anything. Rather than silently enabling that rule for everyone, it is now off by default: a rejected task usually means bad input rather than a sick child, and it counts failures over the process's whole lifetime, so a long-lived child would be recycled after any two bad inputs, ever. If you set it explicitly, expect more churn and `"broken"` in `childEndCounts`. Prefer `healthCheckCommand` if you can ask the child directly.
 
-- 💔 **BREAKING**: `kill()` returns `false` on `EPERM` instead of throwing, matching how it already
-  handled `ESRCH`; unrecognized codes still throw. Callers signal lists of pids in loops, and one
-  pid we aren't permitted to signal stranded every pid after it.
+- 💔 **BREAKING**: `kill()` returns `false` on `EPERM` instead of throwing, matching how it already handled `ESRCH`; unrecognized codes still throw. Callers signal lists of pids in loops, and one pid we aren't permitted to signal stranded every pid after it.
 
-- 💔 **BREAKING** (TypeScript only): `killProcessGroup` is a required property of the exported
-  `InternalBatchProcessOptions` and `CombinedBatchProcessOptions` types, so code building either by
-  hand needs the new field. Passing options to the `BatchCluster` constructor is unaffected.
+- 💔 **BREAKING** (TypeScript only): `killProcessGroup` is a required property of the exported `InternalBatchProcessOptions` and `CombinedBatchProcessOptions` types, so code building either by hand needs the new field. Passing options to the `BatchCluster` constructor is unaffected.
 
 - ✨ Added the `killProcessGroup` option (default `false`) and exported `killGroup()`.
 
-  Enable it if your `processFactory` uses `detached: true`, which makes each child its own process
-  group leader: shutdown then keeps ownership of that group even after the leader exits, so
-  grandchildren are cleaned up too. Safe but pointless for non-detached children — the group signal
-  simply fails and we signal the child directly. Windows has no POSIX process groups and ignores it.
+  Enable it if your `processFactory` uses `detached: true`, which makes each child its own process group leader: shutdown then keeps ownership of that group even after the leader exits, so grandchildren are cleaned up too. Safe but pointless for non-detached children — the group signal simply fails and we signal the child directly. Windows has no POSIX process groups and ignores it.
 
-- 🐞 Fixed two outright child-process leaks. If `new BatchProcess()` threw after the factory
-  returned a live child — a factory whose `stdio` omits stdin or stdout, or a `childStart` listener
-  that throws — the child never entered the pool, leaving it invisible to `pids()`, recycling,
-  `end()`, and the exit backstop, one orphan per spawn retry, surviving even the parent's exit. And
-  a child spawned while `end()` was already draining joined a pool nothing would drain again.
+- 🐞 Fixed two outright child-process leaks. If `new BatchProcess()` threw after the factory returned a live child — a factory whose `stdio` omits stdin or stdout, or a `childStart` listener that throws — the child never entered the pool, leaving it invisible to `pids()`, recycling, `end()`, and the exit backstop, one orphan per spawn retry, surviving even the parent's exit. And a child spawned while `end()` was already draining joined a pool nothing would drain again.
 
-- 🐞 The exit backstop now tracks every child spawned and not yet seen to exit, rather than current
-  pool membership, so an abrupt `process.exit()` during shutdown or recycling can't leave one
-  behind. This supersedes the PID-snapshot workaround from v17.3.1.
+- 🐞 The exit backstop now tracks every child spawned and not yet seen to exit, rather than current pool membership, so an abrupt `process.exit()` during shutdown or recycling can't leave one behind. This supersedes the PID-snapshot workaround from v17.3.1.
 
-- 🐞 A consumer-supplied `logger` that throws can no longer strand a child: cleanup now runs before
-  the log, and a termination that rejects for any reason force-kills the child before it is treated
-  as finished.
+- 🐞 A consumer-supplied `logger` that throws can no longer strand a child: cleanup now runs before the log, and a termination that rejects for any reason force-kills the child before it is treated as finished.
 
-- 🐞 `vacuumProcs()` catches per-process `end()` rejections, as `closeChildProcesses()` always has.
-  Its only caller discards the promise, so a throwing `childEnd` listener became an unhandled
-  rejection — killing the host process and orphaning every child then mid-recycle.
+- 🐞 `vacuumProcs()` catches per-process `end()` rejections, as `closeChildProcesses()` always has. Its only caller discards the promise, so a throwing `childEnd` listener became an unhandled rejection — killing the host process and orphaning every child then mid-recycle.
 
-- 🐞 An IPC `disconnect` is no longer treated as an exit. It only means the channel closed, but it
-  made `running()` false, which skipped both the SIGTERM and the SIGKILL. Children from an
-  IPC-enabled factory (`stdio: [..., "ipc"]` or `fork()`) that disconnect while running are now
-  terminated.
+- 🐞 An IPC `disconnect` is no longer treated as an exit. It only means the channel closed, but it made `running()` false, which skipped both the SIGTERM and the SIGKILL. Children from an IPC-enabled factory (`stdio: [..., "ipc"]` or `fork()`) that disconnect while running are now terminated.
 
-- 📦 The published package no longer includes the spec suite's subprocess fixtures (`*-helper.js`).
-  They require `dist/test.js`, which was already excluded, so they were broken weight in the tarball.
+- 📦 The published package no longer includes the spec suite's subprocess fixtures (`*-helper.js`). They require `dist/test.js`, which was already excluded, so they were broken weight in the tarball.
 
 ## [v18.0.0](https://github.com/photostructure/batch-cluster.js/releases/tag/v18.0.0)
 
