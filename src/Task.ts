@@ -23,6 +23,7 @@ export class Task<T = unknown> {
   #lastTimeoutResetAt?: number;
   #resetTimeout: (() => boolean) | undefined;
   #parsing = false;
+  #stdoutDecided = false;
   #sawFailureToken = false;
   #settledAt?: number;
   readonly #d = new Deferred<T>();
@@ -119,18 +120,23 @@ export class Task<T = unknown> {
 
   onStdout(buf: string | Buffer): void {
     this.#stdout += buf.toString();
+    // Keep later stdout for parsing without changing its first completion.
+    // Stderr failures during the flush delay still take precedence.
+    if (this.#stdoutDecided) return;
     const passRE = this.#opts?.passRE;
-    if (passRE != null && passRE.exec(this.#stdout) != null) {
-      // remove the pass token from stdout:
-      this.#stdout = this.#stdout.replace(passRE, "");
-      void this.#resolve(true);
-    } else {
-      const failRE = this.#opts?.failRE;
-      if (failRE != null && failRE.exec(this.#stdout) != null) {
-        // remove the fail token from stdout:
-        this.#stdout = this.#stdout.replace(failRE, "");
-        void this.#resolve(false);
-      }
+    const failRE = this.#opts?.failRE;
+    // search() preserves lastIndex on regexes shared by streams and tasks.
+    const passIndex = passRE == null ? -1 : this.#stdout.search(passRE);
+    const failIndex = failRE == null ? -1 : this.#stdout.search(failRE);
+    // The earlier token decides when both match. Ties pass because the
+    // pass and fail tokens may be identical.
+    const passed = passIndex >= 0 && (failIndex < 0 || passIndex <= failIndex);
+    const tokenRE = passed ? passRE : failIndex >= 0 ? failRE : undefined;
+    if (tokenRE != null) {
+      this.#stdoutDecided = true;
+      // A fresh regex keeps token removal from advancing shared lastIndex.
+      this.#stdout = this.#stdout.replace(new RegExp(tokenRE), "");
+      void this.#resolve(passed);
     }
   }
 

@@ -799,6 +799,44 @@ describe("StreamHandler", function () {
       });
     }
 
+    for (const chunks of [["FAIL\nPASS\n"], ["FAIL\n", "PASS\n"]]) {
+      it(`fails when the earlier stdout token is FAIL (chunk count: ${chunks.length})`, async function () {
+        const task = new Task<unknown>("test", (_out, _err, passed) => passed);
+        task.onStart({
+          streamFlushMillis: 0,
+          logger,
+          observer: emitter,
+          passRE: /PASS\n/,
+          failRE: /FAIL\n/,
+        });
+        mockContext.getCurrentTask = () => task;
+        for (const chunk of chunks) {
+          streamHandler.processStdout(chunk, mockContext);
+        }
+        expect(await task.promise).to.eql(false);
+      });
+    }
+
+    for (const chunks of [["PASS\nFAIL\n"], ["PASS\n", "FAIL\n"]]) {
+      it(`preserves the first stdout completion during the flush delay (chunk count: ${chunks.length})`, async function () {
+        // A FAIL that arrives after PASS during the flush delay must not change
+        // the result, however the lines are chunked.
+        const task = new Task<unknown>("test", (_out, _err, passed) => passed);
+        task.onStart({
+          streamFlushMillis: 30,
+          logger,
+          observer: emitter,
+          passRE: /PASS\n/,
+          failRE: /FAIL\n/,
+        });
+        mockContext.getCurrentTask = () => task;
+        for (const chunk of chunks) {
+          streamHandler.processStdout(chunk, mockContext);
+        }
+        expect(await task.promise).to.eql(true);
+      });
+    }
+
     it("recognizes retirement before parsing a completion token in the same chunk", async function () {
       const task = new Task<unknown>("test", (out, err, passed) => {
         expect(retirementRequests).to.eql(1);

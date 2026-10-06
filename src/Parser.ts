@@ -8,13 +8,15 @@ import { notBlank } from "./String";
 /**
  * Invoked once per task.
  *
- * @param stdout the concatenated stdout, stripped of the `PASS` or `FAIL`
- * tokens and any lines consumed by `isRetirementRequest`.
+ * @param stdout the concatenated stdout, stripped of the winning completion
+ * token pattern when it first matches and any lines consumed by
+ * `isRetirementRequest`. Later stdout is retained unchanged.
  *
  * @param stderr if defined, includes stderr except lines consumed by
  * `isRetirementRequest` or `shouldIgnoreStderrLine`.
  *
- * @param passed `true` iff the `PASS` pattern was found in stdout.
+ * @param passed `true` if stdout's first completion match is pass (ties pass)
+ * and no failure token was found on stderr before parsing.
  *
  * @throws an error if the Parser implementation wants to reject the task. It
  * is valid to raise Errors if stderr is undefined.

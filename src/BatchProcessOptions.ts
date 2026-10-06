@@ -90,14 +90,20 @@ export interface BatchProcessOptions {
   healthCheckCommand?: string | undefined;
 
   /**
-   * Expected text to print if a command passes. Cannot be blank. Strings will
-   * be interpreted as a regular expression fragment.
+   * Expected text to print if a command passes. If both tokens match a task's
+   * stdout buffer, the earlier match decides; matches at the same position
+   * pass. Later stdout is retained for parsing without changing that decision;
+   * stderr failure tokens can still fail the task. Cannot be blank. Strings
+   * will be interpreted as a regular expression fragment.
    */
   pass: string | RegExp;
 
   /**
-   * Expected text to print if a command fails. Cannot be blank. Strings will
-   * be interpreted as a regular expression fragment.
+   * Expected text to print if a command fails. If both tokens match a task's
+   * stdout buffer, the earlier match decides; matches at the same position
+   * pass. Later stdout is retained for parsing without changing that decision;
+   * stderr failure tokens can still fail the task. Cannot be blank. Strings
+   * will be interpreted as a regular expression fragment.
    */
   fail: string | RegExp;
 
