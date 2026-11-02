@@ -18,48 +18,50 @@ See [Semver](http://semver.org/).
 
 - 📦 Minor packaging changes
 
-## [v19.5.0](https://github.com/photostructure/batch-cluster.js/releases/tag/v19.5.0)
+## [Unreleased]
+
+## [19.5.0] - 2026-10-06
 
 - 🐞 With `isRetirementRequest` set, or `shouldIgnoreStderrLine` for stderr, a task now receives the complete lines from one stdout or stderr chunk in a single `onStdout()` or `onStderr()` call, instead of one call per line. Each call rescans the task's accumulated output, so a task that printed 100,000 lines now takes about 55 ms instead of 30 seconds. `taskData` events and a task's stderr warning logs now cover these batches, as they cover chunks without these options. With `streamFlushMillis: 0`, output after a completion token in the same chunk now reaches the parser, including an unterminated fragment flushed before parsing; at zero delay that fragment previously ended the worker with `stdout.error`.
 - 🐞 A multi-byte UTF-8 character split across two stdout or stderr chunks no longer reaches the task as U+FFFD replacement characters. Stdout chunks were decoded separately when `isRetirementRequest` was unset; stderr chunks were decoded separately when both `isRetirementRequest` and `shouldIgnoreStderrLine` were unset. ExifTool's `-listx` output contained `Кана��ов` where it printed `Каналов`.
 - ✨ `Task.onStdout()`, `Task.onStderr()`, `taskData`, and `noTaskData` now always receive decoded strings, never `Buffer`s. Listeners or subclasses that need a `Buffer` must convert with `Buffer.from(data)`; including those strings in a `Buffer.concat([...])` call throws a `TypeError`.
 - 🐞 When both pass and fail tokens match a task's stdout buffer, the earlier match decides, with same-position ties passing. `FAIL\nPASS\n` now fails even when delivered in one chunk. With `pass: "OK"` and `fail: "NOT OK"`, `NOT OK` now fails instead of matching the overlapping pass token first. Later stdout is retained for parsing without changing that decision; stderr failure tokens still take precedence. Stdout matching and token removal no longer advance shared `RegExp.lastIndex` values.
 
-## [v19.4.1](https://github.com/photostructure/batch-cluster.js/releases/tag/v19.4.1)
+## [19.4.1] - 2026-09-24
 
 - 🐞 `maxProcAgeMillis` may now be less than `taskTimeoutMillis`. A child that reaches `maxProcAgeMillis` during a task already finished that task before being recycled, so the check rejected configurations that work.
 - 🐞 The `BatchCluster` constructor now rejects a `maxProcAgeMillis` below `spawnTimeoutMillis` when `taskTimeoutMillis` is 0. Previously it skipped that check whenever task timeouts were disabled.
 
-## [v19.4.0](https://github.com/photostructure/batch-cluster.js/releases/tag/v19.4.0)
+## [19.4.0] - 2026-09-24
 
 - ✨ `Task.onStderr()` now logs a task's stderr at warn, instead of the stream handler logging it before the task sees it. A `Task` subclass that removes lines it understands before calling `super.onStderr()` keeps those lines out of the log. These log lines now name the task (`Task.toString()`) instead of the process. Stderr that arrives with no pending task is still logged with the process name.
 
-## [v19.3.2](https://github.com/photostructure/batch-cluster.js/releases/tag/v19.3.2)
+## [19.3.2] - 2026-09-24
 
 - 🐞 A timed-out task now rejects with `TaskTimeoutError` even when a `taskTimeout` listener ends its process. Previously the listener's `end()` made the task reject later with a generic "Process terminated before task completed" error, and `childEnd` recorded the listener's reason instead of `"timeout"`.
 
-## [v19.3.0](https://github.com/photostructure/batch-cluster.js/releases/tag/v19.3.0)
+## [19.3.0] - 2026-09-23
 
 - ✨ Added `Task.resetTimeout()`, so a worker that reports progress can restart its task's `taskTimeoutMillis` while the task advances. Timeouts now reject with the exported `TaskTimeoutError`.
 - ✨ `BatchProcess.end()` now resolves only after the child exits, and rejects if the child is still running 5 seconds after termination. `context.end()` in `taskData` listeners returns the same promise. `BatchCluster.end()` rejects, and doesn't emit `end`, while a child it spawned is still running. A child keeps its `maxProcs` slot until it exits.
 - 🐞 A task rejected while queued is removed from the queue and never executed.
 
-## [v19.2.0](https://github.com/photostructure/batch-cluster.js/releases/tag/v19.2.0)
+## [19.2.0] - 2026-09-14
 
 - ✨ Added `isRetirementRequest` to consume worker retirement control lines and recycle the worker after its current task settles. Recognized lines are excluded from task output, events, and stderr logging. Added `BatchProcess.requestRetirement()`, `retirementRequested`, and the expected termination reason `"retired"`.
 - 🐞 Preserve failure tokens discovered while flushing buffered output before task parsing, including when `shouldIgnoreStderrLine` is enabled.
 - 🐞 Flush orphaned output fragments after `streamFlushMillis` so they cannot strand an idle worker or block queued tasks indefinitely.
 
-## [v19.1.0](https://github.com/photostructure/batch-cluster.js/releases/tag/v19.1.0)
+## [19.1.0] - 2026-09-06
 
 - ✨ Added `shouldIgnoreStderrLine` to discard known benign stderr lines before logging or routing.
 
-## [v19.0.1](https://github.com/photostructure/batch-cluster.js/releases/tag/v19.0.1)
+## [19.0.1] - 2026-08-06
 
 - 📦 Restricted the published package to compiled library output and standard package documentation, excluding development configuration and maintainer-only files.
 - 📦 Hardened releases with signed tags and exact-artifact verification before npm staging.
 
-## [v19.0.0](https://github.com/photostructure/batch-cluster.js/releases/tag/v19.0.0)
+## [19.0.0] - 2026-07-31
 
 This release closes several ways a child process could be leaked, and several ways a task's promise could be dropped. It is major because some fixes change runtime behavior for every consumer, even though no API was removed or renamed.
 
@@ -101,7 +103,7 @@ This release closes several ways a child process could be leaked, and several wa
 
 - 📦 The published package no longer includes the spec suite's subprocess fixtures (`*-helper.js`). They require `dist/test.js`, which was already excluded, so they were broken weight in the tarball.
 
-## [v18.0.0](https://github.com/photostructure/batch-cluster.js/releases/tag/v18.0.0)
+## [18.0.0] - 2026-06-03
 
 - 💔 **BREAKING**: Raised the minimum supported Node.js version to `>=22`. Node 20 reached end-of-life, so it is no longer supported or tested. Stay on v17 if you must run on Node 20.
 
@@ -109,15 +111,15 @@ This release closes several ways a child process could be leaked, and several wa
 
 - 📦 Updated GitHub Actions workflow pins and the `pinact` installation step.
 
-## [v17.3.1](https://github.com/photostructure/batch-cluster.js/releases/tag/v17.3.1)
+## [17.3.1] - 2026-02-21
 
 - 🐞 Fixed orphaned child processes after `end()`. When `end()` was called (either explicitly or via the `beforeExit` handler), the synchronous `process.on("exit")` SIGKILL backstop was removed before async cleanup completed. If the parent process exited before graceful termination finished, child processes survived as orphans. The fix snapshots live PIDs before cleanup begins and keeps the backstop registered until async teardown succeeds.
 
-## [v17.3.0](https://github.com/photostructure/batch-cluster.js/releases/tag/v17.3.0)
+## [17.3.0] - 2026-02-07
 
 - ✨ Added `findStreamFlushMillis()` to auto-discover the minimum reliable `streamFlushMillis` value for a given child process on the current operating system and hardware. Uses a three-phase search (coarse binary search, validation, confirmation); callers should apply their own additive headroom for load spikes.
 
-## [v17.2.0](https://github.com/photostructure/batch-cluster.js/releases/tag/v17.2.0)
+## [17.2.0] - 2026-02-06
 
 - ✨ Added `exitCode` and `exitSignal` properties to `BatchProcess` that are always populated when a child process exits. Access these in `childEnd` event handlers for complete diagnostic information about how processes terminated.
 
@@ -125,7 +127,7 @@ This release closes several ways a child process could be leaked, and several wa
 
 - ✨ Exported `ExpectedTerminationReasons` constant listing reasons that indicate managed shutdowns (`"worn"`, `"old"`, `"idle"`, etc.) vs unexpected exits.
 
-## [v17.1.0](https://github.com/photostructure/batch-cluster.js/releases/tag/v17.1.0)
+## [17.1.0] - 2026-01-16
 
 - ✨ Added `cleanupChildProcsOnExit` option (defaults to `true`) to control whether BatchCluster registers `beforeExit` and `exit` handlers for automatic child process cleanup.
 
@@ -133,7 +135,7 @@ This release closes several ways a child process could be leaked, and several wa
 
 - 🐞 Fixed the `exit` handler to synchronously kill child processes. The previous implementation called an async method, which doesn't work in `exit` handlers (only synchronous operations are allowed).
 
-## [v17.0.0](https://github.com/photostructure/batch-cluster.js/releases/tag/v17.0.0)
+## [17.0.0] - 2026-01-09
 
 - 💔 **BREAKING**: Added `unrefStreams` option (defaults to `true`) that unreferences child process stdio streams.
 
@@ -149,7 +151,7 @@ This release closes several ways a child process could be leaked, and several wa
 
   Fixes [exiftool-vendored#319](https://github.com/photostructure/exiftool-vendored.js/discussions/319).
 
-## [v16.0.0](https://github.com/photostructure/batch-cluster.js/releases/tag/v16.0.0)
+## [16.0.0] - 2025-12-05
 
 - 💔 **BREAKING**: Removed `maxReasonableProcessFailuresPerMinute` option and fatal shutdown on spawn failures.
 
@@ -173,13 +175,13 @@ This release closes several ways a child process could be leaked, and several wa
 
 - 🐞 Fixed: `stdin.write()` errors now properly end the process instead of leaving a broken process in the pool
 
-## [v15.0.1](https://github.com/photostructure/batch-cluster.js/releases/tag/v15.0.1)
+## [15.0.1] - 2025-08-26
 
 "This time, with feeling"
 
 - 📦 v15.0.0 automated the release to use OIDC 👍, but the `compile` prerequisite was missed 🤦, so v15.0.0 has _no code in it_ 🪹. v15.0.1 is _better_! It _has code_!
 
-## [v15.0.0](https://github.com/photostructure/batch-cluster.js/releases/tag/v15.0.0)
+## [15.0.0] - 2025-08-25
 
 - 💔 Deleted the standalone `pids()` function and associated code (including the ProcpsChecker). This function was exported but only used internally by tests. This fixes the [issue #58](https://github.com/photostructure/batch-cluster.js/issues/58) (by deleting the unused code! _the best kind of bugfix_). Thanks for the report, [Zaczero](https://github.com/Zaczero)!
 
@@ -187,7 +189,7 @@ This release closes several ways a child process could be leaked, and several wa
 
 - 📦 Simplified `prettier` config to accept all defaults -- this added semicolons to every file.
 
-## [v14.0.0](https://github.com/photostructure/batch-cluster.js/releases/tag/v14.0.0)
+## [14.0.0] - 2025-05-26
 
 - 💔 Dropped official support for Node v14, v16, and v18. Minimum Node.js version is now v20.
 
@@ -199,7 +201,7 @@ This release closes several ways a child process could be leaked, and several wa
   - Improved type safety by replacing `any` with `unknown` throughout the codebase
   - Enhanced error handling and process lifecycle management
 
-## [v13.0.0](https://github.com/photostructure/batch-cluster.js/releases/tag/v13.0.0)
+## [13.0.0] - 2024-02-10
 
 - 💔 Dropped official support for [Node v16, which is EOL](https://nodejs.org/en/blog/announcements/nodejs16-eol/).
 
@@ -213,48 +215,48 @@ This release closes several ways a child process could be leaked, and several wa
 
 - 📦 Updated development dependencies and rebuilt docs
 
-## [v12.1.0](https://github.com/photostructure/batch-cluster.js/releases/tag/v12.1.0)
+## [12.1.0] - 2023-04-11
 
 - 🐞 `pidExists` now handles `EPERM` properly (previous implementation would
   mischaracterize pids as being dead due to insufficient permissions)
 
 - 📦 Updated development dependencies and rebuilt docs
 
-## [v12.0.0](https://github.com/photostructure/batch-cluster.js/releases/tag/v12.0.0)
+## [12.0.0] - 2023-02-02
 
 - 💔/✨ `pidExists` and `killPid` are no longer `async`, as process management
   is now performed via `node:process.kill()`, instead of forking `ps` or `tasklist`.
 
 - 📦 Updated development dependencies and rebuilt docs
 
-## [v11.0.0](https://github.com/photostructure/batch-cluster.js/releases/tag/v11.0.0)
+## [11.0.0] - 2022-08-20
 
 - 💔 Drop official support for Node 12: [EOL was 2022-04-30](https://github.com/nodejs/release#end-of-life-releases)
 
-## [v10.4.3](https://github.com/photostructure/batch-cluster.js/releases/tag/v10.4.3)
+## [10.4.3] - 2022-08-20
 
 - 🐞 Fix support for zero value of `maxProcAgeMillis`
 
 - 📦 Updated development dependencies and rebuilt docs
 
-## [v10.4.2](https://github.com/photostructure/batch-cluster.js/releases/tag/v10.4.2)
+## [10.4.2] - 2022-04-29
 
 - 🐞 Fix [`unref` is not a function](https://github.com/photostructure/batch-cluster.js/issues/16)
 
 - 📦 Updated development dependencies and rebuilt docs
 
-## [v10.4.1](https://github.com/photostructure/batch-cluster.js/releases/tag/v10.4.1)
+## [10.4.1] - 2022-04-03
 
 - 📦 Improved concurrent event `Rate` measurement.
 
-## [v10.4.0](https://github.com/photostructure/batch-cluster.js/releases/tag/v10.4.0)
+## [10.4.0] - 2022-03-28
 
 - ✨ If `healthCheckCommand` is set and any task fails, that child process will
   have a health check run before being put back into rotation.
 
 - 📦 Updated development dependencies and rebuilt docs
 
-## [v10.3.2](https://github.com/photostructure/batch-cluster.js/releases/tag/v10.3.2)
+## [10.3.2] - 2022-03-02
 
 - 🐞 `BatchCluster#maybeSpawnProcs` in prior versions could spawn too many
   processes, especially if process startup was slow. Heuristics for when to
@@ -274,13 +276,13 @@ This release closes several ways a child process could be leaked, and several wa
 
 - 📦 Updated development dependencies and rebuilt docs
 
-## [v10.3.1](https://github.com/photostructure/batch-cluster.js/releases/tag/v10.3.1)
+## [10.3.1] - 2022-02-27
 
 - 📦 Add `Rate.msSinceLastEvent`
 
 - 📦 Adjusted `streamFlushMillis` to remove `onTaskData` errors in CI.
 
-## [v10.3.0](https://github.com/photostructure/batch-cluster.js/releases/tag/v10.3.0)
+## [10.3.0] - 2022-02-25
 
 - ✨ Exported `Rate`. You might like it.
 
@@ -293,7 +295,7 @@ This release closes several ways a child process could be leaked, and several wa
 
 - 📦 Normalized node imports
 
-## v10.2.0
+## [10.2.0] - 2022-02-25
 
 - ✨/📦 Set `minDelayBetweenSpawnMillis = 0` to fork child processes as soon as
   they are needed (rather than waiting between `spawn` calls)
@@ -310,7 +312,7 @@ This release closes several ways a child process could be leaked, and several wa
 - 📦 Several jsdoc improvements, including exporting `WhyNotHeathy` and
   `WhyNotReady`
 
-## v10.1.1
+## [10.1.1] - 2022-02-24
 
 - 🐞 Fixed [issue
   #15](https://github.com/photostructure/batch-cluster.js/issues/15) by
@@ -328,15 +330,15 @@ This release closes several ways a child process could be leaked, and several wa
 
 - 📦 Updated development dependencies and rebuilt docs
 
-## v10.1.0
+## [10.1.0] - 2022-02-23
 
 - 📦 `.end()` and `.closeChildProcesses()` closes all child processes in parallel
 
-## v10.0.1
+## [10.0.1] - 2022-02-12
 
 - 📦 Export `BatchProcess` interface
 
-## v10.0.0
+## [10.0.0] - 2022-02-12
 
 - ✨ Process state improvements
 
@@ -349,7 +351,7 @@ This release closes several ways a child process could be leaked, and several wa
 - 📦 Added spec to verify `.end` rejects long-running pending tasks
 - 📦 Updated development dependencies and rebuilt docs
 
-## v9.1.0
+## [9.1.0] - 2022-02-11
 
 - 🐞/📦 `BatchProcess` exposes a promise for the completion of the startup task,
   which `BatchCluster` now uses to immediately run `#onIdle` and pop off any
@@ -357,11 +359,11 @@ This release closes several ways a child process could be leaked, and several wa
 
 - 📦 Updated development dependencies and rebuild docs
 
-## v9.0.1
+## [9.0.1] - 2022-01-24
 
 - 📦 Don't emit `taskResolved` on startup tasks.
 
-## v9.0.0
+## [9.0.0] - 2022-01-23
 
 - 💔 The `BatchProcessObserver` signature was deleted, as `BatchClusterEmitter` is
   now typesafe. Consumers should not have used this signature directly, but in
@@ -378,7 +380,7 @@ This release closes several ways a child process could be leaked, and several wa
 
 - 📦 Updated development dependencies and rebuild docs
 
-## v8.1.0
+## [8.1.0] - 2022-01-19
 
 - 📦 Added `BatchCluster.procCount` and `BatchCluster.setMaxProcs`, and new
   `BatchCluster.ChildEndCountType` which includes a new `tooMany` value, which
@@ -386,13 +388,13 @@ This release closes several ways a child process could be leaked, and several wa
 
 - 📦 Updated development dependencies
 
-## v8.0.1
+## [8.0.1] - 2021-12-21
 
 - 🐞/📦 BatchProcess now end on spurious stderr/stdout, and reject tasks if ending.
 
 - 📦 Relaxed default for `streamFlushMillis` to deflake CI
 
-## v8.0.0
+## [8.0.0] - 2021-12-21
 
 - 💔/📦 RegExp pass/fail strings are escaped (which could conceivably be a breaking change, hence the major version bump)
 
@@ -404,15 +406,15 @@ This release closes several ways a child process could be leaked, and several wa
 
 - 📦 Updated development dependencies
 
-## v7.2.1
+## [7.2.1] - 2021-09-23
 
 - 📦 Relax typing for optional `BatchProcessOptions` fields
 
-## v7.2.0
+## [7.2.0] - 2021-09-23
 
 - 📦 Upgrade all dev dependencies. Pulling in new TypeScript 4.4 required [redoing all node imports](https://github.com/microsoft/TypeScript/issues/46027#issuecomment-926019016).
 
-## v7.1.0
+## [7.1.0] - 2021-07-14
 
 - ✨ Added `on("healthCheckError", err, proc)` event
 
@@ -422,7 +424,7 @@ This release closes several ways a child process could be leaked, and several wa
 
 - 📦 Rebuild docs
 
-## v7.0.0
+## [7.0.0] - 2021-07-06
 
 - 💔 Several fields were renamed to make things more consistent:
   - `BatchCluster.pendingTasks` was renamed to `BatchCluster.pendingTaskCount`.
@@ -451,31 +453,31 @@ This release closes several ways a child process could be leaked, and several wa
 
 - 📦 `Task` has a default type of `any` now.
 
-## v6.2.1
+## [6.2.1] - 2021-07-01
 
 - 📦 Added `BatchCluster.currentTasks`
 
-## v6.2.0
+## [6.2.0] - 2021-07-01
 
 - 📦 Updated development dependencies, which required handling undefined process ids.
 
-## v6.1.0
+## [6.1.0] - 2021-05-03
 
 - ✨ Added `BatchCluster.closeChildProcesses()` (ends child processes but doesn't `.end()` the BatchCluster instance)
 - 📦 Updated development dependencies
 
-## v6.0.2
+## [6.0.2] - 2021-03-17
 
 - 📦 Include sourcemaps
 - 📦 Updated development dependencies
 
-## v6.0.1
+## [6.0.1] - 2021-02-16
 
 - 📦 Updated development dependencies
 - 📦 Renamed `main` branch
 - 📦 Hopefully fixed all typedoc URL changes
 
-## v6.0.0
+## [6.0.0] - 2020-12-04
 
 No new features in v6: just a breaking change so we can fix an old name
 collision that caused linting errors.
@@ -490,30 +492,30 @@ collision that caused linting errors.
 
 - 📦 Updated development dependencies
 
-## v5.11.3
+## [5.11.3] - 2020-11-20
 
 - 📦 Updated development dependencies (primarily TypeScript 4.1)
 - 📦 `Deferred.resolve` now requires an argument (as per the new Promise spec).
   As this is just a typing change (and `Deferred` is an internal
   implementation), I'm not bumping the major version.
 
-## v5.11.2
+## [5.11.2] - 2020-08-25
 
 - 📦 Updated development dependencies
 - 📦 Minor delint/prettier reformat
 
-## v5.11.1
+## [5.11.1] - 2020-07-14
 
 - 📦 Updated development dependencies
 
-## v5.11.0
+## [5.11.0] - 2020-07-01
 
 - ✨ `BatchCluster` can now be created with a `Logger` thunk.
 - 📦 De-linted
 - 📦 Updated development dependencies
 - 📦 Add Node v14 to build matrix
 
-## v5.10.0
+## [5.10.0] - 2020-04-11
 
 - ✨ New `maxIdleMsPerProcess` option: automatically shut down idle child
   processes to reduce system resource consumption. Defaults to `0`, which
@@ -521,33 +523,33 @@ collision that caused linting errors.
   version!)
 - 📦 Updated development dependencies
 
-## v5.9.5
+## [5.9.5] - 2020-03-30
 
 - 📦 Updated development dependencies
 - 📦 Ran prettier (2.0.0 causes many no-op diffs due to changed defaults)
 
-## v5.9.4
+## [5.9.4] - 2020-03-15
 
 - 📦 Updated development dependencies
 
-## v5.9.3
+## [5.9.3] - 2020-02-11
 
 - 🐞 `BatchProcess`'s streams could cause an infinite loop on `.end()` when
   `stdout` was destroyed.
 - 📦 Updated development dependencies
 
-## v5.9.2
+## [5.9.2] - 2020-01-26
 
 - 🐞 `BatchProcess.ready` now verifies the child process still exists
 - 📦 Replace tslint with eslint
 - 📦 Updated development dependencies
 
-## v5.9.1
+## [5.9.1] - 2019-12-06
 
 - 🐞 Errors after a process has shut down are logged and not propagated
 - 📦 Updated development dependencies
 
-## v5.9.0
+## [5.9.0] - 2019-11-21
 
 - 🐞 Moved all async throws into observables (to prevent "This error originated
   either by throwing inside of an async function without a catch block, or by
@@ -555,17 +557,17 @@ collision that caused linting errors.
   with the reason...")
 - 📦 Updated development dependencies
 
-## v5.8.0
+## [5.8.0] - 2019-11-14
 
 - 🐞 Fixed issue where immediately closing a process before a pending task
   completed resulted in `Error: onExit(exit) called end()`
 - 📦 Updated development dependencies
 
-## v5.7.1
+## [5.7.1] - 2019-10-24
 
 - 📦 `BatchCluster.end()` should return a `Deferred<void>`
 
-## v5.7.0
+## [5.7.0] - 2019-10-24
 
 - 🐞 Fixed issue where `onStartError` and `onTaskError` didn't get emitted.
 - 📦 Updated development dependencies, rebuilt docs.
@@ -573,51 +575,51 @@ collision that caused linting errors.
 - 📦 Had to delete the macOS Travis tests. Travis has been terribly flaky, with
   unreproduceable spec failures.
 
-## v5.6.8
+## [5.6.8] - 2019-09-01
 
 - 📦 Updated development dependencies (new TypeScript)
 
-## v5.6.7
+## [5.6.7] - 2019-07-15
 
 - 📦 Updated development dependencies
 
-## v5.6.6
+## [5.6.6] - 2019-06-25
 
 - 📦 Updated development dependencies
 
-## v5.6.5
+## [5.6.5] - 2019-05-18
 
 - 📦 wrapped `stdin.write()` with try/catch that rejects the current task and
   closes the current process.
 - 📦 wrapped `stdin.end()` with try/catch (as `.writable` isn't reliable)
 
-## v5.6.4
+## [5.6.4] - 2019-05-18
 
 - 📦 Updated development dependencies
 
-## v5.6.3
+## [5.6.3] - 2019-04-03
 
 - 📦 Moved to the PhotoStructure org. Updated URLs in docs.
 
-## v5.6.2
+## [5.6.2] - 2019-03-27
 
 - 📦 Updated development dependencies
 - 📦 Removed trace and debug log calls in `BatchProcess` (which incurred GC
   overhead even when disabled)
 
-## v5.6.1
+## [5.6.1] - 2019-03-16
 
 - 📦 Expose `BatchCluster.options`. Note that the object is frozen at
   construction.
 
-## v5.6.0
+## [5.6.0] - 2019-03-15
 
 - 🐞/✨ `BatchProcess.end()` didn't correctly implement `gracefully` (which
   resulted in spurious `end(): called while not idle` errors), and allowed for
   multiple calls to destroy and disconnect from the child process, which may or
   may not have been ill-advised.
 
-## v5.5.0
+## [5.5.0] - 2019-03-14
 
 - ✨ Added `BatchCluster.isIdle`. Updated development dependencies. Deflaked CI by embiggening
 - ✨ Added `BatchClusterOptions.cleanupChildProcs`, in case you want to handle
@@ -625,7 +627,7 @@ collision that caused linting errors.
 - 📦 Updated development dependencies. Deflaked CI by embiggening timeouts.
 - Happy 🥧 day.
 
-## v5.4.0
+## [5.4.0] - 2019-03-13
 
 - ✨ "wear-leveling" for processes. Previously, only the first-spawned child
   process would service most task requests, but that caused issues with (very)
@@ -641,15 +643,15 @@ collision that caused linting errors.
   `minDelayBetweenSpawnMillis` was added, to help relieve undue system load on
   startup. It defaults to 1.5 seconds and can be disabled by setting it to 0.
 
-## v5.3.1
+## [5.3.1] - 2019-03-05
 
 - 📦 Removed `Deferred`'s warn log messages.
 
-## v5.3.0
+## [5.3.0] - 2019-03-05
 
 - 🐞 `.pass` and `.fail` regex now support multiple line outputs per task.
 
-## v5.2.0
+## [5.2.0] - 2019-03-04
 
 - 🐞 [BatchProcessOptions](https://batch-cluster.js.org/classes/batchclusteroptions.html)`.pass`
   and `.fail` had poorly specified and implemented failure semantics. Prior
@@ -682,18 +684,18 @@ collision that caused linting errors.
 
 - 📦 re-added tslint and delinted code.
 
-## v5.1.0
+## [5.1.0] - 2019-03-02
 
 - ✨ `ChildProcessFactory` supports thunks that return either a `ChildProcess` or
   `Promise<ChildProcess>`
 - 📦 Update deps
 
-## v5.0.1
+## [5.0.1] - 2018-11-29
 
 - 📦 Update deps
 - 📦 re-run prettier
 
-## v5.0.0
+## [5.0.0] - 2018-10-26
 
 - 💔 The `rejectTaskOnStderr` API, which was added in v4.1.0 and applied to all
   tasks for a given `BatchCluster` instance, proved to be a poor decision, and
@@ -704,20 +706,20 @@ collision that caused linting errors.
   type of error. This version allows pids to live even if they emit data to
   stderr.
 
-## v4.3.0
+## [4.3.0] - 2018-09-14
 
 - ✨ If your tasks return interim progress and you want to capture that data
   as it happens, BatchCluster now emits `taskData` events with the data and the
   current task (which may be undefined) as soon as the stream data is emitted.
 - 📦 Pulled in latest dependency versions
 
-## v4.2.0
+## [4.2.0] - 2018-08-18
 
 - 📦 In the interests of less noise, the default logger is now the `NoLogger`.
   Consumers may use the `ConsoleLogger` or another `Logger` implementation as
   they see fit.
 
-## v4.1.0
+## [4.1.0] - 2018-08-17
 
 - ✨ Support for demoting task errors from `stderr` emissions:
   `BatchProcess.rejectTaskOnStderr` is a per-task, per-error predicate which
@@ -727,7 +729,7 @@ collision that caused linting errors.
 - ✨ `BatchProcessOptions.pass` and `BatchProcessOptions.fail` can be RegExp
   instances now, if you have more exotic parsing needs.
 
-## v4.0.0
+## [4.0.0] - 2018-08-15
 
 - 💔 Using Node 8+ to determine if a process is running with `kill(pid, 0)`
   turns out to be unreliable (as it returns true even after the process exits).
@@ -746,12 +748,12 @@ collision that caused linting errors.
   tests to ensure no internal errors happen during integration tests. Previously
   these errors were simply logged.
 
-## v3.2.0
+## [3.2.0] - 2018-06-17
 
 - 📦 New `Logger` methods, `withLevels`, `withTimestamps`, and `filterLevels`
   were shoved into a new `Logger` namespace.
 
-## v3.1.0
+## [3.1.0] - 2018-06-17
 
 - ✨ Added simple timestamp and levels logger prefixer for tests
 - 🐞 Errors rethrown via BatchProcess now strip extraneous `Error:` prefixes
@@ -759,7 +761,7 @@ collision that caused linting errors.
   state inconsistencies on `onExit` that aren't fatal), we now log `.error`
   rather than throw Error() or ignore.
 
-## v3.0.0
+## [3.0.0] - 2018-06-13
 
 - ✨/💔 **`Task` promises are only rejected with `Error` instances now.** Note
   that also means that `BatchProcessObserver` types are more strict. It could be
@@ -769,7 +771,7 @@ collision that caused linting errors.
   [#3](https://github.com/mceachen/batch-cluster.js/issues/3). Thanks for the
   issue, [Nils Knappmeier](https://github.com/nknapp)!
 
-## v2.2.0
+## [2.2.0] - 2018-06-13
 
 - 🐞 Windows taskkill `/PID` option seemed to work downcased, but the docs say
   to use uppercase, so I've updated it.
@@ -777,13 +779,13 @@ collision that caused linting errors.
 
 (v2.1.2 is the same contents, but `np` had a crashbug during publish)
 
-## v2.1.1
+## [2.1.1] - 2018-04-30
 
 - 📦 More robust `end` for `BatchProcess`, which may prevent very long-lived
   consumers from sporadically leaking child processes on Mac and linux.
 - 📦 Added Node 10 to the build matrix.
 
-## v2.1.0
+## [2.1.0] - 2018-04-22
 
 - 📦 Introduced `Logger.trace` and moved logging related to per-task items down
   to `trace`, as heavy load and large request or response payloads could
@@ -791,7 +793,7 @@ collision that caused linting errors.
   enable `trace` in your debugger implementation. By default, the
   `ConsoleLogger` omits log messages with this level.
 
-## v2.0.0
+## [2.0.0] - 2018-04-12
 
 - 💔 Replaced `BatchClusterObserver` with a simple EventEmitter API on
   `BatchCluster` to be more idiomatic with node's API
@@ -800,24 +802,24 @@ collision that caused linting errors.
   `maxTaskErrorsPerProcess` parameter was removed)
 - ✨ `Rate` is simpler and more accurate now.
 
-## v1.11.0
+## [1.11.0] - 2018-04-11
 
 - ✨ Added new `BatchClusterObserver` for error and lifecycle monitoring
 - 📦 Added a number of additional logging calls
 
-## v1.10.0
+## [1.10.0] - 2018-03-01
 
 - 🐞 Explicitly use `timers.setInterval`. May address [this
   issue](https://stackoverflow.com/questions/48961238/electron-setinterval-implementation-difference-between-chrome-and-node).
   Thanks for the PR, [Tim Fish](https://github.com/timfish)!
 
-## v1.9.1
+## [1.9.1] - 2018-03-01
 
 - 📦 Changed `BatchProcess.end()` to use `until()` rather than `Promise.race`,
   and always use `kill(pid, forced)` after waiting the shutdown grace period
   to prevent child process leaks.
 
-## v1.9.0
+## [1.9.0] - 2018-02-28
 
 - ✨ New `Logger.setLogger()` for debug, info, warning, and errors. `debug` and
   `info` defaults to Node's
@@ -834,22 +836,22 @@ collision that caused linting errors.
   timer, which, in certain circumstances, could prevent node processes from
   exiting gracefully until their timeouts expired
 
-## v1.8.0
+## [1.8.0] - 2018-01-03
 
 - ✨ onIdle now runs as many tasks as it can, rather than just one. This should
   provide higher throughput.
 - 🐞 Removed stderr emit on race condition between onIdle and execTask. The
   error condition was already handled appropriately--no need to console.error.
 
-## v1.7.0
+## [1.7.0] - 2017-11-15
 
 - 📦 Exported `kill()` and `running()` from `BatchProcess`
 
-## v1.6.1
+## [1.6.1] - 2017-11-14
 
 - 📦 De-flaked some tests on mac, and added Node 8 to the build matrix.
 
-## v1.6.0
+## [1.6.0] - 2017-11-14
 
 - ✨ Processes are forcefully shut down with `taskkill` on windows and `kill -9`
   on other unix-like platforms if they don't terminate after sending the
@@ -858,27 +860,27 @@ collision that caused linting errors.
 - 📦 Upgrade to TypeScript 2.6.1
 - 🐞 `mocha` tests don't require the `--exit` hack anymore 🎉
 
-## v1.5.0
+## [1.5.0] - 2017-09-15
 
 - ✨ `.running()` works correctly for PIDs with different owners now.
 - 📦 `yarn upgrade --latest`
 
-## v1.4.2
+## [1.4.2] - 2017-08-13
 
 - 📦 Ran code through `prettier` and delinted
 - 📦 Massaged test assertions to pass through slower CI systems
 
-## v1.4.1
+## [1.4.1] - 2017-06-02
 
 - 📦 Replaced an errant `console.log` with a call to `log`.
 
-## v1.4.0
+## [1.4.0] - 2017-06-02
 
 - 🐞 Discovered `maxProcs` wasn't always utilized by `onIdle`, which meant in
   certain circumstances, only 1 child process would be servicing pending
   requests. Added breaking tests and fixed impl.
 
-## v1.3.0
+## [1.3.0] - 2017-05-31
 
 - 📦 Added tests to verify that the `kill(0)` calls to verify the child
   processes are still running work across different node version and OSes
@@ -886,7 +888,7 @@ collision that caused linting errors.
   directly by consumers, so the major version remains at 1)
 - 📦 Switched to yarn and upgraded dependencies
 
-## v1.2.0
+## [1.2.0] - 2017-05-27
 
 - ✨ Added a configurable cleanup signal to ensure child processes shut down on
   `.end()`
@@ -894,7 +896,7 @@ collision that caused linting errors.
 - ✨ More test coverage around batch process concurrency, reuse, flaky task
   retries, and proper process shutdown
 
-## v1.1.0
+## [1.1.0] - 2017-05-09
 
 - ✨ `BatchCluster` now has a force-shutdown `exit` handler to accompany the
   graceful-shutdown `beforeExit` handler. For reference, from the
@@ -905,7 +907,7 @@ collision that caused linting errors.
 
 - ✨ Remove `Rate`'s time decay in the interests of simplicity
 
-## v1.0.0
+## [1.0.0] - 2017-05-04
 
 - ✨ Integration tests now throw deterministically random errors to simulate
   flaky child procs, and ensure retries and disaster recovery work as expected.
@@ -917,7 +919,7 @@ collision that caused linting errors.
   sanity-checked at construction time, and an error will be raised whose message
   contains all incorrect option values.
 
-## v0.0.2
+## [0.0.2] - 2017-05-03
 
 - ✨ Added support and explicit tests for
   [CR LF, CR, and LF](https://en.wikipedia.org/wiki/Newline) encoded streams
@@ -925,7 +927,118 @@ collision that caused linting errors.
 - ✨ child processes are ended after `maxProcAgeMillis`, and restarted as needed
 - 🐞 `BatchCluster` now practices good listener hygene for `process.beforeExit`
 
-## v0.0.1
+## [0.0.1] - 2017-05-02
 
 - ✨ Extracted implementation and tests from
   [exiftool-vendored](https://github.com/mceachen/exiftool-vendored.js)
+
+[19.5.0]: https://github.com/photostructure/batch-cluster.js/releases/tag/v19.5.0
+[19.4.1]: https://github.com/photostructure/batch-cluster.js/releases/tag/v19.4.1
+[19.4.0]: https://github.com/photostructure/batch-cluster.js/releases/tag/v19.4.0
+[19.3.2]: https://github.com/photostructure/batch-cluster.js/releases/tag/v19.3.2
+[19.3.0]: https://github.com/photostructure/batch-cluster.js/releases/tag/v19.3.0
+[19.2.0]: https://github.com/photostructure/batch-cluster.js/releases/tag/v19.2.0
+[19.1.0]: https://github.com/photostructure/batch-cluster.js/releases/tag/v19.1.0
+[19.0.1]: https://github.com/photostructure/batch-cluster.js/releases/tag/v19.0.1
+[19.0.0]: https://github.com/photostructure/batch-cluster.js/releases/tag/v19.0.0
+[18.0.0]: https://github.com/photostructure/batch-cluster.js/releases/tag/v18.0.0
+[17.3.1]: https://github.com/photostructure/batch-cluster.js/releases/tag/v17.3.1
+[17.3.0]: https://github.com/photostructure/batch-cluster.js/releases/tag/v17.3.0
+[17.2.0]: https://github.com/photostructure/batch-cluster.js/releases/tag/v17.2.0
+[17.1.0]: https://github.com/photostructure/batch-cluster.js/releases/tag/v17.1.0
+[17.0.0]: https://github.com/photostructure/batch-cluster.js/releases/tag/v17.0.0
+[16.0.0]: https://github.com/photostructure/batch-cluster.js/releases/tag/v16.0.0
+[15.0.1]: https://github.com/photostructure/batch-cluster.js/releases/tag/v15.0.1
+[15.0.0]: https://github.com/photostructure/batch-cluster.js/releases/tag/v15.0.0
+[14.0.0]: https://github.com/photostructure/batch-cluster.js/releases/tag/v14.0.0
+[13.0.0]: https://github.com/photostructure/batch-cluster.js/releases/tag/v13.0.0
+[12.1.0]: https://github.com/photostructure/batch-cluster.js/releases/tag/v12.1.0
+[12.0.0]: https://github.com/photostructure/batch-cluster.js/releases/tag/v12.0.0
+[11.0.0]: https://github.com/photostructure/batch-cluster.js/releases/tag/v11.0.0
+[10.4.3]: https://github.com/photostructure/batch-cluster.js/releases/tag/v10.4.3
+[10.4.2]: https://github.com/photostructure/batch-cluster.js/releases/tag/v10.4.2
+[10.4.1]: https://github.com/photostructure/batch-cluster.js/releases/tag/v10.4.1
+[10.4.0]: https://github.com/photostructure/batch-cluster.js/releases/tag/v10.4.0
+[10.3.2]: https://github.com/photostructure/batch-cluster.js/releases/tag/v10.3.2
+[10.3.1]: https://github.com/photostructure/batch-cluster.js/releases/tag/v10.3.1
+[10.3.0]: https://github.com/photostructure/batch-cluster.js/releases/tag/v10.3.0
+[10.2.0]: https://github.com/photostructure/batch-cluster.js/releases/tag/v10.2.0
+[10.1.1]: https://github.com/photostructure/batch-cluster.js/releases/tag/v10.1.1
+[10.1.0]: https://github.com/photostructure/batch-cluster.js/releases/tag/v10.1.0
+[10.0.1]: https://github.com/photostructure/batch-cluster.js/releases/tag/v10.0.1
+[10.0.0]: https://github.com/photostructure/batch-cluster.js/releases/tag/v10.0.0
+[9.1.0]: https://github.com/photostructure/batch-cluster.js/releases/tag/v9.1.0
+[9.0.1]: https://github.com/photostructure/batch-cluster.js/releases/tag/v9.0.1
+[9.0.0]: https://github.com/photostructure/batch-cluster.js/releases/tag/v9.0.0
+[8.1.0]: https://github.com/photostructure/batch-cluster.js/releases/tag/v8.1.0
+[8.0.1]: https://github.com/photostructure/batch-cluster.js/releases/tag/v8.0.1
+[8.0.0]: https://github.com/photostructure/batch-cluster.js/releases/tag/v8.0.0
+[7.2.1]: https://github.com/photostructure/batch-cluster.js/releases/tag/v7.2.1
+[7.2.0]: https://github.com/photostructure/batch-cluster.js/releases/tag/v7.2.0
+[7.1.0]: https://github.com/photostructure/batch-cluster.js/releases/tag/v7.1.0
+[7.0.0]: https://github.com/photostructure/batch-cluster.js/releases/tag/v7.0.0
+[6.2.1]: https://github.com/photostructure/batch-cluster.js/releases/tag/v6.2.1
+[6.2.0]: https://github.com/photostructure/batch-cluster.js/releases/tag/v6.2.0
+[6.1.0]: https://github.com/photostructure/batch-cluster.js/releases/tag/v6.1.0
+[6.0.2]: https://github.com/photostructure/batch-cluster.js/releases/tag/v6.0.2
+[6.0.1]: https://github.com/photostructure/batch-cluster.js/releases/tag/v6.0.1
+[6.0.0]: https://github.com/photostructure/batch-cluster.js/releases/tag/v6.0.0
+[5.11.3]: https://github.com/photostructure/batch-cluster.js/releases/tag/v5.11.3
+[5.11.2]: https://github.com/photostructure/batch-cluster.js/releases/tag/v5.11.2
+[5.11.1]: https://github.com/photostructure/batch-cluster.js/releases/tag/v5.11.1
+[5.11.0]: https://github.com/photostructure/batch-cluster.js/releases/tag/v5.11.0
+[5.10.0]: https://github.com/photostructure/batch-cluster.js/releases/tag/v5.10.0
+[5.9.5]: https://github.com/photostructure/batch-cluster.js/releases/tag/v5.9.5
+[5.9.4]: https://github.com/photostructure/batch-cluster.js/releases/tag/v5.9.4
+[5.9.3]: https://github.com/photostructure/batch-cluster.js/releases/tag/v5.9.3
+[5.9.2]: https://github.com/photostructure/batch-cluster.js/releases/tag/v5.9.2
+[5.9.1]: https://github.com/photostructure/batch-cluster.js/releases/tag/v5.9.1
+[5.9.0]: https://github.com/photostructure/batch-cluster.js/releases/tag/v5.9.0
+[5.8.0]: https://github.com/photostructure/batch-cluster.js/releases/tag/v5.8.0
+[5.7.1]: https://github.com/photostructure/batch-cluster.js/releases/tag/v5.7.1
+[5.7.0]: https://github.com/photostructure/batch-cluster.js/releases/tag/v5.7.0
+[5.6.8]: https://github.com/photostructure/batch-cluster.js/releases/tag/v5.6.8
+[5.6.7]: https://github.com/photostructure/batch-cluster.js/releases/tag/v5.6.7
+[5.6.6]: https://github.com/photostructure/batch-cluster.js/releases/tag/v5.6.6
+[5.6.5]: https://github.com/photostructure/batch-cluster.js/releases/tag/v5.6.5
+[5.6.4]: https://github.com/photostructure/batch-cluster.js/releases/tag/v5.6.4
+[5.6.3]: https://github.com/photostructure/batch-cluster.js/releases/tag/v5.6.3
+[5.6.2]: https://github.com/photostructure/batch-cluster.js/releases/tag/v5.6.2
+[5.6.1]: https://github.com/photostructure/batch-cluster.js/releases/tag/v5.6.1
+[5.6.0]: https://github.com/photostructure/batch-cluster.js/releases/tag/v5.6.0
+[5.5.0]: https://github.com/photostructure/batch-cluster.js/releases/tag/v5.5.0
+[5.4.0]: https://github.com/photostructure/batch-cluster.js/releases/tag/v5.4.0
+[5.3.1]: https://github.com/photostructure/batch-cluster.js/releases/tag/v5.3.1
+[5.3.0]: https://github.com/photostructure/batch-cluster.js/releases/tag/v5.3.0
+[5.2.0]: https://github.com/photostructure/batch-cluster.js/releases/tag/v5.2.0
+[5.1.0]: https://github.com/photostructure/batch-cluster.js/releases/tag/v5.1.0
+[5.0.1]: https://github.com/photostructure/batch-cluster.js/releases/tag/v5.0.1
+[5.0.0]: https://github.com/photostructure/batch-cluster.js/releases/tag/v5.0.0
+[4.3.0]: https://github.com/photostructure/batch-cluster.js/releases/tag/v4.3.0
+[4.2.0]: https://github.com/photostructure/batch-cluster.js/releases/tag/v4.2.0
+[4.1.0]: https://github.com/photostructure/batch-cluster.js/releases/tag/v4.1.0
+[4.0.0]: https://github.com/photostructure/batch-cluster.js/releases/tag/v4.0.0
+[3.2.0]: https://github.com/photostructure/batch-cluster.js/releases/tag/v3.2.0
+[3.1.0]: https://github.com/photostructure/batch-cluster.js/releases/tag/v3.1.0
+[3.0.0]: https://github.com/photostructure/batch-cluster.js/releases/tag/v3.0.0
+[2.2.0]: https://github.com/photostructure/batch-cluster.js/releases/tag/v2.2.0
+[2.1.1]: https://github.com/photostructure/batch-cluster.js/releases/tag/v2.1.1
+[2.1.0]: https://github.com/photostructure/batch-cluster.js/releases/tag/v2.1.0
+[2.0.0]: https://github.com/photostructure/batch-cluster.js/releases/tag/v2.0.0
+[1.11.0]: https://github.com/photostructure/batch-cluster.js/releases/tag/v1.11.0
+[1.10.0]: https://github.com/photostructure/batch-cluster.js/releases/tag/v1.10.0
+[1.9.1]: https://github.com/photostructure/batch-cluster.js/releases/tag/v1.9.1
+[1.9.0]: https://github.com/photostructure/batch-cluster.js/releases/tag/v1.9.0
+[1.8.0]: https://github.com/photostructure/batch-cluster.js/releases/tag/v1.8.0
+[1.7.0]: https://github.com/photostructure/batch-cluster.js/releases/tag/v1.7.0
+[1.6.1]: https://github.com/photostructure/batch-cluster.js/releases/tag/v1.6.1
+[1.6.0]: https://github.com/photostructure/batch-cluster.js/releases/tag/v1.6.0
+[1.5.0]: https://github.com/photostructure/batch-cluster.js/releases/tag/v1.5.0
+[1.4.1]: https://github.com/photostructure/batch-cluster.js/releases/tag/v1.4.1
+[1.4.0]: https://github.com/photostructure/batch-cluster.js/releases/tag/v1.4.0
+[1.3.0]: https://github.com/photostructure/batch-cluster.js/releases/tag/v1.3.0
+[1.2.0]: https://github.com/photostructure/batch-cluster.js/releases/tag/v1.2.0
+[1.1.0]: https://github.com/photostructure/batch-cluster.js/releases/tag/v1.1.0
+[1.0.0]: https://github.com/photostructure/batch-cluster.js/releases/tag/v1.0.0
+[0.0.2]: https://github.com/photostructure/batch-cluster.js/releases/tag/v0.0.2
+[0.0.1]: https://github.com/photostructure/batch-cluster.js/releases/tag/v0.0.1
