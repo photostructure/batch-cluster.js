@@ -344,9 +344,14 @@ describe("parent event-loop stall", function () {
   });
 
   it("stops reading a child that keeps writing once the block's overrun is spent", async function () {
-    // The timer is due at 500 + 10 = 510 ms and runs when the block ends at
-    // about 1520 ms, about 1010 ms late. Reading output after the deadline is
-    // capped at that lateness, so the task times out at about 2530 ms.
+    // The child writes every 5 ms, but Windows timers fire about every 15.6 ms,
+    // so a 10 ms streamFlushMillis can see no new output between two checks.
+    // With 50 ms, the timer is due at 500 + 50 = 550 ms and runs when the
+    // block ends at about 1520 ms, about 970 ms late. Reading output after the
+    // deadline is capped at that lateness, so the task times out at about
+    // 2490 ms.
+    await stop();
+    await start(undefined, 50);
     const task = new Task("chatter", SimpleParser);
     expect(bp.execTask(task)).to.eql(true);
     const started = Date.now();
@@ -354,7 +359,7 @@ describe("parent event-loop stall", function () {
     const error = await settle(task);
     const elapsed = Date.now() - started;
     expect(error).to.be.instanceOf(TaskTimeoutError);
-    // Capping at one more task timeout would reject at about 2030 ms:
+    // Capping at one more task timeout would reject at about 2070 ms:
     expect(elapsed).to.be.greaterThanOrEqual(2400);
     expect(elapsed).to.be.lessThan(2900);
   });
