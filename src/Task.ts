@@ -11,6 +11,18 @@ export type TaskOptions = Pick<
 
 let _taskId = 1;
 
+/** Tasks that have read their pass or fail token. */
+const sawToken = new WeakSet<object>();
+
+/**
+ * Whether a pending task has read its pass or fail token, so it settles once
+ * its `streamFlushMillis` wait and parser finish. BatchProcess reads this; the
+ * package doesn't export it.
+ */
+export function isSettling(task: Task<unknown>): boolean {
+  return task.pending && sawToken.has(task);
+}
+
 /**
  * Tasks embody individual jobs given to the underlying child processes. Each
  * instance has a promise that will be resolved or rejected based on the
@@ -172,6 +184,7 @@ export class Task<T = unknown> {
   }
 
   async #resolve(passed: boolean) {
+    sawToken.add(this);
     // Record failures even when another resolution owns parsing. The
     // beforeParse flush can deliver a failure token through a reentrant call.
     this.#sawFailureToken ||= !passed;

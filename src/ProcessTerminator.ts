@@ -91,16 +91,17 @@ export class ProcessTerminator {
     startupTaskId: number,
     gracefully: boolean,
   ): Promise<void> {
-    // Don't wait for startup tasks or if no task is running
-    if (lastTask == null || lastTask.taskId === startupTaskId) {
-      return;
-    }
+    if (lastTask == null) return;
 
-    try {
-      // Wait for the process to complete and streams to flush
-      await thenOrTimeout(lastTask.promise, gracefully ? 2000 : 250);
-    } catch {
-      // Ignore errors during task completion wait
+    // Don't wait for a startup task, but still settle it below: BatchProcess
+    // clears the spawn timer before terminating, so nothing else would.
+    if (lastTask.taskId !== startupTaskId) {
+      try {
+        // Wait for the process to complete and streams to flush
+        await thenOrTimeout(lastTask.promise, gracefully ? 2000 : 250);
+      } catch {
+        // Ignore errors during task completion wait
+      }
     }
 
     // Reject task if still pending

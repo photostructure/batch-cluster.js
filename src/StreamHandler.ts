@@ -580,6 +580,17 @@ export class StreamHandler {
   }
 
   /**
+   * Whether a partial line will be flushed within `streamFlushMillis`. A
+   * pending task's partial line isn't flushed while `isRetirementRequest` is
+   * set, so this can be false while `hasIncompleteOutputLine` is true.
+   */
+  get hasScheduledLineFlush(): boolean {
+    return (
+      this.#stdoutLineFlushTimer != null || this.#stderrLineFlushTimer != null
+    );
+  }
+
+  /**
    * Check if data is considered blank/empty
    */
   isBlankData(data: string | Buffer | null | undefined): boolean {

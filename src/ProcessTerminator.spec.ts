@@ -268,21 +268,33 @@ describe("ProcessTerminator", function () {
       );
     });
 
-    it("should skip task completion wait for startup task", async function () {
+    it("should reject a startup task without waiting for it", async function () {
       const startupTask = createMockTask(999, "version", true);
+      let rejectedAt = 0;
+      const rejection = startupTask.promise.then(
+        () => undefined,
+        (err: Error) => {
+          rejectedAt = Date.now();
+          return err.message;
+        },
+      );
+      const started = Date.now();
 
       await terminator.terminate(
         mockProcess as any,
         "TestProcess(12345)",
         startupTask,
         999, // same as task ID - is startup task
-        true,
+        true, // graceful, which waits up to 2s for any other task
         false,
         mockIsRunning,
       );
 
-      // Should not wait for or reject startup task
-      expect(startupTask.pending).to.be.true;
+      expect(await rejection).to.include(
+        "Process terminated before task completed",
+      );
+      // Waiting for it would have taken up to 2s before rejecting:
+      expect(rejectedAt - started).to.be.lessThan(250);
     });
 
     it("should skip task completion wait when no current task", async function () {

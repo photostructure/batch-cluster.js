@@ -11,7 +11,7 @@ import { ProcessHealthMonitor } from "./ProcessHealthMonitor";
 import { ProcessTerminator } from "./ProcessTerminator";
 import { StreamContext, StreamHandler } from "./StreamHandler";
 import { ensureSuffix } from "./String";
-import { Task } from "./Task";
+import { isSettling, Task } from "./Task";
 import { TaskTimeoutError } from "./TaskTimeoutError";
 import { thenOrTimeout, Timeout } from "./Timeout";
 import {
@@ -22,6 +22,17 @@ import {
 
 /** How long end() waits for the child to exit after termination. */
 export const ExitConfirmationMillis = 5000;
+
+/** See BatchProcess.#onTimeout(). */
+interface Drain {
+  /** When reading output after the deadline must stop. */
+  until: number;
+  /**
+   * #outputCount at the previous check. The first check instead looks for
+   * output read at or after the deadline.
+   */
+  seen: number | undefined;
+}
 
 /**
  * BatchProcess manages the care and feeding of a single child process.
@@ -121,6 +132,14 @@ export class BatchProcess {
     };
   };
   #currentTaskTimeout: NodeJS.Timeout | undefined;
+  /** When #currentTaskTimeout is due, in Date.now() milliseconds. */
+  #currentTaskDeadline = 0;
+  /** When stdout or stderr last delivered data or ended, in Date.now() ms. */
+  #lastOutputAt = 0;
+  /** How many times stdout or stderr delivered data or ended. */
+  #outputCount = 0;
+  /** Set while #onTimeout() reads output that arrived after the deadline. */
+  #drain: Drain | undefined;
 
   /**
    * The task this process was running when it was told to end, held only while
@@ -203,6 +222,16 @@ export class BatchProcess {
 
     // Set up stream handlers using StreamHandler
     this.#streamHandler.setupStreamListeners(this.proc, this.#streamContext);
+    // Prepended so the time is when the output was read, not when a task's
+    // output handler, which may block, returned.
+    for (const stream of [this.proc.stdout, this.proc.stderr]) {
+      for (const event of ["data", "end"]) {
+        stream?.prependListener(event, () => {
+          this.#lastOutputAt = Date.now();
+          this.#outputCount++;
+        });
+      }
+    }
 
     const startupTask = new Task(opts.versionCommand, SimpleParser);
     this.startupTaskId = startupTask.taskId;
@@ -391,13 +420,15 @@ export class BatchProcess {
     const taskTimeoutMs = isStartupTask
       ? this.opts.spawnTimeoutMillis
       : this.opts.taskTimeoutMillis;
+    // add the stream flush millis to the taskTimeoutMs, because that time
+    // should not be counted against the task.
+    const timeoutDelayMs = taskTimeoutMs + this.opts.streamFlushMillis;
     if (taskTimeoutMs > 0) {
-      // add the stream flush millis to the taskTimeoutMs, because that time
-      // should not be counted against the task.
       this.#currentTaskTimeout = timers.setTimeout(
         () => this.#onTimeout(task as Task<unknown>, taskTimeoutMs),
-        taskTimeoutMs + this.opts.streamFlushMillis,
+        timeoutDelayMs,
       );
+      this.#currentTaskDeadline = Date.now() + timeoutDelayMs;
     }
     // CAREFUL! If you add a .catch or .finally, the pipeline can emit unhandled
     // rejections:
@@ -420,10 +451,15 @@ export class BatchProcess {
         // this.#logger().trace("task failed", { task, err: error })
 
         if (isStartupTask) {
-          this.opts.observer.emit(
-            "startError",
-            error instanceof Error ? error : new Error(String(error)),
-          );
+          // A process that is already ending either reported this failure
+          // (#onError emits startError before rejecting) or was ended on
+          // purpose or by its child's exit, which childEnd reports.
+          if (!this.ending) {
+            this.opts.observer.emit(
+              "startError",
+              error instanceof Error ? error : new Error(String(error)),
+            );
+          }
           void this.end(false, "startError");
         } else {
           this.opts.observer.emit(
@@ -456,7 +492,11 @@ export class BatchProcess {
                 this.#currentTaskTimeout == null
               )
                 return false;
+              // refresh() also re-arms a timer that already fired, which
+              // happens when progress is read after a late timer.
               this.#currentTaskTimeout.refresh();
+              this.#currentTaskDeadline = Date.now() + timeoutDelayMs;
+              this.#drain = undefined;
               return true;
             },
       );
@@ -549,14 +589,72 @@ export class BatchProcess {
     }
   }
 
+  /**
+   * A parent event loop blocked past the deadline runs this timer before it
+   * reads what the child wrote during the block, and reading all of it can
+   * take several turns of the event loop: a reply larger than the pipe buffer
+   * only finishes once the parent drains the pipe, and a stderr fragment is
+   * held for `streamFlushMillis`. So before timing out, keep reading while the
+   * child's output is still arriving, for at most as long as this timer ran
+   * late: the parent owes the child no more catch-up time than it spent
+   * blocked past the deadline. Output counts as still arriving if more is read
+   * within `streamFlushMillis` of the previous check, or while StreamHandler or
+   * the task still holds output it read, so a child that pauses longer than
+   * that times out. A child that sends nothing more times
+   * out at the first check. Without a block the timer runs at most a few
+   * milliseconds late, so the task times out as it did before.
+   *
+   * Rejected alternatives: one more full timeout window (an arbitrary amount,
+   * and a hung child waits that long), and moving the deadline by the length
+   * of the block (the child kept running during the block, so a hung child
+   * would wait as long as the block lasted).
+   */
   #onTimeout(task: Task<unknown>, timeoutMs: number): void {
-    if (task.pending) {
-      // Settle the timeout before listeners run: a listener that ends this
-      // process would otherwise make #onError skip the TaskTimeoutError, and
-      // the terminator would reject the task with a generic error instead.
-      this.#onError("timeout", new TaskTimeoutError(timeoutMs), task);
-      this.opts.observer.emit("taskTimeout", timeoutMs, task, this);
+    const now = Date.now();
+    const drain: Drain = {
+      until: now + (now - this.#currentTaskDeadline),
+      seen: undefined,
+    };
+    this.#drain = drain;
+    // The check phase runs after the poll phase, which reads pending output.
+    timers.setImmediate(() => this.#checkDrain(task, timeoutMs, drain));
+  }
+
+  #checkDrain(task: Task<unknown>, timeoutMs: number, drain: Drain): void {
+    // resetTimeout() set a new deadline, or the task was cleared because it
+    // settled or this process is ending, which settles it.
+    if (this.#drain !== drain || !task.pending) return;
+    const now = Date.now();
+    const arriving =
+      (drain.seen == null
+        ? // The poll phase after a block may read output before the overdue
+          // timer runs.
+          this.#lastOutputAt >= this.#currentTaskDeadline
+        : this.#outputCount !== drain.seen) ||
+      // Output that was read but not yet handled: StreamHandler flushes an
+      // unterminated line after streamFlushMillis, and a task that read its
+      // token waits streamFlushMillis for the other stream before it settles.
+      // A partial line held with no flush scheduled won't be handled, so it
+      // doesn't count.
+      this.#streamHandler.hasScheduledLineFlush ||
+      isSettling(task);
+    if (arriving && now < drain.until) {
+      drain.seen = this.#outputCount;
+      // Check again after streamFlushMillis, but not past drain.until, and
+      // let a poll phase read what arrived meanwhile.
+      timers.setTimeout(
+        () =>
+          timers.setImmediate(() => this.#checkDrain(task, timeoutMs, drain)),
+        Math.min(this.opts.streamFlushMillis, drain.until - now),
+      );
+      return;
     }
+    this.#drain = undefined;
+    // Settle the timeout before listeners run: a listener that ends this
+    // process would otherwise make #onError skip the TaskTimeoutError, and
+    // the terminator would reject the task with a generic error instead.
+    this.#onError("timeout", new TaskTimeoutError(timeoutMs), task);
+    this.opts.observer.emit("taskTimeout", timeoutMs, task, this);
   }
 
   #onError(reason: WhyNotHealthy, error: Error, task?: Task<unknown>) {
@@ -625,6 +723,7 @@ export class BatchProcess {
     if (task != null && task.taskId !== this.#currentTask?.taskId) return;
     map(this.#currentTaskTimeout, (ea) => clearTimeout(ea));
     this.#currentTaskTimeout = undefined;
+    this.#drain = undefined;
     this.#currentTask = undefined;
     this.#lastJobFinishedAt = Date.now();
     if (task != null) this.#streamHandler.onTaskSettled(this.#streamContext);

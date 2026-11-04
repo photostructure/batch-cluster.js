@@ -59,7 +59,12 @@ export class BatchClusterOptions {
   /**
    * If commands take longer than this, presume the underlying process is dead
    * and we should fail the task with a `TaskTimeoutError`. The timeout starts
-   * when a process begins the task, and `Task.resetTimeout()` restarts it.
+   * when a process begins the task, and `Task.resetTimeout()` restarts it. If
+   * the parent's event loop was blocked past the deadline, the task waits
+   * while the child's output is still arriving (more is read within
+   * `streamFlushMillis` of the previous check, or batch-cluster is still
+   * handling output it read), for at most as long as the block overran the
+   * deadline.
    *
    * This should be set to something on the order of seconds to a minute, but at
    * least 2-10 times longer than the expected task duration under typical load.

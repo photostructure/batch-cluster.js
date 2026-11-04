@@ -35,7 +35,17 @@ whose source you can examine as an example consumer.
 `taskTimeoutMillis` starts when a worker begins a task, not while the task is
 queued. If your worker reports progress, call `task.resetTimeout()` each time
 you have verified that the task advanced: this restarts its timeout. Don't
-reset on output alone. Startup and health-check tasks keep a fixed deadline.
+reset on output alone. Startup and health-check tasks can't reset their
+deadline.
+
+If the parent's event loop is blocked past a task's deadline, the task keeps
+waiting while the child's output is still arriving, for at most as long as the
+block overran the deadline. Output counts as still arriving if more is read
+within `streamFlushMillis` of the previous check, or while batch-cluster is
+still handling output it read: a partial line it will flush, or a pass or fail
+token while the task waits to settle. A child that wrote nothing more times out as soon as the block ends, and a reply that takes longer
+to read than the block overran the deadline still times out. This applies to
+startup and health-check tasks too.
 
 A task that times out rejects with `TaskTimeoutError`, possibly before its
 worker has exited. To retry safely, await that worker's `end()`
