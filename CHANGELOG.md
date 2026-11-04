@@ -18,7 +18,9 @@ See [Semver](http://semver.org/).
 
 - 📦 Minor packaging changes
 
-## [Unreleased (minor)]
+## [Unreleased]
+
+## [19.6.0] - 2026-11-04
 
 - ✨ A task whose timeout timer runs late because the parent's event loop was blocked now keeps waiting while the child's output read after the deadline is still arriving, for at most as long as the timer ran late. Output counts as still arriving if more is read within `streamFlushMillis` of the previous check, or while batch-cluster is still handling output it read: a partial line it will flush, or a pass or fail token while the task waits to settle. A child that sent nothing more times out as soon as the block ends. Without a block the timer runs at most a few milliseconds late, so a task times out within a few milliseconds of its deadline, as before.
 - 🐞 A task whose child replies while the parent's event loop is blocked past the task's deadline now resolves instead of rejecting with `TaskTimeoutError`, if the parent can read the rest of the reply within as long as the block overran the deadline. This includes replies larger than the pipe buffer, and stderr failure tokens without a trailing newline when `shouldIgnoreStderrLine` is set. Previously, a reply that arrived during a 1.5-second synchronous block with `taskTimeoutMillis: 500` was timed out. If the child exits during the block, the task now rejects with "Process terminated before task completed", as when a child exits mid-task, instead of `TaskTimeoutError`, and no `taskTimeout` event is emitted.
@@ -937,6 +939,7 @@ collision that caused linting errors.
 - ✨ Extracted implementation and tests from
   [exiftool-vendored](https://github.com/mceachen/exiftool-vendored.js)
 
+[19.6.0]: https://github.com/photostructure/batch-cluster.js/releases/tag/v19.6.0
 [19.5.0]: https://github.com/photostructure/batch-cluster.js/releases/tag/v19.5.0
 [19.4.1]: https://github.com/photostructure/batch-cluster.js/releases/tag/v19.4.1
 [19.4.0]: https://github.com/photostructure/batch-cluster.js/releases/tag/v19.4.0
