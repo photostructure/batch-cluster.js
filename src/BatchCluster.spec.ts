@@ -1235,6 +1235,36 @@ describe("BatchCluster", function () {
       expect(bc.pids().length).to.eql(0);
       postAssertions();
     });
+
+    it("culls a child that only ran health checks since its last task", async () => {
+      // Health checks every 100 ms must not count as work, or the child is
+      // never idle for 500 ms.
+      await shutdown(bc);
+      // A failed health check would retire the child as "unhealthy" instead.
+      setFailRatePct(0);
+      const healthChecks: number[] = [];
+      bc = listen(
+        new BatchCluster({
+          ...DefaultTestOptions,
+          processFactory,
+          maxProcs: 1,
+          maxIdleMsPerProcess: 500,
+          maxTasksPerProcess: 1000, // health checks count as tasks here
+          healthCheckCommand: "version",
+          healthCheckIntervalMillis: 100,
+          onIdleIntervalMillis: 50,
+        }),
+      );
+      bc.on("taskResolved", (task: Task) => {
+        if (task.command === "version") healthChecks.push(Date.now());
+      });
+      assertExpectedResults(await Promise.all(runTasks(bc, 1)));
+      expect(
+        await until(() => bc.countEndedChildProcs("idle") > 0, 3000),
+      ).to.eql(true);
+      expect(healthChecks.length).to.be.gte(2);
+      postAssertions();
+    });
   });
 
   // Regression test for https://github.com/photostructure/exiftool-vendored.js/issues/312

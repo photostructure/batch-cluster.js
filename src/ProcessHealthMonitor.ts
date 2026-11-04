@@ -9,7 +9,7 @@ import { blank } from "./String";
 import { Task } from "./Task";
 import { WhyNotHealthy, WhyNotReady } from "./WhyNotHealthy";
 
-class HealthCheckTask extends Task<unknown> {
+export class HealthCheckTask extends Task<unknown> {
   // Health checks detect workers that stopped responding. Letting their own
   // output extend the deadline would disable that fixed recovery bound.
   override resetTimeout(): boolean {

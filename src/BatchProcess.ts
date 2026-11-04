@@ -7,7 +7,7 @@ import { Logger } from "./Logger";
 import { map } from "./Object";
 import { SimpleParser } from "./Parser";
 import { pidExists } from "./Pids";
-import { ProcessHealthMonitor } from "./ProcessHealthMonitor";
+import { HealthCheckTask, ProcessHealthMonitor } from "./ProcessHealthMonitor";
 import { ProcessTerminator } from "./ProcessTerminator";
 import { StreamContext, StreamHandler } from "./StreamHandler";
 import { ensureSuffix } from "./String";
@@ -725,7 +725,11 @@ export class BatchProcess {
     this.#currentTaskTimeout = undefined;
     this.#drain = undefined;
     this.#currentTask = undefined;
-    this.#lastJobFinishedAt = Date.now();
+    // A health check isn't work: restarting the idle clock for it would keep
+    // maxIdleMsPerProcess from ever retiring a process whose health checks
+    // run more often than that.
+    if (!(task instanceof HealthCheckTask))
+      this.#lastJobFinishedAt = Date.now();
     if (task != null) this.#streamHandler.onTaskSettled(this.#streamContext);
   }
 }
