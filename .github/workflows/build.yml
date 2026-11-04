@@ -66,16 +66,11 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - name: Install the release Node.js toolchain
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
-        with:
-          node-version: 24.19.0
-          package-manager-cache: false
       - name: Read the Unreleased heading
         id: bump
-        run: |
-          BUMP="$(node .github/scripts/release-changelog.mjs bump)"
-          echo "bump=$BUMP" >> "$GITHUB_OUTPUT"
+        uses: photostructure/changelog-release-action@efbfab9798f52b3e1538ab1f1d3b73b261b73885 # v0.1.0
+        with:
+          command: bump
 
   release:
     name: Create signed release commit and tag
@@ -157,10 +152,14 @@ jobs:
               throw new Error("package.json and package-lock.json versions do not match")
             }
           '
-          node .github/scripts/release-changelog.mjs stamp "$VERSION" "$(date -u +%F)" \
-            "https://github.com/$GITHUB_REPOSITORY/releases/tag/v$VERSION"
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           echo "tag=v$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Stamp the release section of CHANGELOG.md
+        uses: photostructure/changelog-release-action@efbfab9798f52b3e1538ab1f1d3b73b261b73885 # v0.1.0
+        with:
+          command: stamp
+          tag: ${{ steps.version.outputs.tag }}
 
       - name: Create the signed release commit and tag
         env:
